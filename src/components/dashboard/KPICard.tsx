@@ -73,7 +73,7 @@ export function KPICard({
               {title}
             </span>
             {tooltip && (
-              <Tooltip>
+              <Tooltip delayDuration={200}>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
@@ -84,9 +84,12 @@ export function KPICard({
                 </TooltipTrigger>
                 <TooltipContent
                   side="top"
-                  className="max-w-[260px] text-xs leading-relaxed"
+                  align="start"
+                  sideOffset={8}
+                  className="z-[100] max-w-[300px] rounded-lg border border-border bg-popover px-4 py-3 text-xs leading-relaxed text-popover-foreground shadow-xl shadow-black/20"
                 >
-                  {tooltip}
+                  <p className="font-semibold text-foreground mb-1">{title}</p>
+                  <p className="text-muted-foreground">{tooltip}</p>
                 </TooltipContent>
               </Tooltip>
             )}
