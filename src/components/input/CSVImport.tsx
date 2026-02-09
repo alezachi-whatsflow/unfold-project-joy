@@ -6,15 +6,43 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileSpreadsheet, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
+function detectDelimiter(headerLine: string): string {
+  const semicolons = (headerLine.match(/;/g) || []).length;
+  const commas = (headerLine.match(/,/g) || []).length;
+  return semicolons > commas ? ";" : ",";
+}
+
+function splitCSVLine(line: string, delimiter: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (const char of line) {
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === delimiter && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+}
+
 function parseCSV(csv: string): FinancialEntry[] {
-  const lines = csv.trim().split("\n");
+  const lines = csv.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const delimiter = detectDelimiter(lines[0]);
+  const headers = splitCSVLine(lines[0], delimiter).map((h) => h.trim().toLowerCase());
+  console.log("[CSVImport] Delimiter:", delimiter, "Headers:", headers);
   const entries: FinancialEntry[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(",").map((v) => v.trim());
+    if (!lines[i].trim()) continue;
+    const values = splitCSVLine(lines[i], delimiter);
     if (values.length < headers.length) continue;
 
     const get = (key: string) => {
@@ -22,12 +50,14 @@ function parseCSV(csv: string): FinancialEntry[] {
       return idx >= 0 ? parseFloat(values[idx]) || 0 : 0;
     };
 
-    const month = values[headers.indexOf("month")] || values[0];
-    if (!month || !/^\d{4}-\d{2}$/.test(month)) continue;
+    const monthIdx = headers.indexOf("month");
+    const month = monthIdx >= 0 ? values[monthIdx] : values[0];
+    console.log("[CSVImport] Row", i, "month:", month);
+    if (!month || !/^\d{4}-\d{2}$/.test(month.trim())) continue;
 
     entries.push({
       id: Math.random().toString(36).substring(2, 11),
-      month,
+      month: month.trim(),
       revenue: {
         mrr: get("mrr"),
         newMRR: get("newmrr"),
@@ -56,6 +86,7 @@ function parseCSV(csv: string): FinancialEntry[] {
     });
   }
 
+  console.log("[CSVImport] Parsed entries:", entries.length);
   return entries;
 }
 
