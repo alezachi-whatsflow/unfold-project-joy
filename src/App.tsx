@@ -18,13 +18,20 @@ const App = () => (
       <Sonner />
       <FinancialProvider>
         <BrowserRouter>
-          <DashboardLayout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/input" element={<DataInputPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </DashboardLayout>
+          <Routes>
+            {/* Dashboard: full-width, no sidebar */}
+            <Route path="/" element={<Index />} />
+            {/* Input page: with sidebar layout */}
+            <Route
+              path="/input"
+              element={
+                <DashboardLayout>
+                  <DataInputPage />
+                </DashboardLayout>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </FinancialProvider>
     </TooltipProvider>
