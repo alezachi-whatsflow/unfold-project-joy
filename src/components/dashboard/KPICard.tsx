@@ -51,7 +51,7 @@ export function KPICard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card p-5 transition-all duration-300",
+        "group relative rounded-xl border bg-card p-5 transition-all duration-300",
         "hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5",
         "opacity-0 animate-fade-in-up",
         accentGradients[accentColor]
@@ -61,7 +61,7 @@ export function KPICard({
       {/* Gradient overlay */}
       <div
         className={cn(
-          "absolute inset-0 bg-gradient-to-br opacity-30 pointer-events-none",
+          "absolute inset-0 rounded-xl overflow-hidden bg-gradient-to-br opacity-30 pointer-events-none",
           accentGradients[accentColor]
         )}
       />
