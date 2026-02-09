@@ -26,11 +26,37 @@ function parseDate(value: string): string {
   return value;
 }
 
+function detectDelimiter(headerLine: string): string {
+  const semicolons = (headerLine.match(/;/g) || []).length;
+  const commas = (headerLine.match(/,/g) || []).length;
+  return semicolons > commas ? ";" : ",";
+}
+
+function splitCSVLine(line: string, delimiter: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (const char of line) {
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === delimiter && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+}
+
 function parseCustomerCSV(csv: string): Customer[] {
-  const lines = csv.trim().split("\n");
+  const lines = csv.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(",").map(normalizeHeader);
+  const delimiter = detectDelimiter(lines[0]);
+  const headers = splitCSVLine(lines[0], delimiter).map(normalizeHeader);
   const customers: Customer[] = [];
 
   const getIdx = (key: string): number => {
@@ -38,22 +64,8 @@ function parseCustomerCSV(csv: string): Customer[] {
   };
 
   for (let i = 1; i < lines.length; i++) {
-    // Handle CSV values that might contain commas within quotes
-    const values: string[] = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (const char of lines[i]) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === "," && !inQuotes) {
-        values.push(current.trim());
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
+    if (!lines[i].trim()) continue;
+    const values = splitCSVLine(lines[i], delimiter);
 
     if (values.length < 3) continue;
 
