@@ -1,0 +1,82 @@
+import { supabase } from "@/integrations/supabase/client";
+import { Customer, CustomerRow } from "@/types/customers";
+
+function rowToCustomer(row: CustomerRow): Customer {
+  return {
+    id: row.id,
+    whitelabel: row.whitelabel,
+    nome: row.nome,
+    email: row.email,
+    status: row.status,
+    dataAtivacao: row.data_ativacao,
+    dataDesativacao: row.data_desativacao,
+    dataCobranca: row.data_cobranca,
+    dispositivosOficial: row.dispositivos_oficial,
+    dispositivosNaoOficial: row.dispositivos_nao_oficial,
+    atendentes: row.atendentes,
+    adicional: row.adicional,
+    checkout: row.checkout,
+    receita: row.receita,
+    tipoPagamento: row.tipo_pagamento,
+    condicao: row.condicao,
+    valorUltimaCobranca: row.valor_ultima_cobranca,
+  };
+}
+
+function customerToRow(
+  customer: Customer
+): Omit<CustomerRow, "created_at" | "updated_at"> {
+  return {
+    id: customer.id,
+    whitelabel: customer.whitelabel,
+    nome: customer.nome,
+    email: customer.email,
+    status: customer.status,
+    data_ativacao: customer.dataAtivacao,
+    data_desativacao: customer.dataDesativacao,
+    data_cobranca: customer.dataCobranca,
+    dispositivos_oficial: customer.dispositivosOficial,
+    dispositivos_nao_oficial: customer.dispositivosNaoOficial,
+    atendentes: customer.atendentes,
+    adicional: customer.adicional,
+    checkout: customer.checkout,
+    receita: customer.receita,
+    tipo_pagamento: customer.tipoPagamento,
+    condicao: customer.condicao,
+    valor_ultima_cobranca: customer.valorUltimaCobranca,
+  };
+}
+
+export async function fetchCustomers(): Promise<Customer[]> {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("*")
+    .order("nome", { ascending: true });
+
+  if (error) throw error;
+  return (data as CustomerRow[]).map(rowToCustomer);
+}
+
+export async function importCustomersBatch(
+  customers: Customer[]
+): Promise<void> {
+  const rows = customers.map((c) => ({
+    ...customerToRow(c),
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error } = await supabase
+    .from("customers")
+    .upsert(rows, { onConflict: "email" });
+
+  if (error) throw error;
+}
+
+export async function deleteCustomerById(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("customers")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}

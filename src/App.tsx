@@ -4,9 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FinancialProvider } from "@/contexts/FinancialContext";
+import { CustomerProvider } from "@/contexts/CustomerContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
 import DataInputPage from "./pages/DataInputPage";
+import CustomersPage from "./pages/CustomersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,22 +19,32 @@ const App = () => (
       <Toaster />
       <Sonner />
       <FinancialProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Dashboard: full-width, no sidebar */}
-            <Route path="/" element={<Index />} />
-            {/* Input page: with sidebar layout */}
-            <Route
-              path="/input"
-              element={
-                <DashboardLayout>
-                  <DataInputPage />
-                </DashboardLayout>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <CustomerProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Dashboard: full-width, no sidebar */}
+              <Route path="/" element={<Index />} />
+              {/* Input page: with sidebar layout */}
+              <Route
+                path="/input"
+                element={
+                  <DashboardLayout>
+                    <DataInputPage />
+                  </DashboardLayout>
+                }
+              />
+              <Route
+                path="/customers"
+                element={
+                  <DashboardLayout>
+                    <CustomersPage />
+                  </DashboardLayout>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </CustomerProvider>
       </FinancialProvider>
     </TooltipProvider>
   </QueryClientProvider>
