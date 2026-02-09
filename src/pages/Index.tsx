@@ -78,14 +78,34 @@ export default function DashboardPage() {
     selectedMonth,
     setSelectedMonth,
     entries,
+    isLoading,
   } = useFinancial();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+          <p className="text-sm text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentMetrics) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-muted-foreground">
-          Selecione um mês com dados disponíveis.
-        </p>
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">
+            Nenhum dado disponível. Insira dados financeiros para começar.
+          </p>
+          <Link to="/input">
+            <Button className="gap-2">
+              <PenLine className="h-4 w-4" />
+              Inserir Dados
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }

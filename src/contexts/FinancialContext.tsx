@@ -4,10 +4,17 @@ import React, {
   useState,
   useCallback,
   useMemo,
+  useEffect,
 } from "react";
 import { FinancialEntry, SaaSMetrics } from "@/types/financial";
 import { calculateMetrics } from "@/lib/calculations";
-import { generateSampleData } from "@/lib/sampleData";
+import {
+  fetchEntries,
+  upsertEntry,
+  deleteEntryById,
+  importEntriesBatch,
+} from "@/lib/supabaseQueries";
+import { toast } from "sonner";
 
 interface FinancialContextType {
   entries: FinancialEntry[];
@@ -20,6 +27,8 @@ interface FinancialContextType {
   currentMetrics: SaaSMetrics | null;
   previousMetrics: SaaSMetrics | null;
   allMetrics: { month: string; metrics: SaaSMetrics }[];
+  isLoading: boolean;
+  refetch: () => Promise<void>;
 }
 
 const FinancialContext = createContext<FinancialContextType | null>(null);
@@ -29,10 +38,26 @@ export function FinancialProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [entries, setEntries] = useState<FinancialEntry[]>(
-    generateSampleData()
-  );
+  const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>("2025-12");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadEntries = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await fetchEntries();
+      setEntries(data);
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+      toast.error("Erro ao carregar dados do banco de dados");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEntries();
+  }, [loadEntries]);
 
   const sortedEntries = useMemo(
     () => [...entries].sort((a, b) => a.month.localeCompare(b.month)),
@@ -67,33 +92,61 @@ export function FinancialProvider({
     );
   }, [sortedEntries, selectedMonth]);
 
-  const addEntry = useCallback((entry: FinancialEntry) => {
-    setEntries((prev) => [
-      ...prev.filter((e) => e.month !== entry.month),
-      entry,
-    ]);
-  }, []);
-
-  const updateEntry = useCallback(
-    (id: string, updates: Partial<FinancialEntry>) => {
-      setEntries((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-      );
+  const addEntry = useCallback(
+    async (entry: FinancialEntry) => {
+      try {
+        await upsertEntry(entry);
+        await loadEntries();
+      } catch (err) {
+        console.error("Erro ao salvar entrada:", err);
+        toast.error("Erro ao salvar dados no banco");
+      }
     },
-    []
+    [loadEntries]
   );
 
-  const deleteEntry = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
-  }, []);
+  const updateEntry = useCallback(
+    async (id: string, updates: Partial<FinancialEntry>) => {
+      try {
+        const existing = entries.find((e) => e.id === id);
+        if (!existing) return;
+        const updated = { ...existing, ...updates };
+        await upsertEntry(updated);
+        await loadEntries();
+      } catch (err) {
+        console.error("Erro ao atualizar entrada:", err);
+        toast.error("Erro ao atualizar dados no banco");
+      }
+    },
+    [entries, loadEntries]
+  );
 
-  const importEntries = useCallback((newEntries: FinancialEntry[]) => {
-    setEntries((prev) => {
-      const existingMonths = new Set(newEntries.map((e) => e.month));
-      const filtered = prev.filter((e) => !existingMonths.has(e.month));
-      return [...filtered, ...newEntries];
-    });
-  }, []);
+  const deleteEntry = useCallback(
+    async (id: string) => {
+      try {
+        await deleteEntryById(id);
+        await loadEntries();
+      } catch (err) {
+        console.error("Erro ao deletar entrada:", err);
+        toast.error("Erro ao deletar dados do banco");
+      }
+    },
+    [loadEntries]
+  );
+
+  const importEntries = useCallback(
+    async (newEntries: FinancialEntry[]) => {
+      try {
+        await importEntriesBatch(newEntries);
+        await loadEntries();
+        toast.success(`${newEntries.length} registros importados com sucesso!`);
+      } catch (err) {
+        console.error("Erro ao importar entradas:", err);
+        toast.error("Erro ao importar dados para o banco");
+      }
+    },
+    [loadEntries]
+  );
 
   return (
     <FinancialContext.Provider
@@ -108,6 +161,8 @@ export function FinancialProvider({
         currentMetrics,
         previousMetrics,
         allMetrics,
+        isLoading,
+        refetch: loadEntries,
       }}
     >
       {children}
