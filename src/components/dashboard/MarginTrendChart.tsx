@@ -27,9 +27,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function MarginTrendChart() {
-  const { allMetrics } = useFinancial();
+  const { filteredAllMetrics } = useFinancial();
 
-  const data = allMetrics.map((m) => ({
+  const data = filteredAllMetrics.map((m) => ({
     month: getMonthLabel(m.month),
     "Margem Bruta": parseFloat(m.metrics.grossMargin.toFixed(1)),
     "Margem Líquida": parseFloat(m.metrics.netMargin.toFixed(1)),

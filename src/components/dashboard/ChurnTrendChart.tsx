@@ -27,9 +27,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function ChurnTrendChart() {
-  const { allMetrics } = useFinancial();
+  const { filteredAllMetrics } = useFinancial();
 
-  const data = allMetrics.map((m) => ({
+  const data = filteredAllMetrics.map((m) => ({
     month: getMonthLabel(m.month),
     "Revenue Churn": parseFloat(m.metrics.revenueChurnRate.toFixed(2)),
     "Logo Churn": parseFloat(m.metrics.logoChurnRate.toFixed(2)),

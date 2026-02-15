@@ -16,22 +16,66 @@ import {
 } from "@/lib/supabaseQueries";
 import { toast } from "sonner";
 
+export type AnalysisPeriod = 1 | 3 | 6 | 12 | 24 | 36;
+
+export const PERIOD_OPTIONS: { value: AnalysisPeriod; label: string }[] = [
+  { value: 1, label: "Mensal" },
+  { value: 3, label: "Trimestral" },
+  { value: 6, label: "Semestral" },
+  { value: 12, label: "Anual" },
+  { value: 24, label: "24 Meses" },
+  { value: 36, label: "36 Meses" },
+];
+
 interface FinancialContextType {
   entries: FinancialEntry[];
   selectedMonth: string;
   setSelectedMonth: (month: string) => void;
+  analysisPeriod: AnalysisPeriod;
+  setAnalysisPeriod: (period: AnalysisPeriod) => void;
   addEntry: (entry: FinancialEntry) => void;
   updateEntry: (id: string, entry: Partial<FinancialEntry>) => void;
   deleteEntry: (id: string) => void;
   importEntries: (entries: FinancialEntry[]) => void;
   currentMetrics: SaaSMetrics | null;
   previousMetrics: SaaSMetrics | null;
+  periodMetrics: SaaSMetrics | null;
   allMetrics: { month: string; metrics: SaaSMetrics }[];
+  filteredAllMetrics: { month: string; metrics: SaaSMetrics }[];
+  filteredEntries: FinancialEntry[];
   isLoading: boolean;
   refetch: () => Promise<void>;
 }
 
 const FinancialContext = createContext<FinancialContextType | null>(null);
+
+function averageMetrics(metricsList: SaaSMetrics[]): SaaSMetrics {
+  if (metricsList.length === 0) return {} as SaaSMetrics;
+  if (metricsList.length === 1) return metricsList[0];
+  
+  const sum = (key: keyof SaaSMetrics) =>
+    metricsList.reduce((acc, m) => acc + (m[key] as number), 0);
+  const avg = (key: keyof SaaSMetrics) => sum(key) / metricsList.length;
+
+  return {
+    mrr: avg("mrr"),
+    arr: avg("arr"),
+    cac: avg("cac"),
+    ltv: avg("ltv"),
+    ltvCacRatio: avg("ltvCacRatio"),
+    revenueChurnRate: avg("revenueChurnRate"),
+    logoChurnRate: avg("logoChurnRate"),
+    grossMargin: avg("grossMargin"),
+    netMargin: avg("netMargin"),
+    ebitda: avg("ebitda"),
+    burnRate: avg("burnRate"),
+    runway: avg("runway"),
+    grossProfit: avg("grossProfit"),
+    netProfit: avg("netProfit"),
+    totalRevenue: avg("totalRevenue"),
+    totalCosts: avg("totalCosts"),
+  };
+}
 
 export function FinancialProvider({
   children,
@@ -40,6 +84,7 @@ export function FinancialProvider({
 }) {
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>("2025-12");
+  const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>(1);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadEntries = useCallback(async () => {
@@ -73,6 +118,27 @@ export function FinancialProvider({
       ),
     }));
   }, [sortedEntries]);
+
+  // Filter entries and metrics by period (last N months ending at selectedMonth)
+  const filteredEntries = useMemo(() => {
+    const idx = sortedEntries.findIndex((e) => e.month === selectedMonth);
+    if (idx === -1) return sortedEntries;
+    const start = Math.max(0, idx - analysisPeriod + 1);
+    return sortedEntries.slice(start, idx + 1);
+  }, [sortedEntries, selectedMonth, analysisPeriod]);
+
+  const filteredAllMetrics = useMemo(() => {
+    const idx = allMetrics.findIndex((m) => m.month === selectedMonth);
+    if (idx === -1) return allMetrics;
+    const start = Math.max(0, idx - analysisPeriod + 1);
+    return allMetrics.slice(start, idx + 1);
+  }, [allMetrics, selectedMonth, analysisPeriod]);
+
+  // Period-averaged metrics for KPI cards
+  const periodMetrics = useMemo(() => {
+    if (filteredAllMetrics.length === 0) return null;
+    return averageMetrics(filteredAllMetrics.map((m) => m.metrics));
+  }, [filteredAllMetrics]);
 
   const currentMetrics = useMemo(() => {
     const idx = sortedEntries.findIndex((e) => e.month === selectedMonth);
@@ -154,13 +220,18 @@ export function FinancialProvider({
         entries: sortedEntries,
         selectedMonth,
         setSelectedMonth,
+        analysisPeriod,
+        setAnalysisPeriod,
         addEntry,
         updateEntry,
         deleteEntry,
         importEntries,
         currentMetrics,
         previousMetrics,
+        periodMetrics,
         allMetrics,
+        filteredAllMetrics,
+        filteredEntries,
         isLoading,
         refetch: loadEntries,
       }}
