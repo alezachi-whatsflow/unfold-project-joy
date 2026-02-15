@@ -26,9 +26,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function RevenueChart() {
-  const { allMetrics } = useFinancial();
+  const { filteredAllMetrics } = useFinancial();
 
-  const data = allMetrics.map((m) => ({
+  const data = filteredAllMetrics.map((m) => ({
     month: getMonthLabel(m.month),
     MRR: m.metrics.mrr,
     "Receita Total": m.metrics.totalRevenue,

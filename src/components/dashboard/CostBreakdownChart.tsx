@@ -26,22 +26,25 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export function CostBreakdownChart() {
-  const { entries, selectedMonth } = useFinancial();
-  const entry = entries.find((e) => e.month === selectedMonth);
-  if (!entry) return null;
+  const { filteredEntries } = useFinancial();
+  if (filteredEntries.length === 0) return null;
+
+  // Average costs across filtered entries
+  const avg = (fn: (e: typeof filteredEntries[0]) => number) =>
+    filteredEntries.reduce((s, e) => s + fn(e), 0) / filteredEntries.length;
 
   const data = [
-    { name: "Custos Fixos", value: entry.costs.fixedCosts },
-    { name: "Custos Variáveis", value: entry.costs.variableCosts },
-    { name: "Infraestrutura", value: entry.costs.infrastructure },
-    { name: "Marketing", value: entry.costs.marketing },
-    { name: "Impostos", value: entry.costs.taxes },
+    { name: "Custos Fixos", value: avg((e) => e.costs.fixedCosts) },
+    { name: "Custos Variáveis", value: avg((e) => e.costs.variableCosts) },
+    { name: "Infraestrutura", value: avg((e) => e.costs.infrastructure) },
+    { name: "Marketing", value: avg((e) => e.costs.marketing) },
+    { name: "Impostos", value: avg((e) => e.costs.taxes) },
     {
       name: "Pessoal",
-      value:
-        entry.personnel.payroll +
-        entry.personnel.benefits +
-        entry.personnel.contractors,
+      value: avg(
+        (e) =>
+          e.personnel.payroll + e.personnel.benefits + e.personnel.contractors
+      ),
     },
   ];
 

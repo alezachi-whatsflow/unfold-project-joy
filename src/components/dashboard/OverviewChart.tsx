@@ -27,9 +27,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function OverviewChart() {
-  const { allMetrics } = useFinancial();
+  const { filteredAllMetrics } = useFinancial();
 
-  const data = allMetrics.map((m) => ({
+  const data = filteredAllMetrics.map((m) => ({
     month: getMonthLabel(m.month),
     Receita: m.metrics.totalRevenue,
     Custos: m.metrics.totalCosts,

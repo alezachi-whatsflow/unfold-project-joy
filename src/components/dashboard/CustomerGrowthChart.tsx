@@ -27,9 +27,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function CustomerGrowthChart() {
-  const { entries } = useFinancial();
+  const { filteredEntries } = useFinancial();
 
-  const data = entries.map((e) => ({
+  const data = filteredEntries.map((e) => ({
     month: getMonthLabel(e.month),
     "Total Clientes": e.customers.totalCustomers,
     "Novos": e.customers.newCustomers,

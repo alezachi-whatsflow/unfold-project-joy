@@ -1,4 +1,5 @@
 import { useFinancial } from "@/contexts/FinancialContext";
+import { PERIOD_OPTIONS, AnalysisPeriod } from "@/contexts/FinancialContext";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { CostBreakdownChart } from "@/components/dashboard/CostBreakdownChart";
@@ -36,6 +37,7 @@ import {
   UserMinus,
   Percent,
   PiggyBank,
+  CalendarRange,
 } from "lucide-react";
 
 // Tooltip descriptions for each metric
@@ -73,11 +75,14 @@ const TOOLTIPS = {
 
 export default function DashboardPage() {
   const {
-    currentMetrics,
+    periodMetrics,
     previousMetrics,
     selectedMonth,
     setSelectedMonth,
+    analysisPeriod,
+    setAnalysisPeriod,
     entries,
+    filteredEntries,
     isLoading,
   } = useFinancial();
 
@@ -92,7 +97,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!currentMetrics) {
+  if (!periodMetrics) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center space-y-4">
@@ -110,27 +115,34 @@ export default function DashboardPage() {
     );
   }
 
-  const currentEntry = entries.find((e) => e.month === selectedMonth);
-  const prevIdx = entries.findIndex((e) => e.month === selectedMonth) - 1;
-  const prevEntry = prevIdx >= 0 ? entries[prevIdx] : undefined;
+  const metrics = periodMetrics;
+
+  // For customers / ARPU, use averages from filtered entries
+  const avgTotalCustomers =
+    filteredEntries.length > 0
+      ? filteredEntries.reduce((s, e) => s + e.customers.totalCustomers, 0) /
+        filteredEntries.length
+      : 0;
+  const avgNewCustomers =
+    filteredEntries.length > 0
+      ? filteredEntries.reduce((s, e) => s + e.customers.newCustomers, 0) /
+        filteredEntries.length
+      : 0;
+
+  const arpu = avgTotalCustomers > 0 ? metrics.mrr / avgTotalCustomers : 0;
 
   const trend = (
     current: number,
     field: keyof NonNullable<typeof previousMetrics>
   ) => {
-    if (!previousMetrics) return undefined;
+    if (!previousMetrics || analysisPeriod > 1) return undefined;
     const prev = previousMetrics[field] as number;
     return getTrendPercent(current, prev);
   };
 
-  const arpu =
-    currentEntry && currentEntry.customers.totalCustomers > 0
-      ? currentMetrics.mrr / currentEntry.customers.totalCustomers
-      : 0;
-  const prevArpu =
-    prevEntry && prevEntry.customers.totalCustomers > 0 && previousMetrics
-      ? previousMetrics.mrr / prevEntry.customers.totalCustomers
-      : undefined;
+  const periodLabel = PERIOD_OPTIONS.find(
+    (p) => p.value === analysisPeriod
+  )?.label;
 
   return (
     <div className="min-h-screen bg-background">
@@ -153,6 +165,24 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Select
+              value={String(analysisPeriod)}
+              onValueChange={(v) =>
+                setAnalysisPeriod(Number(v) as AnalysisPeriod)
+              }
+            >
+              <SelectTrigger className="h-9 w-[160px] border-border bg-secondary text-sm">
+                <CalendarRange className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIOD_OPTIONS.map((p) => (
+                  <SelectItem key={p.value} value={String(p.value)}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="h-9 w-[200px] border-border bg-secondary text-sm">
                 <SelectValue />
@@ -176,6 +206,15 @@ export default function DashboardPage() {
       </header>
 
       <div className="mx-auto max-w-[1600px] space-y-8 px-6 py-8">
+        {/* Period info banner */}
+        {analysisPeriod > 1 && (
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-2 text-xs text-muted-foreground">
+            <CalendarRange className="h-3.5 w-3.5" />
+            Análise {periodLabel}: média dos últimos {filteredEntries.length}{" "}
+            meses até {getMonthFullLabel(selectedMonth)}
+          </div>
+        )}
+
         {/* Section: Receita */}
         <section>
           <h2 className="mb-4 flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -185,8 +224,8 @@ export default function DashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KPICard
               title="MRR"
-              value={formatCurrency(currentMetrics.mrr)}
-              change={trend(currentMetrics.mrr, "mrr")}
+              value={formatCurrency(metrics.mrr)}
+              change={trend(metrics.mrr, "mrr")}
               icon={DollarSign}
               accentColor="primary"
               tooltip={TOOLTIPS.mrr}
@@ -194,8 +233,8 @@ export default function DashboardPage() {
             />
             <KPICard
               title="ARR"
-              value={formatCurrency(currentMetrics.arr)}
-              change={trend(currentMetrics.arr, "arr")}
+              value={formatCurrency(metrics.arr)}
+              change={trend(metrics.arr, "arr")}
               icon={TrendingUp}
               accentColor="primary"
               tooltip={TOOLTIPS.arr}
@@ -203,8 +242,8 @@ export default function DashboardPage() {
             />
             <KPICard
               title="Receita Total"
-              value={formatCurrency(currentMetrics.totalRevenue)}
-              change={trend(currentMetrics.totalRevenue, "totalRevenue")}
+              value={formatCurrency(metrics.totalRevenue)}
+              change={trend(metrics.totalRevenue, "totalRevenue")}
               icon={BarChart3}
               accentColor="primary"
               tooltip={TOOLTIPS.totalRevenue}
@@ -212,11 +251,11 @@ export default function DashboardPage() {
             />
             <KPICard
               title="Lucro Líquido"
-              value={formatCurrency(currentMetrics.netProfit)}
-              change={trend(currentMetrics.netProfit, "netProfit")}
+              value={formatCurrency(metrics.netProfit)}
+              change={trend(metrics.netProfit, "netProfit")}
               icon={PiggyBank}
               accentColor={
-                currentMetrics.netProfit >= 0 ? "primary" : "destructive"
+                metrics.netProfit >= 0 ? "primary" : "destructive"
               }
               tooltip={TOOLTIPS.netProfit}
               delay={150}
@@ -233,8 +272,8 @@ export default function DashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KPICard
               title="CAC"
-              value={formatCurrency(currentMetrics.cac)}
-              change={trend(currentMetrics.cac, "cac")}
+              value={formatCurrency(metrics.cac)}
+              change={trend(metrics.cac, "cac")}
               icon={Target}
               accentColor="warning"
               tooltip={TOOLTIPS.cac}
@@ -242,8 +281,8 @@ export default function DashboardPage() {
             />
             <KPICard
               title="LTV"
-              value={formatCurrency(currentMetrics.ltv)}
-              change={trend(currentMetrics.ltv, "ltv")}
+              value={formatCurrency(metrics.ltv)}
+              change={trend(metrics.ltv, "ltv")}
               icon={Activity}
               accentColor="accent"
               tooltip={TOOLTIPS.ltv}
@@ -251,16 +290,16 @@ export default function DashboardPage() {
             />
             <KPICard
               title="LTV / CAC"
-              value={`${currentMetrics.ltvCacRatio.toFixed(1)}x`}
-              change={trend(currentMetrics.ltvCacRatio, "ltvCacRatio")}
+              value={`${metrics.ltvCacRatio.toFixed(1)}x`}
+              change={trend(metrics.ltvCacRatio, "ltvCacRatio")}
               icon={TrendingUp}
               accentColor={
-                currentMetrics.ltvCacRatio >= 3 ? "primary" : "warning"
+                metrics.ltvCacRatio >= 3 ? "primary" : "warning"
               }
               tooltip={TOOLTIPS.ltvCac}
               delay={300}
               description={
-                currentMetrics.ltvCacRatio >= 3
+                metrics.ltvCacRatio >= 3
                   ? "Saudável (≥3x)"
                   : "Atenção (<3x)"
               }
@@ -268,11 +307,6 @@ export default function DashboardPage() {
             <KPICard
               title="ARPU"
               value={formatCurrency(arpu)}
-              change={
-                prevArpu !== undefined
-                  ? getTrendPercent(arpu, prevArpu)
-                  : undefined
-              }
               icon={DollarSign}
               accentColor="accent"
               tooltip={TOOLTIPS.arpu}
@@ -290,18 +324,18 @@ export default function DashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KPICard
               title="Revenue Churn"
-              value={formatPercent(currentMetrics.revenueChurnRate)}
+              value={formatPercent(metrics.revenueChurnRate)}
               change={
-                previousMetrics
+                analysisPeriod === 1 && previousMetrics
                   ? -(
-                      currentMetrics.revenueChurnRate -
+                      metrics.revenueChurnRate -
                       previousMetrics.revenueChurnRate
                     )
                   : undefined
               }
               icon={Percent}
               accentColor={
-                currentMetrics.revenueChurnRate <= 5
+                metrics.revenueChurnRate <= 5
                   ? "primary"
                   : "destructive"
               }
@@ -310,33 +344,25 @@ export default function DashboardPage() {
             />
             <KPICard
               title="Logo Churn"
-              value={formatPercent(currentMetrics.logoChurnRate)}
+              value={formatPercent(metrics.logoChurnRate)}
               change={
-                previousMetrics
+                analysisPeriod === 1 && previousMetrics
                   ? -(
-                      currentMetrics.logoChurnRate -
+                      metrics.logoChurnRate -
                       previousMetrics.logoChurnRate
                     )
                   : undefined
               }
               icon={UserMinus}
               accentColor={
-                currentMetrics.logoChurnRate <= 3 ? "primary" : "destructive"
+                metrics.logoChurnRate <= 3 ? "primary" : "destructive"
               }
               tooltip={TOOLTIPS.logoChurn}
               delay={450}
             />
             <KPICard
               title="Clientes Ativos"
-              value={formatNumber(currentEntry?.customers.totalCustomers ?? 0)}
-              change={
-                prevEntry
-                  ? getTrendPercent(
-                      currentEntry?.customers.totalCustomers ?? 0,
-                      prevEntry.customers.totalCustomers
-                    )
-                  : undefined
-              }
+              value={formatNumber(Math.round(avgTotalCustomers))}
               icon={Users}
               accentColor="accent"
               tooltip={TOOLTIPS.customers}
@@ -344,15 +370,7 @@ export default function DashboardPage() {
             />
             <KPICard
               title="Novos Clientes"
-              value={formatNumber(currentEntry?.customers.newCustomers ?? 0)}
-              change={
-                prevEntry
-                  ? getTrendPercent(
-                      currentEntry?.customers.newCustomers ?? 0,
-                      prevEntry.customers.newCustomers
-                    )
-                  : undefined
-              }
+              value={formatNumber(Math.round(avgNewCustomers))}
               icon={UserPlus}
               accentColor="primary"
               tooltip={TOOLTIPS.newCustomers}
@@ -370,48 +388,48 @@ export default function DashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <KPICard
               title="Margem Bruta"
-              value={formatPercent(currentMetrics.grossMargin)}
-              change={trend(currentMetrics.grossMargin, "grossMargin")}
+              value={formatPercent(metrics.grossMargin)}
+              change={trend(metrics.grossMargin, "grossMargin")}
               icon={TrendingUp}
               accentColor={
-                currentMetrics.grossMargin >= 60 ? "primary" : "warning"
+                metrics.grossMargin >= 60 ? "primary" : "warning"
               }
               tooltip={TOOLTIPS.grossMargin}
               delay={600}
             />
             <KPICard
               title="Margem Líquida"
-              value={formatPercent(currentMetrics.netMargin)}
-              change={trend(currentMetrics.netMargin, "netMargin")}
+              value={formatPercent(metrics.netMargin)}
+              change={trend(metrics.netMargin, "netMargin")}
               icon={DollarSign}
               accentColor={
-                currentMetrics.netMargin >= 0 ? "primary" : "destructive"
+                metrics.netMargin >= 0 ? "primary" : "destructive"
               }
               tooltip={TOOLTIPS.netMargin}
               delay={650}
             />
             <KPICard
               title="EBITDA"
-              value={formatCurrency(currentMetrics.ebitda)}
-              change={trend(currentMetrics.ebitda, "ebitda")}
+              value={formatCurrency(metrics.ebitda)}
+              change={trend(metrics.ebitda, "ebitda")}
               icon={BarChart3}
               accentColor={
-                currentMetrics.ebitda >= 0 ? "primary" : "destructive"
+                metrics.ebitda >= 0 ? "primary" : "destructive"
               }
               tooltip={TOOLTIPS.ebitda}
               delay={700}
             />
             <KPICard
               title="Burn Rate"
-              value={formatCurrency(currentMetrics.burnRate)}
+              value={formatCurrency(metrics.burnRate)}
               icon={Wallet}
               accentColor={
-                currentMetrics.burnRate === 0 ? "primary" : "destructive"
+                metrics.burnRate === 0 ? "primary" : "destructive"
               }
               tooltip={TOOLTIPS.burnRate}
               delay={750}
               description={
-                currentMetrics.burnRate === 0
+                metrics.burnRate === 0
                   ? "Cash flow positivo"
                   : "Queimando caixa"
               }
@@ -419,20 +437,20 @@ export default function DashboardPage() {
             <KPICard
               title="Runway"
               value={
-                currentMetrics.runway >= 999
+                metrics.runway >= 999
                   ? "∞"
-                  : `${currentMetrics.runway.toFixed(0)} meses`
+                  : `${metrics.runway.toFixed(0)} meses`
               }
               icon={Clock}
               accentColor={
-                currentMetrics.runway >= 12 ? "primary" : "destructive"
+                metrics.runway >= 12 ? "primary" : "destructive"
               }
               tooltip={TOOLTIPS.runway}
               delay={800}
               description={
-                currentMetrics.runway >= 18
+                metrics.runway >= 18
                   ? "Posição confortável"
-                  : currentMetrics.runway >= 12
+                  : metrics.runway >= 12
                   ? "Monitorar de perto"
                   : "Atenção urgente"
               }
@@ -467,7 +485,7 @@ export default function DashboardPage() {
         {/* Footer */}
         <footer className="border-t border-border pt-6 pb-4 text-center">
           <p className="text-xs text-muted-foreground">
-            Whatsflow Finance Dashboard — Dados atualizados para{" "}
+            Whatsflow Finance Dashboard — {periodLabel} até{" "}
             {getMonthFullLabel(selectedMonth)}
           </p>
         </footer>
