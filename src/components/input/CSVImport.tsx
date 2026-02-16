@@ -31,6 +31,35 @@ function splitCSVLine(line: string, delimiter: string): string[] {
   return values;
 }
 
+const MONTH_NAMES: Record<string, string> = {
+  jan: "01", fev: "02", mar: "03", abr: "04", mai: "05", jun: "06",
+  jul: "07", ago: "08", set: "09", out: "10", nov: "11", dez: "12",
+  janeiro: "01", fevereiro: "02", março: "03", abril: "04", maio: "05", junho: "06",
+  julho: "07", agosto: "08", setembro: "09", outubro: "10", novembro: "11", dezembro: "12",
+};
+
+/** Normalise various month formats to YYYY-MM */
+function normalizeMonth(raw: string): string | null {
+  const s = raw.trim();
+  // YYYY-MM
+  if (/^\d{4}-\d{2}$/.test(s)) return s;
+  // MM/YYYY or MM-YYYY
+  let m = s.match(/^(\d{1,2})[/-](\d{4})$/);
+  if (m) return `${m[2]}-${m[1].padStart(2, "0")}`;
+  // YYYY/MM
+  m = s.match(/^(\d{4})[/-](\d{1,2})$/);
+  if (m) return `${m[1]}-${m[2].padStart(2, "0")}`;
+  // Abr/25, Dez/2025, janeiro-2025, etc.
+  m = s.match(/^([a-záéíóúçã]+)[/-](\d{2,4})$/i);
+  if (m) {
+    const mon = MONTH_NAMES[m[1].toLowerCase()];
+    if (!mon) return null;
+    const year = m[2].length === 2 ? `20${m[2]}` : m[2];
+    return `${year}-${mon}`;
+  }
+  return null;
+}
+
 function parseCSV(csv: string): FinancialEntry[] {
   const lines = csv.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -40,6 +69,15 @@ function parseCSV(csv: string): FinancialEntry[] {
   console.log("[CSVImport] Delimiter:", delimiter, "Headers:", headers);
   const entries: FinancialEntry[] = [];
 
+  // find month column — accept "month", "mês", "mes", "período", "periodo"
+  const monthAliases = ["month", "mês", "mes", "período", "periodo", "data", "date"];
+  let monthIdx = -1;
+  for (const alias of monthAliases) {
+    const idx = headers.indexOf(alias);
+    if (idx >= 0) { monthIdx = idx; break; }
+  }
+  if (monthIdx === -1) monthIdx = 0; // fallback to first column
+
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
     const values = splitCSVLine(lines[i], delimiter);
@@ -47,17 +85,19 @@ function parseCSV(csv: string): FinancialEntry[] {
 
     const get = (key: string) => {
       const idx = headers.indexOf(key.toLowerCase());
-      return idx >= 0 ? parseFloat(values[idx]) || 0 : 0;
+      if (idx < 0) return 0;
+      const raw = values[idx].replace(/[R$\s.]/g, "").replace(",", ".");
+      return parseFloat(raw) || 0;
     };
 
-    const monthIdx = headers.indexOf("month");
-    const month = monthIdx >= 0 ? values[monthIdx] : values[0];
-    console.log("[CSVImport] Row", i, "month:", month);
-    if (!month || !/^\d{4}-\d{2}$/.test(month.trim())) continue;
+    const rawMonth = values[monthIdx];
+    const month = normalizeMonth(rawMonth || "");
+    console.log("[CSVImport] Row", i, "raw:", rawMonth, "→", month);
+    if (!month) continue;
 
     entries.push({
       id: Math.random().toString(36).substring(2, 11),
-      month: month.trim(),
+      month,
       revenue: {
         mrr: get("mrr"),
         newMRR: get("newmrr"),
