@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FinancialProvider } from "@/contexts/FinancialContext";
 import { CustomerProvider } from "@/contexts/CustomerContext";
 import { ProductProvider } from "@/contexts/ProductContext";
+import { CostLinesProvider } from "@/contexts/CostLinesContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
 import DataInputPage from "./pages/DataInputPage";
@@ -23,6 +24,7 @@ const App = () => (
       <FinancialProvider>
         <CustomerProvider>
           <ProductProvider>
+            <CostLinesProvider>
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -53,6 +55,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+            </CostLinesProvider>
           </ProductProvider>
         </CustomerProvider>
       </FinancialProvider>

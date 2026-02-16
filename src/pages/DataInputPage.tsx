@@ -1,5 +1,6 @@
 import { MonthlyInputForm } from "@/components/input/MonthlyInputForm";
 import { CSVImport } from "@/components/input/CSVImport";
+import { CostDetailTable } from "@/components/input/CostDetailTable";
 import { useFinancial } from "@/contexts/FinancialContext";
 import { formatCurrency, getMonthLabel } from "@/lib/calculations";
 import {
@@ -39,6 +40,9 @@ export default function DataInputPage() {
           <CSVImport />
         </div>
       </div>
+
+      {/* Detalhamento de Custos */}
+      <CostDetailTable />
 
       {/* Entries Table */}
       <Card className="border-border">
