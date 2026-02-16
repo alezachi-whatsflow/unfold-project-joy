@@ -66,16 +66,13 @@ function parseCSV(csv: string): FinancialEntry[] {
         otherRevenue: get("otherrevenue"),
       },
       costs: {
-        fixedCosts: get("fixedcosts"),
-        variableCosts: get("variablecosts"),
-        infrastructure: get("infrastructure"),
-        marketing: get("marketing"),
-        taxes: get("taxes"),
-      },
-      personnel: {
-        payroll: get("payroll"),
-        benefits: get("benefits"),
-        contractors: get("contractors"),
+        csp: get("csp"),
+        mkt: get("mkt"),
+        sal: get("sal"),
+        ga: get("ga"),
+        fin: get("fin"),
+        tax: get("tax"),
+        revDeductions: get("revdeductions"),
       },
       customers: {
         totalCustomers: get("totalcustomers"),
@@ -118,7 +115,6 @@ export function CSVImport() {
     };
     reader.readAsText(file);
 
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -136,9 +132,8 @@ export function CSVImport() {
             Importe dados financeiros em massa. O CSV deve conter as colunas:{" "}
             <code className="rounded bg-secondary px-1 py-0.5 text-[10px]">
               month, mrr, newMRR, expansionMRR, churnedMRR, otherRevenue,
-              fixedCosts, variableCosts, infrastructure, marketing, taxes,
-              payroll, benefits, contractors, totalCustomers, newCustomers,
-              churnedCustomers, cashBalance
+              csp, mkt, sal, ga, fin, tax, revDeductions,
+              totalCustomers, newCustomers, churnedCustomers, cashBalance
             </code>
           </p>
 

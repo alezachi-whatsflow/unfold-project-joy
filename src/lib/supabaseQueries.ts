@@ -2,6 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { FinancialEntry } from "@/types/financial";
 import { FinancialEntryRow } from "@/types/supabase";
 
+/**
+ * DB column mapping:
+ * variable_costs → csp | marketing → mkt | payroll → sal
+ * fixed_costs → ga | infrastructure → fin | taxes → tax
+ * benefits → revDeductions | contractors → unused (0)
+ */
+
 function rowToEntry(row: FinancialEntryRow): FinancialEntry {
   return {
     id: row.id,
@@ -14,16 +21,13 @@ function rowToEntry(row: FinancialEntryRow): FinancialEntry {
       otherRevenue: row.other_revenue,
     },
     costs: {
-      fixedCosts: row.fixed_costs,
-      variableCosts: row.variable_costs,
-      infrastructure: row.infrastructure,
-      marketing: row.marketing,
-      taxes: row.taxes,
-    },
-    personnel: {
-      payroll: row.payroll,
-      benefits: row.benefits,
-      contractors: row.contractors,
+      csp: row.variable_costs,
+      mkt: row.marketing,
+      sal: row.payroll,
+      ga: row.fixed_costs,
+      fin: row.infrastructure,
+      tax: row.taxes,
+      revDeductions: row.benefits, // repurposed column
     },
     customers: {
       totalCustomers: row.total_customers,
@@ -45,14 +49,14 @@ function entryToRow(
     expansion_mrr: entry.revenue.expansionMRR,
     churned_mrr: entry.revenue.churnedMRR,
     other_revenue: entry.revenue.otherRevenue,
-    fixed_costs: entry.costs.fixedCosts,
-    variable_costs: entry.costs.variableCosts,
-    infrastructure: entry.costs.infrastructure,
-    marketing: entry.costs.marketing,
-    taxes: entry.costs.taxes,
-    payroll: entry.personnel.payroll,
-    benefits: entry.personnel.benefits,
-    contractors: entry.personnel.contractors,
+    variable_costs: entry.costs.csp,
+    marketing: entry.costs.mkt,
+    payroll: entry.costs.sal,
+    fixed_costs: entry.costs.ga,
+    infrastructure: entry.costs.fin,
+    taxes: entry.costs.tax,
+    benefits: entry.costs.revDeductions, // repurposed column
+    contractors: 0, // unused
     total_customers: entry.customers.totalCustomers,
     new_customers: entry.customers.newCustomers,
     churned_customers: entry.customers.churnedCustomers,
