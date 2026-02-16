@@ -236,18 +236,21 @@ export function CSVImport() {
     // Track templates created during this import to avoid duplicates
     const createdTemplates: { id: string; subcategory: string }[] = [];
 
+    // Normalize dashes (en-dash, em-dash, hyphen) for comparison
+    const normDash = (s: string) => s.replace(/[\u2013\u2014\u2015\u2012―–—]/g, "-").toLowerCase().trim();
+
     let importedCount = 0;
     for (const row of rows) {
-      const subLower = row.subcategory.toLowerCase();
+      const subNorm = normDash(row.subcategory);
 
-      // 1. Check existing templates (exact match first)
+      // 1. Check existing templates (exact match, dash-normalized)
       let tmplId: string | undefined = templates.find(
-        (t) => t.subcategory.toLowerCase() === subLower
+        (t) => normDash(t.subcategory) === subNorm
       )?.id;
 
       // 2. Check templates created during this import
       if (!tmplId) {
-        const created = createdTemplates.find((c) => c.subcategory.toLowerCase() === subLower);
+        const created = createdTemplates.find((c) => normDash(c.subcategory) === subNorm);
         if (created) tmplId = created.id;
       }
 
@@ -255,8 +258,8 @@ export function CSVImport() {
       if (!tmplId) {
         const partial = templates.find(
           (t) =>
-            t.subcategory.toLowerCase().includes(subLower) ||
-            subLower.includes(t.subcategory.toLowerCase())
+            normDash(t.subcategory).includes(subNorm) ||
+            subNorm.includes(normDash(t.subcategory))
         );
         if (partial) tmplId = partial.id;
       }
