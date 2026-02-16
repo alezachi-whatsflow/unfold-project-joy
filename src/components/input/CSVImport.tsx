@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { useFinancial } from "@/contexts/FinancialContext";
 import { useCostLines } from "@/contexts/CostLinesContext";
 import { FinancialEntry } from "@/types/financial";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileSpreadsheet, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { UnmatchedLinesDialog, UnmatchedLine } from "./UnmatchedLinesDialog";
 
 /* ── CSV helpers ── */
 
@@ -212,6 +213,37 @@ function parseFinancialCSV(csv: string): FinancialEntry[] {
   return entries;
 }
 
+/* ── Matching helper ── */
+
+const norm = (s: string) =>
+  s.replace(/[\u2013\u2014\u2015\u2012―–—]/g, "-")
+    .replace(/\s*&\s*/g, " e ")
+    .toLowerCase()
+    .trim();
+
+function findTemplateId(
+  subcategory: string,
+  existingTemplates: { id: string; subcategory: string }[],
+  createdTemplates: { id: string; subcategory: string }[]
+): string | undefined {
+  const subNorm = norm(subcategory);
+
+  // 1. Exact match on existing
+  let id = existingTemplates.find((t) => norm(t.subcategory) === subNorm)?.id;
+  if (id) return id;
+
+  // 2. Match on created during import
+  id = createdTemplates.find((c) => norm(c.subcategory) === subNorm)?.id;
+  if (id) return id;
+
+  // 3. Partial match
+  id = existingTemplates.find(
+    (t) => norm(t.subcategory).includes(subNorm) || subNorm.includes(norm(t.subcategory))
+  )?.id;
+
+  return id;
+}
+
 /* ── Component ── */
 
 export function CSVImport() {
@@ -219,78 +251,132 @@ export function CSVImport() {
   const { templates, addTemplate, setAmount, setMonths, months: currentMonths } = useCostLines();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imported, setImported] = useState(false);
+  const [unmatchedLines, setUnmatchedLines] = useState<UnmatchedLine[]>([]);
+  const [pendingImport, setPendingImport] = useState<{
+    matchedRows: CostDetailRow[];
+    months: string[];
+  } | null>(null);
 
-  const importCostDetail = (csv: string) => {
-    const { rows, months } = parseCostDetailCSV(csv);
-    if (rows.length === 0) {
-      toast.error("Nenhuma linha de custo válida encontrada no CSV.");
-      return;
-    }
-
-    // Ensure months are set in the CostLines context
-    if (months.length > 0) {
-      const allMonths = Array.from(new Set([...currentMonths, ...months])).sort();
-      setMonths(allMonths);
-    }
-
-    // Track templates created during this import to avoid duplicates
-    const createdTemplates: { id: string; subcategory: string }[] = [];
-    // Track accumulated amounts per template+month to handle duplicate subcategories
-    const accumulatedAmounts = new Map<string, number>();
-
-    // Normalize dashes, "&" vs "e", and whitespace for comparison
-    const norm = (s: string) => s.replace(/[\u2013\u2014\u2015\u2012―–—]/g, "-").replace(/\s*&\s*/g, " e ").toLowerCase().trim();
-
-    let importedCount = 0;
-    for (const row of rows) {
-      const subNorm = norm(row.subcategory);
-
-      // 1. Check existing templates (exact match, normalized)
-      let tmplId: string | undefined = templates.find(
-        (t) => norm(t.subcategory) === subNorm
-      )?.id;
-
-      // 2. Check templates created during this import
-      if (!tmplId) {
-        const created = createdTemplates.find((c) => norm(c.subcategory) === subNorm);
-        if (created) tmplId = created.id;
+  const importRows = useCallback(
+    (rows: CostDetailRow[], months: string[]) => {
+      if (months.length > 0) {
+        const allMonths = Array.from(new Set([...currentMonths, ...months])).sort();
+        setMonths(allMonths);
       }
 
-      // 3. Partial match on existing templates
-      if (!tmplId) {
-        const partial = templates.find(
-          (t) =>
-            norm(t.subcategory).includes(subNorm) ||
-            subNorm.includes(norm(t.subcategory))
-        );
-        if (partial) tmplId = partial.id;
+      const createdTemplates: { id: string; subcategory: string }[] = [];
+      const accumulatedAmounts = new Map<string, number>();
+
+      for (const row of rows) {
+        let tmplId = findTemplateId(row.subcategory, templates, createdTemplates);
+
+        if (!tmplId) {
+          tmplId = addTemplate({
+            category: row.category,
+            subcategory: row.subcategory,
+            block: row.block,
+            costType: row.costType,
+            supplier: row.supplier,
+            description: row.description,
+          });
+          createdTemplates.push({ id: tmplId, subcategory: row.subcategory });
+        }
+
+        for (const [month, amount] of Object.entries(row.monthValues)) {
+          const existing = accumulatedAmounts.get(`${tmplId}::${month}`) ?? 0;
+          const newAmount = existing + amount;
+          accumulatedAmounts.set(`${tmplId}::${month}`, newAmount);
+          setAmount(tmplId, month, newAmount);
+        }
       }
 
-      // 4. Create new template only if no match found
-      if (!tmplId) {
-        tmplId = addTemplate({
-          category: row.category,
+      return rows.length;
+    },
+    [templates, currentMonths, addTemplate, setAmount, setMonths]
+  );
+
+  const importCostDetail = useCallback(
+    (csv: string) => {
+      const { rows, months } = parseCostDetailCSV(csv);
+      if (rows.length === 0) {
+        toast.error("Nenhuma linha de custo válida encontrada no CSV.");
+        return;
+      }
+
+      // Split rows into matched and unmatched
+      const matched: CostDetailRow[] = [];
+      const unmatched: CostDetailRow[] = [];
+
+      for (const row of rows) {
+        const tmplId = findTemplateId(row.subcategory, templates, []);
+        if (tmplId) {
+          matched.push(row);
+        } else {
+          unmatched.push(row);
+        }
+      }
+
+      // Import matched rows immediately
+      if (matched.length > 0) {
+        importRows(matched, months);
+      }
+
+      // If there are unmatched rows, show dialog
+      if (unmatched.length > 0) {
+        const unmatchedForDialog: UnmatchedLine[] = unmatched.map((row, i) => ({
+          index: i,
           subcategory: row.subcategory,
+          description: row.description || row.supplier || "",
           block: row.block,
-          costType: row.costType,
-          supplier: row.supplier,
-          description: row.description,
-        });
-        createdTemplates.push({ id: tmplId, subcategory: row.subcategory });
+          monthValues: row.monthValues,
+        }));
+        setUnmatchedLines(unmatchedForDialog);
+        setPendingImport({ matchedRows: unmatched, months });
+
+        if (matched.length > 0) {
+          toast.success(`${matched.length} linhas reconhecidas importadas. ${unmatched.length} linha(s) precisam de classificação.`);
+        }
+      } else {
+        toast.success(`${rows.length} linhas de custo importadas (${months.length} meses)!`);
+        setImported(true);
+        setTimeout(() => setImported(false), 3000);
+      }
+    },
+    [templates, importRows]
+  );
+
+  const handleUnmatchedConfirm = useCallback(
+    (selected: { line: UnmatchedLine; category: string }[]) => {
+      if (!pendingImport) return;
+
+      const rowsToImport: CostDetailRow[] = selected.map(({ line, category }) => {
+        const original = pendingImport.matchedRows[line.index];
+        return {
+          ...original,
+          category,
+          subcategory: `Diversos (${original.subcategory})`,
+        };
+      });
+
+      if (rowsToImport.length > 0) {
+        importRows(rowsToImport, pendingImport.months);
+        toast.success(`${rowsToImport.length} linha(s) importadas como "Diversos".`);
       }
 
-      // Set amounts for each month (accumulate if same template+month appears more than once)
-      for (const [month, amount] of Object.entries(row.monthValues)) {
-        const existing = accumulatedAmounts.get(`${tmplId}::${month}`) ?? 0;
-        const newAmount = existing + amount;
-        accumulatedAmounts.set(`${tmplId}::${month}`, newAmount);
-        setAmount(tmplId, month, newAmount);
-        importedCount++;
-      }
-    }
+      setUnmatchedLines([]);
+      setPendingImport(null);
+      setImported(true);
+      setTimeout(() => setImported(false), 3000);
+    },
+    [pendingImport, importRows]
+  );
 
-    toast.success(`${rows.length} linhas de custo importadas (${months.length} meses)!`);
-  };
+  const handleUnmatchedCancel = useCallback(() => {
+    setUnmatchedLines([]);
+    setPendingImport(null);
+    setImported(true);
+    setTimeout(() => setImported(false), 3000);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -305,20 +391,17 @@ export function CSVImport() {
         const headers = splitCSVLine(firstLine, delimiter).map((h) => h.trim().toLowerCase());
 
         if (isCostDetailCSV(headers)) {
-          // Cost detail format
           importCostDetail(csv);
         } else {
-          // Financial summary format
           const entries = parseFinancialCSV(csv);
           if (entries.length === 0) {
             toast.error("Nenhum dado válido encontrado no CSV.");
             return;
           }
           importEntries(entries);
+          setImported(true);
+          setTimeout(() => setImported(false), 3000);
         }
-
-        setImported(true);
-        setTimeout(() => setImported(false), 3000);
       } catch (err) {
         console.error("[CSVImport] Error:", err);
         toast.error("Erro ao processar o arquivo CSV.");
@@ -330,61 +413,70 @@ export function CSVImport() {
   };
 
   return (
-    <Card className="border-border">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <FileSpreadsheet className="h-4 w-4 text-accent" />
-          Importar CSV
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Importe dados em massa. O sistema detecta automaticamente o formato:
-          </p>
-          <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-            <li>
-              <strong>Detalhamento de custos</strong> — colunas:{" "}
-              <code className="rounded bg-secondary px-1 py-0.5 text-[10px]">
-                Categoria, Subcategoria, Bloco, Tipo, Fornecedor, Descrição, mês(es)
-              </code>
-            </li>
-            <li>
-              <strong>Resumo financeiro</strong> — colunas:{" "}
-              <code className="rounded bg-secondary px-1 py-0.5 text-[10px]">
-                month, mrr, csp, mkt, sal, ga, fin, tax…
-              </code>
-            </li>
-          </ul>
+    <>
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <FileSpreadsheet className="h-4 w-4 text-accent" />
+            Importar CSV
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Importe dados em massa. O sistema detecta automaticamente o formato:
+            </p>
+            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+              <li>
+                <strong>Detalhamento de custos</strong> — colunas:{" "}
+                <code className="rounded bg-secondary px-1 py-0.5 text-[10px]">
+                  Categoria, Subcategoria, Bloco, Tipo, Fornecedor, Descrição, mês(es)
+                </code>
+              </li>
+              <li>
+                <strong>Resumo financeiro</strong> — colunas:{" "}
+                <code className="rounded bg-secondary px-1 py-0.5 text-[10px]">
+                  month, mrr, csp, mkt, sal, ga, fin, tax…
+                </code>
+              </li>
+            </ul>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileChange}
-            className="hidden"
-          />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              className="hidden"
+            />
 
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {imported ? (
-              <>
-                <CheckCircle className="h-4 w-4 text-accent" />
-                Importado!
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" />
-                Selecionar Arquivo CSV
-              </>
-            )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {imported ? (
+                <>
+                  <CheckCircle className="h-4 w-4 text-accent" />
+                  Importado!
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Selecionar Arquivo CSV
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <UnmatchedLinesDialog
+        open={unmatchedLines.length > 0}
+        lines={unmatchedLines}
+        onConfirm={handleUnmatchedConfirm}
+        onCancel={handleUnmatchedCancel}
+      />
+    </>
   );
 }
