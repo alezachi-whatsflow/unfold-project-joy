@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useFinancial } from "@/contexts/FinancialContext";
+import { useCostLines } from "@/contexts/CostLinesContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { getMonthFullLabel } from "@/lib/calculations";
 import { toast } from "sonner";
-import { Save, DollarSign, TrendingDown, Users, Wallet } from "lucide-react";
+import { Save, DollarSign, TrendingDown, Users, Wallet, RefreshCw } from "lucide-react";
 
 interface FormData {
   mrr: number;
@@ -88,10 +89,18 @@ function InputField({
 export function MonthlyInputForm() {
   const { entries, addEntry, selectedMonth, setSelectedMonth } =
     useFinancial();
+  const { getBlockTotals } = useCostLines();
 
-  const { register, handleSubmit, reset } = useForm<FormData>({
+  const { register, handleSubmit, reset, setValue, getValues } = useForm<FormData>({
     defaultValues,
   });
+
+  // Check if cost lines have data for the selected month
+  const blockTotals = useMemo(() => getBlockTotals(selectedMonth), [getBlockTotals, selectedMonth]);
+  const hasDetailData = useMemo(
+    () => Object.values(blockTotals).some((v) => v > 0),
+    [blockTotals]
+  );
 
   useEffect(() => {
     const entry = entries.find((e) => e.month === selectedMonth);
@@ -119,6 +128,22 @@ export function MonthlyInputForm() {
       reset(defaultValues);
     }
   }, [selectedMonth, entries, reset]);
+
+  const syncFromDetail = () => {
+    const totals = getBlockTotals(selectedMonth);
+    setValue("variableCosts", totals["CSP"], { shouldDirty: true });
+    setValue("marketing", totals["MKT"], { shouldDirty: true });
+    setValue("payroll", totals["SAL"], { shouldDirty: true });
+    setValue("fixedCosts", totals["G&A"], { shouldDirty: true });
+    setValue("infrastructure", totals["FIN"], { shouldDirty: true });
+    setValue("taxes", totals["TAX"], { shouldDirty: true });
+    // REV- subtracts from otherRevenue
+    const currentOther = getValues("otherRevenue");
+    if (totals["REV-"] > 0) {
+      setValue("otherRevenue", currentOther - totals["REV-"], { shouldDirty: true });
+    }
+    toast.success("Valores sincronizados do detalhamento!");
+  };
 
   const onSubmit = (data: FormData) => {
     const entry = {
@@ -220,10 +245,24 @@ export function MonthlyInputForm() {
         {/* Costs */}
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <TrendingDown className="h-4 w-4 text-destructive" />
-              Custos e Despesas
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <TrendingDown className="h-4 w-4 text-destructive" />
+                Custos e Despesas
+              </CardTitle>
+              {hasDetailData && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs h-7"
+                  onClick={syncFromDetail}
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Sincronizar do Detalhamento
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <InputField
