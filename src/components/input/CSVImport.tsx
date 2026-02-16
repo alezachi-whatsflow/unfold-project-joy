@@ -229,30 +229,41 @@ export function CSVImport() {
 
     // Ensure months are set in the CostLines context
     if (months.length > 0) {
-      // Merge with existing months, sorted
       const allMonths = Array.from(new Set([...currentMonths, ...months])).sort();
       setMonths(allMonths);
     }
 
-    let imported = 0;
-    for (const row of rows) {
-      // Find matching template by subcategory (fuzzy)
-      let tmpl = templates.find(
-        (t) => t.subcategory.toLowerCase() === row.subcategory.toLowerCase()
-      );
+    // Track templates created during this import to avoid duplicates
+    const createdTemplates: { id: string; subcategory: string }[] = [];
 
-      // If not found, try partial match
-      if (!tmpl) {
-        const subLower = row.subcategory.toLowerCase();
-        tmpl = templates.find((t) =>
-          t.subcategory.toLowerCase().includes(subLower) ||
-          subLower.includes(t.subcategory.toLowerCase())
-        );
+    let importedCount = 0;
+    for (const row of rows) {
+      const subLower = row.subcategory.toLowerCase();
+
+      // 1. Check existing templates (exact match first)
+      let tmplId: string | undefined = templates.find(
+        (t) => t.subcategory.toLowerCase() === subLower
+      )?.id;
+
+      // 2. Check templates created during this import
+      if (!tmplId) {
+        const created = createdTemplates.find((c) => c.subcategory.toLowerCase() === subLower);
+        if (created) tmplId = created.id;
       }
 
-      // If still not found, create a new template and get its ID
-      if (!tmpl) {
-        const newId = addTemplate({
+      // 3. Partial match on existing templates
+      if (!tmplId) {
+        const partial = templates.find(
+          (t) =>
+            t.subcategory.toLowerCase().includes(subLower) ||
+            subLower.includes(t.subcategory.toLowerCase())
+        );
+        if (partial) tmplId = partial.id;
+      }
+
+      // 4. Create new template only if no match found
+      if (!tmplId) {
+        tmplId = addTemplate({
           category: row.category,
           subcategory: row.subcategory,
           block: row.block,
@@ -260,18 +271,13 @@ export function CSVImport() {
           supplier: row.supplier,
           description: row.description,
         });
-        // Set amounts using the returned ID
-        for (const [month, amount] of Object.entries(row.monthValues)) {
-          setAmount(newId, month, amount);
-          imported++;
-        }
-        continue;
+        createdTemplates.push({ id: tmplId, subcategory: row.subcategory });
       }
 
       // Set amounts for each month
       for (const [month, amount] of Object.entries(row.monthValues)) {
-        setAmount(tmpl.id, month, amount);
-        imported++;
+        setAmount(tmplId, month, amount);
+        importedCount++;
       }
     }
 
