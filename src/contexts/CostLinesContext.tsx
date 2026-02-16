@@ -5,7 +5,7 @@ import { DEFAULT_COST_LINES, groupByCategory } from "@/lib/costLineTemplates";
 interface CostLinesContextType {
   templates: CostLineTemplate[];
   entries: CostLineEntry[];
-  addTemplate: (template: Omit<CostLineTemplate, "id" | "isDefault">) => void;
+  addTemplate: (template: Omit<CostLineTemplate, "id" | "isDefault">) => string;
   removeTemplate: (id: string) => void;
   setAmount: (templateId: string, month: string, amount: number) => void;
   getAmount: (templateId: string, month: string) => number;
@@ -33,9 +33,10 @@ export function CostLinesProvider({ children }: { children: React.ReactNode }) {
     return result;
   });
 
-  const addTemplate = useCallback((t: Omit<CostLineTemplate, "id" | "isDefault">) => {
+  const addTemplate = useCallback((t: Omit<CostLineTemplate, "id" | "isDefault">): string => {
     const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setTemplates((prev) => [...prev, { ...t, id, isDefault: false }]);
+    return id;
   }, []);
 
   const removeTemplate = useCallback((id: string) => {
