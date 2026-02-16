@@ -238,21 +238,21 @@ export function CSVImport() {
     // Track accumulated amounts per template+month to handle duplicate subcategories
     const accumulatedAmounts = new Map<string, number>();
 
-    // Normalize dashes (en-dash, em-dash, hyphen) for comparison
-    const normDash = (s: string) => s.replace(/[\u2013\u2014\u2015\u2012―–—]/g, "-").toLowerCase().trim();
+    // Normalize dashes, "&" vs "e", and whitespace for comparison
+    const norm = (s: string) => s.replace(/[\u2013\u2014\u2015\u2012―–—]/g, "-").replace(/\s*&\s*/g, " e ").toLowerCase().trim();
 
     let importedCount = 0;
     for (const row of rows) {
-      const subNorm = normDash(row.subcategory);
+      const subNorm = norm(row.subcategory);
 
-      // 1. Check existing templates (exact match, dash-normalized)
+      // 1. Check existing templates (exact match, normalized)
       let tmplId: string | undefined = templates.find(
-        (t) => normDash(t.subcategory) === subNorm
+        (t) => norm(t.subcategory) === subNorm
       )?.id;
 
       // 2. Check templates created during this import
       if (!tmplId) {
-        const created = createdTemplates.find((c) => normDash(c.subcategory) === subNorm);
+        const created = createdTemplates.find((c) => norm(c.subcategory) === subNorm);
         if (created) tmplId = created.id;
       }
 
@@ -260,8 +260,8 @@ export function CSVImport() {
       if (!tmplId) {
         const partial = templates.find(
           (t) =>
-            normDash(t.subcategory).includes(subNorm) ||
-            subNorm.includes(normDash(t.subcategory))
+            norm(t.subcategory).includes(subNorm) ||
+            subNorm.includes(norm(t.subcategory))
         );
         if (partial) tmplId = partial.id;
       }
