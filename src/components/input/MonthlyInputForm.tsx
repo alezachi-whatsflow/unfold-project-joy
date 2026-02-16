@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useFinancial } from "@/contexts/FinancialContext";
 import { useCostLines } from "@/contexts/CostLinesContext";
+import { COST_BLOCK_LABELS } from "@/types/financial";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -23,14 +24,13 @@ interface FormData {
   expansionMRR: number;
   churnedMRR: number;
   otherRevenue: number;
-  fixedCosts: number;
-  variableCosts: number;
-  infrastructure: number;
-  marketing: number;
-  taxes: number;
-  payroll: number;
-  benefits: number;
-  contractors: number;
+  csp: number;
+  mkt: number;
+  sal: number;
+  ga: number;
+  fin: number;
+  tax: number;
+  revDeductions: number;
   totalCustomers: number;
   newCustomers: number;
   churnedCustomers: number;
@@ -38,23 +38,9 @@ interface FormData {
 }
 
 const defaultValues: FormData = {
-  mrr: 0,
-  newMRR: 0,
-  expansionMRR: 0,
-  churnedMRR: 0,
-  otherRevenue: 0,
-  fixedCosts: 0,
-  variableCosts: 0,
-  infrastructure: 0,
-  marketing: 0,
-  taxes: 0,
-  payroll: 0,
-  benefits: 0,
-  contractors: 0,
-  totalCustomers: 0,
-  newCustomers: 0,
-  churnedCustomers: 0,
-  cashBalance: 0,
+  mrr: 0, newMRR: 0, expansionMRR: 0, churnedMRR: 0, otherRevenue: 0,
+  csp: 0, mkt: 0, sal: 0, ga: 0, fin: 0, tax: 0, revDeductions: 0,
+  totalCustomers: 0, newCustomers: 0, churnedCustomers: 0, cashBalance: 0,
 };
 
 function InputField({
@@ -68,10 +54,7 @@ function InputField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label
-        htmlFor={name}
-        className="text-xs font-medium text-muted-foreground"
-      >
+      <Label htmlFor={name} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
       <Input
@@ -87,15 +70,13 @@ function InputField({
 }
 
 export function MonthlyInputForm() {
-  const { entries, addEntry, selectedMonth, setSelectedMonth } =
-    useFinancial();
+  const { entries, addEntry, selectedMonth, setSelectedMonth } = useFinancial();
   const { getBlockTotals } = useCostLines();
 
   const { register, handleSubmit, reset, setValue, getValues } = useForm<FormData>({
     defaultValues,
   });
 
-  // Check if cost lines have data for the selected month
   const blockTotals = useMemo(() => getBlockTotals(selectedMonth), [getBlockTotals, selectedMonth]);
   const hasDetailData = useMemo(
     () => Object.values(blockTotals).some((v) => v > 0),
@@ -111,14 +92,13 @@ export function MonthlyInputForm() {
         expansionMRR: entry.revenue.expansionMRR,
         churnedMRR: entry.revenue.churnedMRR,
         otherRevenue: entry.revenue.otherRevenue,
-        fixedCosts: entry.costs.fixedCosts,
-        variableCosts: entry.costs.variableCosts,
-        infrastructure: entry.costs.infrastructure,
-        marketing: entry.costs.marketing,
-        taxes: entry.costs.taxes,
-        payroll: entry.personnel.payroll,
-        benefits: entry.personnel.benefits,
-        contractors: entry.personnel.contractors,
+        csp: entry.costs.csp,
+        mkt: entry.costs.mkt,
+        sal: entry.costs.sal,
+        ga: entry.costs.ga,
+        fin: entry.costs.fin,
+        tax: entry.costs.tax,
+        revDeductions: entry.costs.revDeductions,
         totalCustomers: entry.customers.totalCustomers,
         newCustomers: entry.customers.newCustomers,
         churnedCustomers: entry.customers.churnedCustomers,
@@ -131,17 +111,13 @@ export function MonthlyInputForm() {
 
   const syncFromDetail = () => {
     const totals = getBlockTotals(selectedMonth);
-    setValue("variableCosts", totals["CSP"], { shouldDirty: true });
-    setValue("marketing", totals["MKT"], { shouldDirty: true });
-    setValue("payroll", totals["SAL"], { shouldDirty: true });
-    setValue("fixedCosts", totals["G&A"], { shouldDirty: true });
-    setValue("infrastructure", totals["FIN"], { shouldDirty: true });
-    setValue("taxes", totals["TAX"], { shouldDirty: true });
-    // REV- subtracts from otherRevenue
-    const currentOther = getValues("otherRevenue");
-    if (totals["REV-"] > 0) {
-      setValue("otherRevenue", currentOther - totals["REV-"], { shouldDirty: true });
-    }
+    setValue("csp", totals["CSP"], { shouldDirty: true });
+    setValue("mkt", totals["MKT"], { shouldDirty: true });
+    setValue("sal", totals["SAL"], { shouldDirty: true });
+    setValue("ga", totals["G&A"], { shouldDirty: true });
+    setValue("fin", totals["FIN"], { shouldDirty: true });
+    setValue("tax", totals["TAX"], { shouldDirty: true });
+    setValue("revDeductions", totals["REV-"], { shouldDirty: true });
     toast.success("Valores sincronizados do detalhamento!");
   };
 
@@ -157,16 +133,13 @@ export function MonthlyInputForm() {
         otherRevenue: data.otherRevenue,
       },
       costs: {
-        fixedCosts: data.fixedCosts,
-        variableCosts: data.variableCosts,
-        infrastructure: data.infrastructure,
-        marketing: data.marketing,
-        taxes: data.taxes,
-      },
-      personnel: {
-        payroll: data.payroll,
-        benefits: data.benefits,
-        contractors: data.contractors,
+        csp: data.csp,
+        mkt: data.mkt,
+        sal: data.sal,
+        ga: data.ga,
+        fin: data.fin,
+        tax: data.tax,
+        revDeductions: data.revDeductions,
       },
       customers: {
         totalCustomers: data.totalCustomers,
@@ -181,7 +154,6 @@ export function MonthlyInputForm() {
     );
   };
 
-  // Generate month options
   const monthOptions: string[] = [];
   for (let y = 2024; y <= 2026; y++) {
     for (let m = 1; m <= 12; m++) {
@@ -191,7 +163,6 @@ export function MonthlyInputForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Month selector */}
       <div className="flex items-center gap-4">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
@@ -224,31 +195,19 @@ export function MonthlyInputForm() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <InputField label="MRR" name="mrr" register={register} />
             <InputField label="Novo MRR" name="newMRR" register={register} />
-            <InputField
-              label="Expansão MRR"
-              name="expansionMRR"
-              register={register}
-            />
-            <InputField
-              label="Churn MRR"
-              name="churnedMRR"
-              register={register}
-            />
-            <InputField
-              label="Outras Receitas"
-              name="otherRevenue"
-              register={register}
-            />
+            <InputField label="Expansão MRR" name="expansionMRR" register={register} />
+            <InputField label="Churn MRR" name="churnedMRR" register={register} />
+            <InputField label="Outras Receitas" name="otherRevenue" register={register} />
           </CardContent>
         </Card>
 
-        {/* Costs */}
+        {/* Cost Blocks */}
         <Card className="border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <TrendingDown className="h-4 w-4 text-destructive" />
-                Custos e Despesas
+                Custos e Despesas (por Bloco)
               </CardTitle>
               {hasDetailData && (
                 <Button
@@ -259,92 +218,35 @@ export function MonthlyInputForm() {
                   onClick={syncFromDetail}
                 >
                   <RefreshCw className="h-3 w-3" />
-                  Sincronizar do Detalhamento
+                  Sincronizar
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <InputField
-              label="Custos Fixos"
-              name="fixedCosts"
-              register={register}
-            />
-            <InputField
-              label="Custos Variáveis"
-              name="variableCosts"
-              register={register}
-            />
-            <InputField
-              label="Infraestrutura"
-              name="infrastructure"
-              register={register}
-            />
-            <InputField
-              label="Marketing"
-              name="marketing"
-              register={register}
-            />
-            <InputField label="Impostos" name="taxes" register={register} />
-          </CardContent>
-        </Card>
-
-        {/* Personnel */}
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Users className="h-4 w-4 text-accent" />
-              Pessoal
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <InputField
-              label="Folha de Pagamento"
-              name="payroll"
-              register={register}
-            />
-            <InputField
-              label="Benefícios"
-              name="benefits"
-              register={register}
-            />
-            <InputField
-              label="Terceirizados"
-              name="contractors"
-              register={register}
-            />
+            <InputField label="CSP — Custo de Serviço" name="csp" register={register} />
+            <InputField label="MKT — Marketing" name="mkt" register={register} />
+            <InputField label="SAL — Pessoal" name="sal" register={register} />
+            <InputField label="G&A — Administrativo" name="ga" register={register} />
+            <InputField label="FIN — Financeiro" name="fin" register={register} />
+            <InputField label="TAX — Impostos" name="tax" register={register} />
+            <InputField label="REV- — Deduções" name="revDeductions" register={register} />
           </CardContent>
         </Card>
 
         {/* Customers & Cash */}
-        <Card className="border-border">
+        <Card className="border-border lg:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Wallet className="h-4 w-4 text-warning" />
               Clientes e Caixa
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <InputField
-              label="Total de Clientes"
-              name="totalCustomers"
-              register={register}
-            />
-            <InputField
-              label="Novos Clientes"
-              name="newCustomers"
-              register={register}
-            />
-            <InputField
-              label="Clientes Churned"
-              name="churnedCustomers"
-              register={register}
-            />
-            <InputField
-              label="Saldo em Caixa"
-              name="cashBalance"
-              register={register}
-            />
+          <CardContent className="grid gap-4 sm:grid-cols-4">
+            <InputField label="Total de Clientes" name="totalCustomers" register={register} />
+            <InputField label="Novos Clientes" name="newCustomers" register={register} />
+            <InputField label="Clientes Churned" name="churnedCustomers" register={register} />
+            <InputField label="Saldo em Caixa" name="cashBalance" register={register} />
           </CardContent>
         </Card>
       </div>

@@ -4,37 +4,37 @@ export function calculateMetrics(
   entry: FinancialEntry,
   previousEntry?: FinancialEntry
 ): SaaSMetrics {
-  const totalRevenue = entry.revenue.mrr + entry.revenue.otherRevenue;
+  // Revenue (deductions reduce gross revenue)
+  const grossRevenue = entry.revenue.mrr + entry.revenue.otherRevenue;
+  const totalRevenue = grossRevenue - entry.costs.revDeductions;
 
-  // Cost of Goods Sold
-  const cogs = entry.costs.variableCosts + entry.costs.infrastructure;
+  // COGS = CSP (cost of service provision)
+  const cogs = entry.costs.csp;
   const grossProfit = totalRevenue - cogs;
   const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
 
-  // Total Personnel
-  const totalPersonnel =
-    entry.personnel.payroll +
-    entry.personnel.benefits +
-    entry.personnel.contractors;
-
-  // Operating Expenses
+  // Operating Expenses = MKT + SAL + G&A + FIN
   const totalOpEx =
-    entry.costs.fixedCosts + totalPersonnel + entry.costs.marketing;
-  const totalCosts = cogs + totalOpEx + entry.costs.taxes;
+    entry.costs.mkt +
+    entry.costs.sal +
+    entry.costs.ga +
+    entry.costs.fin;
+
+  const totalCosts = cogs + totalOpEx + entry.costs.tax;
 
   const netProfit = totalRevenue - totalCosts;
   const netMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
-  // Simplified EBITDA (earnings before interest, taxes, depreciation, amortization)
-  const ebitda = netProfit + entry.costs.taxes;
+  // EBITDA (simplified: earnings before taxes)
+  const ebitda = netProfit + entry.costs.tax;
 
   const mrr = entry.revenue.mrr;
   const arr = mrr * 12;
 
-  // CAC = Marketing Spend / New Customers
+  // CAC = Marketing / New Customers
   const cac =
     entry.customers.newCustomers > 0
-      ? entry.costs.marketing / entry.customers.newCustomers
+      ? entry.costs.mkt / entry.customers.newCustomers
       : 0;
 
   // Revenue Churn Rate

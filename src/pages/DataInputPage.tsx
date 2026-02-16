@@ -85,14 +85,12 @@ export default function DataInputPage() {
                   const totalRevenue =
                     entry.revenue.mrr + entry.revenue.otherRevenue;
                   const totalCosts =
-                    entry.costs.fixedCosts +
-                    entry.costs.variableCosts +
-                    entry.costs.infrastructure +
-                    entry.costs.marketing +
-                    entry.costs.taxes +
-                    entry.personnel.payroll +
-                    entry.personnel.benefits +
-                    entry.personnel.contractors;
+                    entry.costs.csp +
+                    entry.costs.mkt +
+                    entry.costs.sal +
+                    entry.costs.ga +
+                    entry.costs.fin +
+                    entry.costs.tax;
 
                   return (
                     <TableRow

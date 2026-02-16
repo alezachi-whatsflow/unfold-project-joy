@@ -25,13 +25,13 @@ export interface CostLineWithValues extends CostLineTemplate {
 
 /** Maps cost blocks to existing financial_entries fields */
 export const BLOCK_FIELD_MAP: Record<CostBlock, { target: string; field: string }> = {
-  CSP: { target: "costs", field: "variableCosts" },
-  MKT: { target: "costs", field: "marketing" },
-  SAL: { target: "personnel", field: "payroll" },
-  "G&A": { target: "costs", field: "fixedCosts" },
-  FIN: { target: "costs", field: "infrastructure" },
-  TAX: { target: "costs", field: "taxes" },
-  "REV-": { target: "revenue", field: "otherRevenue" }, // negativo
+  CSP: { target: "costs", field: "csp" },
+  MKT: { target: "costs", field: "mkt" },
+  SAL: { target: "costs", field: "sal" },
+  "G&A": { target: "costs", field: "ga" },
+  FIN: { target: "costs", field: "fin" },
+  TAX: { target: "costs", field: "tax" },
+  "REV-": { target: "costs", field: "revDeductions" },
 };
 
 export const BLOCK_LABELS: Record<CostBlock, string> = {

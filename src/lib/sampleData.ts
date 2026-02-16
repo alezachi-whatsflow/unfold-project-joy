@@ -30,6 +30,7 @@ export function generateSampleData(): FinancialEntry[] {
     const totalNewMRR =
       i === 0 ? 8000 : d.mrr - base[i - 1].mrr + churnedMRR;
     const expansionMRR = Math.floor(totalNewMRR * 0.3);
+    const personnelTotal = 35000 + Math.floor(i / 3) * 5000 + 7000 + Math.floor(i / 3) * 1000 + 5000 + i * 200;
 
     return {
       id: generateId(),
@@ -42,16 +43,13 @@ export function generateSampleData(): FinancialEntry[] {
         otherRevenue: Math.floor(d.mrr * 0.05),
       },
       costs: {
-        fixedCosts: 15000 + i * 500,
-        variableCosts: Math.floor(d.mrr * 0.12),
-        infrastructure: 8000 + i * 300,
-        marketing: 18000 + i * 800,
-        taxes: Math.floor(d.mrr * 0.08),
-      },
-      personnel: {
-        payroll: 35000 + Math.floor(i / 3) * 5000,
-        benefits: 7000 + Math.floor(i / 3) * 1000,
-        contractors: 5000 + i * 200,
+        csp: Math.floor(d.mrr * 0.12),
+        mkt: 18000 + i * 800,
+        sal: personnelTotal,
+        ga: 15000 + i * 500,
+        fin: 8000 + i * 300,
+        tax: Math.floor(d.mrr * 0.08),
+        revDeductions: 0,
       },
       customers: {
         totalCustomers: d.customers,

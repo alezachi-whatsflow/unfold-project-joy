@@ -10,7 +10,7 @@ import { useFinancial } from "@/contexts/FinancialContext";
 import { formatCurrency } from "@/lib/calculations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const COLORS = ["#10b981", "#06b6d4", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899"];
+const COLORS = ["#10b981", "#06b6d4", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#f97316"];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
@@ -29,24 +29,18 @@ export function CostBreakdownChart() {
   const { filteredEntries } = useFinancial();
   if (filteredEntries.length === 0) return null;
 
-  // Average costs across filtered entries
   const avg = (fn: (e: typeof filteredEntries[0]) => number) =>
     filteredEntries.reduce((s, e) => s + fn(e), 0) / filteredEntries.length;
 
   const data = [
-    { name: "Custos Fixos", value: avg((e) => e.costs.fixedCosts) },
-    { name: "Custos Variáveis", value: avg((e) => e.costs.variableCosts) },
-    { name: "Infraestrutura", value: avg((e) => e.costs.infrastructure) },
-    { name: "Marketing", value: avg((e) => e.costs.marketing) },
-    { name: "Impostos", value: avg((e) => e.costs.taxes) },
-    {
-      name: "Pessoal",
-      value: avg(
-        (e) =>
-          e.personnel.payroll + e.personnel.benefits + e.personnel.contractors
-      ),
-    },
-  ];
+    { name: "CSP (Custo de Serviço)", value: avg((e) => e.costs.csp) },
+    { name: "MKT (Marketing)", value: avg((e) => e.costs.mkt) },
+    { name: "SAL (Pessoal)", value: avg((e) => e.costs.sal) },
+    { name: "G&A (Administrativo)", value: avg((e) => e.costs.ga) },
+    { name: "FIN (Financeiro)", value: avg((e) => e.costs.fin) },
+    { name: "TAX (Impostos)", value: avg((e) => e.costs.tax) },
+    { name: "REV- (Deduções)", value: avg((e) => e.costs.revDeductions) },
+  ].filter((d) => d.value > 0);
 
   return (
     <Card className="border-border">
