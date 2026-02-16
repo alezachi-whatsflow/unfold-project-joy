@@ -235,6 +235,8 @@ export function CSVImport() {
 
     // Track templates created during this import to avoid duplicates
     const createdTemplates: { id: string; subcategory: string }[] = [];
+    // Track accumulated amounts per template+month to handle duplicate subcategories
+    const accumulatedAmounts = new Map<string, number>();
 
     // Normalize dashes (en-dash, em-dash, hyphen) for comparison
     const normDash = (s: string) => s.replace(/[\u2013\u2014\u2015\u2012―–—]/g, "-").toLowerCase().trim();
@@ -277,9 +279,12 @@ export function CSVImport() {
         createdTemplates.push({ id: tmplId, subcategory: row.subcategory });
       }
 
-      // Set amounts for each month
+      // Set amounts for each month (accumulate if same template+month appears more than once)
       for (const [month, amount] of Object.entries(row.monthValues)) {
-        setAmount(tmplId, month, amount);
+        const existing = accumulatedAmounts.get(`${tmplId}::${month}`) ?? 0;
+        const newAmount = existing + amount;
+        accumulatedAmounts.set(`${tmplId}::${month}`, newAmount);
+        setAmount(tmplId, month, newAmount);
         importedCount++;
       }
     }
