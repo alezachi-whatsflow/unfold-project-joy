@@ -72,12 +72,24 @@ export function CustomerProvider({
 
   const importCustomersHandler = useCallback(
     async (newCustomers: Customer[]) => {
+      // Update local state optimistically so KPIs refresh immediately
+      setCustomers((prev) => {
+        const emailMap = new Map(prev.map((c) => [c.email, c]));
+        for (const nc of newCustomers) {
+          emailMap.set(nc.email, nc);
+        }
+        return Array.from(emailMap.values()).sort((a, b) =>
+          a.nome.localeCompare(b.nome)
+        );
+      });
+
       try {
         await importCustomersBatch(newCustomers);
+        // Refetch to sync with DB (in case DB had extra data)
         await loadCustomers();
       } catch (err) {
         console.error("Erro ao importar clientes:", err);
-        toast.error("Erro ao importar clientes para o banco");
+        toast.error("Erro ao salvar no banco — dados exibidos localmente.");
       }
     },
     [loadCustomers]
