@@ -60,16 +60,27 @@ export async function fetchCustomers(): Promise<Customer[]> {
 export async function importCustomersBatch(
   customers: Customer[]
 ): Promise<void> {
-  const rows = customers.map((c) => ({
+  // Deduplicate by email – keep the last occurrence (most recent in CSV)
+  const emailMap = new Map<string, Customer>();
+  for (const c of customers) {
+    emailMap.set(c.email.toLowerCase(), c);
+  }
+  const unique = Array.from(emailMap.values());
+
+  const rows = unique.map((c) => ({
     ...customerToRow(c),
     updated_at: new Date().toISOString(),
   }));
 
-  const { error } = await supabase
-    .from("customers")
-    .upsert(rows, { onConflict: "email" });
-
-  if (error) throw error;
+  // Batch in chunks of 500 to avoid payload limits
+  const CHUNK_SIZE = 500;
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    const chunk = rows.slice(i, i + CHUNK_SIZE);
+    const { error } = await supabase
+      .from("customers")
+      .upsert(chunk, { onConflict: "email" });
+    if (error) throw error;
+  }
 }
 
 export async function deleteCustomerById(id: string): Promise<void> {

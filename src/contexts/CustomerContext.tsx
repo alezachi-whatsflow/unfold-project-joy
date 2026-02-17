@@ -20,20 +20,27 @@ import { toast } from "sonner";
  * Active = activated on or before end of month AND (not deactivated OR deactivated after start of month).
  */
 function isActiveInMonth(customer: Customer, month: string): boolean {
-  // If status field explicitly says "ativo", consider active regardless of dates
-  if (customer.status.toLowerCase() === "ativo") return true;
+  const statusLower = customer.status.toLowerCase();
 
+  // If status field explicitly says "ativo", consider active
+  if (statusLower === "ativo") return true;
+
+  // If status field explicitly says "inativo" or similar non-active, consider inactive
+  if (statusLower === "inativo" || statusLower === "desativado" || statusLower === "bloqueado" || statusLower === "cancelado") return false;
+
+  // Fallback: use date-based logic only when status is ambiguous
   const [year, mon] = month.split("-").map(Number);
   const endOfMonth = new Date(year, mon, 0);
   const startOfMonth = new Date(year, mon - 1, 1);
 
   if (!customer.dataAtivacao) return false;
   const activationDate = new Date(customer.dataAtivacao);
-  if (activationDate > endOfMonth) return false;
+  if (isNaN(activationDate.getTime()) || activationDate > endOfMonth) return false;
 
   if (!customer.dataDesativacao) return true;
 
   const deactivationDate = new Date(customer.dataDesativacao);
+  if (isNaN(deactivationDate.getTime())) return true;
   return deactivationDate >= startOfMonth;
 }
 
