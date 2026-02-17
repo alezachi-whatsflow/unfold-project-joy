@@ -1,6 +1,7 @@
 import { useCustomers } from "@/contexts/CustomerContext";
+import { useFinancial } from "@/contexts/FinancialContext";
 import { CustomerCSVImport } from "@/components/input/CustomerCSVImport";
-import { formatCurrency } from "@/lib/calculations";
+import { formatCurrency, getMonthFullLabel } from "@/lib/calculations";
 import {
   Table,
   TableBody,
@@ -12,9 +13,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Users, UserCheck, UserX, DollarSign } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange } from "lucide-react";
 
 export default function CustomersPage() {
+  const { entries, selectedMonth, setSelectedMonth } = useFinancial();
   const {
     customers,
     activeCount,
@@ -38,13 +47,30 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-          Gestão de Clientes
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Importe e gerencie a base de clientes da Whatsflow
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+            Gestão de Clientes
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Importe e gerencie a base de clientes da Whatsflow
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <CalendarRange className="h-4 w-4 text-muted-foreground" />
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="h-9 w-[200px] border-border bg-secondary text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {entries.map((e) => (
+                <SelectItem key={e.month} value={e.month}>
+                  {getMonthFullLabel(e.month)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Summary */}
