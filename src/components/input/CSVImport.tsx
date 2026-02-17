@@ -261,7 +261,7 @@ function findTemplateId(
 
 export function CSVImport() {
   const { importEntries, entries: financialEntries, addEntry } = useFinancial();
-  const { templates, addTemplate, setAmount, setMonths, months: currentMonths, getBlockTotals } = useCostLines();
+  const { templates, addTemplate, setAmount, setMonths, months: currentMonths } = useCostLines();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imported, setImported] = useState(false);
   const [unmatchedLines, setUnmatchedLines] = useState<UnmatchedLine[]>([]);
@@ -307,34 +307,45 @@ export function CSVImport() {
     },
     [templates, currentMonths, addTemplate, setAmount, setMonths]
   );
+  /** Build block totals directly from parsed rows (avoids stale React state) */
   const syncCostBlocksToEntries = useCallback(
-    (months: string[]) => {
-      // Use setTimeout to allow CostLines state to settle first
-      setTimeout(() => {
-        for (const month of months) {
-          const totals = getBlockTotals(month);
-          const existing = financialEntries.find((e) => e.month === month);
-          const entry = {
-            id: existing?.id || Math.random().toString(36).substring(2, 11),
-            month,
-            revenue: existing?.revenue || { mrr: 0, newMRR: 0, expansionMRR: 0, churnedMRR: 0, otherRevenue: 0 },
-            costs: {
-              csp: totals["CSP"] || 0,
-              mkt: totals["MKT"] || 0,
-              sal: totals["SAL"] || 0,
-              ga: totals["G&A"] || 0,
-              fin: totals["FIN"] || 0,
-              tax: totals["TAX"] || 0,
-              revDeductions: totals["REV-"] || 0,
-            },
-            customers: existing?.customers || { totalCustomers: 0, newCustomers: 0, churnedCustomers: 0 },
-            cashBalance: existing?.cashBalance || 0,
-          };
-          addEntry(entry);
+    (rows: CostDetailRow[], months: string[]) => {
+      // Aggregate totals per month per block from the raw parsed data
+      const monthBlockTotals: Record<string, Record<CostBlock, number>> = {};
+      for (const month of months) {
+        monthBlockTotals[month] = { CSP: 0, MKT: 0, SAL: 0, "G&A": 0, FIN: 0, TAX: 0, "REV-": 0 };
+      }
+      for (const row of rows) {
+        for (const [month, amount] of Object.entries(row.monthValues)) {
+          if (monthBlockTotals[month]) {
+            monthBlockTotals[month][row.block] += amount;
+          }
         }
-      }, 100);
+      }
+
+      for (const month of months) {
+        const totals = monthBlockTotals[month];
+        const existing = financialEntries.find((e) => e.month === month);
+        const entry: FinancialEntry = {
+          id: existing?.id || Math.random().toString(36).substring(2, 11),
+          month,
+          revenue: existing?.revenue || { mrr: 0, newMRR: 0, expansionMRR: 0, churnedMRR: 0, otherRevenue: 0 },
+          costs: {
+            csp: totals.CSP,
+            mkt: totals.MKT,
+            sal: totals.SAL,
+            ga: totals["G&A"],
+            fin: totals.FIN,
+            tax: totals.TAX,
+            revDeductions: totals["REV-"],
+          },
+          customers: existing?.customers || { totalCustomers: 0, newCustomers: 0, churnedCustomers: 0 },
+          cashBalance: existing?.cashBalance || 0,
+        };
+        addEntry(entry);
+      }
     },
-    [getBlockTotals, financialEntries, addEntry]
+    [financialEntries, addEntry]
   );
 
   const importCostDetail = useCallback(
@@ -395,7 +406,7 @@ export function CSVImport() {
 
       // Auto-create/update financial entries with block totals for each imported month
       if (months.length > 0) {
-        syncCostBlocksToEntries(months);
+        syncCostBlocksToEntries(rows, months);
       }
     },
     [templates, importRows, syncCostBlocksToEntries]
