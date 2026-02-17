@@ -1,6 +1,5 @@
-import { useFinancial } from "@/contexts/FinancialContext";
 import { PERIOD_OPTIONS, AnalysisPeriod } from "@/contexts/FinancialContext";
-import { useCustomers } from "@/contexts/CustomerContext";
+import { useEnrichedMetrics } from "@/hooks/useEnrichedMetrics";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { CostBreakdownChart } from "@/components/dashboard/CostBreakdownChart";
@@ -85,18 +84,11 @@ export default function DashboardPage() {
     entries,
     filteredEntries,
     isLoading,
-  } = useFinancial();
-
-  const {
-    activeCustomers,
-    inactiveCustomers,
-    totalMRR: customerMRR,
+    customerMRR,
     activeCount,
-    churnedCount,
-    isLoading: customersLoading,
-  } = useCustomers();
+  } = useEnrichedMetrics();
 
-  if (isLoading || customersLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center space-y-3">
@@ -126,51 +118,15 @@ export default function DashboardPage() {
   }
 
   const metrics = periodMetrics;
-
-  // Use customer-derived data for MRR and customer metrics
-  const mrr = customerMRR > 0 ? customerMRR : metrics.mrr;
-  const arr = mrr * 12;
-  const totalCustomers = activeCount > 0 ? activeCount : Math.round(
-    filteredEntries.length > 0
-      ? filteredEntries.reduce((s, e) => s + e.customers.totalCustomers, 0) /
-        filteredEntries.length
-      : 0
-  );
+  const mrr = metrics.mrr;
+  const arr = metrics.arr;
+  const totalCustomers = activeCount > 0 ? activeCount : 0;
   const newCustomers = filteredEntries.length > 0
     ? filteredEntries.reduce((s, e) => s + e.customers.newCustomers, 0) /
       filteredEntries.length
     : 0;
-
   const arpu = totalCustomers > 0 ? mrr / totalCustomers : 0;
-
-  // Recalculate CAC and LTV using customer-derived MRR
-  const cac = totalCustomers > 0 && newCustomers > 0 ? metrics.cac : 0;
-  const monthlyChurnRate = metrics.revenueChurnRate / 100;
-  const ltv = monthlyChurnRate > 0 ? arpu / monthlyChurnRate : arpu * 24;
-  const ltvCacRatio = cac > 0 ? ltv / cac : 0;
-
-  // Override totalRevenue with customer MRR if available
-  const totalRevenue = customerMRR > 0
-    ? customerMRR - (filteredEntries.length > 0
-        ? filteredEntries.reduce((s, e) => s + e.costs.revDeductions, 0) / filteredEntries.length
-        : 0)
-    : metrics.totalRevenue;
-
-  const totalCosts = metrics.totalCosts;
-  const netProfit = totalRevenue - totalCosts;
-  const grossProfit = totalRevenue - (filteredEntries.length > 0
-    ? filteredEntries.reduce((s, e) => s + e.costs.csp, 0) / filteredEntries.length
-    : 0);
-  const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
-  const netMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-  const ebitda = netProfit + (filteredEntries.length > 0
-    ? filteredEntries.reduce((s, e) => s + e.costs.tax, 0) / filteredEntries.length
-    : 0);
-  const burnRate = Math.max(0, totalCosts - totalRevenue);
-  const cashBalance = filteredEntries.length > 0
-    ? filteredEntries[filteredEntries.length - 1].cashBalance
-    : 0;
-  const runway = burnRate > 0 ? cashBalance / burnRate : 999;
+  const { totalRevenue, netProfit, grossMargin, netMargin, ebitda, burnRate, runway, cac, ltv, ltvCacRatio } = metrics;
 
   const trend = (
     current: number,
