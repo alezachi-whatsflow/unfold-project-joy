@@ -105,8 +105,8 @@ function parseCostDetailCSV(csv: string): { rows: CostDetailRow[]; months: strin
   // Find fixed columns
   const catIdx = headersLower.indexOf("categoria");
   const subIdx = headersLower.indexOf("subcategoria");
-  const blockIdx = headersLower.findIndex((h) => h.includes("csp") && h.includes("mkt"));
-  const typeIdx = headersLower.findIndex((h) => h.includes("fixo") || h.includes("variável") || h.includes("variavel"));
+  const blockIdx = headersLower.findIndex((h) => h === "bloco" || (h.includes("csp") && h.includes("mkt")));
+  const typeIdx = headersLower.findIndex((h) => h === "tipo" || h.includes("fixo") || h.includes("variável") || h.includes("variavel"));
   const supplierIdx = headersLower.indexOf("fornecedor");
   const descIdx = headersLower.findIndex((h) => h.includes("descrição") || h.includes("descricao"));
 
