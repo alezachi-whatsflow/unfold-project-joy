@@ -12,16 +12,42 @@ import {
   importCustomersBatch,
   deleteCustomerById,
 } from "@/lib/customerQueries";
+import { useFinancial } from "@/contexts/FinancialContext";
 import { toast } from "sonner";
+
+/**
+ * Determines if a customer was active during a given month (YYYY-MM).
+ * Active = activated on or before end of month AND (not deactivated OR deactivated after start of month).
+ */
+function isActiveInMonth(customer: Customer, month: string): boolean {
+  const [year, mon] = month.split("-").map(Number);
+  // Last day of the month
+  const endOfMonth = new Date(year, mon, 0); // day 0 of next month = last day
+  const startOfMonth = new Date(year, mon - 1, 1);
+
+  // Must have an activation date on or before end of month
+  if (!customer.dataAtivacao) return false;
+  const activationDate = new Date(customer.dataAtivacao);
+  if (activationDate > endOfMonth) return false;
+
+  // If no deactivation date, still active
+  if (!customer.dataDesativacao) return true;
+
+  // Deactivated after the start of the month means they were active at some point
+  const deactivationDate = new Date(customer.dataDesativacao);
+  return deactivationDate >= startOfMonth;
+}
 
 interface CustomerContextType {
   customers: Customer[];
   activeCustomers: Customer[];
+  inactiveCustomers: Customer[];
   totalMRR: number;
   totalCustomers: number;
   activeCount: number;
   churnedCount: number;
   isLoading: boolean;
+  selectedMonth: string;
   importCustomers: (customers: Customer[]) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
@@ -36,6 +62,7 @@ export function CustomerProvider({
 }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { selectedMonth } = useFinancial();
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -55,8 +82,13 @@ export function CustomerProvider({
   }, [loadCustomers]);
 
   const activeCustomers = useMemo(
-    () => customers.filter((c) => c.status.toLowerCase() === "ativo"),
-    [customers]
+    () => customers.filter((c) => isActiveInMonth(c, selectedMonth)),
+    [customers, selectedMonth]
+  );
+
+  const inactiveCustomers = useMemo(
+    () => customers.filter((c) => !isActiveInMonth(c, selectedMonth)),
+    [customers, selectedMonth]
   );
 
   const totalMRR = useMemo(
@@ -65,10 +97,7 @@ export function CustomerProvider({
   );
 
   const activeCount = activeCustomers.length;
-  const churnedCount = useMemo(
-    () => customers.filter((c) => c.status.toLowerCase() === "desativado").length,
-    [customers]
-  );
+  const churnedCount = inactiveCustomers.length;
 
   const importCustomersHandler = useCallback(
     async (newCustomers: Customer[]) => {
@@ -85,7 +114,6 @@ export function CustomerProvider({
 
       try {
         await importCustomersBatch(newCustomers);
-        // Refetch to sync with DB (in case DB had extra data)
         await loadCustomers();
       } catch (err) {
         console.error("Erro ao importar clientes:", err);
@@ -113,11 +141,13 @@ export function CustomerProvider({
       value={{
         customers,
         activeCustomers,
+        inactiveCustomers,
         totalMRR,
         totalCustomers: customers.length,
         activeCount,
         churnedCount,
         isLoading,
+        selectedMonth,
         importCustomers: importCustomersHandler,
         deleteCustomer: deleteCustomerHandler,
         refetch: loadCustomers,
