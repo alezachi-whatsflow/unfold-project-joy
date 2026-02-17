@@ -260,7 +260,7 @@ function findTemplateId(
 /* ── Component ── */
 
 export function CSVImport() {
-  const { importEntries, entries: financialEntries, addEntry } = useFinancial();
+  const { importEntries, entries: financialEntries } = useFinancial();
   const { templates, addTemplate, setAmount, setMonths, months: currentMonths } = useCostLines();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imported, setImported] = useState(false);
@@ -323,10 +323,10 @@ export function CSVImport() {
         }
       }
 
-      for (const month of months) {
+      const entriesToImport: FinancialEntry[] = months.map((month) => {
         const totals = monthBlockTotals[month];
         const existing = financialEntries.find((e) => e.month === month);
-        const entry: FinancialEntry = {
+        return {
           id: existing?.id || Math.random().toString(36).substring(2, 11),
           month,
           revenue: existing?.revenue || { mrr: 0, newMRR: 0, expansionMRR: 0, churnedMRR: 0, otherRevenue: 0 },
@@ -342,10 +342,11 @@ export function CSVImport() {
           customers: existing?.customers || { totalCustomers: 0, newCustomers: 0, churnedCustomers: 0 },
           cashBalance: existing?.cashBalance || 0,
         };
-        addEntry(entry);
-      }
+      });
+
+      importEntries(entriesToImport);
     },
-    [financialEntries, addEntry]
+    [financialEntries, importEntries]
   );
 
   const importCostDetail = useCallback(
