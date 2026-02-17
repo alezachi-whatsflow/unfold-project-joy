@@ -316,16 +316,21 @@ export function CSVImport() {
         return;
       }
 
-      // Split rows into matched and unmatched (skip zero-value unmatched rows)
-      const matched: CostDetailRow[] = [];
+      // Split rows: rows with category info can be auto-imported (template will be created);
+      // only rows missing category/subcategory need manual classification
+      const autoImport: CostDetailRow[] = [];
       const unmatched: CostDetailRow[] = [];
 
       for (const row of rows) {
         const tmplId = findTemplateId(row.subcategory, templates, []);
         if (tmplId) {
-          matched.push(row);
+          // Already has a matching template
+          autoImport.push(row);
+        } else if (row.category && row.category.trim() !== "") {
+          // No template but CSV provides category — auto-create
+          autoImport.push(row);
         } else {
-          // Only include unmatched rows that have at least one non-zero value
+          // No template and no category info — needs manual classification
           const hasValue = Object.values(row.monthValues).some((v) => v !== 0);
           if (hasValue) {
             unmatched.push(row);
@@ -333,12 +338,12 @@ export function CSVImport() {
         }
       }
 
-      // Import matched rows immediately
-      if (matched.length > 0) {
-        importRows(matched, months);
+      // Import all auto-importable rows (importRows creates templates as needed)
+      if (autoImport.length > 0) {
+        importRows(autoImport, months);
       }
 
-      // If there are unmatched rows, show dialog
+      // If there are truly unmatched rows, show dialog
       if (unmatched.length > 0) {
         const unmatchedForDialog: UnmatchedLine[] = unmatched.map((row, i) => ({
           index: i,
@@ -350,8 +355,8 @@ export function CSVImport() {
         setUnmatchedLines(unmatchedForDialog);
         setPendingImport({ matchedRows: unmatched, months });
 
-        if (matched.length > 0) {
-          toast.success(`${matched.length} linhas reconhecidas importadas. ${unmatched.length} linha(s) precisam de classificação.`);
+        if (autoImport.length > 0) {
+          toast.success(`${autoImport.length} linhas importadas. ${unmatched.length} linha(s) precisam de classificação.`);
         }
       } else {
         toast.success(`${rows.length} linhas de custo importadas (${months.length} meses)!`);
