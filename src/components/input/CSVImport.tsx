@@ -260,8 +260,8 @@ function findTemplateId(
 /* ── Component ── */
 
 export function CSVImport() {
-  const { importEntries } = useFinancial();
-  const { templates, addTemplate, setAmount, setMonths, months: currentMonths } = useCostLines();
+  const { importEntries, entries: financialEntries, addEntry } = useFinancial();
+  const { templates, addTemplate, setAmount, setMonths, months: currentMonths, getBlockTotals } = useCostLines();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imported, setImported] = useState(false);
   const [unmatchedLines, setUnmatchedLines] = useState<UnmatchedLine[]>([]);
@@ -306,6 +306,35 @@ export function CSVImport() {
       return rows.length;
     },
     [templates, currentMonths, addTemplate, setAmount, setMonths]
+  );
+  const syncCostBlocksToEntries = useCallback(
+    (months: string[]) => {
+      // Use setTimeout to allow CostLines state to settle first
+      setTimeout(() => {
+        for (const month of months) {
+          const totals = getBlockTotals(month);
+          const existing = financialEntries.find((e) => e.month === month);
+          const entry = {
+            id: existing?.id || Math.random().toString(36).substring(2, 11),
+            month,
+            revenue: existing?.revenue || { mrr: 0, newMRR: 0, expansionMRR: 0, churnedMRR: 0, otherRevenue: 0 },
+            costs: {
+              csp: totals["CSP"] || 0,
+              mkt: totals["MKT"] || 0,
+              sal: totals["SAL"] || 0,
+              ga: totals["G&A"] || 0,
+              fin: totals["FIN"] || 0,
+              tax: totals["TAX"] || 0,
+              revDeductions: totals["REV-"] || 0,
+            },
+            customers: existing?.customers || { totalCustomers: 0, newCustomers: 0, churnedCustomers: 0 },
+            cashBalance: existing?.cashBalance || 0,
+          };
+          addEntry(entry);
+        }
+      }, 100);
+    },
+    [getBlockTotals, financialEntries, addEntry]
   );
 
   const importCostDetail = useCallback(
@@ -363,8 +392,13 @@ export function CSVImport() {
         setImported(true);
         setTimeout(() => setImported(false), 3000);
       }
+
+      // Auto-create/update financial entries with block totals for each imported month
+      if (months.length > 0) {
+        syncCostBlocksToEntries(months);
+      }
     },
-    [templates, importRows]
+    [templates, importRows, syncCostBlocksToEntries]
   );
 
   const handleUnmatchedConfirm = useCallback(
