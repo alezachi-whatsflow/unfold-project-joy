@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,11 +37,13 @@ interface UnmatchedLinesDialogProps {
 
 export function UnmatchedLinesDialog({ open, lines, onConfirm, onCancel }: UnmatchedLinesDialogProps) {
   const [selected, setSelected] = useState<SelectedLine[]>([]);
+  const [lastLinesRef, setLastLinesRef] = useState<UnmatchedLine[]>([]);
 
-  // Re-sync state when lines change
-  useEffect(() => {
+  // Re-sync state when lines array actually changes
+  if (lines !== lastLinesRef && lines.length > 0) {
+    setLastLinesRef(lines);
     setSelected(lines.map((l) => ({ ...l, selected: true, category: "Outras Despesas" })));
-  }, [lines]);
+  }
 
   const toggleLine = (index: number) => {
     setSelected((prev) =>
