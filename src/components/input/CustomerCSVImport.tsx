@@ -83,14 +83,18 @@ function parseCustomerCSV(csv: string): Customer[] {
     const email = get("email");
     if (!nome && !email) continue;
 
+    // Support both "data_ativacao"/"data_desativacao" and "data_desbloqueio"/"data_bloqueio"
+    const rawAtivacao = get("data_ativacao") || get("data_desbloqueio");
+    const rawDesativacao = get("data_desativacao") || get("data_bloqueio");
+
     customers.push({
       id: Math.random().toString(36).substring(2, 11),
       whitelabel: get("whitelabel"),
       nome,
       email,
       status: get("status") || "Ativo",
-      dataAtivacao: parseDate(get("data_ativacao")),
-      dataDesativacao: parseDate(get("data_desativacao")) || null,
+      dataAtivacao: parseDate(rawAtivacao),
+      dataDesativacao: parseDate(rawDesativacao) || null,
       dataCobranca: parseDate(get("data_cobr")) || null,
       dispositivosOficial: getNum("dispositivos_oficial"),
       dispositivosNaoOficial: getNum("dispositivos_nao_oficial"),
@@ -157,10 +161,10 @@ export function CustomerCSVImport() {
             Importe a lista de clientes via CSV. O arquivo deve conter as
             colunas:{" "}
             <code className="rounded bg-secondary px-1 py-0.5 text-[10px]">
-              WHITELABEL, NOME, EMAIL, STATUS, DATA ATIVAÇÃO, DATA
-              DESATIVAÇÃO, DATA COBRANÇA, DISPOSITIVOS OFICIAL, DISPOSITIVOS
-              NÃO OFICIAL, ATENDENTES, ADICIONAL, CHECKOUT, RECEITA, TIPO
-              PAGAMENTO, CONDIÇÃO, VALOR ÚLTIMA COBRANÇA
+              WHITELABEL, NOME, EMAIL, STATUS, DATA BLOQUEIO, DATA
+              DESBLOQUEIO, DATA COBRANÇA, DISP. OFICIAL, DISP. NÃO OFICIAL,
+              ATENDENTES, ADICIONAL, CHECKOUT, RECEITA, TIPO PAGAMENTO,
+              CONDIÇÃO, VALOR ÚLTIMA COBRANÇA
             </code>
           </p>
 
