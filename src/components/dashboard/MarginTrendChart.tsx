@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { useFinancial } from "@/contexts/FinancialContext";
+import { useEnrichedMetrics } from "@/hooks/useEnrichedMetrics";
 import { getMonthLabel, formatPercent } from "@/lib/calculations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function MarginTrendChart() {
-  const { filteredAllMetrics } = useFinancial();
+  const { filteredAllMetrics } = useEnrichedMetrics();
 
   const data = filteredAllMetrics.map((m) => ({
     month: getMonthLabel(m.month),
