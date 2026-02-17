@@ -303,7 +303,7 @@ export function CSVImport() {
         return;
       }
 
-      // Split rows into matched and unmatched
+      // Split rows into matched and unmatched (skip zero-value unmatched rows)
       const matched: CostDetailRow[] = [];
       const unmatched: CostDetailRow[] = [];
 
@@ -312,7 +312,11 @@ export function CSVImport() {
         if (tmplId) {
           matched.push(row);
         } else {
-          unmatched.push(row);
+          // Only include unmatched rows that have at least one non-zero value
+          const hasValue = Object.values(row.monthValues).some((v) => v !== 0);
+          if (hasValue) {
+            unmatched.push(row);
+          }
         }
       }
 
