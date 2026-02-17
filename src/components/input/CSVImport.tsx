@@ -221,6 +221,12 @@ const norm = (s: string) =>
     .toLowerCase()
     .trim();
 
+/** Extract the inner name from "Diversos (X)" patterns */
+function extractDiversosInner(s: string): string | null {
+  const match = s.match(/^diversos\s*\((.+)\)$/i);
+  return match ? match[1].trim() : null;
+}
+
 function findTemplateId(
   subcategory: string,
   existingTemplates: { id: string; subcategory: string }[],
@@ -236,7 +242,14 @@ function findTemplateId(
   id = createdTemplates.find((c) => norm(c.subcategory) === subNorm)?.id;
   if (id) return id;
 
-  // 3. Partial match
+  // 3. Match against "Diversos (X)" — if existing template is "Diversos (Estagiarios)", match "Estagiarios"
+  id = existingTemplates.find((t) => {
+    const inner = extractDiversosInner(norm(t.subcategory));
+    return inner && inner === subNorm;
+  })?.id;
+  if (id) return id;
+
+  // 4. Partial match (substring)
   id = existingTemplates.find(
     (t) => norm(t.subcategory).includes(subNorm) || subNorm.includes(norm(t.subcategory))
   )?.id;
