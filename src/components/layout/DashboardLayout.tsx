@@ -12,13 +12,7 @@ export function DashboardLayout({
         <AppSidebar />
         <div className="flex flex-1 flex-col min-h-screen">
           <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background px-4">
-            <SidebarTrigger />
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-medium text-muted-foreground">
-                Live
-              </span>
-            </div>
+            <SidebarTrigger className="h-9 w-9 flex items-center justify-center rounded-md border border-border bg-secondary text-foreground hover:bg-accent transition-colors" />
           </header>
           <main className="flex-1 overflow-auto bg-background p-6">
             {children}
