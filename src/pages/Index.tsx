@@ -143,64 +143,39 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <span className="font-display text-sm font-bold text-primary-foreground">
-                W
-              </span>
-            </div>
-            <div>
-              <h1 className="font-display text-base font-bold text-foreground">
-                Whatsflow
-              </h1>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Dashboard Financeiro
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Select
-              value={String(analysisPeriod)}
-              onValueChange={(v) =>
-                setAnalysisPeriod(Number(v) as AnalysisPeriod)
-              }
-            >
-              <SelectTrigger className="h-9 w-[160px] border-border bg-secondary text-sm">
-                <CalendarRange className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIOD_OPTIONS.map((p) => (
-                  <SelectItem key={p.value} value={String(p.value)}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="h-9 w-[200px] border-border bg-secondary text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {entries.map((e) => (
-                  <SelectItem key={e.month} value={e.month}>
-                    {getMonthFullLabel(e.month)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Link to="/input">
-              <Button variant="outline" size="sm" className="gap-2">
-                <PenLine className="h-3.5 w-3.5" />
-                Inserir Dados
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Period & Month Selectors */}
+      <div className="mx-auto flex max-w-[1600px] items-center justify-end gap-3 px-6 pt-4">
+        <Select
+          value={String(analysisPeriod)}
+          onValueChange={(v) =>
+            setAnalysisPeriod(Number(v) as AnalysisPeriod)
+          }
+        >
+          <SelectTrigger className="h-9 w-[160px] border-border bg-secondary text-sm">
+            <CalendarRange className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PERIOD_OPTIONS.map((p) => (
+              <SelectItem key={p.value} value={String(p.value)}>
+                {p.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <SelectTrigger className="h-9 w-[200px] border-border bg-secondary text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {entries.map((e) => (
+              <SelectItem key={e.month} value={e.month}>
+                {getMonthFullLabel(e.month)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="mx-auto max-w-[1600px] space-y-8 px-6 py-8">
         {/* Period info banner */}

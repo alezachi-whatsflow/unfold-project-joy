@@ -27,7 +27,7 @@ const App = () => (
             <CostLinesProvider>
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<DashboardLayout><Index /></DashboardLayout>} />
                 <Route
                   path="/input"
                   element={
