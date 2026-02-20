@@ -58,7 +58,124 @@ const CATEGORY_ORDER: ProductCategory[] = [
   "service_onetime",
 ];
 
+function ProductDetailDialog({ product }: { product: Product }) {
+  const metrics = calculateProductMetrics(product);
+  const health = HEALTH_CONFIG[metrics.health];
+  const totalCosts = product.cogs + product.laborCost + product.supportCost + product.price * (product.salesCommission / 100);
+
+  return (
+    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="font-display flex items-center gap-3">
+          <div className={cn("h-3 w-3 rounded-full", health.dot)} />
+          {product.name}
+          <Badge className={cn("text-[10px] ml-2", health.color)}>{health.label}</Badge>
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-5">
+        <section>
+          <SectionLabel>Informações Básicas</SectionLabel>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <DetailRow label="Categoria" value={CATEGORY_LABELS[product.category]} />
+            <DetailRow label="Status" value={STATUS_LABELS[product.status]} />
+            <DetailRow label="Tipo" value={product.type === "recurring" ? "Recorrente" : "Único"} />
+            <DetailRow label="Ciclo de Cobrança" value={BILLING_LABELS[product.billingCycle]} />
+            {product.description && <div className="col-span-2"><DetailRow label="Descrição" value={product.description} /></div>}
+          </div>
+        </section>
+
+        <section>
+          <SectionLabel>Precificação & Custos</SectionLabel>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <DetailRow label="Preço de Venda" value={`${formatCurrency(product.price)}${product.type === "recurring" ? "/mês" : ""}`} />
+            <DetailRow label="COGS (Custo Variável)" value={formatCurrency(product.cogs)} />
+            <DetailRow label="Custo de Mão de Obra" value={formatCurrency(product.laborCost)} />
+            <DetailRow label="Custo de Suporte" value={formatCurrency(product.supportCost)} />
+            <DetailRow label="Comissão de Vendas" value={`${product.salesCommission}%`} />
+            <DetailRow label="Custo Total" value={formatCurrency(totalCosts)} />
+          </div>
+        </section>
+
+        <section>
+          <SectionLabel>Rentabilidade</SectionLabel>
+          <div className="grid grid-cols-3 gap-4 rounded-lg bg-secondary/50 p-4">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Margem de Contribuição</p>
+              <p className="font-display text-lg font-bold text-card-foreground">{formatCurrency(metrics.contributionMargin)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Margem %</p>
+              <p className={cn("font-display text-lg font-bold", metrics.contributionMarginPercent >= 50 ? "text-success" : metrics.contributionMarginPercent >= 30 ? "text-warning" : "text-destructive")}>
+                {formatPercent(metrics.contributionMarginPercent)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Saúde</p>
+              <p className={cn("font-display text-lg font-bold", health.color)}>{health.label}</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <SectionLabel>Dados Comerciais</SectionLabel>
+          <div className="grid grid-cols-3 gap-3 text-sm">
+            <DetailRow label="Clientes Ativos" value={String(product.activeCustomers)} />
+            <DetailRow label={product.type === "recurring" ? "MRR" : "Receita Total"} value={formatCurrency(product.type === "recurring" ? product.mrr : product.totalRevenue)} />
+            {product.churnRate !== undefined && <DetailRow label="Churn Rate" value={formatPercent(product.churnRate)} />}
+          </div>
+        </section>
+
+        {product.includes && (
+          <section>
+            <SectionLabel>O Que Está Incluso</SectionLabel>
+            <div className="grid grid-cols-4 gap-3 text-sm">
+              <DetailRow label="Dispositivos Web" value={String(product.includes.devicesWeb)} />
+              <DetailRow label="Dispositivos Meta" value={String(product.includes.devicesMeta)} />
+              <DetailRow label="Atendentes" value={String(product.includes.attendants)} />
+              <DetailRow label="Agentes I.A." value={String(product.includes.aiAgents)} />
+            </div>
+          </section>
+        )}
+
+        {product.monthlyHours && (
+          <section>
+            <SectionLabel>Horas de Serviço</SectionLabel>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <DetailRow label="Horas Mensais" value={`${product.monthlyHours}h`} />
+              <DetailRow label="Horas Semanais" value={`${product.weeklyHours}h`} />
+              <DetailRow label="Custo por Hora" value={formatCurrency(product.hourlyRate || 0)} />
+            </div>
+          </section>
+        )}
+
+        {product.deliveryTime && (
+          <section><DetailRow label="Prazo de Entrega" value={product.deliveryTime} /></section>
+        )}
+
+        <section>
+          <SectionLabel>Registro</SectionLabel>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <DetailRow label="Criado em" value={new Date(product.createdAt).toLocaleDateString("pt-BR")} />
+            <DetailRow label="Atualizado em" value={new Date(product.updatedAt).toLocaleDateString("pt-BR")} />
+          </div>
+        </section>
+      </div>
+    </DialogContent>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-card-foreground">{value}</span>
+    </div>
+  );
+}
+
 function ProductCard({ product }: { product: Product }) {
+  const [detailOpen, setDetailOpen] = useState(false);
   const metrics = calculateProductMetrics(product);
   const health = HEALTH_CONFIG[metrics.health];
 
@@ -100,7 +217,6 @@ function ProductCard({ product }: { product: Product }) {
           />
         </div>
 
-        {/* Includes (for plan_base) */}
         {product.includes && (
           <div className="text-xs text-muted-foreground mb-3 rounded-md bg-accent/5 px-3 py-2">
             <strong>Inclui:</strong> {product.includes.devicesWeb} Web + {product.includes.devicesMeta} Meta
@@ -109,7 +225,6 @@ function ProductCard({ product }: { product: Product }) {
           </div>
         )}
 
-        {/* Facilite hours */}
         {product.monthlyHours && (
           <div className="text-xs text-muted-foreground mb-3 rounded-md bg-accent/5 px-3 py-2 flex items-center gap-2">
             <Clock className="h-3 w-3" />
@@ -119,9 +234,14 @@ function ProductCard({ product }: { product: Product }) {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-            <Eye className="h-3 w-3" /> Detalhes
-          </Button>
+          <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                <Eye className="h-3 w-3" /> Detalhes
+              </Button>
+            </DialogTrigger>
+            <ProductDetailDialog product={product} />
+          </Dialog>
           <Button variant="outline" size="sm" className="gap-1.5 text-xs">
             <Pencil className="h-3 w-3" /> Editar
           </Button>
