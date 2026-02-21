@@ -1,4 +1,4 @@
-import { LayoutDashboard, PenLine, Users, Package } from "lucide-react";
+import { LayoutDashboard, PenLine, Users, Package, Radar } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -16,6 +16,7 @@ const navItems = [
   { title: "Inserir Dados", url: "/input", icon: PenLine },
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Produtos", url: "/products", icon: Package },
+  { title: "Intelligence", url: "/intelligence", icon: Radar },
 ];
 
 export function AppSidebar() {
