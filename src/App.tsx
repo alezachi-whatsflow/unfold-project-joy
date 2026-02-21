@@ -7,11 +7,13 @@ import { FinancialProvider } from "@/contexts/FinancialContext";
 import { CustomerProvider } from "@/contexts/CustomerContext";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { CostLinesProvider } from "@/contexts/CostLinesContext";
+import { IntelligenceProvider } from "@/contexts/IntelligenceContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
 import DataInputPage from "./pages/DataInputPage";
 import CustomersPage from "./pages/CustomersPage";
 import ProductsPage from "./pages/ProductsPage";
+import IntelligencePage from "./pages/IntelligencePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,36 +27,30 @@ const App = () => (
         <CustomerProvider>
           <ProductProvider>
             <CostLinesProvider>
+            <IntelligenceProvider>
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<DashboardLayout><Index /></DashboardLayout>} />
                 <Route
                   path="/input"
-                  element={
-                    <DashboardLayout>
-                      <DataInputPage />
-                    </DashboardLayout>
-                  }
+                  element={<DashboardLayout><DataInputPage /></DashboardLayout>}
                 />
                 <Route
                   path="/customers"
-                  element={
-                    <DashboardLayout>
-                      <CustomersPage />
-                    </DashboardLayout>
-                  }
+                  element={<DashboardLayout><CustomersPage /></DashboardLayout>}
                 />
                 <Route
                   path="/products"
-                  element={
-                    <DashboardLayout>
-                      <ProductsPage />
-                    </DashboardLayout>
-                  }
+                  element={<DashboardLayout><ProductsPage /></DashboardLayout>}
+                />
+                <Route
+                  path="/intelligence"
+                  element={<DashboardLayout><IntelligencePage /></DashboardLayout>}
                 />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+            </IntelligenceProvider>
             </CostLinesProvider>
           </ProductProvider>
         </CustomerProvider>
