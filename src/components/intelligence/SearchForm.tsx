@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const SOURCE_OPTIONS: { type: SourceType; label: string; icon: React.ElementType; placeholder: string; enabled: boolean }[] = [
   { type: "website", label: "Website", icon: Globe, placeholder: "https://exemplo.com.br", enabled: true },
-  { type: "instagram", label: "Instagram", icon: Instagram, placeholder: "@usuario", enabled: false },
+  { type: "instagram", label: "Instagram", icon: Instagram, placeholder: "@usuario", enabled: true },
   { type: "linkedin", label: "LinkedIn", icon: Linkedin, placeholder: "linkedin.com/in/usuario", enabled: false },
   { type: "google_maps", label: "Google Maps", icon: MapPin, placeholder: "Nome do negócio + cidade", enabled: false },
 ];
