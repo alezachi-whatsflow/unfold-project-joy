@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import {
   WebScrap,
   ProfileAnalysis,
@@ -6,6 +6,7 @@ import {
   AuthorityDiagnostic,
   AnalysisStatus,
 } from "@/types/intelligence";
+import { fetchWebScraps, fetchProfiles, fetchBusinessLeads, insertWebScrap } from "@/lib/intelligenceQueries";
 
 interface IntelligenceContextType {
   webScraps: WebScrap[];
@@ -19,6 +20,8 @@ interface IntelligenceContextType {
   setDiagnostic: (diagnostic: AuthorityDiagnostic | null) => void;
   setCurrentStatus: (status: AnalysisStatus) => void;
   clearResults: () => void;
+  persistWebScrap: (scrap: Omit<WebScrap, "id">) => Promise<WebScrap>;
+  isLoadingHistory: boolean;
 }
 
 const IntelligenceContext = createContext<IntelligenceContextType | null>(null);
@@ -29,6 +32,28 @@ export function IntelligenceProvider({ children }: { children: React.ReactNode }
   const [leads, setLeads] = useState<BusinessLead[]>([]);
   const [currentDiagnostic, setCurrentDiagnostic] = useState<AuthorityDiagnostic | null>(null);
   const [currentStatus, setCurrentStatus] = useState<AnalysisStatus>("pending");
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  // Load history from Supabase on mount
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const [scraps, profs, bLeads] = await Promise.all([
+          fetchWebScraps(),
+          fetchProfiles(),
+          fetchBusinessLeads(),
+        ]);
+        setWebScraps(scraps);
+        setProfiles(profs);
+        setLeads(bLeads);
+      } catch (err) {
+        console.error("Failed to load intelligence history:", err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+    loadHistory();
+  }, []);
 
   const addWebScrap = useCallback((scrap: WebScrap) => {
     setWebScraps((prev) => [scrap, ...prev]);
@@ -44,6 +69,12 @@ export function IntelligenceProvider({ children }: { children: React.ReactNode }
 
   const setDiagnostic = useCallback((diagnostic: AuthorityDiagnostic | null) => {
     setCurrentDiagnostic(diagnostic);
+  }, []);
+
+  const persistWebScrap = useCallback(async (scrap: Omit<WebScrap, "id">): Promise<WebScrap> => {
+    const saved = await insertWebScrap(scrap);
+    setWebScraps((prev) => [saved, ...prev]);
+    return saved;
   }, []);
 
   const clearResults = useCallback(() => {
@@ -68,6 +99,8 @@ export function IntelligenceProvider({ children }: { children: React.ReactNode }
         setDiagnostic,
         setCurrentStatus,
         clearResults,
+        persistWebScrap,
+        isLoadingHistory,
       }}
     >
       {children}

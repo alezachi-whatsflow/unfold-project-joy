@@ -16,7 +16,7 @@ export default function IntelligencePage() {
     leads,
     currentDiagnostic,
     currentStatus,
-    addWebScrap,
+    persistWebScrap,
     setDiagnostic,
     setCurrentStatus,
   } = useIntelligence();
@@ -41,8 +41,7 @@ export default function IntelligencePage() {
       // Simulate scraping for now (will be replaced by Firecrawl edge function)
       await new Promise((r) => setTimeout(r, 2000));
 
-      const mockScrap: WebScrap = {
-        id: crypto.randomUUID(),
+      const scrapData: Omit<WebScrap, "id"> = {
         url: query.startsWith("http") ? query : `https://${query}`,
         title: `${query} - Site Analisado`,
         description: "Descrição extraída automaticamente do site via meta tags.",
@@ -57,7 +56,8 @@ export default function IntelligencePage() {
         status: "completed",
       };
 
-      addWebScrap(mockScrap);
+      // Persist to Supabase and update state
+      await persistWebScrap(scrapData);
       setCurrentStatus("analyzing");
 
       // Simulate AI diagnostic
