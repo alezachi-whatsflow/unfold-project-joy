@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Radar } from "lucide-react";
 import { SearchForm } from "@/components/intelligence/SearchForm";
 import { WebAnalysisCard } from "@/components/intelligence/WebAnalysisCard";
@@ -56,51 +57,42 @@ export default function IntelligencePage() {
 
   const handleInstagramAnalysis = async (query: string) => {
     const username = query.replace(/^@/, "").trim();
+    setCurrentStatus("scraping");
 
-    // Simulate API call (will be replaced by Apify edge function)
-    await new Promise((r) => setTimeout(r, 2500));
-    setCurrentStatus("analyzing");
+    try {
+      const { data, error } = await supabase.functions.invoke("instagram-scraper", {
+        body: { username },
+      });
 
-    // Generate realistic mock data
-    const followers = Math.floor(5000 + Math.random() * 495000);
-    const following = Math.floor(200 + Math.random() * 2000);
-    const posts = Math.floor(50 + Math.random() * 1500);
-    const engagementRate = Math.round((1 + Math.random() * 7) * 100) / 100;
-    const authorityScore = Math.round((4 + Math.random() * 6) * 10) / 10;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-    const strategies = [
-      "Conteúdo predominantemente visual com foco em carrosséis educativos.",
-      "Uso frequente de Reels com storytelling pessoal e calls-to-action.",
-      "Mix de conteúdo: 40% educativo, 30% bastidores, 20% social proof, 10% vendas diretas.",
-      "Estratégia de hashtags segmentada com 15-20 tags por post, combinando volume alto e nicho.",
-      "Frequência de 4-5 posts/semana com stories diários e lives semanais.",
-    ];
-    const strategyNotes = strategies
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3)
-      .join("\n• ");
+      const profile: ProfileAnalysis = {
+        id: data.profile.id,
+        source: data.profile.source,
+        username: data.profile.username,
+        display_name: data.profile.display_name,
+        bio: data.profile.bio,
+        followers: data.profile.followers,
+        following: data.profile.following,
+        posts_count: data.profile.posts_count,
+        avg_engagement_rate: data.profile.avg_engagement_rate ? Number(data.profile.avg_engagement_rate) : null,
+        profile_url: data.profile.profile_url,
+        profile_image_url: data.profile.profile_image_url,
+        content_strategy_notes: data.profile.content_strategy_notes,
+        authority_score: data.profile.authority_score ? Number(data.profile.authority_score) : null,
+        analyzed_at: data.profile.analyzed_at || new Date().toISOString(),
+        status: "completed",
+      };
 
-    const mockProfile: ProfileAnalysis = {
-      id: crypto.randomUUID(),
-      source: "instagram",
-      username,
-      display_name: username.charAt(0).toUpperCase() + username.slice(1).replace(/[._]/g, " "),
-      bio: `Perfil profissional no Instagram • Análise simulada para @${username}`,
-      followers,
-      following,
-      posts_count: posts,
-      avg_engagement_rate: engagementRate,
-      profile_url: `https://instagram.com/${username}`,
-      profile_image_url: null,
-      content_strategy_notes: `• ${strategyNotes}`,
-      authority_score: authorityScore,
-      analyzed_at: new Date().toISOString(),
-      status: "completed",
-    };
-
-    addProfile(mockProfile);
-    setCurrentStatus("completed");
-    toast({ title: "Análise concluída", description: `@${username} foi analisado com sucesso.` });
+      addProfile(profile);
+      setCurrentStatus("completed");
+      toast({ title: "Análise concluída", description: `@${username} foi analisado com sucesso.` });
+    } catch (err) {
+      console.error("Instagram analysis error:", err);
+      setCurrentStatus("error");
+      toast({ title: "Erro", description: "Falha ao analisar perfil. Verifique se a API key do Apify está configurada.", variant: "destructive" });
+    }
   };
 
   const handleWebsiteAnalysis = async (query: string) => {
