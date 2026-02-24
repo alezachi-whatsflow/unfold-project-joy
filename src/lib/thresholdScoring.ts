@@ -21,27 +21,60 @@ export function getGMNThreshold(score: number): ChannelThreshold {
   return { score, status: "red", label: "Invisível no Local" };
 }
 
+// ─── New Module Thresholds ───
+export function getMetaVerificationThreshold(score: number): ChannelThreshold {
+  if (score >= 7.0) return { score, status: "green", label: "Pronto para Verificação" };
+  if (score >= 4.0) return { score, status: "yellow", label: "Parcialmente Pronto" };
+  return { score, status: "red", label: "Não Pronto" };
+}
+
+export function getWhatsAppThreshold(score: number): ChannelThreshold {
+  if (score >= 7.0) return { score, status: "green", label: "Botão Otimizado" };
+  if (score >= 5.0) return { score, status: "yellow", label: "Botão Parcial" };
+  return { score, status: "red", label: "WhatsApp Ausente/Fraco" };
+}
+
+export function getNeuromarketingThreshold(score: number): ChannelThreshold {
+  if (score >= 7.0) return { score, status: "green", label: "Design Otimizado" };
+  if (score >= 5.5) return { score, status: "yellow", label: "Design Médio" };
+  return { score, status: "red", label: "Design Contra-produtivo" };
+}
+
 // ─── Overall Score (Weighted Average) ───
 export function calculateOverallScore(
   websiteScore: number | null,
   instagramScore: number | null,
-  gmnScore: number | null
+  gmnScore: number | null,
+  metaScore: number | null = null,
+  whatsappScore: number | null = null,
+  neuroScore: number | null = null
 ): ChannelThreshold {
-  const weights = { website: 0.35, instagram: 0.30, gmn: 0.35 };
+  // Redistributed weights: Website 25%, Instagram 20%, GMN 20%, Meta 15%, WhatsApp 10%, Neuro 10%
+  const weights: Record<string, number> = {
+    website: 0.25,
+    instagram: 0.20,
+    gmn: 0.20,
+    meta: 0.15,
+    whatsapp: 0.10,
+    neuro: 0.10,
+  };
+  const scores: Record<string, number | null> = {
+    website: websiteScore,
+    instagram: instagramScore,
+    gmn: gmnScore,
+    meta: metaScore,
+    whatsapp: whatsappScore,
+    neuro: neuroScore,
+  };
+
   let totalWeight = 0;
   let weightedSum = 0;
 
-  if (websiteScore !== null) {
-    weightedSum += websiteScore * weights.website;
-    totalWeight += weights.website;
-  }
-  if (instagramScore !== null) {
-    weightedSum += instagramScore * weights.instagram;
-    totalWeight += weights.instagram;
-  }
-  if (gmnScore !== null) {
-    weightedSum += gmnScore * weights.gmn;
-    totalWeight += weights.gmn;
+  for (const [key, score] of Object.entries(scores)) {
+    if (score !== null) {
+      weightedSum += score * weights[key];
+      totalWeight += weights[key];
+    }
   }
 
   const score = totalWeight > 0 ? weightedSum / totalWeight : 0;
