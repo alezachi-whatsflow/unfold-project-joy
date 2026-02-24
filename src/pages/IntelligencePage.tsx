@@ -7,8 +7,17 @@ import { AuthorityDiagnosticCard } from "@/components/intelligence/AuthorityDiag
 import { InstagramAnalysisCard } from "@/components/intelligence/InstagramAnalysisCard";
 import { AnalysisHistory } from "@/components/intelligence/AnalysisHistory";
 import { SocialPlaceholderCard } from "@/components/intelligence/SocialPlaceholderCard";
+import { RescuePlanCard } from "@/components/intelligence/RescuePlanCard";
+import { ThresholdStatusBar } from "@/components/intelligence/ThresholdStatusBar";
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { SourceType, WebScrap, ProfileAnalysis, AuthorityDiagnostic, AUTHORITY_PILLARS } from "@/types/intelligence";
+import { RescuePlan, ChannelThreshold } from "@/types/rescuePlan";
+import {
+  getWebsiteThreshold,
+  getInstagramThreshold,
+  calculateOverallScore,
+  shouldActivateRescue,
+} from "@/lib/thresholdScoring";
 import { useToast } from "@/hooks/use-toast";
 
 export default function IntelligencePage() {
@@ -26,6 +35,12 @@ export default function IntelligencePage() {
 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [rescuePlan, setRescuePlan] = useState<RescuePlan | null>(null);
+  const [websiteThreshold, setWebsiteThreshold] = useState<ChannelThreshold | null>(null);
+  const [instagramThreshold, setInstagramThreshold] = useState<ChannelThreshold | null>(null);
+  const [overallThreshold, setOverallThreshold] = useState<ChannelThreshold | null>(null);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+
   const latestScrap = webScraps[0] ?? null;
   const latestProfile = profiles[0] ?? null;
 
@@ -40,6 +55,7 @@ export default function IntelligencePage() {
 
     setIsLoading(true);
     setCurrentStatus("scraping");
+    setRescuePlan(null);
 
     try {
       if (sourceType === "instagram") {
@@ -86,6 +102,21 @@ export default function IntelligencePage() {
       };
 
       addProfile(profile);
+
+      // Calculate thresholds
+      const igScore = profile.authority_score ?? 0;
+      const igThreshold = getInstagramThreshold(igScore);
+      setInstagramThreshold(igThreshold);
+
+      const wsScore = websiteThreshold?.score ?? null;
+      const overall = calculateOverallScore(wsScore, igScore, null);
+      setOverallThreshold(overall);
+
+      // Generate rescue plan if needed
+      if (shouldActivateRescue(websiteThreshold, igThreshold, null, overall)) {
+        await generateRescuePlan(null, profile, null, wsScore, igScore, null);
+      }
+
       setCurrentStatus("completed");
       toast({ title: "Análise concluída", description: `@${username} foi analisado com sucesso.` });
     } catch (err) {
@@ -120,15 +151,15 @@ export default function IntelligencePage() {
       status: "completed",
     };
 
-    await persistWebScrap(scrapData);
+    const savedScrap = await persistWebScrap(scrapData);
     setCurrentStatus("analyzing");
 
-    // Generate diagnostic based on real data
+    // Generate diagnostic
     const hasDescription = !!scrapData.description;
     const hasKeywords = !!(scrapData.keywords && scrapData.keywords.length > 0);
     const contentLength = (data.markdown || "").length;
 
-    const mockDiagnostic: AuthorityDiagnostic = {
+    const diagnostic: AuthorityDiagnostic = {
       overallScore: Math.round(((hasDescription ? 2 : 0) + (hasKeywords ? 1.5 : 0) + Math.min(contentLength / 500, 4) + 2) * 10) / 10,
       pillars: AUTHORITY_PILLARS.map((pillar) => ({
         pillar,
@@ -138,9 +169,56 @@ export default function IntelligencePage() {
       summary: scrapData.description || "Análise concluída com dados reais extraídos do site.",
     };
 
-    setDiagnostic(mockDiagnostic);
+    setDiagnostic(diagnostic);
+
+    // Calculate thresholds
+    const wsScore = diagnostic.overallScore;
+    const wsThreshold = getWebsiteThreshold(wsScore);
+    setWebsiteThreshold(wsThreshold);
+
+    const igScore = instagramThreshold?.score ?? null;
+    const overall = calculateOverallScore(wsScore, igScore, null);
+    setOverallThreshold(overall);
+
+    // Generate rescue plan if needed
+    if (shouldActivateRescue(wsThreshold, instagramThreshold, null, overall)) {
+      await generateRescuePlan(savedScrap, null, null, wsScore, igScore, null);
+    }
+
     setCurrentStatus("completed");
     toast({ title: "Análise concluída", description: `${query} foi analisado com sucesso.` });
+  };
+
+  const generateRescuePlan = async (
+    websiteData: WebScrap | null,
+    instagramData: ProfileAnalysis | null,
+    gmnData: any,
+    websiteScore: number | null,
+    instagramScore: number | null,
+    gmnScore: number | null
+  ) => {
+    setIsGeneratingPlan(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-rescue-plan", {
+        body: { websiteData, instagramData, gmnData, websiteScore, instagramScore, gmnScore },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.rescuePlan) {
+        setRescuePlan(data.rescuePlan);
+      }
+    } catch (err) {
+      console.error("Rescue plan generation error:", err);
+      toast({
+        title: "Aviso",
+        description: "Não foi possível gerar o Plano de Resgate automaticamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPlan(false);
+    }
   };
 
   return (
@@ -157,6 +235,35 @@ export default function IntelligencePage() {
 
       {/* Search */}
       <SearchForm onSearch={handleSearch} isLoading={isLoading} />
+
+      {/* Threshold Status Bar */}
+      {overallThreshold && (
+        <ThresholdStatusBar
+          overall={overallThreshold}
+          website={websiteThreshold}
+          instagram={instagramThreshold}
+          gmn={null}
+        />
+      )}
+
+      {/* Rescue Plan */}
+      {rescuePlan?.ativado && overallThreshold && (
+        <RescuePlanCard
+          rescuePlan={rescuePlan}
+          overall={overallThreshold}
+          websiteThreshold={websiteThreshold}
+          instagramThreshold={instagramThreshold}
+          gmnThreshold={null}
+        />
+      )}
+
+      {/* Generating Plan Indicator */}
+      {isGeneratingPlan && (
+        <div className="flex items-center gap-2 rounded-lg border border-accent/20 bg-accent/5 p-4">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <span className="text-sm text-accent">Gerando Plano de Resgate com IA...</span>
+        </div>
+      )}
 
       {/* Results Grid */}
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">

@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.firecrawl-scrape]
 verify_jwt = false
+
+[functions.generate-rescue-plan]
+verify_jwt = false
