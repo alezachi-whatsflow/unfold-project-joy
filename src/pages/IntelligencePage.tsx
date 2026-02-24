@@ -18,6 +18,7 @@ import {
   calculateOverallScore,
   shouldActivateRescue,
 } from "@/lib/thresholdScoring";
+import { generateLocalRescuePlan } from "@/lib/rescuePlanEngine";
 import { useToast } from "@/hooks/use-toast";
 
 export default function IntelligencePage() {
@@ -39,7 +40,7 @@ export default function IntelligencePage() {
   const [websiteThreshold, setWebsiteThreshold] = useState<ChannelThreshold | null>(null);
   const [instagramThreshold, setInstagramThreshold] = useState<ChannelThreshold | null>(null);
   const [overallThreshold, setOverallThreshold] = useState<ChannelThreshold | null>(null);
-  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [isGeneratingPlan] = useState(false);
 
   const latestScrap = webScraps[0] ?? null;
   const latestProfile = profiles[0] ?? null;
@@ -112,9 +113,9 @@ export default function IntelligencePage() {
       const overall = calculateOverallScore(wsScore, igScore, null);
       setOverallThreshold(overall);
 
-      // Generate rescue plan if needed
       if (shouldActivateRescue(websiteThreshold, igThreshold, null, overall)) {
-        await generateRescuePlan(null, profile, null, wsScore, igScore, null);
+        const plan = generateLocalRescuePlan(latestScrap, profile, null, wsScore, igScore, null);
+        setRescuePlan(plan);
       }
 
       setCurrentStatus("completed");
@@ -180,46 +181,17 @@ export default function IntelligencePage() {
     const overall = calculateOverallScore(wsScore, igScore, null);
     setOverallThreshold(overall);
 
-    // Generate rescue plan if needed
     if (shouldActivateRescue(wsThreshold, instagramThreshold, null, overall)) {
-      await generateRescuePlan(savedScrap, null, null, wsScore, igScore, null);
+      const plan = generateLocalRescuePlan(savedScrap, latestProfile, null, wsScore, igScore, null);
+      setRescuePlan(plan);
     }
 
     setCurrentStatus("completed");
     toast({ title: "Análise concluída", description: `${query} foi analisado com sucesso.` });
   };
 
-  const generateRescuePlan = async (
-    websiteData: WebScrap | null,
-    instagramData: ProfileAnalysis | null,
-    gmnData: any,
-    websiteScore: number | null,
-    instagramScore: number | null,
-    gmnScore: number | null
-  ) => {
-    setIsGeneratingPlan(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-rescue-plan", {
-        body: { websiteData, instagramData, gmnData, websiteScore, instagramScore, gmnScore },
-      });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
 
-      if (data?.rescuePlan) {
-        setRescuePlan(data.rescuePlan);
-      }
-    } catch (err) {
-      console.error("Rescue plan generation error:", err);
-      toast({
-        title: "Aviso",
-        description: "Não foi possível gerar o Plano de Resgate automaticamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingPlan(false);
-    }
-  };
 
   return (
     <div className="space-y-8">
