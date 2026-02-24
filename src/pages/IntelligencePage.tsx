@@ -71,9 +71,11 @@ export default function IntelligencePage() {
     try {
       if (sourceType === "instagram") await handleInstagramAnalysis(query);
       else await handleWebsiteAnalysis(query);
-    } catch {
+    } catch (err: any) {
+      console.error("Intelligence analysis error:", err);
       setCurrentStatus("error");
-      toast({ title: "Erro", description: "Falha ao analisar. Tente novamente.", variant: "destructive" });
+      const msg = err?.message || "Falha ao analisar. Tente novamente.";
+      toast({ title: "Erro na análise", description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -82,17 +84,30 @@ export default function IntelligencePage() {
   const handleInstagramAnalysis = async (query: string) => {
     const username = query.replace(/^@/, "").trim();
     setCurrentStatus("scraping");
+    
+    console.log("Calling instagram-scraper for:", username);
     const { data, error } = await supabase.functions.invoke("instagram-scraper", { body: { username } });
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
+    console.log("Instagram scraper response:", { data, error });
+    
+    if (error) {
+      console.error("Supabase function invoke error:", error);
+      throw new Error(`Erro ao chamar edge function: ${error.message || JSON.stringify(error)}`);
+    }
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+    if (!data?.profile) {
+      throw new Error("Nenhum dado de perfil retornado pela análise.");
+    }
 
     const profile: ProfileAnalysis = {
-      id: data.profile.id, source: data.profile.source, username: data.profile.username,
+      id: data.profile.id, source: data.profile.source || "instagram", username: data.profile.username || username,
       display_name: data.profile.display_name, bio: data.profile.bio,
       followers: data.profile.followers, following: data.profile.following,
       posts_count: data.profile.posts_count,
       avg_engagement_rate: data.profile.avg_engagement_rate ? Number(data.profile.avg_engagement_rate) : null,
-      profile_url: data.profile.profile_url, profile_image_url: data.profile.profile_image_url,
+      profile_url: data.profile.profile_url || `https://instagram.com/${username}`,
+      profile_image_url: data.profile.profile_image_url,
       content_strategy_notes: data.profile.content_strategy_notes,
       authority_score: data.profile.authority_score ? Number(data.profile.authority_score) : null,
       analyzed_at: data.profile.analyzed_at || new Date().toISOString(), status: "completed",
