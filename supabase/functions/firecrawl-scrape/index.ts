@@ -61,6 +61,29 @@ Deno.serve(async (req) => {
     const metadata = data.data?.metadata || data.metadata || {};
     const markdown = data.data?.markdown || data.markdown || '';
     const links = data.data?.links || data.links || [];
+    const statusCode = metadata.statusCode || null;
+
+    // Detect error pages (404, 500, etc.)
+    const title = metadata.title || '';
+    const description = metadata.description || '';
+    const ogTitle = metadata.ogTitle || '';
+    const contentLower = `${title} ${description} ${ogTitle} ${markdown.substring(0, 500)}`.toLowerCase();
+    
+    const isErrorPage = 
+      (statusCode && statusCode >= 400) ||
+      /\b(404|erro 404|page not found|página não encontrada|not found|403|500|502|503)\b/i.test(contentLower);
+
+    if (isErrorPage) {
+      console.log('Detected error page for:', formattedUrl, '| statusCode:', statusCode);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `A página retornou um erro (${statusCode || 'página não encontrada'}). Verifique se a URL está correta e acessível.`,
+          detectedStatus: statusCode,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Build structured result
     const result = {
