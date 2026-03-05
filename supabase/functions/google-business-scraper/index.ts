@@ -49,6 +49,8 @@ serve(async (req) => {
         scrapeDirectories: false,
         deeperCityScrape: false,
         additionalInfo: true,
+        scrapeProductInfo: true,
+        scrapeUpdates: true,
       }),
     });
 
