@@ -135,12 +135,44 @@ export function AsaasBillingManagerPanel() {
           payload.postalService = config.postalService;
         }
 
+        // Add split if enabled
+        if (split.enabled && split.walletId) {
+          const splitPayload: Record<string, unknown> = {
+            walletId: split.walletId,
+          };
+          if (split.splitType === "PERCENTAGE") {
+            splitPayload.percentualValue = parseFloat(split.splitValue);
+          } else {
+            splitPayload.fixedValue = parseFloat(split.splitValue);
+          }
+          payload.split = [splitPayload];
+        }
+
         const result = await callAsaasProxy({
           endpoint: "/payments",
           method: "POST",
           params: payload,
           environment,
         });
+
+        // Save split to local DB
+        if (split.enabled && split.walletId && result.id) {
+          const splitVal = parseFloat(split.splitValue);
+          const totalValue = split.splitType === "PERCENTAGE"
+            ? (parseFloat(config.value) * splitVal) / 100
+            : splitVal;
+
+          await supabase.from("asaas_splits").insert({
+            tenant_id: DEFAULT_TENANT_ID,
+            payment_id: result.id,
+            salesperson_id: split.salespersonId || null,
+            wallet_id: split.walletId,
+            percent_value: split.splitType === "PERCENTAGE" ? splitVal : null,
+            fixed_value: split.splitType === "FIXED" ? splitVal : null,
+            total_value: totalValue,
+            status: "PENDING",
+          });
+        }
 
         newResults.push({
           customer: customer?.name || customerId,
@@ -149,6 +181,8 @@ export function AsaasBillingManagerPanel() {
           message: "Cobrança criada com sucesso",
           invoiceUrl: result.invoiceUrl,
           bankSlipUrl: result.bankSlipUrl,
+          pixQrCodeImage: result.pixQrCodeImage || undefined,
+          pixCopyPaste: result.pixCopyPaste || undefined,
         });
       } catch (err) {
         newResults.push({
