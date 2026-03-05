@@ -78,8 +78,9 @@ serve(async (req) => {
     // Log all top-level keys for debugging field mapping
     console.log("Apify place keys:", Object.keys(place).join(", "));
     console.log("Has imageUrls:", Array.isArray(place.imageUrls), "count:", place.imageUrls?.length);
-    console.log("Has orderBy:", Array.isArray(place.orderBy), "count:", place.orderBy?.length);
-    console.log("Has updatesFromCustomers:", Array.isArray(place.updatesFromCustomers), "count:", place.updatesFromCustomers?.length);
+    console.log("orderBy type:", typeof place.orderBy, "isArray:", Array.isArray(place.orderBy), "length:", place.orderBy?.length, "sample:", JSON.stringify(place.orderBy?.[0])?.substring(0, 300));
+    console.log("updatesFromCustomers:", Array.isArray(place.updatesFromCustomers), "count:", place.updatesFromCustomers?.length);
+    console.log("ownerUpdates:", Array.isArray(place.ownerUpdates), "count:", place.ownerUpdates?.length, "sample:", JSON.stringify(place.ownerUpdates?.[0])?.substring(0, 300));
     console.log("Has reviews:", Array.isArray(place.reviews), "count:", place.reviews?.length);
     console.log("Description:", place.description);
     console.log("AdditionalInfo keys:", place.additionalInfo ? Object.keys(place.additionalInfo).join(", ") : "none");
