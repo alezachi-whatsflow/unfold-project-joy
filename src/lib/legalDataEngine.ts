@@ -83,7 +83,7 @@ export function analyzeLegalData(rawMarkdown: string | null, url: string): Legal
   });
 
   // Coherence
-  const razaoVal = razaoMatch?.[1]?.trim().toLowerCase() || "";
+  const razaoVal = razaoValue.toLowerCase();
   const domainBase = domain.replace(/\.(com|br|net|org|io)\.?/g, "").replace(/\./g, "");
   const isCoherent = razaoVal && domainBase && (razaoVal.includes(domainBase) || domainBase.includes(razaoVal.split(" ")[0]));
 
