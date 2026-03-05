@@ -122,7 +122,8 @@ function parseCustomerCSV(csv: string): Customer[] {
 }
 
 export function CustomerCSVImport() {
-  const { importCustomers } = useCustomers();
+  const { importCustomers, customers, getCustomerMetricsForMonth, getAvailableMonths } = useCustomers();
+  const { entries, importEntries } = useFinancial();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imported, setImported] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
