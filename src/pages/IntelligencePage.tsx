@@ -14,6 +14,7 @@ import { MetaVerificationCard } from "@/components/intelligence/MetaVerification
 import { WhatsAppButtonCard } from "@/components/intelligence/WhatsAppButtonCard";
 import { LegalDataCard } from "@/components/intelligence/LegalDataCard";
 import { NeuromarketingCard } from "@/components/intelligence/NeuromarketingCard";
+import { GoogleBusinessCard, GoogleBusinessData, calculateGMNScore } from "@/components/intelligence/GoogleBusinessCard";
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { SourceType, WebScrap, ProfileAnalysis, AuthorityDiagnostic, AUTHORITY_PILLARS } from "@/types/intelligence";
 import { RescuePlan, ChannelThreshold } from "@/types/rescuePlan";
@@ -21,6 +22,7 @@ import { MetaVerificationResult, WhatsAppButtonAnalysis, LegalDataAnalysis, Neur
 import {
   getWebsiteThreshold,
   getInstagramThreshold,
+  getGMNThreshold,
   getMetaVerificationThreshold,
   getWhatsAppThreshold,
   getNeuromarketingThreshold,
@@ -38,7 +40,7 @@ export default function IntelligencePage() {
   const {
     webScraps, profiles, leads,
     currentDiagnostic, currentStatus,
-    persistWebScrap, addProfile, setDiagnostic, setCurrentStatus,
+    persistWebScrap, addProfile, addLead, setDiagnostic, setCurrentStatus,
   } = useIntelligence();
 
   const { toast } = useToast();
@@ -46,6 +48,7 @@ export default function IntelligencePage() {
   const [rescuePlan, setRescuePlan] = useState<RescuePlan | null>(null);
   const [websiteThreshold, setWebsiteThreshold] = useState<ChannelThreshold | null>(null);
   const [instagramThreshold, setInstagramThreshold] = useState<ChannelThreshold | null>(null);
+  const [gmnThreshold, setGmnThreshold] = useState<ChannelThreshold | null>(null);
   const [overallThreshold, setOverallThreshold] = useState<ChannelThreshold | null>(null);
 
   // New module states
@@ -57,12 +60,15 @@ export default function IntelligencePage() {
   const [whatsappThreshold, setWhatsappThreshold] = useState<ChannelThreshold | null>(null);
   const [neuroThreshold, setNeuroThreshold] = useState<ChannelThreshold | null>(null);
 
+  // Google Business state
+  const [googleBusiness, setGoogleBusiness] = useState<GoogleBusinessData | null>(null);
+
   const latestScrap = webScraps[0] ?? null;
   const latestProfile = profiles[0] ?? null;
 
   const handleSearch = async (query: string, sourceType: SourceType) => {
-    if (sourceType !== "website" && sourceType !== "instagram") {
-      toast({ title: "Em breve", description: `A análise de ${sourceType} ainda não está disponível.` });
+    if (sourceType === "linkedin") {
+      toast({ title: "Em breve", description: "A análise de LinkedIn ainda não está disponível." });
       return;
     }
     setIsLoading(true);
@@ -70,6 +76,7 @@ export default function IntelligencePage() {
     setRescuePlan(null);
     try {
       if (sourceType === "instagram") await handleInstagramAnalysis(query);
+      else if (sourceType === "google_maps") await handleGoogleBusinessAnalysis(query);
       else await handleWebsiteAnalysis(query);
     } catch (err: any) {
       console.error("Intelligence analysis error:", err);
@@ -85,20 +92,10 @@ export default function IntelligencePage() {
     const username = query.replace(/^@/, "").trim();
     setCurrentStatus("scraping");
     
-    console.log("Calling instagram-scraper for:", username);
     const { data, error } = await supabase.functions.invoke("instagram-scraper", { body: { username } });
-    console.log("Instagram scraper response:", { data, error });
-    
-    if (error) {
-      console.error("Supabase function invoke error:", error);
-      throw new Error(`Erro ao chamar edge function: ${error.message || JSON.stringify(error)}`);
-    }
-    if (data?.error) {
-      throw new Error(data.error);
-    }
-    if (!data?.profile) {
-      throw new Error("Nenhum dado de perfil retornado pela análise.");
-    }
+    if (error) throw new Error(`Erro ao chamar edge function: ${error.message || JSON.stringify(error)}`);
+    if (data?.error) throw new Error(data.error);
+    if (!data?.profile) throw new Error("Nenhum dado de perfil retornado pela análise.");
 
     const profile: ProfileAnalysis = {
       id: data.profile.id, source: data.profile.source || "instagram", username: data.profile.username || username,
@@ -117,9 +114,49 @@ export default function IntelligencePage() {
     const igScore = profile.authority_score ?? 0;
     const igThreshold = getInstagramThreshold(igScore);
     setInstagramThreshold(igThreshold);
-    recalculateOverall(websiteThreshold?.score ?? null, igScore, null);
+    recalculateOverall(websiteThreshold?.score ?? null, igScore, gmnThreshold?.score ?? null);
     setCurrentStatus("completed");
     toast({ title: "Análise concluída", description: `@${username} foi analisado com sucesso.` });
+  };
+
+  const handleGoogleBusinessAnalysis = async (query: string) => {
+    setCurrentStatus("scraping");
+    
+    const { data, error } = await supabase.functions.invoke("google-business-scraper", { body: { query } });
+    if (error) throw new Error(`Erro ao chamar edge function: ${error.message || JSON.stringify(error)}`);
+    if (data?.error) throw new Error(data.error);
+    if (!data?.business) throw new Error("Nenhum dado retornado pela análise.");
+
+    const business: GoogleBusinessData = data.business;
+    setGoogleBusiness(business);
+
+    // Add to leads context
+    if (data.lead_id) {
+      addLead({
+        id: data.lead_id,
+        name: business.name,
+        address: business.address,
+        phone: business.phone,
+        website: business.website,
+        rating: business.rating,
+        reviews_count: business.reviews_count,
+        category: business.category,
+        latitude: business.latitude,
+        longitude: business.longitude,
+        place_id: business.place_id,
+        scraped_at: new Date().toISOString(),
+        status: "completed",
+      });
+    }
+
+    // Calculate GMN score & threshold
+    const gScore = calculateGMNScore(business.rating, business.reviews_count);
+    const gThreshold = getGMNThreshold(gScore);
+    setGmnThreshold(gThreshold);
+    recalculateOverall(websiteThreshold?.score ?? null, instagramThreshold?.score ?? null, gScore);
+    
+    setCurrentStatus("completed");
+    toast({ title: "Análise concluída", description: `${business.name} foi analisado com sucesso.` });
   };
 
   const handleWebsiteAnalysis = async (query: string) => {
@@ -179,7 +216,7 @@ export default function IntelligencePage() {
     setNeuroThreshold(nThreshold);
 
     recalculateOverall(
-      wsScore, instagramThreshold?.score ?? null, null,
+      wsScore, instagramThreshold?.score ?? null, gmnThreshold?.score ?? null,
       mThreshold.score, wThreshold.score, nThreshold.score
     );
 
@@ -188,18 +225,19 @@ export default function IntelligencePage() {
   };
 
   const recalculateOverall = (
-    wsScore: number | null, igScore: number | null, gmnScore: number | null,
+    wsScore: number | null, igScore: number | null, gScore: number | null,
     metaScore: number | null = metaThreshold?.score ?? null,
     waScore: number | null = whatsappThreshold?.score ?? null,
     nScore: number | null = neuroThreshold?.score ?? null
   ) => {
-    const overall = calculateOverallScore(wsScore, igScore, gmnScore, metaScore, waScore, nScore);
+    const overall = calculateOverallScore(wsScore, igScore, gScore, metaScore, waScore, nScore);
     setOverallThreshold(overall);
 
     const wsT = wsScore !== null ? getWebsiteThreshold(wsScore) : null;
     const igT = igScore !== null ? getInstagramThreshold(igScore) : null;
-    if (shouldActivateRescue(wsT, igT, null, overall)) {
-      const plan = generateLocalRescuePlan(latestScrap, latestProfile, null, wsScore, igScore, gmnScore);
+    const gT = gScore !== null ? getGMNThreshold(gScore) : null;
+    if (shouldActivateRescue(wsT, igT, gT, overall)) {
+      const plan = generateLocalRescuePlan(latestScrap, latestProfile, null, wsScore, igScore, gScore);
       setRescuePlan(plan);
     } else {
       setRescuePlan(null);
@@ -208,6 +246,7 @@ export default function IntelligencePage() {
 
   const hasWebsiteResults = latestScrap || currentDiagnostic || metaResult;
   const hasInstagramResults = latestProfile && latestProfile.source === "instagram";
+  const hasGoogleResults = googleBusiness !== null;
 
   return (
     <div className="space-y-6">
@@ -229,7 +268,7 @@ export default function IntelligencePage() {
           overall={overallThreshold}
           website={websiteThreshold}
           instagram={instagramThreshold}
-          gmn={null}
+          gmn={gmnThreshold}
           meta={metaThreshold}
           whatsapp={whatsappThreshold}
           neuro={neuroThreshold}
@@ -242,7 +281,7 @@ export default function IntelligencePage() {
           <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
           <TabsTrigger value="website" className="text-xs">Website</TabsTrigger>
           <TabsTrigger value="instagram" className="text-xs">Instagram</TabsTrigger>
-          <TabsTrigger value="gmn" className="text-xs">Google Meu Negócio</TabsTrigger>
+          <TabsTrigger value="google_business" className="text-xs">Perfil da Empresa</TabsTrigger>
           <TabsTrigger value="meta" className="text-xs">Meta & WhatsApp</TabsTrigger>
         </TabsList>
 
@@ -253,10 +292,10 @@ export default function IntelligencePage() {
               {rescuePlan?.ativado && overallThreshold && (
                 <RescuePlanCard
                   rescuePlan={rescuePlan} overall={overallThreshold}
-                  websiteThreshold={websiteThreshold} instagramThreshold={instagramThreshold} gmnThreshold={null}
+                  websiteThreshold={websiteThreshold} instagramThreshold={instagramThreshold} gmnThreshold={gmnThreshold}
                 />
               )}
-              {!hasWebsiteResults && !hasInstagramResults && (
+              {!hasWebsiteResults && !hasInstagramResults && !hasGoogleResults && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <SocialPlaceholderCard source="linkedin" />
                   <SocialPlaceholderCard source="google_maps" />
@@ -264,6 +303,7 @@ export default function IntelligencePage() {
               )}
               {latestScrap && <WebAnalysisCard scrap={latestScrap} />}
               {hasInstagramResults && <InstagramAnalysisCard profile={latestProfile!} />}
+              {hasGoogleResults && <GoogleBusinessCard business={googleBusiness!} />}
             </div>
             <div>
               <AnalysisHistory webScraps={webScraps} profiles={profiles} leads={leads} />
@@ -294,10 +334,16 @@ export default function IntelligencePage() {
           </div>
         </TabsContent>
 
-        {/* Tab 4: Google Meu Negócio */}
-        <TabsContent value="gmn">
-          <div className="text-center py-12">
-            <SocialPlaceholderCard source="google_maps" />
+        {/* Tab 4: Perfil da Empresa no Google */}
+        <TabsContent value="google_business">
+          <div className="space-y-6">
+            {hasGoogleResults ? (
+              <GoogleBusinessCard business={googleBusiness!} />
+            ) : (
+              <div className="text-center py-12">
+                <SocialPlaceholderCard source="google_maps" />
+              </div>
+            )}
           </div>
         </TabsContent>
 
