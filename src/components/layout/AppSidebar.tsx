@@ -18,6 +18,7 @@ const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Inserir Dados", url: "/input", icon: PenLine },
   { title: "Cobranças", url: "/cobrancas", icon: Receipt },
+  { title: "Comissões", url: "/comissoes", icon: UserCheck },
   { title: "Despesas", url: "/expenses", icon: DollarSign },
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Produtos", url: "/products", icon: Package },
