@@ -140,7 +140,9 @@ export default function CustomersPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
-              Lista de Clientes ({customers.length})
+              Lista de Clientes ({filteredCustomers.length}
+              {activeFilterCount > 0 && ` de ${customers.length}`})
+            </CardTitle>
             </CardTitle>
           </CardHeader>
           <CardContent>
