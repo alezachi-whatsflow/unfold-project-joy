@@ -14,6 +14,7 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Inserir Dados", url: "/input", icon: PenLine },
+  { title: "Cobranças", url: "/cobrancas", icon: Receipt },
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Produtos", url: "/products", icon: Package },
   { title: "Intelligence", url: "/intelligence", icon: Radar },
