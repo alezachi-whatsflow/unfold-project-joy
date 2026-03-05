@@ -10,7 +10,7 @@ import type {
 } from "@/types/asaas";
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
-const SUPABASE_URL = "https://jtlrglzcsmqmapizqgzu.supabase.co";
+const SUPABASE_URL = "https://knnwgijcrpbgqhdzmdrp.supabase.co";
 
 // ── Asaas Proxy Calls ──
 
