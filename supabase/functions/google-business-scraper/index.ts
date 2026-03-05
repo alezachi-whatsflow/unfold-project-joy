@@ -97,7 +97,23 @@ serve(async (req) => {
       || null;
 
     // Extract products from multiple possible sources
-    const rawProducts = place.orderBy || place.products || place.menu || [];
+    // orderBy can be an array of objects OR an array of categories with items
+    let rawProducts: any[] = [];
+    for (const src of [place.orderBy, place.products, place.menu]) {
+      if (Array.isArray(src) && src.length > 0) {
+        // Check if items are categories containing sub-items
+        if (src[0]?.items && Array.isArray(src[0].items)) {
+          for (const cat of src) {
+            for (const item of (cat.items || [])) {
+              rawProducts.push({ ...item, category: cat.title || cat.name || "" });
+            }
+          }
+        } else {
+          rawProducts = src;
+        }
+        break;
+      }
+    }
     const products = rawProducts.map((p: any) => ({
       name: p.title || p.name || "",
       category: p.category || p.subtitle || "",
@@ -105,8 +121,13 @@ serve(async (req) => {
       image_url: p.imageUrl || p.thumbnailUrl || null,
     }));
 
-    // Extract posts/feed from multiple possible sources
-    const rawPosts = place.updatesFromCustomers || place.updatesFromGoogle || place.posts || place.updates || [];
+    // Extract posts/feed from multiple possible sources (owner + customer updates)
+    let rawPosts: any[] = [];
+    for (const src of [place.ownerUpdates, place.updatesFromCustomers, place.updatesFromGoogle, place.posts, place.updates]) {
+      if (Array.isArray(src) && src.length > 0) {
+        rawPosts = [...rawPosts, ...src];
+      }
+    }
     const posts = rawPosts.slice(0, 5).map((u: any) => ({
       text: u.text || u.body || u.title || "",
       date: u.publishedAt || u.publishedAtDate || u.date || null,
