@@ -45,6 +45,8 @@ serve(async (req) => {
         maxReviews: 5,
         includeWebResults: false,
         onlyDataFromSearchPage: false,
+        scrapeProductInfo: true,
+        scrapeUpdates: true,
       }),
     });
 
