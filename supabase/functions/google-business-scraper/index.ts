@@ -91,14 +91,16 @@ serve(async (req) => {
 
     // Extract photos count from multiple possible sources
     const imageUrls: string[] = place.imageUrls || place.images || [];
-    const photosCount = imageUrls.length || place.photosCount || place.imageCount || 0;
+    const photosCount = imageUrls.length || place.imagesCount || place.photosCount || place.imageCount || 0;
 
-    // Extract description from multiple possible sources
+    // Extract description from multiple possible sources, fallback to first ownerUpdate
     const description = place.description
       || place.additionalInfo?.["Sobre"]
       || place.additionalInfo?.["About"]
       || place.additionalInfo?.["Descrição"]
+      || place.subTitle
       || (place.additionalInfo ? Object.values(place.additionalInfo).find((v: any) => typeof v === "string" && v.length > 30) : null)
+      || (Array.isArray(place.ownerUpdates) && place.ownerUpdates[0]?.text ? place.ownerUpdates[0].text.substring(0, 300) : null)
       || null;
 
     // Extract products from multiple possible sources
