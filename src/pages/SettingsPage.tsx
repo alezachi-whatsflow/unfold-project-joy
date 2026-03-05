@@ -38,9 +38,13 @@ export default function SettingsPage() {
     setLoadingWebhooks(true);
     try {
       const res = await callAsaasProxy({ endpoint: "/webhooks", method: "GET", environment });
-      setWebhooks(res?.data || []);
-    } catch (err) {
-      console.error("Erro ao carregar webhooks:", err);
+      if (res && Array.isArray(res.data)) {
+        setWebhooks(res.data);
+      } else {
+        setWebhooks([]);
+      }
+    } catch (err: any) {
+      console.warn("[Settings] Webhooks não carregados (API Key pode estar inválida):", err?.message || err);
       setWebhooks([]);
     } finally {
       setLoadingWebhooks(false);
