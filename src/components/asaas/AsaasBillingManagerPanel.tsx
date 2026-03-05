@@ -15,12 +15,19 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  FileText, Send, Plus, Settings2, Users, Calendar,
+  FileText, Send, Settings2, Users, Calendar,
   CreditCard, QrCode, Receipt, Loader2, Check, AlertCircle,
+  Zap, MousePointerClick,
 } from "lucide-react";
 import { toast } from "sonner";
 
-interface BillingConfig {
+// ── Sub-components ──
+
+import { BillingConfigCard } from "./billing/BillingConfigCard";
+import { CustomerSelectionCard } from "./billing/CustomerSelectionCard";
+import { BillingResultsCard } from "./billing/BillingResultsCard";
+
+export interface BillingConfig {
   billingType: "BOLETO" | "CREDIT_CARD" | "PIX";
   value: string;
   description: string;
@@ -32,7 +39,7 @@ interface BillingConfig {
   postalService: boolean;
 }
 
-const DEFAULT_CONFIG: BillingConfig = {
+export const DEFAULT_CONFIG: BillingConfig = {
   billingType: "BOLETO",
   value: "",
   description: "",
@@ -44,7 +51,7 @@ const DEFAULT_CONFIG: BillingConfig = {
   postalService: false,
 };
 
-interface CreationResult {
+export interface CreationResult {
   customer: string;
   asaasId: string;
   status: "success" | "error";
@@ -53,35 +60,15 @@ interface CreationResult {
   bankSlipUrl?: string;
 }
 
+type BillingMode = "manual" | "automatic";
+
 export function AsaasBillingManagerPanel() {
   const { customers, environment } = useAsaas();
   const [config, setConfig] = useState<BillingConfig>(DEFAULT_CONFIG);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [results, setResults] = useState<CreationResult[]>([]);
-  const [customerSearch, setCustomerSearch] = useState("");
-
-  const filteredCustomers = customers.filter((c) =>
-    c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    (c.email && c.email.toLowerCase().includes(customerSearch.toLowerCase())) ||
-    (c.cpf_cnpj && c.cpf_cnpj.includes(customerSearch))
-  );
-
-  const toggleCustomer = (asaasId: string) => {
-    setSelectedCustomers((prev) =>
-      prev.includes(asaasId) ? prev.filter((id) => id !== asaasId) : [...prev, asaasId]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectAll) {
-      setSelectedCustomers([]);
-    } else {
-      setSelectedCustomers(filteredCustomers.map((c) => c.asaas_id));
-    }
-    setSelectAll(!selectAll);
-  };
+  const [mode, setMode] = useState<BillingMode>("manual");
 
   const getDueDate = () => {
     const date = new Date();
@@ -89,9 +76,16 @@ export function AsaasBillingManagerPanel() {
     return date.toISOString().split("T")[0];
   };
 
+  // In automatic mode, use all customers; in manual, use selected
+  const targetCustomerIds = mode === "automatic"
+    ? customers.map((c) => c.asaas_id)
+    : selectedCustomers;
+
   const createBillings = async () => {
-    if (selectedCustomers.length === 0) {
-      toast.error("Selecione pelo menos um cliente");
+    if (targetCustomerIds.length === 0) {
+      toast.error(mode === "automatic"
+        ? "Nenhum cliente sincronizado. Sincronize os clientes primeiro."
+        : "Selecione pelo menos um cliente");
       return;
     }
     if (!config.value || parseFloat(config.value) <= 0) {
@@ -103,7 +97,7 @@ export function AsaasBillingManagerPanel() {
     setResults([]);
     const newResults: CreationResult[] = [];
 
-    for (const customerId of selectedCustomers) {
+    for (const customerId of targetCustomerIds) {
       const customer = customers.find((c) => c.asaas_id === customerId);
       try {
         const payload: Record<string, unknown> = {
@@ -114,7 +108,6 @@ export function AsaasBillingManagerPanel() {
           description: config.description || `Cobrança - ${customer?.name || customerId}`,
         };
 
-        // Fine & interest for BOLETO
         if (config.billingType === "BOLETO") {
           if (parseFloat(config.fineValue) > 0) {
             payload.fine = { value: parseFloat(config.fineValue), type: "PERCENTAGE" };
@@ -156,7 +149,6 @@ export function AsaasBillingManagerPanel() {
         });
       }
 
-      // Delay between requests to avoid rate limiting
       await new Promise((r) => setTimeout(r, 300));
     }
 
@@ -166,12 +158,8 @@ export function AsaasBillingManagerPanel() {
     const successCount = newResults.filter((r) => r.status === "success").length;
     const errorCount = newResults.filter((r) => r.status === "error").length;
 
-    if (successCount > 0) {
-      toast.success(`${successCount} cobrança(s) criada(s) com sucesso`);
-    }
-    if (errorCount > 0) {
-      toast.error(`${errorCount} cobrança(s) com erro`);
-    }
+    if (successCount > 0) toast.success(`${successCount} cobrança(s) criada(s) com sucesso`);
+    if (errorCount > 0) toast.error(`${errorCount} cobrança(s) com erro`);
   };
 
   const BillingIcon = config.billingType === "CREDIT_CARD" ? CreditCard
@@ -179,235 +167,64 @@ export function AsaasBillingManagerPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Configuration */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Billing Settings */}
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-muted-foreground" />
-              Configuração da Cobrança
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Configure os parâmetros para criação automática de cobranças
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Tipo de Cobrança</Label>
-                <Select
-                  value={config.billingType}
-                  onValueChange={(v) => setConfig({ ...config, billingType: v as BillingConfig["billingType"] })}
-                >
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BOLETO">
-                      <span className="flex items-center gap-1.5"><FileText className="h-3 w-3" /> Boleto</span>
-                    </SelectItem>
-                    <SelectItem value="CREDIT_CARD">
-                      <span className="flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Cartão de Crédito</span>
-                    </SelectItem>
-                    <SelectItem value="PIX">
-                      <span className="flex items-center gap-1.5"><QrCode className="h-3 w-3" /> Pix</span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Valor (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={config.value}
-                  onChange={(e) => setConfig({ ...config, value: e.target.value })}
-                  placeholder="0,00"
-                  className="h-9 text-xs"
-                />
-              </div>
+      {/* Mode Selector */}
+      <Card className="border-border">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">Modo de Criação</p>
+              <p className="text-[10px] text-muted-foreground">
+                Escolha como as cobranças serão geradas
+              </p>
             </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Descrição</Label>
-              <Textarea
-                value={config.description}
-                onChange={(e) => setConfig({ ...config, description: e.target.value })}
-                placeholder="Descrição da cobrança (ex: Mensalidade Março/2026)"
-                className="text-xs min-h-[60px]"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  <Calendar className="h-3 w-3" /> Dias até vencimento
-                </Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={config.daysUntilDue}
-                  onChange={(e) => setConfig({ ...config, daysUntilDue: parseInt(e.target.value) || 5 })}
-                  className="h-9 text-xs"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Vencimento calculado</Label>
-                <div className="flex h-9 items-center rounded-md border border-border bg-muted/50 px-3">
-                  <span className="text-xs text-muted-foreground">{getDueDate()}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Boleto-specific settings */}
-            {config.billingType === "BOLETO" && (
-              <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                  Configurações do Boleto
-                </p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px]">Multa (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="10"
-                      value={config.fineValue}
-                      onChange={(e) => setConfig({ ...config, fineValue: e.target.value })}
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px]">Juros a.m. (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="10"
-                      value={config.interestValue}
-                      onChange={(e) => setConfig({ ...config, interestValue: e.target.value })}
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px]">Desconto (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={config.discountValue}
-                      onChange={(e) => setConfig({ ...config, discountValue: e.target.value })}
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                </div>
-                {parseFloat(config.discountValue) > 0 && (
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px]">Dias antes do vencimento para desconto</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={config.discountDueDateLimitDays}
-                      onChange={(e) => setConfig({ ...config, discountDueDateLimitDays: parseInt(e.target.value) || 3 })}
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px]">Envio pelos Correios</Label>
-                  <Switch
-                    checked={config.postalService}
-                    onCheckedChange={(checked) => setConfig({ ...config, postalService: checked })}
-                  />
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Customer Selection */}
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              Selecionar Clientes
-              {selectedCustomers.length > 0 && (
-                <Badge variant="secondary" className="text-[10px]">
-                  {selectedCustomers.length} selecionado(s)
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Selecione os clientes que receberão a cobrança
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Input
-              value={customerSearch}
-              onChange={(e) => setCustomerSearch(e.target.value)}
-              placeholder="Buscar cliente por nome, email ou CPF/CNPJ..."
-              className="h-8 text-xs"
-            />
-
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={toggleSelectAll}>
-                {selectAll ? "Desmarcar todos" : "Selecionar todos"}
+            <div className="flex gap-2">
+              <Button
+                variant={mode === "automatic" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMode("automatic")}
+                className="gap-1.5 text-xs"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Automático (Todos)
               </Button>
-              {selectedCustomers.length > 0 && (
-                <Button variant="ghost" size="sm" className="text-[10px] h-7" onClick={() => { setSelectedCustomers([]); setSelectAll(false); }}>
-                  Limpar seleção
-                </Button>
-              )}
+              <Button
+                variant={mode === "manual" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMode("manual")}
+                className="gap-1.5 text-xs"
+              >
+                <MousePointerClick className="h-3.5 w-3.5" />
+                Manual (Selecionar)
+              </Button>
             </div>
+          </div>
 
-            <div className="max-h-[320px] overflow-y-auto rounded-md border border-border">
-              {filteredCustomers.length === 0 ? (
-                <div className="p-6 text-center text-xs text-muted-foreground">
-                  {customers.length === 0
-                    ? "Nenhum cliente sincronizado. Sincronize os clientes na aba Cobranças primeiro."
-                    : "Nenhum cliente encontrado para a busca."}
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="w-10 text-xs"></TableHead>
-                      <TableHead className="text-xs text-muted-foreground">Nome</TableHead>
-                      <TableHead className="text-xs text-muted-foreground">CPF/CNPJ</TableHead>
-                      <TableHead className="text-xs text-muted-foreground">Email</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCustomers.map((c) => (
-                      <TableRow
-                        key={c.asaas_id}
-                        className={`border-border cursor-pointer transition-colors ${
-                          selectedCustomers.includes(c.asaas_id) ? "bg-primary/5" : "hover:bg-secondary/50"
-                        }`}
-                        onClick={() => toggleCustomer(c.asaas_id)}
-                      >
-                        <TableCell className="text-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedCustomers.includes(c.asaas_id)}
-                            onChange={() => toggleCustomer(c.asaas_id)}
-                            className="rounded border-border"
-                          />
-                        </TableCell>
-                        <TableCell className="text-xs font-medium">{c.name}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{c.cpf_cnpj || "-"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{c.email || "-"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+          {mode === "automatic" && (
+            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5" />
+                Modo automático ativo
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                A cobrança será criada para <strong>todos os {customers.length} clientes</strong> sincronizados.
+                Configure o valor e os parâmetros abaixo e clique em "Criar Cobranças".
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Configuration */}
+      <div className={`grid gap-6 ${mode === "manual" ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
+        <BillingConfigCard config={config} setConfig={setConfig} getDueDate={getDueDate} />
+
+        {mode === "manual" && (
+          <CustomerSelectionCard
+            customers={customers}
+            selectedCustomers={selectedCustomers}
+            setSelectedCustomers={setSelectedCustomers}
+          />
+        )}
       </div>
 
       {/* Action Button */}
@@ -417,17 +234,17 @@ export function AsaasBillingManagerPanel() {
             <BillingIcon className="h-5 w-5 text-primary" />
             <div>
               <p className="text-sm font-medium">
-                Criar {selectedCustomers.length} cobrança(s) via{" "}
+                Criar {targetCustomerIds.length} cobrança(s) via{" "}
                 {config.billingType === "BOLETO" ? "Boleto" : config.billingType === "PIX" ? "Pix" : "Cartão"}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                Valor: R$ {config.value || "0,00"} cada • Vencimento: {getDueDate()} • Ambiente: {environment}
+                Valor: R$ {config.value || "0,00"} cada • Vencimento: {getDueDate()} • Modo: {mode === "automatic" ? "Automático" : "Manual"} • Ambiente: {environment}
               </p>
             </div>
           </div>
           <Button
             onClick={createBillings}
-            disabled={isCreating || selectedCustomers.length === 0 || !config.value}
+            disabled={isCreating || targetCustomerIds.length === 0 || !config.value}
             className="gap-2"
           >
             {isCreating ? (
@@ -446,63 +263,7 @@ export function AsaasBillingManagerPanel() {
       </Card>
 
       {/* Results */}
-      {results.length > 0 && (
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-muted-foreground" />
-              Resultado da Criação
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-xs text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-xs text-muted-foreground">Cliente</TableHead>
-                  <TableHead className="text-xs text-muted-foreground">ID Asaas</TableHead>
-                  <TableHead className="text-xs text-muted-foreground">Mensagem</TableHead>
-                  <TableHead className="text-xs text-muted-foreground">Links</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {results.map((r, i) => (
-                  <TableRow key={i} className="border-border">
-                    <TableCell>
-                      {r.status === "success" ? (
-                        <Check className="h-4 w-4 text-primary" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-destructive" />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs font-medium">{r.customer}</TableCell>
-                    <TableCell className="text-xs font-mono">{r.asaasId || "-"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{r.message}</TableCell>
-                    <TableCell className="text-xs">
-                      <div className="flex gap-1">
-                        {r.invoiceUrl && (
-                          <a href={r.invoiceUrl} target="_blank" rel="noopener noreferrer">
-                            <Badge variant="outline" className="text-[10px] cursor-pointer hover:bg-primary/10">
-                              Fatura
-                            </Badge>
-                          </a>
-                        )}
-                        {r.bankSlipUrl && (
-                          <a href={r.bankSlipUrl} target="_blank" rel="noopener noreferrer">
-                            <Badge variant="outline" className="text-[10px] cursor-pointer hover:bg-primary/10">
-                              Boleto
-                            </Badge>
-                          </a>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+      {results.length > 0 && <BillingResultsCard results={results} />}
     </div>
   );
 }
