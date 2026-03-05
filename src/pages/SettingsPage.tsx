@@ -39,8 +39,12 @@ export default function SettingsPage() {
     try {
       const res = await callAsaasProxy({ endpoint: "/webhooks", method: "GET", environment });
       setWebhooks(res?.data || []);
-    } catch { setWebhooks([]); }
-    finally { setLoadingWebhooks(false); }
+    } catch (err) {
+      console.error("Erro ao carregar webhooks:", err);
+      setWebhooks([]);
+    } finally {
+      setLoadingWebhooks(false);
+    }
   };
 
   const registerWebhook = async () => {
@@ -69,7 +73,9 @@ export default function SettingsPage() {
     }
   };
 
-  useEffect(() => { loadWebhooks(); }, [environment]);
+  useEffect(() => {
+    loadWebhooks().catch((err) => console.error("Webhook load effect error:", err));
+  }, [environment]);
 
   return (
     <div className="space-y-6">
