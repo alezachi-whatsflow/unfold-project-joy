@@ -438,6 +438,76 @@ export default function DashboardPage() {
           </div>
         </section>
 
+        {/* Asaas Revenue Section */}
+        {stats && stats.total > 0 && (
+          <section>
+            <h2 className="mb-4 flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              <div className="h-1 w-4 rounded-full bg-accent" />
+              Cobranças (Asaas)
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <KPICard
+                title="Receita Recebida"
+                value={formatCurrency(stats.receivedValue)}
+                icon={DollarSign}
+                accentColor="primary"
+                tooltip="Total de cobranças com status recebido/confirmado no Asaas"
+                delay={0}
+                description={`${stats.received} cobranças`}
+              />
+              <KPICard
+                title="Pendente"
+                value={formatCurrency(stats.pendingValue)}
+                icon={Clock}
+                accentColor="warning"
+                tooltip="Total de cobranças pendentes de pagamento"
+                delay={50}
+                description={`${stats.pending} cobranças`}
+              />
+              <KPICard
+                title="Inadimplência"
+                value={formatCurrency(stats.overdueValue)}
+                icon={AlertTriangle}
+                accentColor="destructive"
+                tooltip="Total de cobranças vencidas e não pagas"
+                delay={100}
+                description={`${stats.overdue} cobranças (${stats.total > 0 ? ((stats.overdue / stats.total) * 100).toFixed(1) : 0}%)`}
+              />
+              <KPICard
+                title="Taxa Inadimplência"
+                value={formatPercent(stats.total > 0 ? (stats.overdueValue / stats.totalValue) * 100 : 0)}
+                icon={Percent}
+                accentColor={stats.total > 0 && (stats.overdueValue / stats.totalValue) * 100 > 10 ? "destructive" : "primary"}
+                tooltip="Percentual do valor total que está em atraso"
+                delay={150}
+              />
+            </div>
+            {Object.keys(stats.byBillingType).length > 0 && (
+              <div className="grid gap-3 sm:grid-cols-3 mt-4">
+                {Object.entries(stats.byBillingType).map(([type, info]) => {
+                  const Icon = type === "CREDIT_CARD" ? CreditCard : type === "PIX" ? QrCode : FileText;
+                  return (
+                    <Card key={type} className="border-border">
+                      <CardContent className="flex items-center gap-3 pt-4 pb-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">
+                            {BILLING_TYPE_LABELS[type as keyof typeof BILLING_TYPE_LABELS] || type}
+                          </p>
+                          <p className="font-display text-sm font-bold">{formatCurrency(info.value)}</p>
+                          <p className="text-[10px] text-muted-foreground">{info.count} cobranças</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Charts Row 1 */}
         <section>
           <h2 className="mb-4 flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">
