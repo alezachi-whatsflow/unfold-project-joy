@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange } from "lucide-react";
+import { useCustomerFilters, ColumnFilterPopover } from "@/components/customers/CustomerTableFilters";
 
 function formatDateBR(date: string | null): string {
   if (!date) return "-";
@@ -40,6 +41,9 @@ export default function CustomersPage() {
     deleteCustomer,
     isLoading,
   } = useCustomers();
+
+  const { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount } =
+    useCustomerFilters(customers);
 
   if (isLoading) {
     return (
@@ -136,7 +140,8 @@ export default function CustomersPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
-              Lista de Clientes ({customers.length})
+              Lista de Clientes ({filteredCustomers.length}
+              {activeFilterCount > 0 && ` de ${customers.length}`})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -146,7 +151,9 @@ export default function CustomersPage() {
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-xs text-muted-foreground">Empresa / Titular</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Email</TableHead>
-                    <TableHead className="text-xs text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-xs">
+                      <ColumnFilterPopover label="Status" filterKey="status" options={uniqueValues.status} selected={filters.status} onToggle={toggleFilter} onClear={clearFilter} />
+                    </TableHead>
                     <TableHead className="text-xs text-muted-foreground">Ativação</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Cancelado</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Bloqueio</TableHead>
@@ -154,21 +161,25 @@ export default function CustomersPage() {
                     <TableHead className="text-xs text-muted-foreground">Vencimento</TableHead>
                     <TableHead className="text-xs text-muted-foreground text-right">Disp. Oficial</TableHead>
                     <TableHead className="text-xs text-muted-foreground text-right">Atendentes</TableHead>
-                    <TableHead className="text-xs text-muted-foreground">Checkout</TableHead>
-                    <TableHead className="text-xs text-muted-foreground">Condição</TableHead>
+                    <TableHead className="text-xs">
+                      <ColumnFilterPopover label="Checkout" filterKey="checkout" options={uniqueValues.checkout} selected={filters.checkout} onToggle={toggleFilter} onClear={clearFilter} />
+                    </TableHead>
+                    <TableHead className="text-xs">
+                      <ColumnFilterPopover label="Condição" filterKey="condicao" options={uniqueValues.condicao} selected={filters.condicao} onToggle={toggleFilter} onClear={clearFilter} />
+                    </TableHead>
                     <TableHead className="text-xs text-muted-foreground text-right">Valor</TableHead>
                     <TableHead className="text-xs text-muted-foreground w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customers.length === 0 ? (
+                  {filteredCustomers.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={14} className="text-center text-sm text-muted-foreground py-8">
-                        Nenhum cliente importado. Use o botão ao lado para importar um CSV.
+                        {customers.length === 0 ? "Nenhum cliente importado. Use o botão ao lado para importar um CSV." : "Nenhum cliente encontrado com os filtros aplicados."}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    customers.map((customer) => (
+                    filteredCustomers.map((customer) => (
                       <TableRow
                         key={customer.id}
                         className="border-border hover:bg-secondary/50"
