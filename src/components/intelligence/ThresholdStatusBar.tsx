@@ -19,7 +19,7 @@ export function ThresholdStatusBar({ overall, website, instagram, gmn, meta, wha
   const channels = [
     { label: "Website", icon: Globe, threshold: website },
     { label: "Instagram", icon: Instagram, threshold: instagram },
-    { label: "GMN", icon: MapPin, threshold: gmn },
+    { label: "Perfil Empresa", icon: MapPin, threshold: gmn },
     { label: "Meta", icon: ShieldCheck, threshold: meta ?? null },
     { label: "WhatsApp", icon: MessageCircle, threshold: whatsapp ?? null },
     { label: "Neuro", icon: Brain, threshold: neuro ?? null },
