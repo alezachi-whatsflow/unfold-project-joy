@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { useCustomers } from "@/contexts/CustomerContext";
+import { useFinancial } from "@/contexts/FinancialContext";
 import { Customer } from "@/types/customers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Users, CheckCircle } from "lucide-react";
+import { Upload, Users, CheckCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 function normalizeHeader(header: string): string {
