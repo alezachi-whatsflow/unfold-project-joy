@@ -22,6 +22,13 @@ import {
 } from "@/components/ui/select";
 import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange } from "lucide-react";
 
+function formatDateBR(date: string | null): string {
+  if (!date) return "-";
+  const parts = date.split("-");
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return date;
+}
+
 export default function CustomersPage() {
   const { entries, selectedMonth, setSelectedMonth } = useFinancial();
   const {
@@ -137,10 +144,15 @@ export default function CustomersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="text-xs text-muted-foreground">Nome</TableHead>
+                    <TableHead className="text-xs text-muted-foreground">Empresa / Titular</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Email</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Status</TableHead>
-                    <TableHead className="text-xs text-muted-foreground text-right">Dispositivos</TableHead>
+                    <TableHead className="text-xs text-muted-foreground">Ativação</TableHead>
+                    <TableHead className="text-xs text-muted-foreground">Cancelado</TableHead>
+                    <TableHead className="text-xs text-muted-foreground">Bloqueio</TableHead>
+                    <TableHead className="text-xs text-muted-foreground">Desbloqueio</TableHead>
+                    <TableHead className="text-xs text-muted-foreground">Vencimento</TableHead>
+                    <TableHead className="text-xs text-muted-foreground text-right">Disp. Oficial</TableHead>
                     <TableHead className="text-xs text-muted-foreground text-right">Atendentes</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Checkout</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Condição</TableHead>
@@ -151,7 +163,7 @@ export default function CustomersPage() {
                 <TableBody>
                   {customers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-8">
+                      <TableCell colSpan={14} className="text-center text-sm text-muted-foreground py-8">
                         Nenhum cliente importado. Use o botão ao lado para importar um CSV.
                       </TableCell>
                     </TableRow>
@@ -178,6 +190,21 @@ export default function CustomersPage() {
                           >
                             {customer.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {formatDateBR(customer.dataAtivacao)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {formatDateBR(customer.dataCancelado)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {formatDateBR(customer.dataBloqueio)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {formatDateBR(customer.dataDesbloqueio)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {formatDateBR(customer.dataVencimento)}
                         </TableCell>
                         <TableCell className="text-right font-display text-sm">
                           {customer.dispositivosOficial}
@@ -216,7 +243,6 @@ export default function CustomersPage() {
         <div className="space-y-6">
           <CustomerCSVImport />
 
-          {/* Placeholder for future expense CSV import */}
           <Card className="border-border border-dashed opacity-60">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">

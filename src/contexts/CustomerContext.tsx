@@ -17,18 +17,22 @@ import { toast } from "sonner";
 
 /**
  * Determines if a customer was active during a given month (YYYY-MM).
- * Active = activated on or before end of month AND (not deactivated OR deactivated after start of month).
+ * Uses explicit status first, then date logic as fallback.
  */
 function isActiveInMonth(customer: Customer, month: string): boolean {
   const statusLower = customer.status.toLowerCase();
 
-  // If status field explicitly says "ativo", consider active
   if (statusLower === "ativo") return true;
 
-  // If status field explicitly says "inativo" or similar non-active, consider inactive
-  if (statusLower === "inativo" || statusLower === "desativado" || statusLower === "bloqueado" || statusLower === "cancelado") return false;
+  if (
+    statusLower === "inativo" ||
+    statusLower === "desativado" ||
+    statusLower === "bloqueado" ||
+    statusLower === "cancelado"
+  )
+    return false;
 
-  // Fallback: use date-based logic only when status is ambiguous
+  // Fallback: date-based logic
   const [year, mon] = month.split("-").map(Number);
   const endOfMonth = new Date(year, mon, 0);
   const startOfMonth = new Date(year, mon - 1, 1);
@@ -37,11 +41,19 @@ function isActiveInMonth(customer: Customer, month: string): boolean {
   const activationDate = new Date(customer.dataAtivacao);
   if (isNaN(activationDate.getTime()) || activationDate > endOfMonth) return false;
 
-  if (!customer.dataDesativacao) return true;
+  // Check cancellation
+  if (customer.dataCancelado) {
+    const cancelDate = new Date(customer.dataCancelado);
+    if (!isNaN(cancelDate.getTime()) && cancelDate < startOfMonth) return false;
+  }
 
-  const deactivationDate = new Date(customer.dataDesativacao);
-  if (isNaN(deactivationDate.getTime())) return true;
-  return deactivationDate >= startOfMonth;
+  // Check bloqueio (block)
+  if (customer.dataBloqueio && !customer.dataDesbloqueio) {
+    const blockDate = new Date(customer.dataBloqueio);
+    if (!isNaN(blockDate.getTime()) && blockDate < startOfMonth) return false;
+  }
+
+  return true;
 }
 
 interface CustomerContextType {
@@ -107,7 +119,6 @@ export function CustomerProvider({
 
   const importCustomersHandler = useCallback(
     async (newCustomers: Customer[]) => {
-      // Update local state optimistically so KPIs refresh immediately
       setCustomers((prev) => {
         const emailMap = new Map(prev.map((c) => [c.email, c]));
         for (const nc of newCustomers) {
