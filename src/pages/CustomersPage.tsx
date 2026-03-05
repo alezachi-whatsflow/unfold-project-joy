@@ -179,7 +179,7 @@ export default function CustomersPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    customers.map((customer) => (
+                    filteredCustomers.map((customer) => (
                       <TableRow
                         key={customer.id}
                         className="border-border hover:bg-secondary/50"
