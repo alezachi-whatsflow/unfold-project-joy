@@ -329,6 +329,54 @@ export type Database = {
           },
         ]
       }
+      business_leads: {
+        Row: {
+          address: string | null
+          category: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          phone: string | null
+          place_id: string | null
+          rating: number | null
+          reviews_count: number | null
+          scraped_at: string
+          status: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          place_id?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          scraped_at?: string
+          status?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          place_id?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          scraped_at?: string
+          status?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       checkout_sources: {
         Row: {
           billing_type: Database["public"]["Enums"]["billing_type"]
@@ -550,6 +598,60 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_analysis: {
+        Row: {
+          analyzed_at: string
+          authority_score: number | null
+          avg_engagement_rate: number | null
+          bio: string | null
+          content_strategy_notes: string | null
+          display_name: string | null
+          followers: number | null
+          following: number | null
+          id: string
+          posts_count: number | null
+          profile_image_url: string | null
+          profile_url: string
+          source: string
+          status: string
+          username: string
+        }
+        Insert: {
+          analyzed_at?: string
+          authority_score?: number | null
+          avg_engagement_rate?: number | null
+          bio?: string | null
+          content_strategy_notes?: string | null
+          display_name?: string | null
+          followers?: number | null
+          following?: number | null
+          id?: string
+          posts_count?: number | null
+          profile_image_url?: string | null
+          profile_url: string
+          source?: string
+          status?: string
+          username: string
+        }
+        Update: {
+          analyzed_at?: string
+          authority_score?: number | null
+          avg_engagement_rate?: number | null
+          bio?: string | null
+          content_strategy_notes?: string | null
+          display_name?: string | null
+          followers?: number | null
+          following?: number | null
+          id?: string
+          posts_count?: number | null
+          profile_image_url?: string | null
+          profile_url?: string
+          source?: string
+          status?: string
+          username?: string
+        }
+        Relationships: []
+      }
       revenue_rules: {
         Row: {
           billing_type: Database["public"]["Enums"]["billing_type"] | null
@@ -713,6 +815,54 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      web_scraps: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          description: string | null
+          id: string
+          keywords: string[] | null
+          niche: string | null
+          raw_markdown: string | null
+          scraped_at: string
+          status: string
+          technologies: string[] | null
+          title: string | null
+          url: string
+          value_proposition: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          description?: string | null
+          id?: string
+          keywords?: string[] | null
+          niche?: string | null
+          raw_markdown?: string | null
+          scraped_at?: string
+          status?: string
+          technologies?: string[] | null
+          title?: string | null
+          url: string
+          value_proposition?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          description?: string | null
+          id?: string
+          keywords?: string[] | null
+          niche?: string | null
+          raw_markdown?: string | null
+          scraped_at?: string
+          status?: string
+          technologies?: string[] | null
+          title?: string | null
+          url?: string
+          value_proposition?: string | null
         }
         Relationships: []
       }
