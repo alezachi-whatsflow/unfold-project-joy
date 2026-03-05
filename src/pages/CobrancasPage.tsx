@@ -1,7 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AsaasPaymentsPanel } from "@/components/asaas/AsaasPaymentsPanel";
 import { AsaasDunningPanel } from "@/components/asaas/AsaasDunningPanel";
-import { Receipt, Shield } from "lucide-react";
+import { AsaasBillingManagerPanel } from "@/components/asaas/AsaasBillingManagerPanel";
+import { Receipt, Shield, Send } from "lucide-react";
 
 export default function CobrancasPage() {
   return (
@@ -16,10 +17,14 @@ export default function CobrancasPage() {
       </div>
 
       <Tabs defaultValue="payments" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="payments" className="gap-2 text-xs sm:text-sm">
             <Receipt className="h-4 w-4" />
             Cobranças
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="gap-2 text-xs sm:text-sm">
+            <Send className="h-4 w-4" />
+            Criar Cobranças
           </TabsTrigger>
           <TabsTrigger value="dunning" className="gap-2 text-xs sm:text-sm">
             <Shield className="h-4 w-4" />
@@ -29,6 +34,10 @@ export default function CobrancasPage() {
 
         <TabsContent value="payments" className="mt-6">
           <AsaasPaymentsPanel />
+        </TabsContent>
+
+        <TabsContent value="billing" className="mt-6">
+          <AsaasBillingManagerPanel />
         </TabsContent>
 
         <TabsContent value="dunning" className="mt-6">
