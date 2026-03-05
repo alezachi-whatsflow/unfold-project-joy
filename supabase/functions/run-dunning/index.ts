@@ -3,8 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const ASAAS_SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
+const ASAAS_PRODUCTION_URL = "https://api.asaas.com/v3";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,6 +19,17 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const asaasApiKey = Deno.env.get("ASAAS_API_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Determine environment from body or default to production for cron
+    let environment = "production";
+    try {
+      const body = await req.json();
+      if (body?.environment) environment = body.environment;
+    } catch {
+      // No body (cron call) - use production
+    }
+
+    const baseUrl = environment === "sandbox" ? ASAAS_SANDBOX_URL : ASAAS_PRODUCTION_URL;
 
     // Fetch active dunning rules
     const { data: rules, error: rulesErr } = await supabase
@@ -61,7 +75,7 @@ Deno.serve(async (req) => {
         const step = steps[i];
         if (step.days_after_due !== daysOverdue) continue;
 
-        // Check if already executed
+        // Check if already executed (idempotency)
         const { data: existing } = await supabase
           .from("dunning_executions")
           .select("id")
@@ -78,7 +92,6 @@ Deno.serve(async (req) => {
 
         try {
           if (step.action === "notification" || step.action === "email") {
-            const baseUrl = "https://api.asaas.com/v3";
             const resp = await fetch(`${baseUrl}/notifications`, {
               method: "POST",
               headers: {
@@ -95,11 +108,23 @@ Deno.serve(async (req) => {
             result = await resp.json();
             success = resp.ok;
           } else if (step.action === "sms") {
-            // SMS notification
-            result = { simulated: true, action: "sms", message: step.message };
-            success = true;
+            // SMS via Asaas notification API
+            const resp = await fetch(`${baseUrl}/notifications`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                access_token: asaasApiKey,
+              },
+              body: JSON.stringify({
+                customer: payment.asaas_customer_id,
+                payment: payment.asaas_id,
+                type: "SMS",
+                message: step.message,
+              }),
+            });
+            result = await resp.json();
+            success = resp.ok;
           } else if (step.action === "protest") {
-            const baseUrl = "https://api.asaas.com/v3";
             const resp = await fetch(`${baseUrl}/paymentDunnings`, {
               method: "POST",
               headers: {
@@ -135,7 +160,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ message: "Dunning run complete", processed: totalProcessed }),
+      JSON.stringify({ message: "Dunning run complete", processed: totalProcessed, environment }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

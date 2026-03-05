@@ -8,6 +8,7 @@ import { useAsaas } from "@/contexts/AsaasContext";
 import { callAsaasProxy } from "@/lib/asaasQueries";
 import { toast } from "sonner";
 import { Settings, Webhook, RefreshCw, Shield, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { TenantManagementCard } from "@/components/settings/TenantManagementCard";
 
 export default function SettingsPage() {
   const { environment, setEnvironment, isSyncing, syncAll } = useAsaas();
@@ -74,8 +75,11 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Configurações</h1>
-        <p className="text-sm text-muted-foreground">Configurações do Asaas e da integração</p>
+        <p className="text-sm text-muted-foreground">Configurações do Asaas, empresas e integrações</p>
       </div>
+
+      {/* Tenant Management */}
+      <TenantManagementCard />
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Ambiente */}
