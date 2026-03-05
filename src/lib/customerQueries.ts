@@ -52,13 +52,30 @@ function customerToRow(
 }
 
 export async function fetchCustomers(): Promise<Customer[]> {
-  const { data, error } = await supabase
-    .from("customers")
-    .select("*")
-    .order("nome", { ascending: true });
+  const allData: CustomerRow[] = [];
+  const batchSize = 1000;
+  let offset = 0;
+  let hasMore = true;
 
-  if (error) throw error;
-  return (data as CustomerRow[]).map(rowToCustomer);
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from("customers")
+      .select("*")
+      .order("nome", { ascending: true })
+      .range(offset, offset + batchSize - 1);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      allData.push(...(data as CustomerRow[]));
+      offset += batchSize;
+      hasMore = data.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allData.map(rowToCustomer);
 }
 
 export async function importCustomersBatch(
