@@ -1,14 +1,1 @@
-[functions.instagram-scraper]
-verify_jwt = false
-
-[functions.firecrawl-scrape]
-verify_jwt = false
-
-[functions.generate-rescue-plan]
-verify_jwt = false
-
-[functions.asaas-proxy]
-verify_jwt = false
-
-[functions.asaas-webhook]
-verify_jwt = false
+project_id = "knnwgijcrpbgqhdzmdrp"
