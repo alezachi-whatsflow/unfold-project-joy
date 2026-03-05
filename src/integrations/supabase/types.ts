@@ -427,39 +427,52 @@ export type Database = {
       }
       dunning_rules: {
         Row: {
+          checkout_source_id: string | null
           created_at: string | null
           description: string | null
           id: string
           name: string
           rules: Json
           status: Database["public"]["Enums"]["dunning_status"] | null
+          template_key: string | null
           tenant_id: string
           updated_at: string | null
           version: number | null
         }
         Insert: {
+          checkout_source_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name: string
           rules?: Json
           status?: Database["public"]["Enums"]["dunning_status"] | null
+          template_key?: string | null
           tenant_id: string
           updated_at?: string | null
           version?: number | null
         }
         Update: {
+          checkout_source_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name?: string
           rules?: Json
           status?: Database["public"]["Enums"]["dunning_status"] | null
+          template_key?: string | null
           tenant_id?: string
           updated_at?: string | null
           version?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "dunning_rules_checkout_source_id_fkey"
+            columns: ["checkout_source_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_sources"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dunning_rules_tenant_id_fkey"
             columns: ["tenant_id"]

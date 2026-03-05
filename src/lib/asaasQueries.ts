@@ -232,6 +232,19 @@ export async function fetchWebhookEvents(
   return (data || []) as WebhookEvent[];
 }
 
+// ── Dunning Executions ──
+
+export async function fetchDunningExecutions(ruleId: string) {
+  const { data, error } = await supabase
+    .from("dunning_executions")
+    .select("*")
+    .eq("dunning_rule_id", ruleId)
+    .order("executed_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return data || [];
+}
+
 // ── Dunning Simulation ──
 
 export async function simulateDunning(
