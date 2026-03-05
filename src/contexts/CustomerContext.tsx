@@ -56,6 +56,13 @@ function isActiveInMonth(customer: Customer, month: string): boolean {
   return true;
 }
 
+interface CustomerMonthMetrics {
+  totalCustomers: number;
+  newCustomers: number;
+  churnedCustomers: number;
+  mrr: number;
+}
+
 interface CustomerContextType {
   customers: Customer[];
   activeCustomers: Customer[];
@@ -69,6 +76,8 @@ interface CustomerContextType {
   importCustomers: (customers: Customer[]) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
+  getCustomerMetricsForMonth: (month: string) => CustomerMonthMetrics;
+  getAvailableMonths: () => string[];
 }
 
 const CustomerContext = createContext<CustomerContextType | null>(null);
@@ -153,6 +162,55 @@ export function CustomerProvider({
     [loadCustomers]
   );
 
+  const getCustomerMetricsForMonth = useCallback(
+    (month: string): CustomerMonthMetrics => {
+      const active = customers.filter((c) => isActiveInMonth(c, month));
+      const mrr = active.reduce((sum, c) => sum + c.valorUltimaCobranca, 0);
+
+      // New customers: activated in this month
+      const [year, mon] = month.split("-").map(Number);
+      const newCustomers = customers.filter((c) => {
+        if (!c.dataAtivacao) return false;
+        const d = new Date(c.dataAtivacao);
+        return d.getFullYear() === year && d.getMonth() + 1 === mon;
+      }).length;
+
+      // Churned: cancelled in this month
+      const churnedCustomers = customers.filter((c) => {
+        if (!c.dataCancelado) return false;
+        const d = new Date(c.dataCancelado);
+        return d.getFullYear() === year && d.getMonth() + 1 === mon;
+      }).length;
+
+      return {
+        totalCustomers: active.length,
+        newCustomers,
+        churnedCustomers,
+        mrr,
+      };
+    },
+    [customers]
+  );
+
+  const getAvailableMonths = useCallback((): string[] => {
+    const months = new Set<string>();
+    for (const c of customers) {
+      if (c.dataAtivacao) {
+        const d = new Date(c.dataAtivacao);
+        if (!isNaN(d.getTime())) {
+          months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+        }
+      }
+      if (c.dataCancelado) {
+        const d = new Date(c.dataCancelado);
+        if (!isNaN(d.getTime())) {
+          months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+        }
+      }
+    }
+    return Array.from(months).sort();
+  }, [customers]);
+
   return (
     <CustomerContext.Provider
       value={{
@@ -168,6 +226,8 @@ export function CustomerProvider({
         importCustomers: importCustomersHandler,
         deleteCustomer: deleteCustomerHandler,
         refetch: loadCustomers,
+        getCustomerMetricsForMonth,
+        getAvailableMonths,
       }}
     >
       {children}

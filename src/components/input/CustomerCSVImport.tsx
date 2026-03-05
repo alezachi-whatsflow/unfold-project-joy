@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { useCustomers } from "@/contexts/CustomerContext";
+import { useFinancial } from "@/contexts/FinancialContext";
 import { Customer } from "@/types/customers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Users, CheckCircle } from "lucide-react";
+import { Upload, Users, CheckCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 function normalizeHeader(header: string): string {
@@ -121,7 +122,8 @@ function parseCustomerCSV(csv: string): Customer[] {
 }
 
 export function CustomerCSVImport() {
-  const { importCustomers } = useCustomers();
+  const { importCustomers, customers, getCustomerMetricsForMonth, getAvailableMonths } = useCustomers();
+  const { entries, importEntries } = useFinancial();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imported, setImported] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -156,6 +158,47 @@ export function CustomerCSVImport() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const syncToFinancial = () => {
+    if (customers.length === 0) {
+      toast.error("Nenhum cliente importado para sincronizar.");
+      return;
+    }
+
+    const months = getAvailableMonths();
+    if (months.length === 0) {
+      toast.error("Nenhum mês disponível nos dados de clientes.");
+      return;
+    }
+
+    const updatedEntries = months.map((month) => {
+      const metrics = getCustomerMetricsForMonth(month);
+      const existing = entries.find((e) => e.month === month);
+      return {
+        id: existing?.id || Math.random().toString(36).substring(2, 11),
+        month,
+        revenue: {
+          mrr: metrics.mrr || existing?.revenue.mrr || 0,
+          newMRR: existing?.revenue.newMRR || 0,
+          expansionMRR: existing?.revenue.expansionMRR || 0,
+          churnedMRR: existing?.revenue.churnedMRR || 0,
+          otherRevenue: existing?.revenue.otherRevenue || 0,
+        },
+        costs: existing?.costs || { csp: 0, mkt: 0, sal: 0, ga: 0, fin: 0, tax: 0, revDeductions: 0 },
+        customers: {
+          totalCustomers: metrics.totalCustomers,
+          newCustomers: metrics.newCustomers,
+          churnedCustomers: metrics.churnedCustomers,
+        },
+        cashBalance: existing?.cashBalance || 0,
+      };
+    });
+
+    importEntries(updatedEntries);
+    toast.success(`Dados de clientes sincronizados para ${months.length} meses!`);
+  };
+
+  const hasCustomers = customers.length > 0;
+
   return (
     <Card className="border-border">
       <CardHeader className="pb-3">
@@ -184,30 +227,45 @@ export function CustomerCSVImport() {
             className="hidden"
           />
 
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            disabled={isImporting}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {imported ? (
-              <>
-                <CheckCircle className="h-4 w-4 text-primary" />
-                Importado!
-              </>
-            ) : isImporting ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                Importando...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" />
-                Importar Clientes
-              </>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={isImporting}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {imported ? (
+                <>
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  Importado!
+                </>
+              ) : isImporting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  Importando...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Importar Clientes
+                </>
+              )}
+            </Button>
+
+            {hasCustomers && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={syncToFinancial}
+              >
+                <RefreshCw className="h-3 w-3" />
+                Sincronizar com Financeiro
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
