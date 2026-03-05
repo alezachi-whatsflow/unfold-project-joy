@@ -14,7 +14,621 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      asaas_connections: {
+        Row: {
+          api_key_hint: string | null
+          created_at: string | null
+          environment: Database["public"]["Enums"]["asaas_environment"]
+          id: string
+          is_active: boolean | null
+          tenant_id: string
+          updated_at: string | null
+          webhook_token: string | null
+        }
+        Insert: {
+          api_key_hint?: string | null
+          created_at?: string | null
+          environment?: Database["public"]["Enums"]["asaas_environment"]
+          id?: string
+          is_active?: boolean | null
+          tenant_id: string
+          updated_at?: string | null
+          webhook_token?: string | null
+        }
+        Update: {
+          api_key_hint?: string | null
+          created_at?: string | null
+          environment?: Database["public"]["Enums"]["asaas_environment"]
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string
+          updated_at?: string | null
+          webhook_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_connections_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asaas_customers: {
+        Row: {
+          additional_emails: string | null
+          address: Json | null
+          asaas_id: string
+          cpf_cnpj: string | null
+          created_at: string | null
+          email: string | null
+          external_reference: string | null
+          id: string
+          mobile_phone: string | null
+          name: string
+          phone: string | null
+          raw_data: Json | null
+          synced_at: string | null
+          tenant_id: string
+        }
+        Insert: {
+          additional_emails?: string | null
+          address?: Json | null
+          asaas_id: string
+          cpf_cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          external_reference?: string | null
+          id?: string
+          mobile_phone?: string | null
+          name: string
+          phone?: string | null
+          raw_data?: Json | null
+          synced_at?: string | null
+          tenant_id: string
+        }
+        Update: {
+          additional_emails?: string | null
+          address?: Json | null
+          asaas_id?: string
+          cpf_cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          external_reference?: string | null
+          id?: string
+          mobile_phone?: string | null
+          name?: string
+          phone?: string | null
+          raw_data?: Json | null
+          synced_at?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asaas_expenses: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          date: string
+          description: string
+          id: string
+          is_recurring: boolean | null
+          recurrence_period: string | null
+          tenant_id: string
+          value: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          date: string
+          description: string
+          id?: string
+          is_recurring?: boolean | null
+          recurrence_period?: string | null
+          tenant_id: string
+          value: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string
+          id?: string
+          is_recurring?: boolean | null
+          recurrence_period?: string | null
+          tenant_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_expenses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asaas_payments: {
+        Row: {
+          asaas_customer_id: string | null
+          asaas_id: string
+          bank_slip_url: string | null
+          billing_type: Database["public"]["Enums"]["billing_type"]
+          checkout_source_id: string | null
+          confirmed_date: string | null
+          created_at: string | null
+          customer_id: string | null
+          description: string | null
+          due_date: string
+          external_reference: string | null
+          id: string
+          invoice_url: string | null
+          net_value: number | null
+          payment_date: string | null
+          pix_copy_paste: string | null
+          pix_qr_code: string | null
+          raw_data: Json | null
+          salesperson_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          synced_at: string | null
+          tenant_id: string
+          updated_at: string | null
+          value: number
+        }
+        Insert: {
+          asaas_customer_id?: string | null
+          asaas_id: string
+          bank_slip_url?: string | null
+          billing_type?: Database["public"]["Enums"]["billing_type"]
+          checkout_source_id?: string | null
+          confirmed_date?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          due_date: string
+          external_reference?: string | null
+          id?: string
+          invoice_url?: string | null
+          net_value?: number | null
+          payment_date?: string | null
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
+          raw_data?: Json | null
+          salesperson_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          synced_at?: string | null
+          tenant_id: string
+          updated_at?: string | null
+          value: number
+        }
+        Update: {
+          asaas_customer_id?: string | null
+          asaas_id?: string
+          bank_slip_url?: string | null
+          billing_type?: Database["public"]["Enums"]["billing_type"]
+          checkout_source_id?: string | null
+          confirmed_date?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          due_date?: string
+          external_reference?: string | null
+          id?: string
+          invoice_url?: string | null
+          net_value?: number | null
+          payment_date?: string | null
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
+          raw_data?: Json | null
+          salesperson_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          synced_at?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_payments_checkout_source_id_fkey"
+            columns: ["checkout_source_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asaas_payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "asaas_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asaas_payments_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "sales_people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asaas_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asaas_splits: {
+        Row: {
+          created_at: string | null
+          fixed_value: number | null
+          id: string
+          payment_id: string
+          percent_value: number | null
+          salesperson_id: string | null
+          status: string | null
+          tenant_id: string
+          total_value: number | null
+          wallet_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          fixed_value?: number | null
+          id?: string
+          payment_id: string
+          percent_value?: number | null
+          salesperson_id?: string | null
+          status?: string | null
+          tenant_id: string
+          total_value?: number | null
+          wallet_id: string
+        }
+        Update: {
+          created_at?: string | null
+          fixed_value?: number | null
+          id?: string
+          payment_id?: string
+          percent_value?: number | null
+          salesperson_id?: string | null
+          status?: string | null
+          tenant_id?: string
+          total_value?: number | null
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_splits_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "asaas_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asaas_splits_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "sales_people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asaas_splits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkout_sources: {
+        Row: {
+          billing_type: Database["public"]["Enums"]["billing_type"]
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          billing_type: Database["public"]["Enums"]["billing_type"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          billing_type?: Database["public"]["Enums"]["billing_type"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_sources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dunning_executions: {
+        Row: {
+          action: string
+          dunning_rule_id: string
+          executed_at: string | null
+          id: string
+          payment_id: string
+          result: Json | null
+          step_index: number
+          success: boolean | null
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          dunning_rule_id: string
+          executed_at?: string | null
+          id?: string
+          payment_id: string
+          result?: Json | null
+          step_index: number
+          success?: boolean | null
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          dunning_rule_id?: string
+          executed_at?: string | null
+          id?: string
+          payment_id?: string
+          result?: Json | null
+          step_index?: number
+          success?: boolean | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_executions_dunning_rule_id_fkey"
+            columns: ["dunning_rule_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dunning_executions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "asaas_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dunning_executions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dunning_rules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          rules: Json
+          status: Database["public"]["Enums"]["dunning_status"] | null
+          tenant_id: string
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          rules?: Json
+          status?: Database["public"]["Enums"]["dunning_status"] | null
+          tenant_id: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          rules?: Json
+          status?: Database["public"]["Enums"]["dunning_status"] | null
+          tenant_id?: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_rules: {
+        Row: {
+          billing_type: Database["public"]["Enums"]["billing_type"] | null
+          checkout_source_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          revenue_category: string | null
+          tenant_id: string
+        }
+        Insert: {
+          billing_type?: Database["public"]["Enums"]["billing_type"] | null
+          checkout_source_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          revenue_category?: string | null
+          tenant_id: string
+        }
+        Update: {
+          billing_type?: Database["public"]["Enums"]["billing_type"] | null
+          checkout_source_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          revenue_category?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_rules_checkout_source_id_fkey"
+            columns: ["checkout_source_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_people: {
+        Row: {
+          asaas_wallet_id: string | null
+          commission_percent: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          asaas_wallet_id?: string | null
+          commission_percent?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          asaas_wallet_id?: string | null
+          commission_percent?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_people_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string | null
+          document: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          asaas_event_id: string | null
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean | null
+          processed_at: string | null
+          received_at: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          asaas_event_id?: string | null
+          error?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          received_at?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          asaas_event_id?: string | null
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          received_at?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +637,24 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      asaas_environment: "sandbox" | "production"
+      billing_type: "BOLETO" | "CREDIT_CARD" | "PIX" | "UNDEFINED"
+      dunning_status: "draft" | "active" | "paused" | "completed"
+      payment_status:
+        | "PENDING"
+        | "RECEIVED"
+        | "CONFIRMED"
+        | "OVERDUE"
+        | "REFUNDED"
+        | "RECEIVED_IN_CASH"
+        | "REFUND_REQUESTED"
+        | "REFUND_IN_PROGRESS"
+        | "CHARGEBACK_REQUESTED"
+        | "CHARGEBACK_DISPUTE"
+        | "AWAITING_CHARGEBACK_REVERSAL"
+        | "DUNNING_REQUESTED"
+        | "DUNNING_RECEIVED"
+        | "AWAITING_RISK_ANALYSIS"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +781,26 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      asaas_environment: ["sandbox", "production"],
+      billing_type: ["BOLETO", "CREDIT_CARD", "PIX", "UNDEFINED"],
+      dunning_status: ["draft", "active", "paused", "completed"],
+      payment_status: [
+        "PENDING",
+        "RECEIVED",
+        "CONFIRMED",
+        "OVERDUE",
+        "REFUNDED",
+        "RECEIVED_IN_CASH",
+        "REFUND_REQUESTED",
+        "REFUND_IN_PROGRESS",
+        "CHARGEBACK_REQUESTED",
+        "CHARGEBACK_DISPUTE",
+        "AWAITING_CHARGEBACK_REVERSAL",
+        "DUNNING_REQUESTED",
+        "DUNNING_RECEIVED",
+        "AWAITING_RISK_ANALYSIS",
+      ],
+    },
   },
 } as const
