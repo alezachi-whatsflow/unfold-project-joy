@@ -15,8 +15,8 @@ const PLACEHOLDERS: Record<Exclude<SourceType, "website">, { icon: React.Element
   },
   google_maps: {
     icon: MapPin,
-    title: "Google Maps Leads",
-    description: "Extração de negócios locais, avaliações e dados de contato. Requer Google Places API ou Apify.",
+    title: "Perfil da Empresa no Google",
+    description: "Análise de presença local, avaliações e dados de contato via Google Maps.",
   },
 };
 
