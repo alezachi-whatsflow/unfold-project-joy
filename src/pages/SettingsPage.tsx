@@ -73,7 +73,9 @@ export default function SettingsPage() {
     }
   };
 
-  useEffect(() => { loadWebhooks(); }, [environment]);
+  useEffect(() => {
+    loadWebhooks().catch((err) => console.error("Webhook load effect error:", err));
+  }, [environment]);
 
   return (
     <div className="space-y-6">
