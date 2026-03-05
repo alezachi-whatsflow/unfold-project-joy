@@ -1,4 +1,4 @@
-import { LayoutDashboard, PenLine, Users, Package, Radar } from "lucide-react";
+import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -14,6 +14,7 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Inserir Dados", url: "/input", icon: PenLine },
+  { title: "Cobranças", url: "/cobrancas", icon: Receipt },
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Produtos", url: "/products", icon: Package },
   { title: "Intelligence", url: "/intelligence", icon: Radar },
