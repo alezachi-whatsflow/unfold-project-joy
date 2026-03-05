@@ -29,12 +29,15 @@ export function analyzeLegalData(rawMarkdown: string | null, url: string): Legal
     impacto_meta: "Bloqueante para verificação",
   });
 
-  // Razão Social
-  const razaoMatch = md.match(/(?:razão\s*social|razao\s*social)[:\s]*([^\n]{5,80})/i);
+  // Razão Social — match explicit label OR company suffixes (LTDA, ME, S.A., EIRELI, etc.)
+  const razaoLabelMatch = md.match(/(?:razão\s*social|razao\s*social)[:\s]*([^\n]{5,80})/i);
+  const razaoSuffixMatch = md.match(/([A-ZÀ-Ú][A-Za-zÀ-ú\s&.'-]{3,60}(?:\s(?:LTDA|ltda|Ltda|ME|me|Me|S[\.\s]*A|SA|sa|EIRELI|eireli|EPP|epp|SLU|slu|EMPRESARIAL|S\/S|SS)))/);
+  const razaoMatch = razaoLabelMatch || razaoSuffixMatch;
+  const razaoValue = razaoLabelMatch?.[1]?.trim() || razaoSuffixMatch?.[1]?.trim() || "";
   itens.push({
     dado: "Razão Social",
     status: razaoMatch ? "presente" : "ausente",
-    valor_encontrado: razaoMatch?.[1]?.trim() || "",
+    valor_encontrado: razaoValue,
     pagina_encontrada: razaoMatch ? "Conteúdo da página" : "",
     alerta: !razaoMatch ? "Razão Social não encontrada — importante para verificação Meta" : "",
     acao_corretiva: !razaoMatch ? "Adicione a Razão Social no rodapé junto ao CNPJ" : "",
