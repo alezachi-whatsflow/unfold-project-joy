@@ -78,7 +78,16 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    loadWebhooks().catch((err) => console.error("Webhook load effect error:", err));
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await loadWebhooks();
+      } catch (err) {
+        if (!cancelled) console.warn("[Settings] Effect loadWebhooks error:", err);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
   }, [environment]);
 
   return (
