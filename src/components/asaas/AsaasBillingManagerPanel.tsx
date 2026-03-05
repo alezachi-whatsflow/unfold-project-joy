@@ -17,15 +17,20 @@ import {
 import {
   FileText, Send, Settings2, Users, Calendar,
   CreditCard, QrCode, Receipt, Loader2, Check, AlertCircle,
-  Zap, MousePointerClick,
+  Zap, MousePointerClick, Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Sub-components ──
 
 import { BillingConfigCard } from "./billing/BillingConfigCard";
 import { CustomerSelectionCard } from "./billing/CustomerSelectionCard";
 import { BillingResultsCard } from "./billing/BillingResultsCard";
+import { SplitConfigCard, DEFAULT_SPLIT, type SplitConfig } from "./billing/SplitConfigCard";
+import { PaymentArtifactsDialog } from "./billing/PaymentArtifactsDialog";
+
+const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 export interface BillingConfig {
   billingType: "BOLETO" | "CREDIT_CARD" | "PIX";
@@ -58,6 +63,8 @@ export interface CreationResult {
   message: string;
   invoiceUrl?: string;
   bankSlipUrl?: string;
+  pixQrCodeImage?: string;
+  pixCopyPaste?: string;
 }
 
 type BillingMode = "manual" | "automatic";
