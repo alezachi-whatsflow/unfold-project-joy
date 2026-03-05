@@ -11,13 +11,13 @@ function normalizeHeader(header: string): string {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove accents
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\/]/g, "_")
     .replace(/\s+/g, "_");
 }
 
 function parseDate(value: string): string {
   if (!value || value === "-") return "";
-  // Handle DD/MM/YYYY format
   const parts = value.split("/");
   if (parts.length === 3) {
     const [day, month, year] = parts;
@@ -79,13 +79,20 @@ function parseCustomerCSV(csv: string): Customer[] {
       return parseFloat(val.replace(/[^\d.,\-]/g, "").replace(",", ".")) || 0;
     };
 
-    const nome = get("nome");
+    // Support both "NOME" and "EMPRESA / TITULAR"
+    const nome = get("empresa") || get("titular") || get("nome");
     const email = get("email");
     if (!nome && !email) continue;
 
-    // Support both "data_ativacao"/"data_desativacao" and "data_desbloqueio"/"data_bloqueio"
-    const rawAtivacao = get("data_ativacao") || get("data_desbloqueio");
-    const rawDesativacao = get("data_desativacao") || get("data_bloqueio");
+    // Date fields - support both old and new column names
+    const rawAtivacao = get("ativacao") || get("data_ativacao");
+    const rawCancelado = get("cancelado") || get("data_cancelado");
+    const rawBloqueio = get("bloqueio");
+    const rawDesbloqueio = get("desbloqueio");
+    const rawVencimento = get("vencimento") || get("data_cobranca") || get("data_cobr");
+
+    // Value field - support both "VALOR COBRANÇA" and "VALOR ÚLTIMA COBRANÇA"
+    const valor = getNum("valor_cobranca") || getNum("valor_ultima_cobranca");
 
     customers.push({
       id: Math.random().toString(36).substring(2, 11),
@@ -94,8 +101,10 @@ function parseCustomerCSV(csv: string): Customer[] {
       email,
       status: get("status") || "Ativo",
       dataAtivacao: parseDate(rawAtivacao),
-      dataDesativacao: parseDate(rawDesativacao) || null,
-      dataCobranca: parseDate(get("data_cobr")) || null,
+      dataCancelado: parseDate(rawCancelado) || null,
+      dataBloqueio: parseDate(rawBloqueio) || null,
+      dataDesbloqueio: parseDate(rawDesbloqueio) || null,
+      dataVencimento: parseDate(rawVencimento) || null,
       dispositivosOficial: getNum("dispositivos_oficial"),
       dispositivosNaoOficial: getNum("dispositivos_nao_oficial"),
       atendentes: getNum("atendentes"),
@@ -104,7 +113,7 @@ function parseCustomerCSV(csv: string): Customer[] {
       receita: get("receita"),
       tipoPagamento: get("tipo_pagamento"),
       condicao: get("condicao"),
-      valorUltimaCobranca: getNum("valor_ultima_cobranca"),
+      valorUltimaCobranca: valor,
     });
   }
 
@@ -158,13 +167,12 @@ export function CustomerCSVImport() {
       <CardContent>
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Importe a lista de clientes via CSV. O arquivo deve conter as
-            colunas:{" "}
+            Importe a lista de clientes via CSV. Colunas suportadas:{" "}
             <code className="rounded bg-secondary px-1 py-0.5 text-[10px]">
-              WHITELABEL, NOME, EMAIL, STATUS, DATA BLOQUEIO, DATA
-              DESBLOQUEIO, DATA COBRANÇA, DISP. OFICIAL, DISP. NÃO OFICIAL,
-              ATENDENTES, ADICIONAL, CHECKOUT, RECEITA, TIPO PAGAMENTO,
-              CONDIÇÃO, VALOR ÚLTIMA COBRANÇA
+              WHITELABEL, EMPRESA/TITULAR, EMAIL, STATUS, ATIVAÇÃO,
+              CANCELADO, BLOQUEIO, DESBLOQUEIO, VENCIMENTO, DISP. OFICIAL,
+              DISP. NÃO OFICIAL, ATENDENTES, ADICIONAL, CHECKOUT, RECEITA,
+              TIPO PAGAMENTO, CONDIÇÃO, VALOR COBRANÇA
             </code>
           </p>
 

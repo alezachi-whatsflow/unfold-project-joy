@@ -9,8 +9,10 @@ function rowToCustomer(row: CustomerRow): Customer {
     email: row.email,
     status: row.status,
     dataAtivacao: row.data_ativacao,
-    dataDesativacao: row.data_desativacao,
-    dataCobranca: row.data_cobranca,
+    dataCancelado: row.data_cancelado,
+    dataBloqueio: row.data_bloqueio,
+    dataDesbloqueio: row.data_desbloqueio,
+    dataVencimento: row.data_vencimento,
     dispositivosOficial: row.dispositivos_oficial,
     dispositivosNaoOficial: row.dispositivos_nao_oficial,
     atendentes: row.atendentes,
@@ -33,8 +35,10 @@ function customerToRow(
     email: customer.email,
     status: customer.status,
     data_ativacao: customer.dataAtivacao,
-    data_desativacao: customer.dataDesativacao,
-    data_cobranca: customer.dataCobranca,
+    data_cancelado: customer.dataCancelado,
+    data_bloqueio: customer.dataBloqueio,
+    data_desbloqueio: customer.dataDesbloqueio,
+    data_vencimento: customer.dataVencimento,
     dispositivos_oficial: customer.dispositivosOficial,
     dispositivos_nao_oficial: customer.dispositivosNaoOficial,
     atendentes: customer.atendentes,
@@ -60,7 +64,6 @@ export async function fetchCustomers(): Promise<Customer[]> {
 export async function importCustomersBatch(
   customers: Customer[]
 ): Promise<void> {
-  // Deduplicate by email – keep the last occurrence (most recent in CSV)
   const emailMap = new Map<string, Customer>();
   for (const c of customers) {
     emailMap.set(c.email.toLowerCase(), c);
@@ -72,7 +75,6 @@ export async function importCustomersBatch(
     updated_at: new Date().toISOString(),
   }));
 
-  // Batch in chunks of 500 to avoid payload limits
   const CHUNK_SIZE = 500;
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
     const chunk = rows.slice(i, i + CHUNK_SIZE);
