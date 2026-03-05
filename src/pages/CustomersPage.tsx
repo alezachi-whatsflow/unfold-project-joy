@@ -42,6 +42,9 @@ export default function CustomersPage() {
     isLoading,
   } = useCustomers();
 
+  const { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount } =
+    useCustomerFilters(customers);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
