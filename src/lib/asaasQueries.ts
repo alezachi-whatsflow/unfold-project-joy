@@ -25,7 +25,15 @@ export async function callAsaasProxy(params: {
   const { data, error } = await supabase.functions.invoke("asaas-proxy", {
     body: params,
   });
-  if (error) throw error;
+  if (error) {
+    const message = typeof error === "object" && error !== null && "message" in error
+      ? (error as any).message
+      : String(error);
+    throw new Error(message || "Asaas proxy error");
+  }
+  if (data && data.error) {
+    throw new Error(data.error + (data.details ? `: ${JSON.stringify(data.details)}` : ""));
+  }
   return data;
 }
 
