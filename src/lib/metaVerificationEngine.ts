@@ -152,12 +152,15 @@ function analyzeBusinessVerification(markdown: string, domain: string, siteTitle
     tipo: phones.length > 0 ? "corporativo" : "pessoal",
   };
 
-  // Razão Social heuristic
-  const razaoMatch = markdown.match(/(?:razão\s*social|razao\s*social)[:\s]*([^\n]{5,80})/i);
+  // Razão Social — explicit label OR company suffix patterns (LTDA, ME, S.A., EIRELI, etc.)
+  const razaoLabelMatch = markdown.match(/(?:razão\s*social|razao\s*social)[:\s]*([^\n]{5,80})/i);
+  const razaoSuffixMatch = markdown.match(/([A-ZÀ-Ú][A-Za-zÀ-ú\s&.'-]{3,60}(?:\s(?:LTDA|ltda|Ltda|ME|me|Me|S[\.\s]*A|SA|sa|EIRELI|eireli|EPP|epp|SLU|slu|EMPRESARIAL|S\/S|SS)))/);
+  const razaoFound = razaoLabelMatch || razaoSuffixMatch;
+  const razaoVal = razaoLabelMatch?.[1]?.trim() || razaoSuffixMatch?.[1]?.trim() || "";
   const razaoSocial: LegalDataItem = {
-    encontrado: !!razaoMatch,
-    valor: razaoMatch?.[1]?.trim() || "",
-    localizacao: razaoMatch ? "Detectado no conteúdo" : "",
+    encontrado: !!razaoFound,
+    valor: razaoVal,
+    localizacao: razaoFound ? "Detectado no conteúdo" : "",
   };
 
   // Address heuristic
