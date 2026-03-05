@@ -56,6 +56,13 @@ function isActiveInMonth(customer: Customer, month: string): boolean {
   return true;
 }
 
+interface CustomerMonthMetrics {
+  totalCustomers: number;
+  newCustomers: number;
+  churnedCustomers: number;
+  mrr: number;
+}
+
 interface CustomerContextType {
   customers: Customer[];
   activeCustomers: Customer[];
@@ -69,6 +76,8 @@ interface CustomerContextType {
   importCustomers: (customers: Customer[]) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
+  getCustomerMetricsForMonth: (month: string) => CustomerMonthMetrics;
+  getAvailableMonths: () => string[];
 }
 
 const CustomerContext = createContext<CustomerContextType | null>(null);
