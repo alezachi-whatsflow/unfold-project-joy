@@ -469,6 +469,74 @@ export type Database = {
           },
         ]
       }
+      payment_dunnings: {
+        Row: {
+          asaas_payment_dunning_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          payment_id: string | null
+          simulated: boolean | null
+          status: string | null
+          tenant_id: string
+        }
+        Insert: {
+          asaas_payment_dunning_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          payment_id?: string | null
+          simulated?: boolean | null
+          status?: string | null
+          tenant_id: string
+        }
+        Update: {
+          asaas_payment_dunning_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          payment_id?: string | null
+          simulated?: boolean | null
+          status?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_dunnings_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "asaas_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       revenue_rules: {
         Row: {
           billing_type: Database["public"]["Enums"]["billing_type"] | null
@@ -557,6 +625,50 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          related_payment_id: string | null
+          status: string | null
+          tenant_id: string
+          type: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          related_payment_id?: string | null
+          status?: string | null
+          tenant_id: string
+          type?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          related_payment_id?: string | null
+          status?: string | null
+          tenant_id?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_related_payment_id_fkey"
+            columns: ["related_payment_id"]
+            isOneToOne: false
+            referencedRelation: "asaas_payments"
             referencedColumns: ["id"]
           },
         ]
