@@ -1,5 +1,6 @@
 import { PERIOD_OPTIONS, AnalysisPeriod } from "@/contexts/FinancialContext";
 import { useEnrichedMetrics } from "@/hooks/useEnrichedMetrics";
+import { useAsaas } from "@/contexts/AsaasContext";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { CostBreakdownChart } from "@/components/dashboard/CostBreakdownChart";
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import {
   DollarSign,
@@ -38,7 +40,12 @@ import {
   Percent,
   PiggyBank,
   CalendarRange,
+  CreditCard,
+  QrCode,
+  FileText,
+  AlertTriangle,
 } from "lucide-react";
+import { BILLING_TYPE_LABELS } from "@/types/asaas";
 
 // Tooltip descriptions for each metric
 const TOOLTIPS = {
