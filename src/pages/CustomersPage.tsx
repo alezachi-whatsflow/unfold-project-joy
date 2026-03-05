@@ -172,10 +172,10 @@ export default function CustomersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customers.length === 0 ? (
+                  {filteredCustomers.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={14} className="text-center text-sm text-muted-foreground py-8">
-                        Nenhum cliente importado. Use o botão ao lado para importar um CSV.
+                        {customers.length === 0 ? "Nenhum cliente importado. Use o botão ao lado para importar um CSV." : "Nenhum cliente encontrado com os filtros aplicados."}
                       </TableCell>
                     </TableRow>
                   ) : (
