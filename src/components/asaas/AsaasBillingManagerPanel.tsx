@@ -72,10 +72,13 @@ type BillingMode = "manual" | "automatic";
 export function AsaasBillingManagerPanel() {
   const { customers, environment } = useAsaas();
   const [config, setConfig] = useState<BillingConfig>(DEFAULT_CONFIG);
+  const [split, setSplit] = useState<SplitConfig>(DEFAULT_SPLIT);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [results, setResults] = useState<CreationResult[]>([]);
   const [mode, setMode] = useState<BillingMode>("manual");
+  const [artifactResult, setArtifactResult] = useState<CreationResult | null>(null);
+  const [artifactOpen, setArtifactOpen] = useState(false);
 
   const getDueDate = () => {
     const date = new Date();
