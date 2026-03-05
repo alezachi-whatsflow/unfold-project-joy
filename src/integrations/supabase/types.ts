@@ -688,22 +688,28 @@ export type Database = {
       }
       tenants: {
         Row: {
+          cpf_cnpj: string | null
           created_at: string | null
           document: string | null
+          email: string | null
           id: string
           name: string
           updated_at: string | null
         }
         Insert: {
+          cpf_cnpj?: string | null
           created_at?: string | null
           document?: string | null
+          email?: string | null
           id?: string
           name: string
           updated_at?: string | null
         }
         Update: {
+          cpf_cnpj?: string | null
           created_at?: string | null
           document?: string | null
+          email?: string | null
           id?: string
           name?: string
           updated_at?: string | null
