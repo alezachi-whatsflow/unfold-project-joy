@@ -1,4 +1,4 @@
-import { LayoutDashboard, PenLine, Users, Package, Radar } from "lucide-react";
+import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
