@@ -94,6 +94,7 @@ export default function DashboardPage() {
     customerMRR,
     activeCount,
   } = useEnrichedMetrics();
+  const { stats } = useAsaas();
 
   if (isLoading) {
     return (
