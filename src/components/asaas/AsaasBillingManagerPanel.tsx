@@ -260,7 +260,10 @@ export function AsaasBillingManagerPanel() {
 
       {/* Configuration */}
       <div className={`grid gap-6 ${mode === "manual" ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
-        <BillingConfigCard config={config} setConfig={setConfig} getDueDate={getDueDate} />
+        <div className="space-y-6">
+          <BillingConfigCard config={config} setConfig={setConfig} getDueDate={getDueDate} />
+          <SplitConfigCard split={split} setSplit={setSplit} />
+        </div>
 
         {mode === "manual" && (
           <CustomerSelectionCard
@@ -280,6 +283,7 @@ export function AsaasBillingManagerPanel() {
               <p className="text-sm font-medium">
                 Criar {targetCustomerIds.length} cobrança(s) via{" "}
                 {config.billingType === "BOLETO" ? "Boleto" : config.billingType === "PIX" ? "Pix" : "Cartão"}
+                {split.enabled && " + Split"}
               </p>
               <p className="text-[10px] text-muted-foreground">
                 Valor: R$ {config.value || "0,00"} cada • Vencimento: {getDueDate()} • Modo: {mode === "automatic" ? "Automático" : "Manual"} • Ambiente: {environment}
@@ -307,7 +311,19 @@ export function AsaasBillingManagerPanel() {
       </Card>
 
       {/* Results */}
-      {results.length > 0 && <BillingResultsCard results={results} />}
+      {results.length > 0 && (
+        <BillingResultsCard
+          results={results}
+          onViewArtifacts={(r) => { setArtifactResult(r); setArtifactOpen(true); }}
+        />
+      )}
+
+      {/* Artifacts Dialog */}
+      <PaymentArtifactsDialog
+        open={artifactOpen}
+        onOpenChange={setArtifactOpen}
+        result={artifactResult}
+      />
     </div>
   );
 }
