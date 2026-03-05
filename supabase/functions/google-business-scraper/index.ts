@@ -83,7 +83,11 @@ serve(async (req) => {
     console.log("ownerUpdates:", Array.isArray(place.ownerUpdates), "count:", place.ownerUpdates?.length, "sample:", JSON.stringify(place.ownerUpdates?.[0])?.substring(0, 300));
     console.log("Has reviews:", Array.isArray(place.reviews), "count:", place.reviews?.length);
     console.log("Description:", place.description);
-    console.log("AdditionalInfo keys:", place.additionalInfo ? Object.keys(place.additionalInfo).join(", ") : "none");
+    console.log("AdditionalInfo:", JSON.stringify(place.additionalInfo)?.substring(0, 500));
+    console.log("orderOnline:", JSON.stringify(place.orderOnline)?.substring(0, 300));
+    console.log("subTitle:", place.subTitle);
+    console.log("imagesCount:", place.imagesCount);
+    console.log("imageCategories:", JSON.stringify(place.imageCategories)?.substring(0, 300));
 
     // Extract photos count from multiple possible sources
     const imageUrls: string[] = place.imageUrls || place.images || [];
