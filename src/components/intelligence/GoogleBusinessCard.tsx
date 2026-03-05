@@ -1,4 +1,4 @@
-import { MapPin, Star, Phone, Globe, Clock, Image, MessageSquare, ExternalLink, Building2, ShoppingBag, Rss, CheckCircle2, XCircle, Instagram } from "lucide-react";
+import { MapPin, Star, Phone, Globe, Clock, Image, MessageSquare, ExternalLink, Building2, ShoppingBag, Rss, CheckCircle2, XCircle, Instagram, Info, CreditCard, Wifi } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,10 @@ interface PostItem {
   text: string;
   date: string | null;
   image_url: string | null;
+}
+
+interface AdditionalInfoEntry {
+  [key: string]: boolean;
 }
 
 export interface GoogleBusinessData {
@@ -41,6 +45,9 @@ export interface GoogleBusinessData {
   has_products?: boolean;
   has_recent_posts?: boolean;
   social_profiles?: any;
+  additional_info?: Record<string, AdditionalInfoEntry[]> | null;
+  image_categories?: string[] | null;
+  people_also_search?: { title: string; category: string }[];
 }
 
 interface GoogleBusinessCardProps {
@@ -101,9 +108,27 @@ export function calculateGMNScore(rating: number | null, reviewsCount: number | 
   return Math.min(Math.round(score * 10) / 10, 10);
 }
 
+/** Extract flat list of active attributes from additionalInfo */
+function extractAttributes(additionalInfo: Record<string, AdditionalInfoEntry[]> | null | undefined): { category: string; items: string[] }[] {
+  if (!additionalInfo) return [];
+  return Object.entries(additionalInfo)
+    .map(([category, entries]) => {
+      const items = entries
+        .flatMap((entry) =>
+          Object.entries(entry)
+            .filter(([, val]) => val === true)
+            .map(([key]) => key)
+        );
+      return { category, items };
+    })
+    .filter((g) => g.items.length > 0);
+}
+
 export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
   const products = business.products || [];
   const posts = business.posts || [];
+  const attributes = extractAttributes(business.additional_info);
+  const hasAttributes = attributes.length > 0;
 
   return (
     <Card className="border-border bg-card">
@@ -154,8 +179,8 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
 
         {/* Profile Completeness Indicators */}
         <div className="rounded-lg bg-secondary/50 p-3 grid grid-cols-2 gap-2">
-          <StatusBadge active={!!business.has_products || products.length > 0} label="Produtos/Serviços" />
-          <StatusBadge active={!!business.has_recent_posts || posts.length > 0} label="Feed Atualizado" />
+          <StatusBadge active={products.length > 0 || hasAttributes} label="Produtos/Serviços" />
+          <StatusBadge active={posts.length > 0} label="Feed Atualizado" />
           <StatusBadge active={!!business.website} label="Website" />
           <StatusBadge active={!!business.phone} label="Telefone" />
           <StatusBadge active={business.photos_count > 0} label={`${business.photos_count} Fotos`} />
@@ -189,17 +214,41 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
         {/* Description */}
         {business.description && (
           <div className="rounded-lg bg-secondary/50 p-3">
-            <p className="text-xs text-muted-foreground leading-relaxed">{business.description}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-4">{business.description}</p>
+          </div>
+        )}
+
+        {/* Business Attributes from additionalInfo */}
+        {hasAttributes && (
+          <div className="space-y-2">
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <Info className="h-3.5 w-3.5" />
+              Atributos do Negócio
+            </h4>
+            <div className="grid gap-2">
+              {attributes.map((group) => (
+                <div key={group.category} className="rounded-lg bg-muted/50 p-2.5">
+                  <p className="text-[10px] font-semibold text-muted-foreground mb-1">{group.category}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.items.map((item) => (
+                      <Badge key={item} variant="secondary" className="text-[10px] font-normal">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Products / Services */}
-        <div className="space-y-2">
-          <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-            <ShoppingBag className="h-3.5 w-3.5" />
-            Produtos / Serviços
-          </h4>
-          {products.length > 0 ? (
+        {products.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <ShoppingBag className="h-3.5 w-3.5" />
+              Produtos / Serviços
+            </h4>
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
               {products.map((p, i) => (
                 <div key={i} className="rounded-lg border border-border bg-muted/50 p-2">
@@ -213,23 +262,13 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
                     />
                   )}
                   <p className="text-[11px] font-medium text-foreground line-clamp-2">{p.name}</p>
-                  {p.category && (
-                    <p className="text-[10px] text-muted-foreground">{p.category}</p>
-                  )}
-                  {p.price && (
-                    <p className="text-[10px] font-semibold text-primary mt-0.5">{p.price}</p>
-                  )}
+                  {p.category && <p className="text-[10px] text-muted-foreground">{p.category}</p>}
+                  {p.price && <p className="text-[10px] font-semibold text-primary mt-0.5">{p.price}</p>}
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="rounded-lg border border-dashed border-destructive/30 bg-destructive/5 p-3 text-center">
-              <XCircle className="h-4 w-4 text-destructive mx-auto mb-1" />
-              <p className="text-[11px] text-destructive">Nenhum produto ou serviço cadastrado</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Recomendação: Cadastrar produtos/serviços para aumentar a visibilidade</p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Feed / Posts */}
         <div className="space-y-2">
@@ -255,7 +294,9 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
                       <p className="text-[11px] text-muted-foreground line-clamp-2">{post.text}</p>
                     )}
                     {post.date && (
-                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">{post.date}</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                        {new Date(post.date).toLocaleDateString("pt-BR")}
+                      </p>
                     )}
                   </div>
                 </div>
