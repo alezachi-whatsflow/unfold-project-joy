@@ -42,11 +42,13 @@ serve(async (req) => {
         searchStringsArray: [query],
         maxCrawledPlacesPerSearch: 1,
         language: "pt-BR",
-        maxReviews: 5,
+        maxReviews: 10,
+        maxImages: 10,
         includeWebResults: false,
         onlyDataFromSearchPage: false,
-        scrapeProductInfo: true,
-        scrapeUpdates: true,
+        scrapeDirectories: false,
+        deeperCityScrape: false,
+        additionalInfo: true,
       }),
     });
 
@@ -71,6 +73,52 @@ serve(async (req) => {
 
     const place = results[0];
 
+    // Log all top-level keys for debugging field mapping
+    console.log("Apify place keys:", Object.keys(place).join(", "));
+    console.log("Has imageUrls:", Array.isArray(place.imageUrls), "count:", place.imageUrls?.length);
+    console.log("Has orderBy:", Array.isArray(place.orderBy), "count:", place.orderBy?.length);
+    console.log("Has updatesFromCustomers:", Array.isArray(place.updatesFromCustomers), "count:", place.updatesFromCustomers?.length);
+    console.log("Has reviews:", Array.isArray(place.reviews), "count:", place.reviews?.length);
+    console.log("Description:", place.description);
+    console.log("AdditionalInfo keys:", place.additionalInfo ? Object.keys(place.additionalInfo).join(", ") : "none");
+
+    // Extract photos count from multiple possible sources
+    const imageUrls: string[] = place.imageUrls || place.images || [];
+    const photosCount = imageUrls.length || place.photosCount || place.imageCount || 0;
+
+    // Extract description from multiple possible sources
+    const description = place.description
+      || place.additionalInfo?.["Sobre"]
+      || place.additionalInfo?.["About"]
+      || place.additionalInfo?.["Descrição"]
+      || (place.additionalInfo ? Object.values(place.additionalInfo).find((v: any) => typeof v === "string" && v.length > 30) : null)
+      || null;
+
+    // Extract products from multiple possible sources
+    const rawProducts = place.orderBy || place.products || place.menu || [];
+    const products = rawProducts.map((p: any) => ({
+      name: p.title || p.name || "",
+      category: p.category || p.subtitle || "",
+      price: p.price || null,
+      image_url: p.imageUrl || p.thumbnailUrl || null,
+    }));
+
+    // Extract posts/feed from multiple possible sources
+    const rawPosts = place.updatesFromCustomers || place.updatesFromGoogle || place.posts || place.updates || [];
+    const posts = rawPosts.slice(0, 5).map((u: any) => ({
+      text: u.text || u.body || u.title || "",
+      date: u.publishedAt || u.publishedAtDate || u.date || null,
+      image_url: u.imageUrl || u.thumbnailUrl || null,
+    }));
+
+    // Extract reviews
+    const rawReviews = place.reviews || [];
+    const topReviews = rawReviews.slice(0, 5).map((r: any) => ({
+      text: r.text || r.textTranslated || "",
+      stars: r.stars,
+      publishedAtDate: r.publishedAtDate,
+    }));
+
     // Map to our BusinessLead structure
     const businessData = {
       name: place.title || place.searchString || query,
@@ -78,41 +126,27 @@ serve(async (req) => {
       phone: place.phone || null,
       website: place.website || place.url || null,
       rating: place.totalScore ?? place.rating ?? null,
-      reviews_count: place.reviewsCount ?? place.reviews ?? null,
+      reviews_count: place.reviewsCount ?? place.reviews?.length ?? null,
       category: place.categoryName || place.category || null,
       latitude: place.location?.lat ?? null,
       longitude: place.location?.lng ?? null,
       place_id: place.placeId || null,
-      // Extra fields for analysis
       opening_hours: place.openingHours || null,
-      photos_count: place.imageUrls?.length ?? place.photosCount ?? 0,
-      description: place.description || place.additionalInfo?.["Sobre"] || null,
+      photos_count: photosCount,
+      description: description,
       claimed: place.isAdvertising ?? null,
       reviews_distribution: place.reviewsDistribution || null,
-      top_reviews: (place.reviews || []).slice(0, 5).map((r: any) => ({
-        text: r.text || r.textTranslated || "",
-        stars: r.stars,
-        publishedAtDate: r.publishedAtDate,
-      })),
-      image_url: place.imageUrls?.[0] || place.imageUrl || null,
+      top_reviews: topReviews,
+      image_url: imageUrls[0] || place.imageUrl || null,
       maps_url: place.url || `https://www.google.com/maps/place/?q=${encodeURIComponent(query)}`,
-      // Products / Services
-      products: (place.orderBy || place.products || []).map((p: any) => ({
-        name: p.title || p.name || "",
-        category: p.category || p.subtitle || "",
-        price: p.price || null,
-        image_url: p.imageUrl || p.thumbnailUrl || null,
-      })),
-      // Posts / Feed updates
-      posts: (place.updatesFromCustomers || place.posts || place.updates || []).slice(0, 5).map((u: any) => ({
-        text: u.text || u.body || "",
-        date: u.publishedAt || u.publishedAtDate || u.date || null,
-        image_url: u.imageUrl || u.thumbnailUrl || null,
-      })),
-      has_products: !!(place.orderBy?.length || place.products?.length),
-      has_recent_posts: !!(place.updatesFromCustomers?.length || place.posts?.length || place.updates?.length),
+      products: products,
+      posts: posts,
+      has_products: products.length > 0,
+      has_recent_posts: posts.length > 0,
       social_profiles: place.socialProfiles || place.additionalInfo?.["Perfis"] || null,
     };
+
+    console.log("Mapped data — products:", products.length, "posts:", posts.length, "photos:", photosCount, "description:", !!description);
 
     // Persist to business_leads table
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
