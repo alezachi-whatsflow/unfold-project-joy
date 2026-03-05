@@ -143,7 +143,6 @@ export default function CustomersPage() {
               Lista de Clientes ({filteredCustomers.length}
               {activeFilterCount > 0 && ` de ${customers.length}`})
             </CardTitle>
-            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -152,7 +151,9 @@ export default function CustomersPage() {
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-xs text-muted-foreground">Empresa / Titular</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Email</TableHead>
-                    <TableHead className="text-xs text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-xs">
+                      <ColumnFilterPopover label="Status" filterKey="status" options={uniqueValues.status} selected={filters.status} onToggle={toggleFilter} onClear={clearFilter} />
+                    </TableHead>
                     <TableHead className="text-xs text-muted-foreground">Ativação</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Cancelado</TableHead>
                     <TableHead className="text-xs text-muted-foreground">Bloqueio</TableHead>
@@ -160,8 +161,12 @@ export default function CustomersPage() {
                     <TableHead className="text-xs text-muted-foreground">Vencimento</TableHead>
                     <TableHead className="text-xs text-muted-foreground text-right">Disp. Oficial</TableHead>
                     <TableHead className="text-xs text-muted-foreground text-right">Atendentes</TableHead>
-                    <TableHead className="text-xs text-muted-foreground">Checkout</TableHead>
-                    <TableHead className="text-xs text-muted-foreground">Condição</TableHead>
+                    <TableHead className="text-xs">
+                      <ColumnFilterPopover label="Checkout" filterKey="checkout" options={uniqueValues.checkout} selected={filters.checkout} onToggle={toggleFilter} onClear={clearFilter} />
+                    </TableHead>
+                    <TableHead className="text-xs">
+                      <ColumnFilterPopover label="Condição" filterKey="condicao" options={uniqueValues.condicao} selected={filters.condicao} onToggle={toggleFilter} onClear={clearFilter} />
+                    </TableHead>
                     <TableHead className="text-xs text-muted-foreground text-right">Valor</TableHead>
                     <TableHead className="text-xs text-muted-foreground w-16">Ações</TableHead>
                   </TableRow>
