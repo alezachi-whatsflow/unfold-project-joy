@@ -1,16 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Receipt, Check, AlertCircle } from "lucide-react";
+import { Receipt, Check, AlertCircle, Eye } from "lucide-react";
 import type { CreationResult } from "../AsaasBillingManagerPanel";
 
 interface Props {
   results: CreationResult[];
+  onViewArtifacts?: (result: CreationResult) => void;
 }
 
-export function BillingResultsCard({ results }: Props) {
+export function BillingResultsCard({ results, onViewArtifacts }: Props) {
   return (
     <Card className="border-border">
       <CardHeader className="pb-3">
@@ -27,7 +29,7 @@ export function BillingResultsCard({ results }: Props) {
               <TableHead className="text-xs text-muted-foreground">Cliente</TableHead>
               <TableHead className="text-xs text-muted-foreground">ID Asaas</TableHead>
               <TableHead className="text-xs text-muted-foreground">Mensagem</TableHead>
-              <TableHead className="text-xs text-muted-foreground">Links</TableHead>
+              <TableHead className="text-xs text-muted-foreground">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -45,6 +47,17 @@ export function BillingResultsCard({ results }: Props) {
                 <TableCell className="text-xs text-muted-foreground">{r.message}</TableCell>
                 <TableCell className="text-xs">
                   <div className="flex gap-1">
+                    {r.status === "success" && (r.invoiceUrl || r.bankSlipUrl || r.pixCopyPaste || r.pixQrCodeImage) && onViewArtifacts && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 text-[10px] gap-1"
+                        onClick={() => onViewArtifacts(r)}
+                      >
+                        <Eye className="h-3 w-3" />
+                        Ver Detalhes
+                      </Button>
+                    )}
                     {r.invoiceUrl && (
                       <a href={r.invoiceUrl} target="_blank" rel="noopener noreferrer">
                         <Badge variant="outline" className="text-[10px] cursor-pointer hover:bg-primary/10">
