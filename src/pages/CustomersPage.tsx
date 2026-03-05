@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange } from "lucide-react";
+import { useCustomerFilters, ColumnFilterPopover } from "@/components/customers/CustomerTableFilters";
 
 function formatDateBR(date: string | null): string {
   if (!date) return "-";
