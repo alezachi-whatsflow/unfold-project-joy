@@ -18,6 +18,7 @@ import ProductsPage from "./pages/ProductsPage";
 import IntelligencePage from "./pages/IntelligencePage";
 import CobrancasPage from "./pages/CobrancasPage";
 import ExpensesPage from "./pages/ExpensesPage";
+import ComissoesPage from "./pages/ComissoesPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -55,6 +56,7 @@ const AppRoutes = () => (
     <Route path="/input" element={<ProtectedRoute><DashboardLayout><DataInputPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/cobrancas" element={<ProtectedRoute><DashboardLayout><CobrancasPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/expenses" element={<ProtectedRoute><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute>} />
+    <Route path="/comissoes" element={<ProtectedRoute><DashboardLayout><ComissoesPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/customers" element={<ProtectedRoute><DashboardLayout><CustomersPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/products" element={<ProtectedRoute><DashboardLayout><ProductsPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/intelligence" element={<ProtectedRoute><DashboardLayout><IntelligencePage /></DashboardLayout></ProtectedRoute>} />

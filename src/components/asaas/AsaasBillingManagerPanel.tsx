@@ -17,15 +17,20 @@ import {
 import {
   FileText, Send, Settings2, Users, Calendar,
   CreditCard, QrCode, Receipt, Loader2, Check, AlertCircle,
-  Zap, MousePointerClick,
+  Zap, MousePointerClick, Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Sub-components ──
 
 import { BillingConfigCard } from "./billing/BillingConfigCard";
 import { CustomerSelectionCard } from "./billing/CustomerSelectionCard";
 import { BillingResultsCard } from "./billing/BillingResultsCard";
+import { SplitConfigCard, DEFAULT_SPLIT, type SplitConfig } from "./billing/SplitConfigCard";
+import { PaymentArtifactsDialog } from "./billing/PaymentArtifactsDialog";
+
+const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 export interface BillingConfig {
   billingType: "BOLETO" | "CREDIT_CARD" | "PIX";
@@ -58,6 +63,8 @@ export interface CreationResult {
   message: string;
   invoiceUrl?: string;
   bankSlipUrl?: string;
+  pixQrCodeImage?: string;
+  pixCopyPaste?: string;
 }
 
 type BillingMode = "manual" | "automatic";
@@ -65,10 +72,13 @@ type BillingMode = "manual" | "automatic";
 export function AsaasBillingManagerPanel() {
   const { customers, environment } = useAsaas();
   const [config, setConfig] = useState<BillingConfig>(DEFAULT_CONFIG);
+  const [split, setSplit] = useState<SplitConfig>(DEFAULT_SPLIT);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [results, setResults] = useState<CreationResult[]>([]);
   const [mode, setMode] = useState<BillingMode>("manual");
+  const [artifactResult, setArtifactResult] = useState<CreationResult | null>(null);
+  const [artifactOpen, setArtifactOpen] = useState(false);
 
   const getDueDate = () => {
     const date = new Date();
@@ -125,12 +135,44 @@ export function AsaasBillingManagerPanel() {
           payload.postalService = config.postalService;
         }
 
+        // Add split if enabled
+        if (split.enabled && split.walletId) {
+          const splitPayload: Record<string, unknown> = {
+            walletId: split.walletId,
+          };
+          if (split.splitType === "PERCENTAGE") {
+            splitPayload.percentualValue = parseFloat(split.splitValue);
+          } else {
+            splitPayload.fixedValue = parseFloat(split.splitValue);
+          }
+          payload.split = [splitPayload];
+        }
+
         const result = await callAsaasProxy({
           endpoint: "/payments",
           method: "POST",
           params: payload,
           environment,
         });
+
+        // Save split to local DB
+        if (split.enabled && split.walletId && result.id) {
+          const splitVal = parseFloat(split.splitValue);
+          const totalValue = split.splitType === "PERCENTAGE"
+            ? (parseFloat(config.value) * splitVal) / 100
+            : splitVal;
+
+          await supabase.from("asaas_splits").insert({
+            tenant_id: DEFAULT_TENANT_ID,
+            payment_id: result.id,
+            salesperson_id: split.salespersonId || null,
+            wallet_id: split.walletId,
+            percent_value: split.splitType === "PERCENTAGE" ? splitVal : null,
+            fixed_value: split.splitType === "FIXED" ? splitVal : null,
+            total_value: totalValue,
+            status: "PENDING",
+          });
+        }
 
         newResults.push({
           customer: customer?.name || customerId,
@@ -139,6 +181,8 @@ export function AsaasBillingManagerPanel() {
           message: "Cobrança criada com sucesso",
           invoiceUrl: result.invoiceUrl,
           bankSlipUrl: result.bankSlipUrl,
+          pixQrCodeImage: result.pixQrCodeImage || undefined,
+          pixCopyPaste: result.pixCopyPaste || undefined,
         });
       } catch (err) {
         newResults.push({
@@ -216,7 +260,10 @@ export function AsaasBillingManagerPanel() {
 
       {/* Configuration */}
       <div className={`grid gap-6 ${mode === "manual" ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
-        <BillingConfigCard config={config} setConfig={setConfig} getDueDate={getDueDate} />
+        <div className="space-y-6">
+          <BillingConfigCard config={config} setConfig={setConfig} getDueDate={getDueDate} />
+          <SplitConfigCard split={split} setSplit={setSplit} />
+        </div>
 
         {mode === "manual" && (
           <CustomerSelectionCard
@@ -236,6 +283,7 @@ export function AsaasBillingManagerPanel() {
               <p className="text-sm font-medium">
                 Criar {targetCustomerIds.length} cobrança(s) via{" "}
                 {config.billingType === "BOLETO" ? "Boleto" : config.billingType === "PIX" ? "Pix" : "Cartão"}
+                {split.enabled && " + Split"}
               </p>
               <p className="text-[10px] text-muted-foreground">
                 Valor: R$ {config.value || "0,00"} cada • Vencimento: {getDueDate()} • Modo: {mode === "automatic" ? "Automático" : "Manual"} • Ambiente: {environment}
@@ -263,7 +311,19 @@ export function AsaasBillingManagerPanel() {
       </Card>
 
       {/* Results */}
-      {results.length > 0 && <BillingResultsCard results={results} />}
+      {results.length > 0 && (
+        <BillingResultsCard
+          results={results}
+          onViewArtifacts={(r) => { setArtifactResult(r); setArtifactOpen(true); }}
+        />
+      )}
+
+      {/* Artifacts Dialog */}
+      <PaymentArtifactsDialog
+        open={artifactOpen}
+        onOpenChange={setArtifactOpen}
+        result={artifactResult}
+      />
     </div>
   );
 }
