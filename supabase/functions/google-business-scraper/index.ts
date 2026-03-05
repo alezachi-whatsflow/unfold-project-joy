@@ -45,6 +45,8 @@ serve(async (req) => {
         maxReviews: 5,
         includeWebResults: false,
         onlyDataFromSearchPage: false,
+        scrapeProductInfo: true,
+        scrapeUpdates: true,
       }),
     });
 
@@ -94,6 +96,22 @@ serve(async (req) => {
       })),
       image_url: place.imageUrls?.[0] || place.imageUrl || null,
       maps_url: place.url || `https://www.google.com/maps/place/?q=${encodeURIComponent(query)}`,
+      // Products / Services
+      products: (place.orderBy || place.products || []).map((p: any) => ({
+        name: p.title || p.name || "",
+        category: p.category || p.subtitle || "",
+        price: p.price || null,
+        image_url: p.imageUrl || p.thumbnailUrl || null,
+      })),
+      // Posts / Feed updates
+      posts: (place.updatesFromCustomers || place.posts || place.updates || []).slice(0, 5).map((u: any) => ({
+        text: u.text || u.body || "",
+        date: u.publishedAt || u.publishedAtDate || u.date || null,
+        image_url: u.imageUrl || u.thumbnailUrl || null,
+      })),
+      has_products: !!(place.orderBy?.length || place.products?.length),
+      has_recent_posts: !!(place.updatesFromCustomers?.length || place.posts?.length || place.updates?.length),
+      social_profiles: place.socialProfiles || place.additionalInfo?.["Perfis"] || null,
     };
 
     // Persist to business_leads table

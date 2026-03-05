@@ -1,8 +1,21 @@
-import { MapPin, Star, Phone, Globe, Clock, Image, MessageSquare, ExternalLink, Building2 } from "lucide-react";
+import { MapPin, Star, Phone, Globe, Clock, Image, MessageSquare, ExternalLink, Building2, ShoppingBag, Rss, CheckCircle2, XCircle, Instagram } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+interface ProductItem {
+  name: string;
+  category: string;
+  price: string | null;
+  image_url: string | null;
+}
+
+interface PostItem {
+  text: string;
+  date: string | null;
+  image_url: string | null;
+}
 
 export interface GoogleBusinessData {
   name: string;
@@ -23,6 +36,11 @@ export interface GoogleBusinessData {
   top_reviews: { text: string; stars: number; publishedAtDate: string }[];
   image_url: string | null;
   maps_url: string;
+  products?: ProductItem[];
+  posts?: PostItem[];
+  has_products?: boolean;
+  has_recent_posts?: boolean;
+  social_profiles?: any;
 }
 
 interface GoogleBusinessCardProps {
@@ -57,25 +75,36 @@ function ScoreIndicator({ rating, reviewsCount }: { rating: number | null; revie
   );
 }
 
+function StatusBadge({ active, label }: { active: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {active ? (
+        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+      ) : (
+        <XCircle className="h-3.5 w-3.5 text-destructive" />
+      )}
+      <span className={cn("text-xs", active ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+    </div>
+  );
+}
+
 export function calculateGMNScore(rating: number | null, reviewsCount: number | null): number {
   let score = 0;
-  // Rating contributes up to 5 points (mapped 1-5 → 0-5)
-  if (rating !== null) {
-    score += Math.min((rating / 5) * 5, 5);
-  }
-  // Reviews count contributes up to 3 points
+  if (rating !== null) score += Math.min((rating / 5) * 5, 5);
   if (reviewsCount !== null) {
     if (reviewsCount >= 100) score += 3;
     else if (reviewsCount >= 30) score += 2;
     else if (reviewsCount >= 10) score += 1.5;
     else if (reviewsCount >= 1) score += 0.5;
   }
-  // Bonus for having rich data (up to 2 points)
-  score += 2; // baseline for having a listing
+  score += 2;
   return Math.min(Math.round(score * 10) / 10, 10);
 }
 
 export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
+  const products = business.products || [];
+  const posts = business.posts || [];
+
   return (
     <Card className="border-border bg-card">
       <CardHeader className="pb-3">
@@ -123,6 +152,16 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
           </div>
         )}
 
+        {/* Profile Completeness Indicators */}
+        <div className="rounded-lg bg-secondary/50 p-3 grid grid-cols-2 gap-2">
+          <StatusBadge active={!!business.has_products || products.length > 0} label="Produtos/Serviços" />
+          <StatusBadge active={!!business.has_recent_posts || posts.length > 0} label="Feed Atualizado" />
+          <StatusBadge active={!!business.website} label="Website" />
+          <StatusBadge active={!!business.phone} label="Telefone" />
+          <StatusBadge active={business.photos_count > 0} label={`${business.photos_count} Fotos`} />
+          <StatusBadge active={!!business.description} label="Descrição" />
+        </div>
+
         {/* Info Grid */}
         <div className="grid gap-2 text-xs">
           {business.address && (
@@ -145,18 +184,114 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
               </a>
             </div>
           )}
-          {business.photos_count > 0 && (
-            <div className="flex items-center gap-2">
-              <Image className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span className="text-foreground">{business.photos_count} fotos</span>
-            </div>
-          )}
         </div>
 
         {/* Description */}
         {business.description && (
           <div className="rounded-lg bg-secondary/50 p-3">
             <p className="text-xs text-muted-foreground leading-relaxed">{business.description}</p>
+          </div>
+        )}
+
+        {/* Products / Services */}
+        <div className="space-y-2">
+          <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            <ShoppingBag className="h-3.5 w-3.5" />
+            Produtos / Serviços
+          </h4>
+          {products.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              {products.map((p, i) => (
+                <div key={i} className="rounded-lg border border-border bg-muted/50 p-2">
+                  {p.image_url && (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="h-16 w-full rounded object-cover mb-1.5"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  )}
+                  <p className="text-[11px] font-medium text-foreground line-clamp-2">{p.name}</p>
+                  {p.category && (
+                    <p className="text-[10px] text-muted-foreground">{p.category}</p>
+                  )}
+                  {p.price && (
+                    <p className="text-[10px] font-semibold text-primary mt-0.5">{p.price}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-destructive/30 bg-destructive/5 p-3 text-center">
+              <XCircle className="h-4 w-4 text-destructive mx-auto mb-1" />
+              <p className="text-[11px] text-destructive">Nenhum produto ou serviço cadastrado</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Recomendação: Cadastrar produtos/serviços para aumentar a visibilidade</p>
+            </div>
+          )}
+        </div>
+
+        {/* Feed / Posts */}
+        <div className="space-y-2">
+          <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            <Rss className="h-3.5 w-3.5" />
+            Postagens / Feed
+          </h4>
+          {posts.length > 0 ? (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {posts.map((post, i) => (
+                <div key={i} className="rounded-lg bg-muted/50 p-2.5 flex gap-2">
+                  {post.image_url && (
+                    <img
+                      src={post.image_url}
+                      alt=""
+                      className="h-12 w-12 rounded object-cover shrink-0"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  )}
+                  <div className="min-w-0">
+                    {post.text && (
+                      <p className="text-[11px] text-muted-foreground line-clamp-2">{post.text}</p>
+                    )}
+                    {post.date && (
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">{post.date}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-warning/30 bg-warning/5 p-3 text-center">
+              <Rss className="h-4 w-4 text-warning mx-auto mb-1" />
+              <p className="text-[11px] text-warning">Feed sem atualizações recentes</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Recomendação: Publicar atualizações semanais para melhorar o engajamento</p>
+            </div>
+          )}
+        </div>
+
+        {/* Social Profiles */}
+        {business.social_profiles && (
+          <div className="space-y-2">
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <Instagram className="h-3.5 w-3.5" />
+              Perfis Sociais
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {typeof business.social_profiles === "object" &&
+                Object.entries(business.social_profiles).map(([key, url]) => (
+                  <a
+                    key={key}
+                    href={url as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[10px] text-primary hover:bg-muted/80 transition"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    {key}
+                  </a>
+                ))}
+            </div>
           </div>
         )}
 
