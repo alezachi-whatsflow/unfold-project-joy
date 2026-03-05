@@ -46,17 +46,29 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
       <CardContent className="space-y-5">
         {/* Profile Header */}
         <div className="flex items-center gap-4 rounded-lg bg-secondary p-4">
-          {profile.profile_image_url ? (
-            <img
-              src={profile.profile_image_url}
-              alt={profile.display_name || profile.username}
-              className="h-14 w-14 rounded-full border-2 border-primary object-cover"
-            />
-          ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600">
+          <div className="relative h-14 w-14 shrink-0">
+            {profile.profile_image_url ? (
+              <img
+                src={profile.profile_image_url}
+                alt={profile.display_name || profile.username}
+                className="h-14 w-14 rounded-full border-2 border-primary object-cover"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.style.display = "none";
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = "flex";
+                }}
+              />
+            ) : null}
+            <div
+              className="h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600"
+              style={{ display: profile.profile_image_url ? "none" : "flex" }}
+            >
               <Instagram className="h-6 w-6 text-white" />
             </div>
-          )}
+          </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-display text-base font-bold text-foreground truncate">
               {profile.display_name || profile.username}
