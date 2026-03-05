@@ -162,7 +162,7 @@ serve(async (req) => {
       longitude: place.location?.lng ?? null,
       place_id: place.placeId || null,
       opening_hours: place.openingHours || null,
-      photos_count: photosCount,
+      photos_count: place.imagesCount || photosCount,
       description: description,
       claimed: place.isAdvertising ?? null,
       reviews_distribution: place.reviewsDistribution || null,
@@ -174,6 +174,13 @@ serve(async (req) => {
       has_products: products.length > 0,
       has_recent_posts: posts.length > 0,
       social_profiles: place.socialProfiles || place.additionalInfo?.["Perfis"] || null,
+      // Additional business attributes from Google
+      additional_info: place.additionalInfo || null,
+      image_categories: place.imageCategories || null,
+      people_also_search: (place.peopleAlsoSearch || []).slice(0, 5).map((p: any) => ({
+        title: p.title || p.name || "",
+        category: p.category || "",
+      })),
     };
 
     console.log("Mapped data — products:", products.length, "posts:", posts.length, "photos:", photosCount, "description:", !!description);
