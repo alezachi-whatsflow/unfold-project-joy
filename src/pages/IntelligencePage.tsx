@@ -15,6 +15,7 @@ import { WhatsAppButtonCard } from "@/components/intelligence/WhatsAppButtonCard
 import { LegalDataCard } from "@/components/intelligence/LegalDataCard";
 import { NeuromarketingCard } from "@/components/intelligence/NeuromarketingCard";
 import { GoogleBusinessCard, GoogleBusinessData, calculateGMNScore } from "@/components/intelligence/GoogleBusinessCard";
+import { SaveAnalysisButton } from "@/components/intelligence/SaveAnalysisButton";
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { SourceType, WebScrap, ProfileAnalysis, AuthorityDiagnostic, AUTHORITY_PILLARS } from "@/types/intelligence";
 import { RescuePlan, ChannelThreshold } from "@/types/rescuePlan";
@@ -264,15 +265,34 @@ export default function IntelligencePage() {
 
       {/* Threshold Status Bar */}
       {overallThreshold && (
-        <ThresholdStatusBar
-          overall={overallThreshold}
-          website={websiteThreshold}
-          instagram={instagramThreshold}
-          gmn={gmnThreshold}
-          meta={metaThreshold}
-          whatsapp={whatsappThreshold}
-          neuro={neuroThreshold}
-        />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <ThresholdStatusBar
+              overall={overallThreshold}
+              website={websiteThreshold}
+              instagram={instagramThreshold}
+              gmn={gmnThreshold}
+              meta={metaThreshold}
+              whatsapp={whatsappThreshold}
+              neuro={neuroThreshold}
+            />
+          </div>
+          <SaveAnalysisButton
+            overallThreshold={overallThreshold}
+            websiteThreshold={websiteThreshold}
+            instagramThreshold={instagramThreshold}
+            gmnThreshold={gmnThreshold}
+            metaThreshold={metaThreshold}
+            whatsappThreshold={whatsappThreshold}
+            neuroThreshold={neuroThreshold}
+            latestScrap={latestScrap}
+            latestProfile={latestProfile}
+            googleBusiness={googleBusiness}
+            metaResult={metaResult}
+            whatsappResult={whatsappResult}
+            neuroResult={neuroResult}
+          />
+        </div>
       )}
 
       {/* Tabs */}

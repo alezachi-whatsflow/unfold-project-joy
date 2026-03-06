@@ -415,6 +415,69 @@ export type Database = {
           },
         ]
       }
+      digital_analyses: {
+        Row: {
+          address: string | null
+          avg_rating: number | null
+          category: string | null
+          company_name: string
+          created_at: string
+          details_json: Json | null
+          id: string
+          overall_label: string | null
+          overall_score: number
+          phone: string | null
+          score_google_business: number | null
+          score_instagram: number | null
+          score_meta: number | null
+          score_neuro: number | null
+          score_website: number | null
+          score_whatsapp: number | null
+          total_reviews: number | null
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          avg_rating?: number | null
+          category?: string | null
+          company_name: string
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          overall_label?: string | null
+          overall_score?: number
+          phone?: string | null
+          score_google_business?: number | null
+          score_instagram?: number | null
+          score_meta?: number | null
+          score_neuro?: number | null
+          score_website?: number | null
+          score_whatsapp?: number | null
+          total_reviews?: number | null
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          avg_rating?: number | null
+          category?: string | null
+          company_name?: string
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          overall_label?: string | null
+          overall_score?: number
+          phone?: string | null
+          score_google_business?: number | null
+          score_instagram?: number | null
+          score_meta?: number | null
+          score_neuro?: number | null
+          score_website?: number | null
+          score_whatsapp?: number | null
+          total_reviews?: number | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       dunning_executions: {
         Row: {
           action: string
@@ -526,6 +589,32 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      export_logs: {
+        Row: {
+          analysis_id: string
+          exported_at: string
+          id: string
+        }
+        Insert: {
+          analysis_id: string
+          exported_at?: string
+          id?: string
+        }
+        Update: {
+          analysis_id?: string
+          exported_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_logs_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "digital_analyses"
             referencedColumns: ["id"]
           },
         ]
