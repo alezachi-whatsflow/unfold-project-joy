@@ -265,15 +265,34 @@ export default function IntelligencePage() {
 
       {/* Threshold Status Bar */}
       {overallThreshold && (
-        <ThresholdStatusBar
-          overall={overallThreshold}
-          website={websiteThreshold}
-          instagram={instagramThreshold}
-          gmn={gmnThreshold}
-          meta={metaThreshold}
-          whatsapp={whatsappThreshold}
-          neuro={neuroThreshold}
-        />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <ThresholdStatusBar
+              overall={overallThreshold}
+              website={websiteThreshold}
+              instagram={instagramThreshold}
+              gmn={gmnThreshold}
+              meta={metaThreshold}
+              whatsapp={whatsappThreshold}
+              neuro={neuroThreshold}
+            />
+          </div>
+          <SaveAnalysisButton
+            overallThreshold={overallThreshold}
+            websiteThreshold={websiteThreshold}
+            instagramThreshold={instagramThreshold}
+            gmnThreshold={gmnThreshold}
+            metaThreshold={metaThreshold}
+            whatsappThreshold={whatsappThreshold}
+            neuroThreshold={neuroThreshold}
+            latestScrap={latestScrap}
+            latestProfile={latestProfile}
+            googleBusiness={googleBusiness}
+            metaResult={metaResult}
+            whatsappResult={whatsappResult}
+            neuroResult={neuroResult}
+          />
+        </div>
       )}
 
       {/* Tabs */}
