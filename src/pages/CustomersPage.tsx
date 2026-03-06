@@ -72,6 +72,9 @@ export default function CustomersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" onClick={openNew} className="gap-1.5 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Novo Cliente
+          </Button>
           <CalendarRange className="h-4 w-4 text-muted-foreground" />
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="h-9 w-[200px] border-border bg-secondary text-sm">
