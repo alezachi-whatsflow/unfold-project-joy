@@ -22,18 +22,44 @@ export async function callAsaasProxy(params: {
   limit?: number;
   offset?: number;
 }) {
-  const { data, error } = await supabase.functions.invoke("asaas-proxy", {
-    body: params,
-  });
+  let data: any = null;
+  let error: any = null;
+
+  try {
+    const result = await supabase.functions.invoke("asaas-proxy", {
+      body: params,
+    });
+    data = result.data;
+    error = result.error;
+  } catch (invokeError: any) {
+    throw new Error(invokeError?.message || "Erro de conexão com o servidor");
+  }
+
   if (error) {
-    const message = typeof error === "object" && error !== null && "message" in error
-      ? (error as any).message
-      : String(error);
-    throw new Error(message || "Asaas proxy error");
+    // Try to extract a meaningful message from the error
+    let message = "Asaas proxy error";
+    if (typeof error === "string") {
+      message = error;
+    } else if (error?.message) {
+      message = error.message;
+    } else if (error?.context) {
+      try {
+        const ctx = typeof error.context === "string" ? JSON.parse(error.context) : error.context;
+        message = ctx?.error || ctx?.message || JSON.stringify(ctx);
+      } catch {
+        message = String(error);
+      }
+    }
+    throw new Error(message);
   }
+
   if (data && data.error) {
-    throw new Error(data.error + (data.details ? `: ${JSON.stringify(data.details)}` : ""));
+    const details = data.details
+      ? `: ${typeof data.details === "string" ? data.details : JSON.stringify(data.details)}`
+      : "";
+    throw new Error(data.error + details);
   }
+
   return data;
 }
 
