@@ -26,8 +26,25 @@ function formatDateBR(date: string | null): string {
 export default function CustomersPage() {
   const { entries, selectedMonth, setSelectedMonth } = useFinancial();
   const {
-    customers, activeCount, churnedCount, totalMRR, totalCustomers, deleteCustomer, isLoading,
+    customers, activeCount, churnedCount, totalMRR, totalCustomers, deleteCustomer, importCustomers, isLoading,
   } = useCustomers();
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
+  const handleSaveCustomer = async (customer: Customer) => {
+    await importCustomers([customer]);
+  };
+
+  const openEdit = (c: Customer) => {
+    setEditingCustomer(c);
+    setFormOpen(true);
+  };
+
+  const openNew = () => {
+    setEditingCustomer(null);
+    setFormOpen(true);
+  };
 
   const { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount } =
     useCustomerFilters(customers);
