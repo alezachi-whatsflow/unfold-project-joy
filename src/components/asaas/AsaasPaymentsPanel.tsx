@@ -60,56 +60,93 @@ export function AsaasPaymentsPanel() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-border">
-            <CardContent className="flex items-center gap-3 pt-4 pb-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Recebido</p>
-                <p className="font-display text-base font-bold">{formatCurrency(stats.receivedValue)}</p>
-                <p className="text-[10px] text-muted-foreground">{stats.received} cobranças</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border">
-            <CardContent className="flex items-center gap-3 pt-4 pb-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Pendente</p>
-                <p className="font-display text-base font-bold">{formatCurrency(stats.pendingValue)}</p>
-                <p className="text-[10px] text-muted-foreground">{stats.pending} cobranças</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border">
-            <CardContent className="flex items-center gap-3 pt-4 pb-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Vencido</p>
-                <p className="font-display text-base font-bold text-destructive">{formatCurrency(stats.overdueValue)}</p>
-                <p className="text-[10px] text-muted-foreground">{stats.overdue} cobranças</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border">
-            <CardContent className="flex items-center gap-3 pt-4 pb-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
-                <DollarSign className="h-4 w-4 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Total Geral</p>
-                <p className="font-display text-base font-bold">{formatCurrency(stats.totalValue)}</p>
-                <p className="text-[10px] text-muted-foreground">{stats.total} cobranças</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <TooltipProvider delayDuration={200}>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card className="border-border cursor-default">
+                  <CardContent className="flex items-center gap-3 pt-4 pb-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Recebido</p>
+                      <p className="font-display text-base font-bold">{formatCurrency(stats.receivedValue)}</p>
+                      <p className="text-[10px] text-muted-foreground">{stats.received} cobranças</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                <p className="font-semibold">Período dos recebimentos</p>
+                <p>{formatPeriod(stats.receivedPeriod)}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card className="border-border cursor-default">
+                  <CardContent className="flex items-center gap-3 pt-4 pb-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Pendente</p>
+                      <p className="font-display text-base font-bold">{formatCurrency(stats.pendingValue)}</p>
+                      <p className="text-[10px] text-muted-foreground">{stats.pending} cobranças</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                <p className="font-semibold">Período dos pendentes</p>
+                <p>{formatPeriod(stats.pendingPeriod)}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card className="border-border cursor-default">
+                  <CardContent className="flex items-center gap-3 pt-4 pb-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Vencido</p>
+                      <p className="font-display text-base font-bold text-destructive">{formatCurrency(stats.overdueValue)}</p>
+                      <p className="text-[10px] text-muted-foreground">{stats.overdue} cobranças</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                <p className="font-semibold">Período dos vencimentos</p>
+                <p>{formatPeriod(stats.overduePeriod)}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card className="border-border cursor-default">
+                  <CardContent className="flex items-center gap-3 pt-4 pb-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
+                      <DollarSign className="h-4 w-4 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Total Geral</p>
+                      <p className="font-display text-base font-bold">{formatCurrency(stats.totalValue)}</p>
+                      <p className="text-[10px] text-muted-foreground">{stats.total} cobranças</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                <p className="font-semibold">Período total</p>
+                <p>{formatPeriod(stats.totalPeriod)}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       )}
 
       {/* By Billing Type */}
