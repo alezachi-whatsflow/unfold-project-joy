@@ -100,6 +100,7 @@ function parseCustomerCSV(csv: string): Customer[] {
       whitelabel: get("whitelabel"),
       nome,
       email,
+      cpfCnpj: get("cpf_cnpj") || get("cpf") || get("cnpj") || "",
       status: get("status") || "Ativo",
       dataAtivacao: parseDate(rawAtivacao),
       dataCancelado: parseDate(rawCancelado) || null,

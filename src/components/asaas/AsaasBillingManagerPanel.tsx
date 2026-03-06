@@ -112,14 +112,53 @@ export function AsaasBillingManagerPanel() {
     const newResults: CreationResult[] = [];
 
     for (const customerId of targetCustomerIds) {
-      const customer = customers.find((c) => c.asaas_id === customerId);
+      let asaasCustomerId = customerId;
+      let customerName = customerId;
+
+      if (customerId.startsWith("manual_")) {
+        // Manual customer — create in Asaas first
+        const localId = customerId.replace("manual_", "");
+        const { data: localCustomer } = await supabase
+          .from("customers")
+          .select("nome, email, cpf_cnpj")
+          .eq("id", localId)
+          .maybeSingle();
+
+        if (!localCustomer) {
+          newResults.push({ customer: customerId, asaasId: "", status: "error", message: "Cliente manual não encontrado" });
+          continue;
+        }
+
+        customerName = localCustomer.nome;
+
+        try {
+          const asaasResult = await callAsaasProxy({
+            endpoint: "/customers",
+            method: "POST",
+            params: {
+              name: localCustomer.nome,
+              email: localCustomer.email || undefined,
+              cpfCnpj: localCustomer.cpf_cnpj || undefined,
+            },
+            environment,
+          });
+          asaasCustomerId = asaasResult.id;
+        } catch (err) {
+          newResults.push({ customer: customerName, asaasId: "", status: "error", message: `Erro ao criar cliente no Asaas: ${err instanceof Error ? err.message : "Erro"}` });
+          continue;
+        }
+      } else {
+        const customer = customers.find((c) => c.asaas_id === customerId);
+        customerName = customer?.name || customerId;
+      }
+
       try {
         const payload: Record<string, unknown> = {
-          customer: customerId,
+          customer: asaasCustomerId,
           billingType: config.billingType,
           value: parseFloat(config.value),
           dueDate: getDueDate(),
-          description: config.description || `Cobrança - ${customer?.name || customerId}`,
+          description: config.description || `Cobrança - ${customerName}`,
         };
 
         if (config.billingType === "BOLETO" || config.billingType === "UNDEFINED") {
@@ -195,7 +234,7 @@ export function AsaasBillingManagerPanel() {
         }
 
         newResults.push({
-          customer: customer?.name || customerId,
+          customer: customerName,
           asaasId: result.id || "",
           status: "success",
           message: "Cobrança criada com sucesso",
@@ -206,7 +245,7 @@ export function AsaasBillingManagerPanel() {
         });
       } catch (err) {
         newResults.push({
-          customer: customer?.name || customerId,
+          customer: customerName,
           asaasId: "",
           status: "error",
           message: err instanceof Error ? err.message : "Erro desconhecido",
