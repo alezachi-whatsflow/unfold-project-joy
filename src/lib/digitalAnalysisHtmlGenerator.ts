@@ -84,29 +84,43 @@ export function generateAnalysisHtml(data: DigitalAnalysisData): string {
     day: "2-digit", month: "long", year: "numeric",
   });
 
+  const goalScore = 7.5;
+
   const channels = [
-    { key: "website", label: "Website", score: data.score_website },
-    { key: "instagram", label: "Instagram", score: data.score_instagram },
-    { key: "google_business", label: "Perfil Empresa", score: data.score_google_business },
-    { key: "meta", label: "Meta", score: data.score_meta },
-    { key: "whatsapp", label: "WhatsApp", score: data.score_whatsapp },
-    { key: "neuro", label: "Neuro", score: data.score_neuro },
+    { key: "website", label: "Website", score: data.score_website, weight: "25%", action: "Otimizar SEO e conteúdo de autoridade" },
+    { key: "instagram", label: "Instagram", score: data.score_instagram, weight: "20%", action: "Aumentar engajamento e consistência" },
+    { key: "google_business", label: "Perfil Empresa", score: data.score_google_business, weight: "20%", action: "Completar perfil e obter avaliações" },
+    { key: "meta", label: "Meta", score: data.score_meta, weight: "15%", action: "Verificar domínio e configurar Business Manager" },
+    { key: "whatsapp", label: "WhatsApp", score: data.score_whatsapp, weight: "10%", action: "Adicionar botão de contato acessível" },
+    { key: "neuro", label: "Neuro", score: data.score_neuro, weight: "10%", action: "Melhorar hierarquia visual e CTAs" },
   ];
 
-  const scoreCards = channels
-    .map(
-      (ch) => `
-    <div class="score-card" onmouseenter="this.querySelector('.details').style.maxHeight='300px';this.querySelector('.details').style.opacity='1';" onmouseleave="this.querySelector('.details').style.maxHeight='0';this.querySelector('.details').style.opacity='0';">
-      <div class="score-header">
-        <span class="channel-name">${ch.label}</span>
-        <span class="channel-score" style="color:${scoreColor(ch.score)}">${scoreLabel(ch.score)}</span>
+  const channelBars = channels.map((ch) => {
+    const score = ch.score;
+    const pct = score !== null ? Math.min((score / 10) * 100, 100) : 0;
+    const color = scoreColor(score);
+    const isNA = score === null;
+    const showAction = !isNA && score < goalScore;
+    const detailsHtml = buildDetailsHtml(data.details_json, ch.key);
+    const customAction = data.details_json[ch.key]?.recommendation || ch.action;
+
+    return `
+    <div class="channel-row" onclick="this.classList.toggle('expanded')">
+      <div class="channel-info">
+        <span class="channel-label">${ch.label}</span>
+        <span class="channel-weight">(${ch.weight})</span>
+        <span class="channel-score-val" style="color:${color}">${isNA ? "N/A" : score!.toFixed(1)}</span>
       </div>
-      <div class="details" style="max-height:0;opacity:0;overflow:hidden;transition:all .3s ease;">
-        ${buildDetailsHtml(data.details_json, ch.key)}
+      <div class="bar-container">
+        <div class="bar-bg">
+          <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+          <div class="goal-line" style="left:${(goalScore / 10) * 100}%"></div>
+        </div>
       </div>
-    </div>`
-    )
-    .join("\n");
+      ${showAction ? `<div class="channel-action">💡 ${customAction}</div>` : ""}
+      <div class="channel-details">${detailsHtml}</div>
+    </div>`;
+  }).join("\n");
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -124,12 +138,33 @@ body{background:#0f1117;color:#e5e7eb;font-family:system-ui,-apple-system,sans-s
 .overall-score{font-size:56px;font-weight:800;margin:16px 0 8px}
 .overall-label{font-size:16px;font-weight:500;margin-bottom:8px}
 .date{font-size:13px;color:#6b7280}
-.scores-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:32px}
-.score-card{background:#1a1d27;border-radius:12px;padding:16px;border:1px solid #2d3142;cursor:pointer;transition:border-color .2s}
-.score-card:hover{border-color:#4f46e5}
-.score-header{display:flex;flex-direction:column;align-items:center;gap:8px}
-.channel-name{font-size:13px;color:#9ca3af;font-weight:500}
-.channel-score{font-size:24px;font-weight:700}
+
+/* Overall bar */
+.overall-bar-section{margin-bottom:32px;padding:0 4px}
+.overall-bar-bg{height:14px;border-radius:99px;background:#1a1d27;overflow:hidden;position:relative;border:1px solid #2d3142}
+.overall-bar-fill{height:100%;border-radius:99px;transition:width .5s}
+.overall-goal-line{position:absolute;top:0;height:100%;width:2px;background:rgba(255,255,255,0.4)}
+.bar-legend{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#6b7280;position:relative}
+.bar-legend .goal-label{position:absolute;transform:translateX(-50%);color:#9ca3af}
+
+/* Channel bars */
+.channels-section{background:#1a1d27;border-radius:16px;border:1px solid #2d3142;padding:24px;margin-bottom:24px}
+.channels-section h3{font-size:16px;font-weight:600;color:#fff;margin-bottom:20px}
+.channel-row{padding:12px 0;border-bottom:1px solid #2d3142;cursor:pointer;transition:background .2s}
+.channel-row:last-child{border-bottom:none}
+.channel-row:hover{background:#22253050;border-radius:8px;padding:12px 8px}
+.channel-info{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.channel-label{font-size:14px;font-weight:500;color:#e5e7eb;width:110px}
+.channel-weight{font-size:11px;color:#6b7280}
+.channel-score-val{margin-left:auto;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.bar-container{position:relative}
+.bar-bg{height:8px;border-radius:99px;background:#2d3142;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:99px;transition:width .5s}
+.goal-line{position:absolute;top:0;height:100%;width:1px;background:rgba(255,255,255,0.25)}
+.channel-action{font-size:12px;color:#9ca3af;font-style:italic;margin-top:6px;padding-left:4px}
+.channel-details{max-height:0;overflow:hidden;transition:max-height .3s ease;padding-left:4px}
+.channel-row.expanded .channel-details{max-height:300px}
+
 .info-section{background:#1a1d27;border-radius:12px;padding:24px;border:1px solid #2d3142;margin-bottom:24px}
 .info-section h3{font-size:16px;font-weight:600;color:#fff;margin-bottom:16px}
 .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -141,9 +176,9 @@ body{background:#0f1117;color:#e5e7eb;font-family:system-ui,-apple-system,sans-s
 .action-content.open{max-height:2000px;padding:24px;border-color:#2d3142;margin-top:-25px;margin-bottom:24px}
 .footer{text-align:center;padding:24px;color:#6b7280;font-size:12px;border-top:1px solid #2d3142;margin-top:32px}
 @media(max-width:640px){
-  .scores-grid{grid-template-columns:repeat(2,1fr)}
   .overall-score{font-size:40px}
   body{padding:12px}
+  .channel-label{width:80px;font-size:12px}
 }
 </style>
 </head>
@@ -159,12 +194,26 @@ body{background:#0f1117;color:#e5e7eb;font-family:system-ui,-apple-system,sans-s
     <div class="date">Análise realizada em ${date}</div>
   </div>
 
-  <!-- SEÇÃO 2: Score Cards -->
-  <div class="scores-grid">
-    ${scoreCards}
+  <!-- SEÇÃO 2: Overall Progress Bar -->
+  <div class="overall-bar-section">
+    <div class="overall-bar-bg">
+      <div class="overall-bar-fill" style="width:${Math.min((data.overall_score / 10) * 100, 100)}%;background:${scoreColor(data.overall_score)}"></div>
+      <div class="overall-goal-line" style="left:${(goalScore / 10) * 100}%"></div>
+    </div>
+    <div class="bar-legend">
+      <span>0</span>
+      <span class="goal-label" style="left:${(goalScore / 10) * 100}%">Meta ${goalScore}</span>
+      <span>10</span>
+    </div>
   </div>
 
-  <!-- SEÇÃO 3: Resumo da Empresa -->
+  <!-- SEÇÃO 3: Channel Bars -->
+  <div class="channels-section">
+    <h3>Scores por Canal</h3>
+    ${channelBars}
+  </div>
+
+  <!-- SEÇÃO 4: Resumo da Empresa -->
   <div class="info-section">
     <h3>Resumo da Empresa</h3>
     <div class="info-grid">
@@ -176,7 +225,7 @@ body{background:#0f1117;color:#e5e7eb;font-family:system-ui,-apple-system,sans-s
     </div>
   </div>
 
-  <!-- SEÇÃO 4: Plano de Ação -->
+  <!-- SEÇÃO 5: Plano de Ação -->
   <button class="action-btn" onclick="var c=document.getElementById('action-content');c.classList.toggle('open');">
     📋 Ver Plano de Ação
   </button>
