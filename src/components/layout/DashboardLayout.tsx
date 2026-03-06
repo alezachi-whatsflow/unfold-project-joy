@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 export function DashboardLayout({
   children,
