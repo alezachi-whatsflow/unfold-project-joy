@@ -226,6 +226,12 @@ export default function CustomersPage() {
           </div>
         </CardContent>
       </Card>
+      <CustomerFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSave={handleSaveCustomer}
+        editing={editingCustomer}
+      />
     </div>
   );
 }
