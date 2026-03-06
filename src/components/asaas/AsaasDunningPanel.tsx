@@ -527,9 +527,9 @@ export function AsaasDunningPanel() {
                       return (
                         <div key={i} className="flex items-center gap-1">
                           {i > 0 && <ArrowRight className="h-3 w-3 text-muted-foreground/50" />}
-                          <Badge variant="outline" className="text-[10px] gap-1">
+                          <Badge variant="outline" className={`text-[10px] gap-1 ${step.days_after_due < 0 ? "border-amber-500/50" : ""}`}>
                             <Icon className={`h-2.5 w-2.5 ${cfg?.color || ""}`} />
-                            D+{step.days_after_due}
+                            {step.days_after_due < 0 ? `D${step.days_after_due}` : step.days_after_due === 0 ? "D0" : `D+${step.days_after_due}`}
                           </Badge>
                         </div>
                       );
