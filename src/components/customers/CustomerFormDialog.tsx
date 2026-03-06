@@ -18,6 +18,7 @@ const emptyForm: Omit<Customer, "id"> = {
   whitelabel: "",
   nome: "",
   email: "",
+  cpfCnpj: "",
   status: "Ativo",
   dataAtivacao: new Date().toISOString().split("T")[0],
   dataCancelado: null,
@@ -71,7 +72,7 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
           <DialogTitle>{editing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {/* Row 1 */}
+          {/* Row 1: Nome + Email */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Empresa / Titular *</Label>
@@ -83,8 +84,12 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
             </div>
           </div>
 
-          {/* Row 2 */}
+          {/* Row 2: CPF/CNPJ + Whitelabel + Status */}
           <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">CPF / CNPJ</Label>
+              <Input value={form.cpfCnpj} onChange={(e) => set("cpfCnpj", e.target.value)} placeholder="000.000.000-00" />
+            </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Whitelabel</Label>
               <Input value={form.whitelabel} onChange={(e) => set("whitelabel", e.target.value)} placeholder="Whitelabel" />
@@ -100,10 +105,6 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
                   <SelectItem value="Cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Condição</Label>
-              <Input value={form.condicao} onChange={(e) => set("condicao", e.target.value)} placeholder="Ex: Mensal" />
             </div>
           </div>
 
@@ -151,23 +152,70 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
             </div>
           </div>
 
-          {/* Financial */}
+          {/* Financial with Dropdowns */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Checkout</Label>
-              <Input value={form.checkout} onChange={(e) => set("checkout", e.target.value)} placeholder="Ex: Asaas" />
+              <Select value={form.checkout || "_empty"} onValueChange={(v) => set("checkout", v === "_empty" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_empty">Nenhum</SelectItem>
+                  <SelectItem value="Asaas">Asaas</SelectItem>
+                  <SelectItem value="Stripe">Stripe</SelectItem>
+                  <SelectItem value="PagSeguro">PagSeguro</SelectItem>
+                  <SelectItem value="Mercado Pago">Mercado Pago</SelectItem>
+                  <SelectItem value="Manual">Manual</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Receita</Label>
-              <Input value={form.receita} onChange={(e) => set("receita", e.target.value)} placeholder="Tipo receita" />
+              <Select value={form.receita || "_empty"} onValueChange={(v) => set("receita", v === "_empty" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_empty">Nenhum</SelectItem>
+                  <SelectItem value="recorrente">Recorrente</SelectItem>
+                  <SelectItem value="avulsa">Avulsa</SelectItem>
+                  <SelectItem value="setup">Setup</SelectItem>
+                  <SelectItem value="consultoria">Consultoria</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Tipo Pagamento</Label>
-              <Input value={form.tipoPagamento} onChange={(e) => set("tipoPagamento", e.target.value)} placeholder="Ex: Boleto" />
+              <Select value={form.tipoPagamento || "_empty"} onValueChange={(v) => set("tipoPagamento", v === "_empty" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_empty">Nenhum</SelectItem>
+                  <SelectItem value="Boleto">Boleto</SelectItem>
+                  <SelectItem value="Pix">Pix</SelectItem>
+                  <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                  <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                  <SelectItem value="Transferência">Transferência</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Valor Cobrança (R$)</Label>
               <Input type="number" min={0} step={0.01} value={form.valorUltimaCobranca} onChange={(e) => set("valorUltimaCobranca", Number(e.target.value))} />
+            </div>
+          </div>
+
+          {/* Condição */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Condição</Label>
+              <Select value={form.condicao || "_empty"} onValueChange={(v) => set("condicao", v === "_empty" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_empty">Nenhum</SelectItem>
+                  <SelectItem value="Mensal">Mensal</SelectItem>
+                  <SelectItem value="Trimestral">Trimestral</SelectItem>
+                  <SelectItem value="Semestral">Semestral</SelectItem>
+                  <SelectItem value="Anual">Anual</SelectItem>
+                  <SelectItem value="Avulso">Avulso</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

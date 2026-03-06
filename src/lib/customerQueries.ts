@@ -34,6 +34,7 @@ function customerToRow(
     whitelabel: customer.whitelabel,
     nome: customer.nome,
     email: customer.email,
+    cpf_cnpj: customer.cpfCnpj || "",
     status: customer.status,
     data_ativacao: customer.dataAtivacao,
     data_cancelado: customer.dataCancelado,
