@@ -10,8 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange } from "lucide-react";
+import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange, Plus, Pencil } from "lucide-react";
 import { useCustomerFilters, ColumnFilterPopover } from "@/components/customers/CustomerTableFilters";
+import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
+import { useState } from "react";
+import type { Customer } from "@/types/customers";
 
 function formatDateBR(date: string | null): string {
   if (!date) return "-";
