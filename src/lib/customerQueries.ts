@@ -7,6 +7,7 @@ function rowToCustomer(row: CustomerRow): Customer {
     whitelabel: row.whitelabel,
     nome: row.nome,
     email: row.email,
+    cpfCnpj: row.cpf_cnpj || "",
     status: row.status,
     dataAtivacao: row.data_ativacao,
     dataCancelado: row.data_cancelado,
