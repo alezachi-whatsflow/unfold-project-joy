@@ -214,17 +214,16 @@ export function PaymentNotificationsCard({ paymentAsaasId, paymentId, environmen
                     <TableCell className="py-2">
                       <div className="flex items-center justify-end gap-1">
                         {n.delivered && (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" title="Enviado" />
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
                         )}
                         <Mail
                           className={`h-4 w-4 ${n.delivered ? "text-primary" : "text-muted-foreground"}`}
-                          title="E-mail"
                         />
                         {n.opened && (
-                          <Eye className="h-4 w-4 text-muted-foreground" title="Visualizado" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         )}
                         {n.hasLink && (
-                          <Link2 className="h-4 w-4 text-muted-foreground" title="Link" />
+                          <Link2 className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
                     </TableCell>
