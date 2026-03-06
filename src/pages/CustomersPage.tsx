@@ -10,8 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange } from "lucide-react";
+import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange, Plus, Pencil } from "lucide-react";
 import { useCustomerFilters, ColumnFilterPopover } from "@/components/customers/CustomerTableFilters";
+import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
+import { useState } from "react";
+import type { Customer } from "@/types/customers";
 
 function formatDateBR(date: string | null): string {
   if (!date) return "-";
@@ -23,8 +26,25 @@ function formatDateBR(date: string | null): string {
 export default function CustomersPage() {
   const { entries, selectedMonth, setSelectedMonth } = useFinancial();
   const {
-    customers, activeCount, churnedCount, totalMRR, totalCustomers, deleteCustomer, isLoading,
+    customers, activeCount, churnedCount, totalMRR, totalCustomers, deleteCustomer, importCustomers, isLoading,
   } = useCustomers();
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
+  const handleSaveCustomer = async (customer: Customer) => {
+    await importCustomers([customer]);
+  };
+
+  const openEdit = (c: Customer) => {
+    setEditingCustomer(c);
+    setFormOpen(true);
+  };
+
+  const openNew = () => {
+    setEditingCustomer(null);
+    setFormOpen(true);
+  };
 
   const { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount } =
     useCustomerFilters(customers);
@@ -52,6 +72,9 @@ export default function CustomersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" onClick={openNew} className="gap-1.5 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Novo Cliente
+          </Button>
           <CalendarRange className="h-4 w-4 text-muted-foreground" />
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="h-9 w-[200px] border-border bg-secondary text-sm">
@@ -186,9 +209,14 @@ export default function CustomersPage() {
                       </TableCell>
                       <TableCell className="text-right font-display text-sm">{formatCurrency(customer.valorUltimaCobranca)}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteCustomer(customer.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex gap-0.5">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(customer)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteCustomer(customer.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -198,6 +226,12 @@ export default function CustomersPage() {
           </div>
         </CardContent>
       </Card>
+      <CustomerFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSave={handleSaveCustomer}
+        editing={editingCustomer}
+      />
     </div>
   );
 }
