@@ -295,8 +295,8 @@ export function AsaasBillingManagerPanel() {
             <BillingIcon className="h-5 w-5 text-primary" />
             <div>
               <p className="text-sm font-medium">
-                Criar {targetCustomerIds.length} cobrança(s) via{" "}
-                {config.billingType === "BOLETO" ? "Boleto" : config.billingType === "PIX" ? "Pix" : "Cartão"}
+                Criar {targetCustomerIds.length} cobrança(s) via {billingTypeLabel}
+                {split.enabled && " + Split"}
                 {split.enabled && " + Split"}
               </p>
               <p className="text-[10px] text-muted-foreground">
