@@ -118,7 +118,7 @@ export function AsaasBillingManagerPanel() {
           description: config.description || `Cobrança - ${customer?.name || customerId}`,
         };
 
-        if (config.billingType === "BOLETO") {
+        if (config.billingType === "BOLETO" || config.billingType === "UNDEFINED") {
           if (parseFloat(config.fineValue) > 0) {
             payload.fine = { value: parseFloat(config.fineValue), type: "PERCENTAGE" };
           }
