@@ -1,6 +1,7 @@
 import { useAsaas } from "@/contexts/AsaasContext";
 import { PAYMENT_STATUS_CONFIG, BILLING_TYPE_LABELS } from "@/types/asaas";
 import { formatCurrency } from "@/lib/calculations";
+import type { DateRange } from "@/lib/asaasQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,21 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   RefreshCw, CreditCard, Receipt, QrCode, DollarSign,
   AlertTriangle, CheckCircle2, Clock,
 } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+function formatPeriod(range: DateRange): string {
+  if (!range.earliest || !range.latest) return "Sem dados";
+  const fmt = (d: string) => format(parseISO(d), "dd/MM/yyyy", { locale: ptBR });
+  if (range.earliest === range.latest) return fmt(range.earliest);
+  return `${fmt(range.earliest)} — ${fmt(range.latest)}`;
+}
 
 export function AsaasPaymentsPanel() {
   const { payments, stats, isSyncing, syncPayments, environment, setEnvironment } = useAsaas();
