@@ -194,7 +194,12 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
             </Select>
             {config.billingType === "UNDEFINED" && (
               <p className="text-[10px] text-muted-foreground">
-                O cliente poderá pagar via Boleto ou Pix na mesma cobrança
+                O cliente poderá escolher entre todas as formas de pagamento disponíveis
+              </p>
+            )}
+            {config.billingType === "BOLETO" && (
+              <p className="text-[10px] text-muted-foreground">
+                Gera boleto com QR Code Pix integrado automaticamente
               </p>
             )}
           </div>
