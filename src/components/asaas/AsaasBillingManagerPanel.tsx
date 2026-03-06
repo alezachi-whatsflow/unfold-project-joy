@@ -33,7 +33,7 @@ import { PaymentArtifactsDialog } from "./billing/PaymentArtifactsDialog";
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 export interface BillingConfig {
-  billingType: "BOLETO" | "CREDIT_CARD" | "PIX";
+  billingType: "BOLETO" | "CREDIT_CARD" | "PIX" | "UNDEFINED";
   value: string;
   description: string;
   daysUntilDue: number;
