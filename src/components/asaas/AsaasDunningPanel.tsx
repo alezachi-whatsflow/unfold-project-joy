@@ -89,7 +89,7 @@ export function AsaasDunningPanel() {
       name: template?.name || "",
       description: template?.description || "",
       status: "draft",
-      rules: template?.rules || [{ days_after_due: 1, action: "email", message: "" }],
+      rules: template?.rules || [{ days_after_due: -5, action: "email", message: "" }],
       version: 1,
       template_key: template?.key || undefined,
     });
