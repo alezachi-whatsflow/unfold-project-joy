@@ -33,7 +33,7 @@ import { PaymentArtifactsDialog } from "./billing/PaymentArtifactsDialog";
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 export interface BillingConfig {
-  billingType: "BOLETO" | "CREDIT_CARD" | "PIX";
+  billingType: "BOLETO" | "CREDIT_CARD" | "PIX" | "UNDEFINED";
   value: string;
   description: string;
   daysUntilDue: number;
@@ -45,7 +45,7 @@ export interface BillingConfig {
 }
 
 export const DEFAULT_CONFIG: BillingConfig = {
-  billingType: "BOLETO",
+  billingType: "UNDEFINED",
   value: "",
   description: "",
   daysUntilDue: 5,
@@ -118,7 +118,7 @@ export function AsaasBillingManagerPanel() {
           description: config.description || `Cobrança - ${customer?.name || customerId}`,
         };
 
-        if (config.billingType === "BOLETO") {
+        if (config.billingType === "BOLETO" || config.billingType === "UNDEFINED") {
           if (parseFloat(config.fineValue) > 0) {
             payload.fine = { value: parseFloat(config.fineValue), type: "PERCENTAGE" };
           }
@@ -216,6 +216,10 @@ export function AsaasBillingManagerPanel() {
     if (errorCount > 0) toast.error(`${errorCount} cobrança(s) com erro`);
   };
 
+  const billingTypeLabel = config.billingType === "UNDEFINED" ? "Boleto+Pix"
+    : config.billingType === "CREDIT_CARD" ? "Cartão"
+    : config.billingType === "PIX" ? "Pix" : "Boleto";
+
   const BillingIcon = config.billingType === "CREDIT_CARD" ? CreditCard
     : config.billingType === "PIX" ? QrCode : FileText;
 
@@ -291,8 +295,8 @@ export function AsaasBillingManagerPanel() {
             <BillingIcon className="h-5 w-5 text-primary" />
             <div>
               <p className="text-sm font-medium">
-                Criar {targetCustomerIds.length} cobrança(s) via{" "}
-                {config.billingType === "BOLETO" ? "Boleto" : config.billingType === "PIX" ? "Pix" : "Cartão"}
+                Criar {targetCustomerIds.length} cobrança(s) via {billingTypeLabel}
+                {split.enabled && " + Split"}
                 {split.enabled && " + Split"}
               </p>
               <p className="text-[10px] text-muted-foreground">
