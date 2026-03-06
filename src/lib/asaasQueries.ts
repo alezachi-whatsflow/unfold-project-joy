@@ -269,6 +269,11 @@ export async function simulateDunning(
 
 // ── Payment Stats ──
 
+export interface DateRange {
+  earliest: string | null;
+  latest: string | null;
+}
+
 export interface PaymentStats {
   total: number;
   received: number;
@@ -279,6 +284,10 @@ export interface PaymentStats {
   pendingValue: number;
   overdueValue: number;
   byBillingType: Record<string, { count: number; value: number }>;
+  receivedPeriod: DateRange;
+  pendingPeriod: DateRange;
+  overduePeriod: DateRange;
+  totalPeriod: DateRange;
 }
 
 export function calculatePaymentStats(payments: AsaasPayment[]): PaymentStats {
