@@ -302,8 +302,7 @@ export function AsaasBillingManagerPanel() {
             <div>
               <p className="text-sm font-medium">
                 Criar {targetCustomerIds.length} cobrança(s) via {billingTypeLabel}
-                {split.enabled && " + Split"}
-                {split.enabled && " + Split"}
+                {split.enabled && ` + Split (${split.recipients.filter((r) => r.walletId).length} recebedor(es))`}
               </p>
               <p className="text-[10px] text-muted-foreground">
                 Valor: R$ {config.value || "0,00"} cada • Vencimento: {getDueDate()} • Modo: {mode === "automatic" ? "Automático" : "Manual"} • Ambiente: {environment}
