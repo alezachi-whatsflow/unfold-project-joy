@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/calculations";
 import { PAYMENT_STATUS_CONFIG, BILLING_TYPE_LABELS } from "@/types/asaas";
 import type { AsaasPayment } from "@/types/asaas";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Clock, Webhook, MessageSquare, Send, Loader2,
-  CreditCard, FileText, QrCode,
+  CreditCard, FileText, QrCode, Bell,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PaymentNotificationsCard } from "./PaymentNotificationsCard";
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -123,7 +125,7 @@ export function PaymentTimelineDialog({ payment, onClose, environment }: Props) 
 
   return (
     <Dialog open={!!payment} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <BillingIcon className="h-4 w-4 text-muted-foreground" />
@@ -138,71 +140,94 @@ export function PaymentTimelineDialog({ payment, onClose, environment }: Props) 
           </DialogDescription>
         </DialogHeader>
 
-        <Separator />
+        <Tabs defaultValue="timeline" className="flex-1 min-h-0 flex flex-col">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="timeline" className="gap-1.5 text-xs">
+              <Clock className="h-3.5 w-3.5" />
+              Timeline
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-1.5 text-xs">
+              <Bell className="h-3.5 w-3.5" />
+              Notificações
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Add Note */}
-        <div className="flex gap-2">
-          <Textarea
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Adicionar nota interna..."
-            className="text-xs min-h-[40px] max-h-[80px]"
-          />
-          <Button
-            size="sm"
-            onClick={addNote}
-            disabled={saving || !newNote.trim()}
-            className="self-end gap-1"
-          >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-          </Button>
-        </div>
-
-        <Separator />
-
-        {/* Timeline */}
-        <ScrollArea className="flex-1 min-h-0">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <TabsContent value="timeline" className="flex-1 min-h-0 flex flex-col mt-3 space-y-3">
+            {/* Add Note */}
+            <div className="flex gap-2">
+              <Textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Adicionar nota interna..."
+                className="text-xs min-h-[40px] max-h-[80px]"
+              />
+              <Button
+                size="sm"
+                onClick={addNote}
+                disabled={saving || !newNote.trim()}
+                className="self-end gap-1"
+              >
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              </Button>
             </div>
-          ) : timelineItems.length === 0 ? (
-            <p className="text-center text-xs text-muted-foreground py-8">
-              Nenhum evento ou nota registrada para esta cobrança.
-            </p>
-          ) : (
-            <div className="space-y-1 pr-2">
-              {timelineItems.map((item) => (
-                <div key={item.id} className="flex gap-3 py-2">
-                  <div className="flex flex-col items-center">
-                    <div className={`flex h-7 w-7 items-center justify-center rounded-full ${
-                      item.type === "webhook" ? "bg-accent/10" : "bg-primary/10"
-                    }`}>
-                      {item.type === "webhook" ? (
-                        <Webhook className="h-3.5 w-3.5 text-accent" />
-                      ) : (
-                        <MessageSquare className="h-3.5 w-3.5 text-primary" />
-                      )}
-                    </div>
-                    <div className="w-px flex-1 bg-border" />
-                  </div>
-                  <div className="flex-1 pb-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-medium">{item.label}</p>
-                      <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(item.date).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
-                      </p>
-                    </div>
-                    {item.detail && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{item.detail}</p>
-                    )}
-                  </div>
+
+            <Separator />
+
+            {/* Timeline */}
+            <ScrollArea className="flex-1 min-h-0">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+              ) : timelineItems.length === 0 ? (
+                <p className="text-center text-xs text-muted-foreground py-8">
+                  Nenhum evento ou nota registrada para esta cobrança.
+                </p>
+              ) : (
+                <div className="space-y-1 pr-2">
+                  {timelineItems.map((item) => (
+                    <div key={item.id} className="flex gap-3 py-2">
+                      <div className="flex flex-col items-center">
+                        <div className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                          item.type === "webhook" ? "bg-accent/10" : "bg-primary/10"
+                        }`}>
+                          {item.type === "webhook" ? (
+                            <Webhook className="h-3.5 w-3.5 text-accent" />
+                          ) : (
+                            <MessageSquare className="h-3.5 w-3.5 text-primary" />
+                          )}
+                        </div>
+                        <div className="w-px flex-1 bg-border" />
+                      </div>
+                      <div className="flex-1 pb-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium">{item.label}</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(item.date).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                          </p>
+                        </div>
+                        {item.detail && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{item.detail}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="flex-1 min-h-0 mt-3">
+            <ScrollArea className="h-full">
+              <PaymentNotificationsCard
+                paymentAsaasId={payment.asaas_id}
+                paymentId={payment.id}
+                environment={environment}
+              />
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
