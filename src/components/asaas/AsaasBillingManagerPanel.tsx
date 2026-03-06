@@ -45,7 +45,7 @@ export interface BillingConfig {
 }
 
 export const DEFAULT_CONFIG: BillingConfig = {
-  billingType: "BOLETO",
+  billingType: "UNDEFINED",
   value: "",
   description: "",
   daysUntilDue: 5,

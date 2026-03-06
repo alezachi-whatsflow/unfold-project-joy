@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { FileText, Settings2, Calendar, CreditCard, QrCode } from "lucide-react";
+import { FileText, Settings2, Calendar, CreditCard, QrCode, Layers } from "lucide-react";
 import type { BillingConfig } from "../AsaasBillingManagerPanel";
 
 interface Props {
@@ -15,7 +15,32 @@ interface Props {
   getDueDate: () => string;
 }
 
+const BILLING_TYPE_LABELS: Record<BillingConfig["billingType"], { label: string; icon: React.ReactNode; description: string }> = {
+  UNDEFINED: {
+    label: "Boleto + Pix",
+    icon: <Layers className="h-3 w-3" />,
+    description: "Cliente escolhe entre Boleto ou Pix no checkout",
+  },
+  BOLETO: {
+    label: "Boleto",
+    icon: <FileText className="h-3 w-3" />,
+    description: "Apenas boleto bancário",
+  },
+  CREDIT_CARD: {
+    label: "Cartão de Crédito",
+    icon: <CreditCard className="h-3 w-3" />,
+    description: "Cobrança via cartão de crédito",
+  },
+  PIX: {
+    label: "Pix",
+    icon: <QrCode className="h-3 w-3" />,
+    description: "Apenas Pix com QR Code",
+  },
+};
+
 export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
+  const showBoletoSettings = config.billingType === "BOLETO" || config.billingType === "UNDEFINED";
+
   return (
     <Card className="border-border">
       <CardHeader className="pb-3">
@@ -39,17 +64,20 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="BOLETO">
-                  <span className="flex items-center gap-1.5"><FileText className="h-3 w-3" /> Boleto</span>
-                </SelectItem>
-                <SelectItem value="CREDIT_CARD">
-                  <span className="flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Cartão de Crédito</span>
-                </SelectItem>
-                <SelectItem value="PIX">
-                  <span className="flex items-center gap-1.5"><QrCode className="h-3 w-3" /> Pix</span>
-                </SelectItem>
+                {Object.entries(BILLING_TYPE_LABELS).map(([key, { label, icon, description }]) => (
+                  <SelectItem key={key} value={key}>
+                    <span className="flex items-center gap-1.5">
+                      {icon} {label}
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            {config.billingType === "UNDEFINED" && (
+              <p className="text-[10px] text-muted-foreground">
+                O cliente poderá pagar via Boleto ou Pix na mesma cobrança
+              </p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Valor (R$)</Label>
@@ -96,10 +124,12 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
           </div>
         </div>
 
-        {config.billingType === "BOLETO" && (
+        {showBoletoSettings && (
           <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-              Configurações do Boleto
+              {config.billingType === "UNDEFINED"
+                ? "Configurações do Boleto (aplicadas quando pago via boleto)"
+                : "Configurações do Boleto"}
             </p>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
