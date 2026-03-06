@@ -220,9 +220,9 @@ export function AsaasDunningPanel() {
                       const cfg = ACTION_CONFIG[s.action];
                       const Icon = cfg.icon;
                       return (
-                        <Badge key={i} variant="outline" className="text-[10px] gap-1">
+                        <Badge key={i} variant="outline" className={`text-[10px] gap-1 ${s.days_after_due < 0 ? "border-amber-500/50" : ""}`}>
                           <Icon className={`h-2.5 w-2.5 ${cfg.color}`} />
-                          D+{s.days_after_due}
+                          {s.days_after_due < 0 ? `D${s.days_after_due}` : s.days_after_due === 0 ? "D0" : `D+${s.days_after_due}`}
                         </Badge>
                       );
                     })}
