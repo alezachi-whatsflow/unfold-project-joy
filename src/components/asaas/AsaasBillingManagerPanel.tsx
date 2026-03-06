@@ -36,7 +36,7 @@ export interface BillingConfig {
   billingType: "BOLETO" | "CREDIT_CARD" | "PIX" | "UNDEFINED";
   value: string;
   description: string;
-  daysUntilDue: number;
+  dueDate: Date;
   fineValue: string;
   interestValue: string;
   discountValue: string;
@@ -44,11 +44,17 @@ export interface BillingConfig {
   postalService: boolean;
 }
 
+const getDefaultDueDate = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 5);
+  return d;
+};
+
 export const DEFAULT_CONFIG: BillingConfig = {
   billingType: "UNDEFINED",
   value: "",
   description: "",
-  daysUntilDue: 5,
+  dueDate: getDefaultDueDate(),
   fineValue: "2",
   interestValue: "1",
   discountValue: "0",
