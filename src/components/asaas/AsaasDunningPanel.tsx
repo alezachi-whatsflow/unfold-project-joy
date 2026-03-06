@@ -32,8 +32,10 @@ const TEMPLATES = [
   {
     key: "standard",
     name: "Régua Padrão",
-    description: "Notificação gradual: lembrete, SMS, e-mail e protesto",
+    description: "Aviso antes do vencimento + cobrança gradual após",
     rules: [
+      { days_after_due: -5, action: "email" as const, message: "Lembrete: sua fatura vence em 5 dias. Antecipe o pagamento pelo link." },
+      { days_after_due: -1, action: "notification" as const, message: "Sua fatura vence amanhã. Pague agora e evite atrasos." },
       { days_after_due: 1, action: "notification" as const, message: "Olá! Identificamos que seu pagamento venceu ontem. Caso já tenha efetuado, desconsidere." },
       { days_after_due: 3, action: "email" as const, message: "Gostaríamos de lembrar que há um pagamento em aberto. Acesse o link para regularizar." },
       { days_after_due: 7, action: "sms" as const, message: "Pagamento em atraso há 7 dias. Regularize para evitar bloqueio do serviço." },
@@ -43,8 +45,10 @@ const TEMPLATES = [
   {
     key: "gentle",
     name: "Régua Suave",
-    description: "Apenas lembretes por e-mail, sem protesto",
+    description: "Lembretes gentis antes e depois do vencimento",
     rules: [
+      { days_after_due: -3, action: "email" as const, message: "Sua fatura vence em 3 dias. Pague com antecedência!" },
+      { days_after_due: 0, action: "email" as const, message: "Sua fatura vence hoje. Acesse o link para efetuar o pagamento." },
       { days_after_due: 2, action: "email" as const, message: "Notamos um pagamento pendente. Caso já tenha pago, desconsidere." },
       { days_after_due: 7, action: "email" as const, message: "Lembrete: seu pagamento está pendente há uma semana." },
       { days_after_due: 14, action: "email" as const, message: "Última notificação: pagamento em aberto há 14 dias." },
@@ -55,6 +59,7 @@ const TEMPLATES = [
     name: "Régua Agressiva",
     description: "Ação rápida com SMS e protesto antecipado",
     rules: [
+      { days_after_due: -1, action: "sms" as const, message: "Sua fatura vence amanhã. Evite juros e multa, pague agora." },
       { days_after_due: 1, action: "sms" as const, message: "Pagamento vencido. Regularize imediatamente." },
       { days_after_due: 2, action: "email" as const, message: "Pagamento em atraso. Acesse o link para pagar." },
       { days_after_due: 5, action: "sms" as const, message: "Última chance: pague em 48h para evitar protesto." },
