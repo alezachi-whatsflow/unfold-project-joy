@@ -1,10 +1,21 @@
+import { useState } from "react";
 import { useAsaas } from "@/contexts/AsaasContext";
+import { callAsaasProxy } from "@/lib/asaasQueries";
 import { PAYMENT_STATUS_CONFIG, BILLING_TYPE_LABELS } from "@/types/asaas";
 import { formatCurrency } from "@/lib/calculations";
 import type { DateRange } from "@/lib/asaasQueries";
+import type { AsaasPayment } from "@/types/asaas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -16,10 +27,12 @@ import {
 } from "@/components/ui/tooltip";
 import {
   RefreshCw, CreditCard, Receipt, QrCode, DollarSign,
-  AlertTriangle, CheckCircle2, Clock,
+  AlertTriangle, CheckCircle2, Clock, Pencil, CalendarIcon, Loader2,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 function formatPeriod(range: DateRange): string {
   if (!range.earliest || !range.latest) return "Sem dados";
@@ -28,8 +41,170 @@ function formatPeriod(range: DateRange): string {
   return `${fmt(range.earliest)} — ${fmt(range.latest)}`;
 }
 
+function EditPaymentDialog({
+  payment,
+  open,
+  onOpenChange,
+  environment,
+  onUpdated,
+}: {
+  payment: AsaasPayment | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  environment: "sandbox" | "production";
+  onUpdated: () => void;
+}) {
+  const [value, setValue] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Sync state when payment changes
+  const [lastId, setLastId] = useState<string | null>(null);
+  if (payment && payment.asaas_id !== lastId) {
+    setLastId(payment.asaas_id);
+    setValue(String(payment.value));
+    setDescription(payment.description || "");
+    setDueDate(payment.due_date ? parseISO(payment.due_date) : undefined);
+  }
+
+  const canEdit = payment && ["PENDING", "OVERDUE"].includes(payment.status);
+
+  const handleSave = async () => {
+    if (!payment) return;
+    setIsSaving(true);
+    try {
+      const payload: Record<string, unknown> = {};
+      if (value && parseFloat(value) !== payment.value) payload.value = parseFloat(value);
+      if (description !== (payment.description || "")) payload.description = description;
+      if (dueDate) {
+        const newDue = dueDate.toISOString().split("T")[0];
+        if (newDue !== payment.due_date) payload.dueDate = newDue;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        toast.info("Nenhuma alteração detectada");
+        setIsSaving(false);
+        return;
+      }
+
+      await callAsaasProxy({
+        endpoint: `/payments/${payment.asaas_id}`,
+        method: "PUT",
+        params: payload,
+        environment,
+      });
+
+      toast.success("Cobrança atualizada com sucesso");
+      onUpdated();
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar cobrança");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-sm flex items-center gap-2">
+            <Pencil className="h-4 w-4" />
+            Editar Cobrança
+          </DialogTitle>
+        </DialogHeader>
+        {payment && (
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-mono">{payment.asaas_id}</span>
+              <Badge variant={PAYMENT_STATUS_CONFIG[payment.status]?.color || "outline"} className="text-[10px]">
+                {PAYMENT_STATUS_CONFIG[payment.status]?.label || payment.status}
+              </Badge>
+            </div>
+
+            {!canEdit && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <p className="text-xs text-destructive">
+                  Apenas cobranças com status Pendente ou Vencida podem ser editadas.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Valor (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                disabled={!canEdit}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Descrição</Label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={!canEdit}
+                className="text-xs min-h-[60px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1">
+                <CalendarIcon className="h-3 w-3" /> Vencimento
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={!canEdit}
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-9 text-xs",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {dueDate ? format(dueDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={(d) => d && setDueDate(d)}
+                    disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                    initialFocus
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={!canEdit || isSaving} className="gap-1.5">
+            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Pencil className="h-3.5 w-3.5" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function AsaasPaymentsPanel() {
-  const { payments, stats, isSyncing, syncPayments, environment, setEnvironment } = useAsaas();
+  const { payments, stats, isSyncing, syncPayments, environment, setEnvironment, refetch } = useAsaas();
+  const [editPayment, setEditPayment] = useState<AsaasPayment | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -192,18 +367,20 @@ export function AsaasPaymentsPanel() {
                   <TableHead className="text-xs text-muted-foreground">Vencimento</TableHead>
                   <TableHead className="text-xs text-muted-foreground">Pagamento</TableHead>
                   <TableHead className="text-xs text-muted-foreground">Descrição</TableHead>
+                  <TableHead className="text-xs text-muted-foreground w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">
                       Nenhuma cobrança sincronizada. Clique em "Sincronizar" para importar do Asaas.
                     </TableCell>
                   </TableRow>
                 ) : (
                   payments.slice(0, 100).map((p) => {
                     const statusConfig = PAYMENT_STATUS_CONFIG[p.status] || { label: p.status, color: "outline" as const };
+                    const canEdit = ["PENDING", "OVERDUE"].includes(p.status);
                     return (
                       <TableRow key={p.id} className="border-border hover:bg-secondary/50">
                         <TableCell className="text-xs font-mono">{p.asaas_id}</TableCell>
@@ -223,6 +400,18 @@ export function AsaasPaymentsPanel() {
                         <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
                           {p.description || "-"}
                         </TableCell>
+                        <TableCell>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => { setEditPayment(p); setEditOpen(true); }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -232,6 +421,15 @@ export function AsaasPaymentsPanel() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <EditPaymentDialog
+        payment={editPayment}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        environment={environment}
+        onUpdated={() => { syncPayments(); }}
+      />
     </div>
   );
 }
