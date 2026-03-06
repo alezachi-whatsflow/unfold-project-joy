@@ -216,6 +216,10 @@ export function AsaasBillingManagerPanel() {
     if (errorCount > 0) toast.error(`${errorCount} cobrança(s) com erro`);
   };
 
+  const billingTypeLabel = config.billingType === "UNDEFINED" ? "Boleto+Pix"
+    : config.billingType === "CREDIT_CARD" ? "Cartão"
+    : config.billingType === "PIX" ? "Pix" : "Boleto";
+
   const BillingIcon = config.billingType === "CREDIT_CARD" ? CreditCard
     : config.billingType === "PIX" ? QrCode : FileText;
 
