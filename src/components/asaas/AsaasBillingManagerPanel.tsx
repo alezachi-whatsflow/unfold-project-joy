@@ -234,7 +234,7 @@ export function AsaasBillingManagerPanel() {
         }
 
         newResults.push({
-          customer: customer?.name || customerId,
+          customer: customerName,
           asaasId: result.id || "",
           status: "success",
           message: "Cobrança criada com sucesso",
@@ -245,7 +245,7 @@ export function AsaasBillingManagerPanel() {
         });
       } catch (err) {
         newResults.push({
-          customer: customer?.name || customerId,
+          customer: customerName,
           asaasId: "",
           status: "error",
           message: err instanceof Error ? err.message : "Erro desconhecido",
