@@ -87,9 +87,7 @@ export function AsaasBillingManagerPanel() {
   const [artifactOpen, setArtifactOpen] = useState(false);
 
   const getDueDate = () => {
-    const date = new Date();
-    date.setDate(date.getDate() + config.daysUntilDue);
-    return date.toISOString().split("T")[0];
+    return config.dueDate.toISOString().split("T")[0];
   };
 
   // In automatic mode, use all customers; in manual, use selected
