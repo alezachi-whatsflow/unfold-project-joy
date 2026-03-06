@@ -69,7 +69,7 @@ export function KPICard({
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="text-fluid-xs font-medium uppercase tracking-wider text-muted-foreground">
               {title}
             </span>
             {tooltip && (
@@ -104,7 +104,7 @@ export function KPICard({
           </div>
         </div>
 
-        <div className="font-display text-2xl font-bold tracking-tight text-card-foreground">
+        <div className="font-display text-fluid-2xl font-bold tracking-tight text-card-foreground">
           {value}
         </div>
 
