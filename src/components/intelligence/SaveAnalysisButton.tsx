@@ -103,11 +103,11 @@ export function SaveAnalysisButton({
     if (whatsappResult) {
       details.whatsapp = {
         checks: [
-          { label: "Botão de WhatsApp presente", passed: whatsappResult.tem_botao },
-          { label: "Link correto (wa.me)", passed: whatsappResult.link_valido },
-          { label: "Mensagem pré-definida", passed: whatsappResult.mensagem_predefinida },
+          { label: "Botão de WhatsApp encontrado", passed: whatsappResult.encontrado },
+          { label: "Visível no mobile", passed: whatsappResult.configuracao_atual.visivel_mobile },
+          { label: "Contraste adequado", passed: whatsappResult.configuracao_atual.contraste_adequado },
         ],
-        recommendation: whatsappResult.recomendacoes?.[0] || "Adicione um botão de WhatsApp acessível no site.",
+        recommendation: whatsappResult.recomendacoes?.[0]?.acao || "Adicione um botão de WhatsApp acessível no site.",
       };
     }
 
@@ -118,7 +118,7 @@ export function SaveAnalysisButton({
           { label: "Hierarquia visual adequada", passed: neuroResult.score_geral >= 6 },
           { label: "Design persuasivo", passed: neuroResult.score_geral >= 7 },
         ],
-        recommendation: neuroResult.recomendacoes?.[0] || "Aplique princípios de neuromarketing no design.",
+        recommendation: neuroResult.top5_melhorias_neuromarketing?.[0]?.melhoria || "Aplique princípios de neuromarketing no design.",
       };
     }
 
