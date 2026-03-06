@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/calculations";
 import { PAYMENT_STATUS_CONFIG, BILLING_TYPE_LABELS } from "@/types/asaas";
 import type { AsaasPayment } from "@/types/asaas";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Clock, Webhook, MessageSquare, Send, Loader2,
-  CreditCard, FileText, QrCode,
+  CreditCard, FileText, QrCode, Bell,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PaymentNotificationsCard } from "./PaymentNotificationsCard";
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
