@@ -26,15 +26,10 @@ interface Props {
 }
 
 const BILLING_TYPE_LABELS: Record<BillingConfig["billingType"], { label: string; icon: React.ReactNode; description: string }> = {
-  UNDEFINED: {
-    label: "Boleto + Pix",
-    icon: <Layers className="h-3 w-3" />,
-    description: "Cliente escolhe entre Boleto ou Pix no checkout",
-  },
   BOLETO: {
-    label: "Boleto",
+    label: "Boleto Bancário / Pix",
     icon: <FileText className="h-3 w-3" />,
-    description: "Apenas boleto bancário",
+    description: "Boleto com QR Code Pix integrado",
   },
   CREDIT_CARD: {
     label: "Cartão de Crédito",
@@ -45,6 +40,11 @@ const BILLING_TYPE_LABELS: Record<BillingConfig["billingType"], { label: string;
     label: "Pix",
     icon: <QrCode className="h-3 w-3" />,
     description: "Apenas Pix com QR Code",
+  },
+  UNDEFINED: {
+    label: "Pergunte ao Cliente",
+    icon: <Layers className="h-3 w-3" />,
+    description: "Cliente escolhe a forma de pagamento no checkout",
   },
 };
 
@@ -194,7 +194,12 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
             </Select>
             {config.billingType === "UNDEFINED" && (
               <p className="text-[10px] text-muted-foreground">
-                O cliente poderá pagar via Boleto ou Pix na mesma cobrança
+                O cliente poderá escolher entre todas as formas de pagamento disponíveis
+              </p>
+            )}
+            {config.billingType === "BOLETO" && (
+              <p className="text-[10px] text-muted-foreground">
+                Gera boleto com QR Code Pix integrado automaticamente
               </p>
             )}
           </div>
