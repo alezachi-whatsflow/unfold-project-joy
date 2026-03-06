@@ -51,7 +51,7 @@ const getDefaultDueDate = () => {
 };
 
 export const DEFAULT_CONFIG: BillingConfig = {
-  billingType: "UNDEFINED",
+  billingType: "BOLETO",
   value: "",
   description: "",
   dueDate: getDefaultDueDate(),
