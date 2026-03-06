@@ -530,6 +530,78 @@ export type Database = {
           },
         ]
       }
+      financial_entries: {
+        Row: {
+          benefits: number
+          cash_balance: number
+          churned_customers: number
+          churned_mrr: number
+          contractors: number
+          created_at: string | null
+          expansion_mrr: number
+          fixed_costs: number
+          id: string
+          infrastructure: number
+          marketing: number
+          month: string
+          mrr: number
+          new_customers: number
+          new_mrr: number
+          other_revenue: number
+          payroll: number
+          taxes: number
+          total_customers: number
+          updated_at: string | null
+          variable_costs: number
+        }
+        Insert: {
+          benefits?: number
+          cash_balance?: number
+          churned_customers?: number
+          churned_mrr?: number
+          contractors?: number
+          created_at?: string | null
+          expansion_mrr?: number
+          fixed_costs?: number
+          id?: string
+          infrastructure?: number
+          marketing?: number
+          month: string
+          mrr?: number
+          new_customers?: number
+          new_mrr?: number
+          other_revenue?: number
+          payroll?: number
+          taxes?: number
+          total_customers?: number
+          updated_at?: string | null
+          variable_costs?: number
+        }
+        Update: {
+          benefits?: number
+          cash_balance?: number
+          churned_customers?: number
+          churned_mrr?: number
+          contractors?: number
+          created_at?: string | null
+          expansion_mrr?: number
+          fixed_costs?: number
+          id?: string
+          infrastructure?: number
+          marketing?: number
+          month?: string
+          mrr?: number
+          new_customers?: number
+          new_mrr?: number
+          other_revenue?: number
+          payroll?: number
+          taxes?: number
+          total_customers?: number
+          updated_at?: string | null
+          variable_costs?: number
+        }
+        Relationships: []
+      }
       payment_dunnings: {
         Row: {
           asaas_payment_dunning_id: string | null
