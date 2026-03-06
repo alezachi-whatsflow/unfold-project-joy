@@ -1,4 +1,4 @@
-import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck } from "lucide-react";
+import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ const navItems = [
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Produtos", url: "/products", icon: Package },
   { title: "Intelligence", url: "/intelligence", icon: Radar },
+  { title: "Relatórios", url: "/reports", icon: FileBarChart },
   { title: "Configurações", url: "/settings", icon: Settings },
 ];
 
