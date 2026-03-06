@@ -290,7 +290,13 @@ export interface PaymentStats {
   totalPeriod: DateRange;
 }
 
+function updateRange(range: DateRange, date: string) {
+  if (!range.earliest || date < range.earliest) range.earliest = date;
+  if (!range.latest || date > range.latest) range.latest = date;
+}
+
 export function calculatePaymentStats(payments: AsaasPayment[]): PaymentStats {
+  const emptyRange = (): DateRange => ({ earliest: null, latest: null });
   const stats: PaymentStats = {
     total: payments.length,
     received: 0,
@@ -301,20 +307,28 @@ export function calculatePaymentStats(payments: AsaasPayment[]): PaymentStats {
     pendingValue: 0,
     overdueValue: 0,
     byBillingType: {},
+    receivedPeriod: emptyRange(),
+    pendingPeriod: emptyRange(),
+    overduePeriod: emptyRange(),
+    totalPeriod: emptyRange(),
   };
 
   for (const p of payments) {
     stats.totalValue += p.value;
+    updateRange(stats.totalPeriod, p.due_date);
 
     if (p.status === "RECEIVED" || p.status === "CONFIRMED" || p.status === "RECEIVED_IN_CASH") {
       stats.received++;
       stats.receivedValue += p.value;
+      updateRange(stats.receivedPeriod, p.payment_date || p.due_date);
     } else if (p.status === "OVERDUE") {
       stats.overdue++;
       stats.overdueValue += p.value;
+      updateRange(stats.overduePeriod, p.due_date);
     } else if (p.status === "PENDING") {
       stats.pending++;
       stats.pendingValue += p.value;
+      updateRange(stats.pendingPeriod, p.due_date);
     }
 
     if (!stats.byBillingType[p.billing_type]) {
