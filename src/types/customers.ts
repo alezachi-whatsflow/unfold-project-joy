@@ -26,6 +26,7 @@ export interface CustomerRow {
   whitelabel: string;
   nome: string;
   email: string;
+  cpf_cnpj: string;
   status: string;
   data_ativacao: string;
   data_cancelado: string | null;
