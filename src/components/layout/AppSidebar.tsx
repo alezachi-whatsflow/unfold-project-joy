@@ -23,6 +23,7 @@ const navItems = [
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Produtos", url: "/products", icon: Package },
   { title: "Intelligence", url: "/intelligence", icon: Radar },
+  { title: "Relatórios", url: "/reports", icon: FileBarChart },
   { title: "Configurações", url: "/settings", icon: Settings },
 ];
 
