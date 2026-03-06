@@ -395,14 +395,17 @@ export function AsaasDunningPanel() {
                   return (
                     <div key={i} className="relative">
                       <div className={`absolute -left-6 top-3 h-5 w-5 rounded-full border-2 border-background flex items-center justify-center ${
-                        step.action === "protest" ? "bg-destructive" : "bg-primary"
+                        step.action === "protest" ? "bg-destructive" : step.days_after_due < 0 ? "bg-amber-500" : "bg-primary"
                       }`}>
                         <Icon className="h-2.5 w-2.5 text-primary-foreground" />
                       </div>
-                      <div className="rounded-md border border-border bg-background p-3 ml-2">
+                      <div className={`rounded-md border bg-background p-3 ml-2 ${step.days_after_due < 0 ? "border-amber-500/30" : "border-border"}`}>
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-[10px] font-mono">
-                            D+{step.days_after_due}
+                          <Badge variant="outline" className={`text-[10px] font-mono ${step.days_after_due < 0 ? "border-amber-500/50 text-amber-500" : ""}`}>
+                            {step.days_after_due < 0 ? `D${step.days_after_due}` : step.days_after_due === 0 ? "D0" : `D+${step.days_after_due}`}
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {step.days_after_due < 0 ? "Pré-vencimento" : step.days_after_due === 0 ? "Dia do vencimento" : "Pós-vencimento"}
                           </Badge>
                           <Badge variant="secondary" className={`text-[10px] ${cfg?.color || ""}`}>
                             {cfg?.label || step.action}
@@ -419,13 +422,14 @@ export function AsaasDunningPanel() {
                         </div>
                         <div className="grid gap-2 sm:grid-cols-3">
                           <div>
-                            <label className="text-[10px] text-muted-foreground">Dias após venc.</label>
+                            <label className="text-[10px] text-muted-foreground">
+                              {step.days_after_due < 0 ? "Dias antes do venc." : step.days_after_due === 0 ? "No vencimento" : "Dias após venc."}
+                            </label>
                             <Input
                               type="number"
                               value={step.days_after_due}
                               onChange={(e) => handleUpdateStep(i, "days_after_due", Number(e.target.value))}
                               className="h-7 text-xs"
-                              min={1}
                             />
                           </div>
                           <div>
