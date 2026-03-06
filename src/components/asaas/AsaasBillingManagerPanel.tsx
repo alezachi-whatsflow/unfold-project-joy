@@ -158,32 +158,35 @@ export function AsaasBillingManagerPanel() {
           environment,
         });
 
-        // Save split to local DB - need to find the local payment UUID first
-        if (split.enabled && split.walletId && result.id) {
-          const splitVal = parseFloat(split.splitValue);
-          const totalValue = split.splitType === "PERCENTAGE"
-            ? (parseFloat(config.value) * splitVal) / 100
-            : splitVal;
+        // Save splits to local DB
+        if (split.enabled && result.id) {
+          const validRecipients = split.recipients.filter((r) => r.walletId && r.splitValue);
+          if (validRecipients.length > 0) {
+            const { data: localPayment } = await supabase
+              .from("asaas_payments")
+              .select("id")
+              .eq("asaas_id", result.id)
+              .maybeSingle();
 
-          // Look up or wait for the local payment record by asaas_id
-          const { data: localPayment } = await supabase
-            .from("asaas_payments")
-            .select("id")
-            .eq("asaas_id", result.id)
-            .maybeSingle();
+            if (localPayment?.id) {
+              for (const r of validRecipients) {
+                const splitVal = parseFloat(r.splitValue);
+                const totalValue = r.splitType === "PERCENTAGE"
+                  ? (parseFloat(config.value) * splitVal) / 100
+                  : splitVal;
 
-          const paymentUuid = localPayment?.id;
-          if (paymentUuid) {
-            await supabase.from("asaas_splits").insert({
-              tenant_id: DEFAULT_TENANT_ID,
-              payment_id: paymentUuid,
-              salesperson_id: split.salespersonId || null,
-              wallet_id: split.walletId,
-              percent_value: split.splitType === "PERCENTAGE" ? splitVal : null,
-              fixed_value: split.splitType === "FIXED" ? splitVal : null,
-              total_value: totalValue,
-              status: "PENDING",
-            });
+                await supabase.from("asaas_splits").insert({
+                  tenant_id: DEFAULT_TENANT_ID,
+                  payment_id: localPayment.id,
+                  salesperson_id: r.salespersonId || null,
+                  wallet_id: r.walletId,
+                  percent_value: r.splitType === "PERCENTAGE" ? splitVal : null,
+                  fixed_value: r.splitType === "FIXED" ? splitVal : null,
+                  total_value: totalValue,
+                  status: "PENDING",
+                });
+              }
+            }
           }
         }
 
