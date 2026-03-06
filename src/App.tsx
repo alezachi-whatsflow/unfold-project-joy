@@ -19,6 +19,7 @@ import ProductsPage from "./pages/ProductsPage";
 import IntelligencePage from "./pages/IntelligencePage";
 import CobrancasPage from "./pages/CobrancasPage";
 import ExpensesPage from "./pages/ExpensesPage";
+import ReportsPage from "./pages/ReportsPage";
 import ComissoesPage from "./pages/ComissoesPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
