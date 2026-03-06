@@ -99,7 +99,7 @@ export function AsaasDunningPanel() {
   const handleAddStep = () => {
     if (!editingRule) return;
     const steps = [...(editingRule.rules || [])];
-    const lastDay = steps.length > 0 ? steps[steps.length - 1].days_after_due + 3 : 1;
+    const lastDay = steps.length > 0 ? steps[steps.length - 1].days_after_due + 3 : -5;
     steps.push({ days_after_due: lastDay, action: "email", message: "" });
     setEditingRule({ ...editingRule, rules: steps });
   };
