@@ -135,17 +135,20 @@ export function AsaasBillingManagerPanel() {
           payload.postalService = config.postalService;
         }
 
-        // Add split if enabled
-        if (split.enabled && split.walletId) {
-          const splitPayload: Record<string, unknown> = {
-            walletId: split.walletId,
-          };
-          if (split.splitType === "PERCENTAGE") {
-            splitPayload.percentualValue = parseFloat(split.splitValue);
-          } else {
-            splitPayload.fixedValue = parseFloat(split.splitValue);
+        // Add split if enabled — supports multiple recipients per Asaas API
+        if (split.enabled && split.recipients.length > 0) {
+          const validRecipients = split.recipients.filter((r) => r.walletId && r.splitValue);
+          if (validRecipients.length > 0) {
+            payload.split = validRecipients.map((r) => {
+              const entry: Record<string, unknown> = { walletId: r.walletId };
+              if (r.splitType === "PERCENTAGE") {
+                entry.percentualValue = parseFloat(parseFloat(r.splitValue).toFixed(4));
+              } else {
+                entry.fixedValue = parseFloat(parseFloat(r.splitValue).toFixed(2));
+              }
+              return entry;
+            });
           }
-          payload.split = [splitPayload];
         }
 
         const result = await callAsaasProxy({
