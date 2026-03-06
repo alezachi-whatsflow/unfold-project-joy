@@ -135,17 +135,20 @@ export function AsaasBillingManagerPanel() {
           payload.postalService = config.postalService;
         }
 
-        // Add split if enabled
-        if (split.enabled && split.walletId) {
-          const splitPayload: Record<string, unknown> = {
-            walletId: split.walletId,
-          };
-          if (split.splitType === "PERCENTAGE") {
-            splitPayload.percentualValue = parseFloat(split.splitValue);
-          } else {
-            splitPayload.fixedValue = parseFloat(split.splitValue);
+        // Add split if enabled — supports multiple recipients per Asaas API
+        if (split.enabled && split.recipients.length > 0) {
+          const validRecipients = split.recipients.filter((r) => r.walletId && r.splitValue);
+          if (validRecipients.length > 0) {
+            payload.split = validRecipients.map((r) => {
+              const entry: Record<string, unknown> = { walletId: r.walletId };
+              if (r.splitType === "PERCENTAGE") {
+                entry.percentualValue = parseFloat(parseFloat(r.splitValue).toFixed(4));
+              } else {
+                entry.fixedValue = parseFloat(parseFloat(r.splitValue).toFixed(2));
+              }
+              return entry;
+            });
           }
-          payload.split = [splitPayload];
         }
 
         const result = await callAsaasProxy({
@@ -155,32 +158,35 @@ export function AsaasBillingManagerPanel() {
           environment,
         });
 
-        // Save split to local DB - need to find the local payment UUID first
-        if (split.enabled && split.walletId && result.id) {
-          const splitVal = parseFloat(split.splitValue);
-          const totalValue = split.splitType === "PERCENTAGE"
-            ? (parseFloat(config.value) * splitVal) / 100
-            : splitVal;
+        // Save splits to local DB
+        if (split.enabled && result.id) {
+          const validRecipients = split.recipients.filter((r) => r.walletId && r.splitValue);
+          if (validRecipients.length > 0) {
+            const { data: localPayment } = await supabase
+              .from("asaas_payments")
+              .select("id")
+              .eq("asaas_id", result.id)
+              .maybeSingle();
 
-          // Look up or wait for the local payment record by asaas_id
-          const { data: localPayment } = await supabase
-            .from("asaas_payments")
-            .select("id")
-            .eq("asaas_id", result.id)
-            .maybeSingle();
+            if (localPayment?.id) {
+              for (const r of validRecipients) {
+                const splitVal = parseFloat(r.splitValue);
+                const totalValue = r.splitType === "PERCENTAGE"
+                  ? (parseFloat(config.value) * splitVal) / 100
+                  : splitVal;
 
-          const paymentUuid = localPayment?.id;
-          if (paymentUuid) {
-            await supabase.from("asaas_splits").insert({
-              tenant_id: DEFAULT_TENANT_ID,
-              payment_id: paymentUuid,
-              salesperson_id: split.salespersonId || null,
-              wallet_id: split.walletId,
-              percent_value: split.splitType === "PERCENTAGE" ? splitVal : null,
-              fixed_value: split.splitType === "FIXED" ? splitVal : null,
-              total_value: totalValue,
-              status: "PENDING",
-            });
+                await supabase.from("asaas_splits").insert({
+                  tenant_id: DEFAULT_TENANT_ID,
+                  payment_id: localPayment.id,
+                  salesperson_id: r.salespersonId || null,
+                  wallet_id: r.walletId,
+                  percent_value: r.splitType === "PERCENTAGE" ? splitVal : null,
+                  fixed_value: r.splitType === "FIXED" ? splitVal : null,
+                  total_value: totalValue,
+                  status: "PENDING",
+                });
+              }
+            }
           }
         }
 
@@ -296,8 +302,7 @@ export function AsaasBillingManagerPanel() {
             <div>
               <p className="text-sm font-medium">
                 Criar {targetCustomerIds.length} cobrança(s) via {billingTypeLabel}
-                {split.enabled && " + Split"}
-                {split.enabled && " + Split"}
+                {split.enabled && ` + Split (${split.recipients.filter((r) => r.walletId).length} recebedor(es))`}
               </p>
               <p className="text-[10px] text-muted-foreground">
                 Valor: R$ {config.value || "0,00"} cada • Vencimento: {getDueDate()} • Modo: {mode === "automatic" ? "Automático" : "Manual"} • Ambiente: {environment}
