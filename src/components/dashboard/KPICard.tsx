@@ -104,7 +104,7 @@ export function KPICard({
           </div>
         </div>
 
-        <div className="font-display text-2xl font-bold tracking-tight text-card-foreground">
+        <div className="font-display text-fluid-2xl font-bold tracking-tight text-card-foreground">
           {value}
         </div>
 
