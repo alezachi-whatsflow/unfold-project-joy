@@ -32,8 +32,10 @@ const TEMPLATES = [
   {
     key: "standard",
     name: "Régua Padrão",
-    description: "Notificação gradual: lembrete, SMS, e-mail e protesto",
+    description: "Aviso antes do vencimento + cobrança gradual após",
     rules: [
+      { days_after_due: -5, action: "email" as const, message: "Lembrete: sua fatura vence em 5 dias. Antecipe o pagamento pelo link." },
+      { days_after_due: -1, action: "notification" as const, message: "Sua fatura vence amanhã. Pague agora e evite atrasos." },
       { days_after_due: 1, action: "notification" as const, message: "Olá! Identificamos que seu pagamento venceu ontem. Caso já tenha efetuado, desconsidere." },
       { days_after_due: 3, action: "email" as const, message: "Gostaríamos de lembrar que há um pagamento em aberto. Acesse o link para regularizar." },
       { days_after_due: 7, action: "sms" as const, message: "Pagamento em atraso há 7 dias. Regularize para evitar bloqueio do serviço." },
@@ -43,8 +45,10 @@ const TEMPLATES = [
   {
     key: "gentle",
     name: "Régua Suave",
-    description: "Apenas lembretes por e-mail, sem protesto",
+    description: "Lembretes gentis antes e depois do vencimento",
     rules: [
+      { days_after_due: -3, action: "email" as const, message: "Sua fatura vence em 3 dias. Pague com antecedência!" },
+      { days_after_due: 0, action: "email" as const, message: "Sua fatura vence hoje. Acesse o link para efetuar o pagamento." },
       { days_after_due: 2, action: "email" as const, message: "Notamos um pagamento pendente. Caso já tenha pago, desconsidere." },
       { days_after_due: 7, action: "email" as const, message: "Lembrete: seu pagamento está pendente há uma semana." },
       { days_after_due: 14, action: "email" as const, message: "Última notificação: pagamento em aberto há 14 dias." },
@@ -55,6 +59,7 @@ const TEMPLATES = [
     name: "Régua Agressiva",
     description: "Ação rápida com SMS e protesto antecipado",
     rules: [
+      { days_after_due: -1, action: "sms" as const, message: "Sua fatura vence amanhã. Evite juros e multa, pague agora." },
       { days_after_due: 1, action: "sms" as const, message: "Pagamento vencido. Regularize imediatamente." },
       { days_after_due: 2, action: "email" as const, message: "Pagamento em atraso. Acesse o link para pagar." },
       { days_after_due: 5, action: "sms" as const, message: "Última chance: pague em 48h para evitar protesto." },
@@ -84,7 +89,7 @@ export function AsaasDunningPanel() {
       name: template?.name || "",
       description: template?.description || "",
       status: "draft",
-      rules: template?.rules || [{ days_after_due: 1, action: "email", message: "" }],
+      rules: template?.rules || [{ days_after_due: -5, action: "email", message: "" }],
       version: 1,
       template_key: template?.key || undefined,
     });
@@ -94,7 +99,7 @@ export function AsaasDunningPanel() {
   const handleAddStep = () => {
     if (!editingRule) return;
     const steps = [...(editingRule.rules || [])];
-    const lastDay = steps.length > 0 ? steps[steps.length - 1].days_after_due + 3 : 1;
+    const lastDay = steps.length > 0 ? steps[steps.length - 1].days_after_due + 3 : -5;
     steps.push({ days_after_due: lastDay, action: "email", message: "" });
     setEditingRule({ ...editingRule, rules: steps });
   };
@@ -215,9 +220,9 @@ export function AsaasDunningPanel() {
                       const cfg = ACTION_CONFIG[s.action];
                       const Icon = cfg.icon;
                       return (
-                        <Badge key={i} variant="outline" className="text-[10px] gap-1">
+                        <Badge key={i} variant="outline" className={`text-[10px] gap-1 ${s.days_after_due < 0 ? "border-amber-500/50" : ""}`}>
                           <Icon className={`h-2.5 w-2.5 ${cfg.color}`} />
-                          D+{s.days_after_due}
+                          {s.days_after_due < 0 ? `D${s.days_after_due}` : s.days_after_due === 0 ? "D0" : `D+${s.days_after_due}`}
                         </Badge>
                       );
                     })}
@@ -390,14 +395,17 @@ export function AsaasDunningPanel() {
                   return (
                     <div key={i} className="relative">
                       <div className={`absolute -left-6 top-3 h-5 w-5 rounded-full border-2 border-background flex items-center justify-center ${
-                        step.action === "protest" ? "bg-destructive" : "bg-primary"
+                        step.action === "protest" ? "bg-destructive" : step.days_after_due < 0 ? "bg-amber-500" : "bg-primary"
                       }`}>
                         <Icon className="h-2.5 w-2.5 text-primary-foreground" />
                       </div>
-                      <div className="rounded-md border border-border bg-background p-3 ml-2">
+                      <div className={`rounded-md border bg-background p-3 ml-2 ${step.days_after_due < 0 ? "border-amber-500/30" : "border-border"}`}>
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-[10px] font-mono">
-                            D+{step.days_after_due}
+                          <Badge variant="outline" className={`text-[10px] font-mono ${step.days_after_due < 0 ? "border-amber-500/50 text-amber-500" : ""}`}>
+                            {step.days_after_due < 0 ? `D${step.days_after_due}` : step.days_after_due === 0 ? "D0" : `D+${step.days_after_due}`}
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {step.days_after_due < 0 ? "Pré-vencimento" : step.days_after_due === 0 ? "Dia do vencimento" : "Pós-vencimento"}
                           </Badge>
                           <Badge variant="secondary" className={`text-[10px] ${cfg?.color || ""}`}>
                             {cfg?.label || step.action}
@@ -414,13 +422,14 @@ export function AsaasDunningPanel() {
                         </div>
                         <div className="grid gap-2 sm:grid-cols-3">
                           <div>
-                            <label className="text-[10px] text-muted-foreground">Dias após venc.</label>
+                            <label className="text-[10px] text-muted-foreground">
+                              {step.days_after_due < 0 ? "Dias antes do venc." : step.days_after_due === 0 ? "No vencimento" : "Dias após venc."}
+                            </label>
                             <Input
                               type="number"
                               value={step.days_after_due}
                               onChange={(e) => handleUpdateStep(i, "days_after_due", Number(e.target.value))}
                               className="h-7 text-xs"
-                              min={1}
                             />
                           </div>
                           <div>
@@ -518,9 +527,9 @@ export function AsaasDunningPanel() {
                       return (
                         <div key={i} className="flex items-center gap-1">
                           {i > 0 && <ArrowRight className="h-3 w-3 text-muted-foreground/50" />}
-                          <Badge variant="outline" className="text-[10px] gap-1">
+                          <Badge variant="outline" className={`text-[10px] gap-1 ${step.days_after_due < 0 ? "border-amber-500/50" : ""}`}>
                             <Icon className={`h-2.5 w-2.5 ${cfg?.color || ""}`} />
-                            D+{step.days_after_due}
+                            {step.days_after_due < 0 ? `D${step.days_after_due}` : step.days_after_due === 0 ? "D0" : `D+${step.days_after_due}`}
                           </Badge>
                         </div>
                       );

@@ -45,7 +45,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch overdue payments
+    // Check if any rule has pre-due steps (negative days)
+    const hasPreDueSteps = rules.some((r: any) =>
+      ((r.rules as any[]) || []).some((s: any) => s.days_after_due < 0)
+    );
+
+    // Fetch overdue payments (post-due steps)
     const { data: overduePayments, error: payErr } = await supabase
       .from("asaas_payments")
       .select("*")
@@ -53,12 +58,28 @@ Deno.serve(async (req) => {
 
     if (payErr) throw payErr;
 
+    // Fetch pending payments for pre-due reminders
+    let pendingPayments: any[] = [];
+    if (hasPreDueSteps) {
+      const { data: pending, error: pendErr } = await supabase
+        .from("asaas_payments")
+        .select("*")
+        .eq("status", "PENDING");
+
+      if (pendErr) throw pendErr;
+      pendingPayments = pending || [];
+    }
+
+    // Combine all payments to process
+    const allPayments = [...(overduePayments || []), ...pendingPayments];
+
     let totalProcessed = 0;
     const now = new Date();
 
-    for (const payment of overduePayments || []) {
+    for (const payment of allPayments) {
       const dueDate = new Date(payment.due_date);
-      const daysOverdue = Math.floor(
+      // Positive = days overdue, negative = days before due, 0 = due today
+      const daysDiff = Math.floor(
         (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
@@ -73,7 +94,12 @@ Deno.serve(async (req) => {
 
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        if (step.days_after_due !== daysOverdue) continue;
+        if (step.days_after_due !== daysDiff) continue;
+
+        // Pre-due steps should only fire for PENDING payments
+        if (step.days_after_due < 0 && payment.status !== "PENDING") continue;
+        // Post-due steps should only fire for OVERDUE payments
+        if (step.days_after_due > 0 && payment.status !== "OVERDUE") continue;
 
         // Check if already executed (idempotency)
         const { data: existing } = await supabase
@@ -108,7 +134,6 @@ Deno.serve(async (req) => {
             result = await resp.json();
             success = resp.ok;
           } else if (step.action === "sms") {
-            // SMS via Asaas notification API
             const resp = await fetch(`${baseUrl}/notifications`, {
               method: "POST",
               headers: {
@@ -125,6 +150,8 @@ Deno.serve(async (req) => {
             result = await resp.json();
             success = resp.ok;
           } else if (step.action === "protest") {
+            // Protest only makes sense for overdue payments
+            if (payment.status !== "OVERDUE") continue;
             const resp = await fetch(`${baseUrl}/paymentDunnings`, {
               method: "POST",
               headers: {
