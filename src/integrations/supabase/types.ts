@@ -415,6 +415,81 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          adicional: number
+          atendentes: number
+          checkout: string
+          condicao: string
+          cpf_cnpj: string | null
+          created_at: string | null
+          data_ativacao: string
+          data_bloqueio: string | null
+          data_cancelado: string | null
+          data_desbloqueio: string | null
+          data_vencimento: string | null
+          dispositivos_nao_oficial: number
+          dispositivos_oficial: number
+          email: string
+          id: string
+          nome: string
+          receita: string
+          status: string
+          tipo_pagamento: string
+          updated_at: string | null
+          valor_ultima_cobranca: number
+          whitelabel: string
+        }
+        Insert: {
+          adicional?: number
+          atendentes?: number
+          checkout?: string
+          condicao?: string
+          cpf_cnpj?: string | null
+          created_at?: string | null
+          data_ativacao?: string
+          data_bloqueio?: string | null
+          data_cancelado?: string | null
+          data_desbloqueio?: string | null
+          data_vencimento?: string | null
+          dispositivos_nao_oficial?: number
+          dispositivos_oficial?: number
+          email?: string
+          id?: string
+          nome?: string
+          receita?: string
+          status?: string
+          tipo_pagamento?: string
+          updated_at?: string | null
+          valor_ultima_cobranca?: number
+          whitelabel?: string
+        }
+        Update: {
+          adicional?: number
+          atendentes?: number
+          checkout?: string
+          condicao?: string
+          cpf_cnpj?: string | null
+          created_at?: string | null
+          data_ativacao?: string
+          data_bloqueio?: string | null
+          data_cancelado?: string | null
+          data_desbloqueio?: string | null
+          data_vencimento?: string | null
+          dispositivos_nao_oficial?: number
+          dispositivos_oficial?: number
+          email?: string
+          id?: string
+          nome?: string
+          receita?: string
+          status?: string
+          tipo_pagamento?: string
+          updated_at?: string | null
+          valor_ultima_cobranca?: number
+          whitelabel?: string
+        }
+        Relationships: []
+      }
       digital_analyses: {
         Row: {
           address: string | null
