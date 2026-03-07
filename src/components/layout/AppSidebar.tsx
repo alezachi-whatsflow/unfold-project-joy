@@ -66,7 +66,8 @@ export function AppSidebar() {
   const { signOut, user } = useAuth();
   const { canView, userRole } = usePermissions();
   const { prefs } = useSidebarPrefs();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const location = useLocation();
