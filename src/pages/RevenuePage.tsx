@@ -415,7 +415,7 @@ export default function RevenuePage() {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+          </PermissionGate>
       </div>
 
       {/* KPI Cards */}
