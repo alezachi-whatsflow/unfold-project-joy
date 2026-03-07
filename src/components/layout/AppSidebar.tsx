@@ -106,7 +106,25 @@ export function AppSidebar() {
     return { padding: isCompactLayout ? "5px 10px" : "7px 10px", fontSize: 13 };
   }, [prefs.density, prefs.layout]);
 
-  const isCollapsed = isMobile ? false : (collapsed || isRailLayout);
+  // Hover expand/collapse (not for Rail or mobile)
+  const [hoverExpanded, setHoverExpanded] = useState(false);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleMouseEnter = useCallback(() => {
+    if (isMobile || isRailLayout) return;
+    clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => setHoverExpanded(true), 200);
+  }, [isMobile, isRailLayout]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (isMobile || isRailLayout) return;
+    clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => setHoverExpanded(false), 300);
+  }, [isMobile, isRailLayout]);
+
+  useEffect(() => () => clearTimeout(hoverTimer.current), []);
+
+  const isCollapsed = isMobile ? false : ((collapsed || isRailLayout) && !hoverExpanded);
   const sidebarWidth = isCollapsed ? "w-16" : "w-60";
 
   const isItemActive = useCallback((url: string, end?: boolean) => {
