@@ -35,7 +35,9 @@ export function usePermissions() {
     retry: 1,
   });
 
-  const userRole: UserRole = (profile?.role as UserRole) || 'consultor';
+  const userRole: UserRole = (profile?.role && profile.role in DEFAULT_PERMISSIONS
+    ? (profile.role as UserRole)
+    : 'consultor');
 
   const permissions = useMemo(() => {
     const base = DEFAULT_PERMISSIONS[userRole] || DEFAULT_PERMISSIONS.consultor;
