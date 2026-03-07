@@ -160,17 +160,18 @@ export function generateAnalysisHtml(data: DigitalAnalysisData): string {
 *{margin:0;padding:0;box-sizing:border-box}
 
 :root{
-  --bg:#0a0d14;
-  --surface:#111827;
-  --surface-2:#1f2937;
-  --border:#1e293b;
-  --text:#f1f5f9;
+  --bg:#191d20;
+  --surface:#1e2529;
+  --surface-2:#2a3038;
+  --border:#2a3038;
+  --text:#ebefef;
   --text-dim:#94a3b8;
   --text-muted:#64748b;
-  --emerald:#34d399;
+  --emerald:#11bc76;
+  --aqua:#39f7b2;
   --amber:#fbbf24;
   --rose:#f87171;
-  --blue:#60a5fa;
+  --blue:#4f5ae3;
   --purple:#a78bfa;
 }
 
