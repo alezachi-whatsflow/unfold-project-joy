@@ -3,7 +3,7 @@ import { useFinancial } from "@/contexts/FinancialContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Download, FileSpreadsheet, TrendingUp, Users, DollarSign, PiggyBank, Loader2 } from "lucide-react";
+import { FileText, Download, FileSpreadsheet, TrendingUp, Users, DollarSign, PiggyBank, Loader2, Percent } from "lucide-react";
 import { toast } from "sonner";
 import {
   generateDREReport,
