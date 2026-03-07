@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Download, FileSpreadsheet, TrendingUp, Users, DollarSign, PiggyBank, Loader2, Percent } from "lucide-react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { toast } from "sonner";
 import {
   generateDREReport,
