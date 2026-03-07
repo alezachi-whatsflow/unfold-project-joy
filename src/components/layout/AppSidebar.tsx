@@ -68,9 +68,10 @@ export function AppSidebar() {
     if (isRailLayout) return true;
     try {
       const saved = localStorage.getItem(COLLAPSE_KEY);
-      // Default to collapsed so hover-expand is immediately useful
-      return saved === null ? true : saved === "collapsed";
-    } catch { return true; }
+      if (saved !== null) return saved === "collapsed";
+      // "standard" layout defaults expanded; others default collapsed
+      return prefs.layout !== "standard";
+    } catch { return false; }
   });
 
   // Mobile drawer state
