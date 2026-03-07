@@ -3,7 +3,7 @@ import { useFinancial } from "@/contexts/FinancialContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Download, FileSpreadsheet, TrendingUp, Users, DollarSign, PiggyBank, Loader2 } from "lucide-react";
+import { FileText, Download, FileSpreadsheet, TrendingUp, Users, DollarSign, PiggyBank, Loader2, Percent } from "lucide-react";
 import { toast } from "sonner";
 import {
   generateDREReport,
@@ -129,6 +129,15 @@ export default function ReportsPage() {
       onCSV: () => exportCashFlowCSV(entries),
       category: "financeiro",
     },
+    {
+      id: "comissoes",
+      title: "Fechamento de Comissões",
+      description: "Relatório mensal de comissões por vendedor",
+      icon: <Percent className="h-5 w-5" />,
+      onPDF: async () => { window.location.href = "/comissoes"; },
+      onCSV: () => { window.location.href = "/comissoes"; },
+      category: "comissoes",
+    },
   ];
 
   return (
@@ -157,9 +166,10 @@ export default function ReportsPage() {
             <TabsTrigger value="todos">Todos</TabsTrigger>
             <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
             <TabsTrigger value="clientes">Clientes</TabsTrigger>
+            <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           </TabsList>
 
-          {["todos", "financeiro", "clientes"].map(tab => (
+          {["todos", "financeiro", "clientes", "comissoes"].map(tab => (
             <TabsContent key={tab} value={tab}>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {reports

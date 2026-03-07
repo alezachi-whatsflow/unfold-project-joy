@@ -522,6 +522,68 @@ export type Database = {
           },
         ]
       }
+      commission_rules: {
+        Row: {
+          created_at: string
+          id: string
+          installment_rates: Json
+          is_active: boolean
+          name: string
+          notes: string | null
+          product_id: string | null
+          product_name: string
+          product_price: number
+          recurring_rate_max: number | null
+          recurring_rate_min: number | null
+          recurring_start_installment: number | null
+          rule_type: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installment_rates?: Json
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          product_id?: string | null
+          product_name: string
+          product_price?: number
+          recurring_rate_max?: number | null
+          recurring_rate_min?: number | null
+          recurring_start_installment?: number | null
+          rule_type?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installment_rates?: Json
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          product_id?: string | null
+          product_name?: string
+          product_price?: number
+          recurring_rate_max?: number | null
+          recurring_rate_min?: number | null
+          recurring_start_installment?: number | null
+          rule_type?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           adicional: number
