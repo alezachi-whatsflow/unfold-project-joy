@@ -80,5 +80,7 @@ export function usePermissions() {
     permissions,
     isAdmin: userRole === 'admin',
     isGestor: userRole === 'gestor',
+    isPermissionsLoading: isPermissionsLoading || isPermissionsFetching,
+    permissionsError,
   };
 }
