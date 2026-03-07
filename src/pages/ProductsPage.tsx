@@ -611,7 +611,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <span className="text-xs font-medium text-muted-foreground">Filtrar:</span>
         {(["all", ...CATEGORY_ORDER] as const).map((cat) => (
           <Button
