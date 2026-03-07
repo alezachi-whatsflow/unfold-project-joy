@@ -100,6 +100,16 @@ export function AppSidebar() {
     refetchInterval: 60000,
   });
 
+  // NF pending/rejected badge count from localStorage
+  const nfPendingCount = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("fiscal_notas_fiscais");
+      if (!raw) return 0;
+      const notas = JSON.parse(raw) as { status: string }[];
+      return notas.filter((n) => n.status === "pendente" || n.status === "rejeitada").length;
+    } catch { return 0; }
+  }, [location.pathname]); // re-evaluate on route change
+
   const handleLogout = async () => {
     try { await signOut(); toast.success("Logout realizado"); } catch { toast.error("Erro ao sair"); }
   };
