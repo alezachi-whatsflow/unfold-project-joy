@@ -136,6 +136,8 @@ export function AppSidebar() {
     <aside
       role="navigation"
       aria-label="Menu principal"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={cn(
         "flex flex-col h-screen shrink-0 overflow-hidden",
         isMobile ? "w-60" : sidebarWidth
