@@ -74,6 +74,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
 
   gestor: {
     dashboard:     viewExport,
+    vendas:        crudNoDelete(true),
     cobrancas:     crudNoDelete(true),
     comissoes:     crudNoDelete(true),
     receitas:      crudNoDelete(true),
