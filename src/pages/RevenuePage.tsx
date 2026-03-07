@@ -12,9 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2, TrendingUp, DollarSign, Clock, CheckCircle, Upload, RefreshCw } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Trash2, Loader2, TrendingUp, DollarSign, Clock, CheckCircle, Upload, RefreshCw, CalendarIcon } from "lucide-react";
+import { format, parse } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { useAsaas } from "@/contexts/AsaasContext";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
@@ -63,6 +66,73 @@ const statusMap: Record<string, { label: string; variant: "default" | "secondary
   CANCELLED: { label: "Cancelado", variant: "outline" },
   RECEIVED_IN_CASH: { label: "Recebido", variant: "default" },
 };
+
+/* ── DatePicker Field ── */
+function DatePickerField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const dateObj = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined;
+  const valid = dateObj && !isNaN(dateObj.getTime()) ? dateObj : undefined;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !valid && "text-muted-foreground")}>
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {valid ? format(valid, "dd/MM/yyyy") : "dd/mm/aaaa"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={valid}
+          onSelect={(d) => { if (d) { onChange(format(d, "yyyy-MM-dd")); setOpen(false); } }}
+          locale={ptBR}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/* ── Client Autocomplete ── */
+function ClientAutocomplete({ value, onChange, revenues, customers }: { value: string; onChange: (v: string) => void; revenues: Revenue[]; customers: any[] }) {
+  const [open, setOpen] = useState(false);
+  const suggestions = useMemo(() => {
+    const names = new Set<string>();
+    revenues.forEach((r) => { if (r.client_name) names.add(r.client_name); });
+    customers.forEach((c) => { if (c.name) names.add(c.name); });
+    return Array.from(names).sort();
+  }, [revenues, customers]);
+
+  const filtered = useMemo(() => {
+    if (value.length < 3) return [];
+    const q = value.toLowerCase();
+    return suggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 10);
+  }, [value, suggestions]);
+
+  return (
+    <Popover open={open && filtered.length > 0} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Input
+          value={value}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+          placeholder="Nome do cliente"
+        />
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <Command>
+          <CommandList>
+            <CommandGroup heading="Clientes">
+              {filtered.map((s) => (
+                <CommandItem key={s} onSelect={() => { onChange(s); setOpen(false); }}>{s}</CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function RevenuePage() {
   const [revenues, setRevenues] = useState<Revenue[]>([]);
@@ -257,9 +327,15 @@ export default function RevenuePage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
+                  {/* Client with autocomplete */}
                   <div className="space-y-1">
                     <Label>Cliente</Label>
-                    <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} placeholder="Nome do cliente" />
+                    <ClientAutocomplete
+                      value={form.client_name}
+                      onChange={(v) => setForm({ ...form, client_name: v })}
+                      revenues={revenues}
+                      customers={customers}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Categoria</Label>
@@ -294,11 +370,17 @@ export default function RevenuePage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label>Data Lançamento</Label>
-                    <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                    <DatePickerField
+                      value={form.date}
+                      onChange={(v) => setForm({ ...form, date: v })}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Vencimento</Label>
-                    <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+                    <DatePickerField
+                      value={form.due_date}
+                      onChange={(v) => setForm({ ...form, due_date: v })}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Status</Label>
