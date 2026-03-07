@@ -12,6 +12,52 @@ import { Settings, Webhook, RefreshCw, Shield, Loader2, CheckCircle, XCircle, Pa
 import { TenantManagementCard } from "@/components/settings/TenantManagementCard";
 import { useSidebarPrefs, type SidebarLayout, type SidebarDensity } from "@/contexts/SidebarPrefsContext";
 
+function SidebarAppearanceCard() {
+  const { prefs, setPrefs } = useSidebarPrefs();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg"><PanelLeft className="h-5 w-5" /> Aparência do Menu</CardTitle>
+        <CardDescription>Personalize o layout e a densidade da barra lateral</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Layout</Label>
+          <RadioGroup value={prefs.layout} onValueChange={(v) => setPrefs({ layout: v as SidebarLayout })} className="grid grid-cols-3 gap-3">
+            {([
+              { value: "standard", label: "Padrão", desc: "Sidebar expandida com toggle" },
+              { value: "compact", label: "Compacto", desc: "Expandida com menos espaçamento" },
+              { value: "rail", label: "Rail", desc: "Sempre colapsada (64px)" },
+            ] as const).map((opt) => (
+              <label key={opt.value} className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 cursor-pointer transition-colors ${prefs.layout === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />
+                <span className="text-sm font-medium text-foreground">{opt.label}</span>
+                <span className="text-[11px] text-muted-foreground text-center">{opt.desc}</span>
+              </label>
+            ))}
+          </RadioGroup>
+        </div>
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Densidade</Label>
+          <RadioGroup value={prefs.density} onValueChange={(v) => setPrefs({ density: v as SidebarDensity })} className="grid grid-cols-3 gap-3">
+            {([
+              { value: "comfortable", label: "Confortável", desc: "Mais espaço, fonte 14px" },
+              { value: "default", label: "Padrão", desc: "Equilíbrio, fonte 13px" },
+              { value: "compact", label: "Compacto", desc: "Menos espaço, fonte 12px" },
+            ] as const).map((opt) => (
+              <label key={opt.value} className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 cursor-pointer transition-colors ${prefs.density === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />
+                <span className="text-sm font-medium text-foreground">{opt.label}</span>
+                <span className="text-[11px] text-muted-foreground text-center">{opt.desc}</span>
+              </label>
+            ))}
+          </RadioGroup>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const { environment, setEnvironment, isSyncing, syncAll } = useAsaas();
   const [registering, setRegistering] = useState(false);
