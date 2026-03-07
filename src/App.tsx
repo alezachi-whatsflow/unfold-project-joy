@@ -19,6 +19,7 @@ import ProductsPage from "./pages/ProductsPage";
 import IntelligencePage from "./pages/IntelligencePage";
 import CobrancasPage from "./pages/CobrancasPage";
 import ExpensesPage from "./pages/ExpensesPage";
+import RevenuePage from "./pages/RevenuePage";
 import ReportsPage from "./pages/ReportsPage";
 import ComissoesPage from "./pages/ComissoesPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -58,6 +59,7 @@ const AppRoutes = () => (
     <Route path="/input" element={<ProtectedRoute><DashboardLayout><DataInputPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/cobrancas" element={<ProtectedRoute><DashboardLayout><CobrancasPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/expenses" element={<ProtectedRoute><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute>} />
+    <Route path="/revenue" element={<ProtectedRoute><DashboardLayout><RevenuePage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/comissoes" element={<ProtectedRoute><DashboardLayout><ComissoesPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/customers" element={<ProtectedRoute><DashboardLayout><CustomersPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/products" element={<ProtectedRoute><DashboardLayout><ProductsPage /></DashboardLayout></ProtectedRoute>} />
