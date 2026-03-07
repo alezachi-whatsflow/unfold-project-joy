@@ -187,8 +187,8 @@ body{
 /* Ambient background */
 body::before{
   content:'';position:fixed;top:0;left:0;right:0;bottom:0;
-  background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(16,185,129,0.06),transparent),
-              radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,165,250,0.04),transparent);
+  background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(17,188,118,0.08),transparent),
+              radial-gradient(ellipse 60% 40% at 80% 80%,rgba(79,90,227,0.05),transparent);
   pointer-events:none;z-index:0;
 }
 
