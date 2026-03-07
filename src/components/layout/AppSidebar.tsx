@@ -27,7 +27,7 @@ const menuGroups = [
       { title: "Inserir Dados", url: "/input", icon: PenLine },
       { title: "Receitas", url: "/revenue", icon: TrendingUp },
       { title: "Despesas", url: "/expenses", icon: DollarSign },
-      { title: "Fiscal", url: "/fiscal", icon: FileText },
+      { title: "Fiscal", url: "/fiscal", icon: FileText, badgeKey: "nfPending" as const },
       { title: "Comissões", url: "/comissoes", icon: UserCheck },
     ],
   },
@@ -99,6 +99,16 @@ export function AppSidebar() {
     },
     refetchInterval: 60000,
   });
+
+  // NF pending/rejected badge count from localStorage
+  const nfPendingCount = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("fiscal_notas_fiscais");
+      if (!raw) return 0;
+      const notas = JSON.parse(raw) as { status: string }[];
+      return notas.filter((n) => n.status === "pendente" || n.status === "rejeitada").length;
+    } catch { return 0; }
+  }, [location.pathname]); // re-evaluate on route change
 
   const handleLogout = async () => {
     try { await signOut(); toast.success("Logout realizado"); } catch { toast.error("Erro ao sair"); }
@@ -213,18 +223,24 @@ export function AppSidebar() {
                     >
                       <span className="relative shrink-0 flex items-center justify-center">
                         <item.icon className="h-4 w-4 opacity-60" />
-                        {"badgeKey" in item && item.badgeKey === "overdue" && isCollapsed && !isMobile && overdueCount && overdueCount > 0 && (
-                          <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
-                        )}
+                        {"badgeKey" in item && (() => {
+                          const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                          return isCollapsed && !isMobile && count && count > 0 ? (
+                            <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
+                          ) : null;
+                        })()}
                       </span>
                       {(!isCollapsed || isMobile) && (
                         <>
                           <span className="flex-1 truncate">{item.title}</span>
-                          {"badgeKey" in item && item.badgeKey === "overdue" && overdueCount && overdueCount > 0 ? (
-                            <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", lineHeight: 1 }}>
-                              {overdueCount}
-                            </span>
-                          ) : null}
+                          {"badgeKey" in item && (() => {
+                            const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                            return count && count > 0 ? (
+                              <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", lineHeight: 1 }}>
+                                {count}
+                              </span>
+                            ) : null;
+                          })()}
                         </>
                       )}
                     </RouterNavLink>
