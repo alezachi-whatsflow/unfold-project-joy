@@ -233,7 +233,7 @@ function ProductCard({ product }: { product: Product }) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs">
