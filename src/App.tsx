@@ -11,6 +11,7 @@ import { IntelligenceProvider } from "@/contexts/IntelligenceContext";
 import { AsaasProvider } from "@/contexts/AsaasContext";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SidebarPrefsProvider } from "@/contexts/SidebarPrefsContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
 import DataInputPage from "./pages/DataInputPage";
@@ -78,6 +79,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <SidebarPrefsProvider>
           <FinancialProvider>
             <CustomerProvider>
               <ProductProvider>
@@ -91,6 +93,7 @@ const App = () => (
               </ProductProvider>
             </CustomerProvider>
           </FinancialProvider>
+          </SidebarPrefsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
