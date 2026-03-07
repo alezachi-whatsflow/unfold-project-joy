@@ -57,6 +57,7 @@ const crudNoDelete = (exp: boolean): ModulePermission => ({ view: true, create: 
 export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
   admin: {
     dashboard:     full,
+    vendas:        full,
     cobrancas:     full,
     comissoes:     full,
     receitas:      full,
