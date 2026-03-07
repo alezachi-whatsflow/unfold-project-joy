@@ -166,6 +166,7 @@ export default function ReportsPage() {
             <TabsTrigger value="todos">Todos</TabsTrigger>
             <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
             <TabsTrigger value="clientes">Clientes</TabsTrigger>
+            <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           </TabsList>
 
           {["todos", "financeiro", "clientes"].map(tab => (
