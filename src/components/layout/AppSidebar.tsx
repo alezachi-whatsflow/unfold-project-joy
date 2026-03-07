@@ -2,6 +2,7 @@ import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, S
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -10,45 +11,47 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ROLE_LABELS, ROLE_COLORS } from "@/types/roles";
 
 const COLLAPSE_KEY = "wf_sidebar_state";
 
+/** Map each sidebar item to a permission module */
 const menuGroups = [
   {
     label: "PRINCIPAL",
     items: [
-      { title: "Dashboard", url: "/", icon: LayoutDashboard, end: true },
-      { title: "Cobranças", url: "/cobrancas", icon: Receipt, badgeKey: "overdue" as const },
+      { title: "Dashboard", url: "/", icon: LayoutDashboard, end: true, module: "dashboard" },
+      { title: "Cobranças", url: "/cobrancas", icon: Receipt, badgeKey: "overdue" as const, module: "cobrancas" },
     ],
   },
   {
     label: "FINANCEIRO",
     items: [
-      { title: "Inserir Dados", url: "/input", icon: PenLine },
-      { title: "Receitas", url: "/revenue", icon: TrendingUp },
-      { title: "Despesas", url: "/expenses", icon: DollarSign },
-      { title: "Fiscal", url: "/fiscal", icon: FileText, badgeKey: "nfPending" as const },
-      { title: "Comissões", url: "/comissoes", icon: UserCheck },
+      { title: "Inserir Dados", url: "/input", icon: PenLine, module: "inserir_dados" },
+      { title: "Receitas", url: "/revenue", icon: TrendingUp, module: "receitas" },
+      { title: "Despesas", url: "/expenses", icon: DollarSign, module: "despesas" },
+      { title: "Fiscal", url: "/fiscal", icon: FileText, badgeKey: "nfPending" as const, module: "fiscal" },
+      { title: "Comissões", url: "/comissoes", icon: UserCheck, module: "comissoes" },
     ],
   },
   {
     label: "CLIENTES & PRODUTOS",
     items: [
-      { title: "Clientes", url: "/customers", icon: Users },
-      { title: "Produtos", url: "/products", icon: Package },
+      { title: "Clientes", url: "/customers", icon: Users, module: "clientes" },
+      { title: "Produtos", url: "/products", icon: Package, module: "produtos" },
     ],
   },
   {
     label: "ANALYTICS",
     items: [
-      { title: "Intelligence", url: "/intelligence", icon: Radar },
-      { title: "Relatórios", url: "/reports", icon: FileBarChart },
+      { title: "Intelligence", url: "/intelligence", icon: Radar, module: "intelligence" },
+      { title: "Relatórios", url: "/reports", icon: FileBarChart, module: "relatorios" },
     ],
   },
   {
     label: "SISTEMA",
     items: [
-      { title: "Configurações", url: "/settings", icon: Settings },
+      { title: "Configurações", url: "/settings", icon: Settings, module: "configuracoes" },
     ],
   },
 ];
@@ -59,6 +62,7 @@ const menuItemActive = "[background:rgba(74,222,128,0.10)] [border:1px_solid_rgb
 
 export function AppSidebar() {
   const { signOut, user } = useAuth();
+  const { canView, userRole } = usePermissions();
   const { prefs } = useSidebarPrefs();
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -70,15 +74,12 @@ export function AppSidebar() {
     try {
       const saved = localStorage.getItem(COLLAPSE_KEY);
       if (saved !== null) return saved === "collapsed";
-      // "standard" layout defaults expanded; others default collapsed
       return prefs.layout !== "standard";
     } catch { return false; }
   });
 
-  // Mobile drawer state
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile drawer on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
@@ -100,7 +101,6 @@ export function AppSidebar() {
     refetchInterval: 60000,
   });
 
-  // NF pending/rejected badge count from localStorage
   const nfPendingCount = useMemo(() => {
     try {
       const raw = localStorage.getItem("fiscal_notas_fiscais");
@@ -108,7 +108,7 @@ export function AppSidebar() {
       const notas = JSON.parse(raw) as { status: string }[];
       return notas.filter((n) => n.status === "pendente" || n.status === "rejeitada").length;
     } catch { return 0; }
-  }, [location.pathname]); // re-evaluate on route change
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try { await signOut(); toast.success("Logout realizado"); } catch { toast.error("Erro ao sair"); }
@@ -122,7 +122,6 @@ export function AppSidebar() {
     return { padding: isCompactLayout ? "5px 10px" : "7px 10px", fontSize: 13 };
   }, [prefs.density, prefs.layout]);
 
-  // Hover expand/collapse (not for Rail or mobile)
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -147,6 +146,21 @@ export function AppSidebar() {
     if (end) return location.pathname === url;
     return location.pathname.startsWith(url);
   }, [location.pathname]);
+
+  // Filter menu groups by permission
+  const filteredGroups = useMemo(() => {
+    return menuGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => canView(item.module)),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [canView]);
+
+  // User display info
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
+  const roleLabel = ROLE_LABELS[userRole] || userRole;
+  const roleColor = ROLE_COLORS[userRole] || '#888';
 
   const sidebarContent = (
     <aside
@@ -197,7 +211,7 @@ export function AppSidebar() {
 
       {/* Menu */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
-        {menuGroups.map((group) => (
+        {filteredGroups.map((group) => (
           <div key={group.label}>
             {(!isCollapsed || isMobile) && (
               <span className="select-none block" style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", paddingTop: 16, paddingBottom: 4, paddingLeft: 8 }}>
@@ -252,9 +266,28 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
+      {/* Footer — user card with role badge */}
       <div className="mt-auto p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        {(!isCollapsed || isMobile) && <div className="mb-2 truncate text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{user?.email}</div>}
+        {(!isCollapsed || isMobile) ? (
+          <div className="mb-2">
+            <div className="truncate text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{userName}</div>
+            <span
+              className="inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold"
+              style={{ background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
+            >
+              {roleLabel}
+            </span>
+          </div>
+        ) : (
+          <div className="flex justify-center mb-2" title={`${userName} — ${roleLabel}`}>
+            <span
+              className="flex items-center justify-center rounded-full text-[10px] font-bold"
+              style={{ width: 28, height: 28, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
+            >
+              {userName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
         <Button variant="ghost" size="sm" onClick={handleLogout} title={isCollapsed && !isMobile ? "Sair" : undefined} className={cn("w-full hover:text-foreground", isCollapsed && !isMobile ? "justify-center px-0" : "justify-start")} style={{ color: "rgba(255,255,255,0.4)" }}>
           <LogOut className={cn("h-4 w-4", (!isCollapsed || isMobile) && "mr-2")} /> {(!isCollapsed || isMobile) && "Sair"}
         </Button>
@@ -262,13 +295,10 @@ export function AppSidebar() {
     </aside>
   );
 
-  // Mobile: drawer with overlay
   if (isMobile) {
     return (
       <>
-        {/* Hamburger trigger in header */}
         <MobileTrigger onOpen={() => setMobileOpen(true)} />
-        {/* Overlay + Drawer */}
         {mobileOpen && (
           <div className="fixed inset-0 z-50 flex">
             <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
@@ -284,7 +314,6 @@ export function AppSidebar() {
   return sidebarContent;
 }
 
-/** Small hamburger button injected into the header area on mobile */
 function MobileTrigger({ onOpen }: { onOpen: () => void }) {
   return (
     <button
