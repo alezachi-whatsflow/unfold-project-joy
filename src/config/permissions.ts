@@ -14,6 +14,7 @@ export type PermissionMatrix = Record<string, ModulePermission>;
 
 export const ALL_MODULES = [
   'dashboard',
+  'vendas',
   'cobrancas',
   'comissoes',
   'receitas',
@@ -32,6 +33,7 @@ export type AppModule = (typeof ALL_MODULES)[number];
 
 export const MODULE_LABELS: Record<AppModule, string> = {
   dashboard:     'Dashboard',
+  vendas:        'Vendas',
   cobrancas:     'Cobranças',
   comissoes:     'Comissões',
   receitas:      'Receitas',
@@ -55,6 +57,7 @@ const crudNoDelete = (exp: boolean): ModulePermission => ({ view: true, create: 
 export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
   admin: {
     dashboard:     full,
+    vendas:        full,
     cobrancas:     full,
     comissoes:     full,
     receitas:      full,
@@ -71,6 +74,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
 
   gestor: {
     dashboard:     viewExport,
+    vendas:        crudNoDelete(true),
     cobrancas:     crudNoDelete(true),
     comissoes:     crudNoDelete(true),
     receitas:      crudNoDelete(true),
@@ -87,6 +91,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
 
   financeiro: {
     dashboard:     viewExport,
+    vendas:        viewExport,
     cobrancas:     crudNoDelete(true),
     comissoes:     viewExport,
     receitas:      crudNoDelete(true),
@@ -103,6 +108,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
 
   consultor: {
     dashboard:     viewOnly,
+    vendas:        { view: true, create: true, edit: true, delete: false, export: false },
     cobrancas:     viewOnly,
     comissoes:     viewOnly,
     receitas:      viewOnly,
@@ -119,6 +125,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
 
   representante: {
     dashboard:     viewOnly,
+    vendas:        { view: true, create: true, edit: true, delete: false, export: false },
     cobrancas:     noAccess,
     comissoes:     viewOnly,
     receitas:      noAccess,

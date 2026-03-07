@@ -935,6 +935,108 @@ export type Database = {
         }
         Relationships: []
       }
+      negocios: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          cobranca_id: string | null
+          condicao_pagamento: string
+          consultor_id: string | null
+          consultor_nome: string | null
+          created_at: string
+          data_criacao: string
+          data_fechamento: string | null
+          data_previsao_fechamento: string | null
+          desconto: number
+          desconto_tipo: string
+          forma_pagamento: string
+          gerar_cobranca: boolean
+          gerar_nf: boolean
+          historico: Json
+          id: string
+          motivo_perda: string | null
+          motivo_perda_detalhe: string | null
+          nf_emitida_id: string | null
+          notas: string | null
+          origem: string
+          probabilidade: number
+          produtos: Json
+          status: string
+          tags: string[]
+          tenant_id: string
+          titulo: string
+          updated_at: string
+          valor_liquido: number
+          valor_total: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          cobranca_id?: string | null
+          condicao_pagamento?: string
+          consultor_id?: string | null
+          consultor_nome?: string | null
+          created_at?: string
+          data_criacao?: string
+          data_fechamento?: string | null
+          data_previsao_fechamento?: string | null
+          desconto?: number
+          desconto_tipo?: string
+          forma_pagamento?: string
+          gerar_cobranca?: boolean
+          gerar_nf?: boolean
+          historico?: Json
+          id?: string
+          motivo_perda?: string | null
+          motivo_perda_detalhe?: string | null
+          nf_emitida_id?: string | null
+          notas?: string | null
+          origem?: string
+          probabilidade?: number
+          produtos?: Json
+          status?: string
+          tags?: string[]
+          tenant_id?: string
+          titulo: string
+          updated_at?: string
+          valor_liquido?: number
+          valor_total?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          cobranca_id?: string | null
+          condicao_pagamento?: string
+          consultor_id?: string | null
+          consultor_nome?: string | null
+          created_at?: string
+          data_criacao?: string
+          data_fechamento?: string | null
+          data_previsao_fechamento?: string | null
+          desconto?: number
+          desconto_tipo?: string
+          forma_pagamento?: string
+          gerar_cobranca?: boolean
+          gerar_nf?: boolean
+          historico?: Json
+          id?: string
+          motivo_perda?: string | null
+          motivo_perda_detalhe?: string | null
+          nf_emitida_id?: string | null
+          notas?: string | null
+          origem?: string
+          probabilidade?: number
+          produtos?: Json
+          status?: string
+          tags?: string[]
+          tenant_id?: string
+          titulo?: string
+          updated_at?: string
+          valor_liquido?: number
+          valor_total?: number
+        }
+        Relationships: []
+      }
       payment_dunnings: {
         Row: {
           asaas_payment_dunning_id: string | null
