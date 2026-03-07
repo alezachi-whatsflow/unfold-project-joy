@@ -91,6 +91,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
 
   financeiro: {
     dashboard:     viewExport,
+    vendas:        viewExport,
     cobrancas:     crudNoDelete(true),
     comissoes:     viewExport,
     receitas:      crudNoDelete(true),
