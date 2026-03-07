@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { ROLE_LABELS, ROLE_COLORS, type UserRole } from "@/types/roles";
-import { ALL_MODULES, MODULE_LABELS, DEFAULT_PERMISSIONS, type PermissionAction, type ModulePermission } from "@/config/permissions";
+import { ALL_MODULES, MODULE_LABELS, DEFAULT_PERMISSIONS, type PermissionAction, type ModulePermission, type PermissionMatrix } from "@/config/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Users, UserPlus, Shield, ShieldCheck, Clock, Pencil, RotateCcw, CheckCircle, XCircle } from "lucide-react";
+import { Users, UserPlus, Shield, ShieldCheck, Pencil, RotateCcw, Trash2 } from "lucide-react";
 
 const ROLES: UserRole[] = ["admin", "gestor", "financeiro", "consultor", "representante"];
 const ACTIONS: PermissionAction[] = ["view", "create", "edit", "delete", "export"];
@@ -30,6 +30,7 @@ interface ProfileRow {
   avatar_url: string | null;
   created_at: string | null;
   updated_at: string | null;
+  custom_permissions: any;
 }
 
 export default function UsersPage() {
@@ -54,6 +55,22 @@ export default function UsersPage() {
     const gestors = profiles.filter((p) => p.role === "gestor").length;
     return { total, admins, gestors };
   }, [profiles]);
+
+  const handleDeleteUser = async (profile: ProfileRow) => {
+    if (profile.id === user?.id) {
+      toast.error("Você não pode remover a si mesmo.");
+      return;
+    }
+    if (!confirm(`Remover o usuário "${profile.full_name || 'Sem nome'}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+      const { error } = await supabase.from("profiles").delete().eq("id", profile.id);
+      if (error) throw error;
+      toast.success("Usuário removido.");
+      queryClient.invalidateQueries({ queryKey: ["all-profiles"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao remover usuário.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -126,11 +143,18 @@ export default function UsersPage() {
                       {p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <PermissionGate module="usuarios" action="edit">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditUser(p)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </PermissionGate>
+                      <div className="flex items-center justify-end gap-1">
+                        <PermissionGate module="usuarios" action="edit">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditUser(p)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </PermissionGate>
+                        <PermissionGate module="usuarios" action="delete">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteUser(p)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </PermissionGate>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -181,10 +205,9 @@ function InviteUserForm({ onClose }: { onClose: () => void }) {
     if (!name || !email) { toast.error("Preencha nome e e-mail."); return; }
     setLoading(true);
     try {
-      // Use Supabase Auth admin invite (via edge function or signUp)
       const { error } = await supabase.auth.signUp({
         email,
-        password: crypto.randomUUID().slice(0, 12) + "Aa1!", // temp password
+        password: crypto.randomUUID().slice(0, 12) + "Aa1!",
         options: {
           data: { full_name: name },
           emailRedirectTo: window.location.origin,
@@ -193,7 +216,6 @@ function InviteUserForm({ onClose }: { onClose: () => void }) {
       if (error) throw error;
 
       // Update the profile role once created
-      // Small delay to wait for trigger
       setTimeout(async () => {
         await supabase.from("profiles").update({ role }).eq("full_name", name);
       }, 2000);
@@ -254,8 +276,20 @@ function EditUserForm({ profile, currentUserId, isAdmin, onClose }: {
   const isSelf = profile.id === currentUserId;
   const currentRole = (profile.role || "consultor") as UserRole;
   const [role, setRole] = useState<UserRole>(currentRole);
+
+  // Initialize custom permissions from saved data or defaults
   const [customPerms, setCustomPerms] = useState<Record<string, ModulePermission>>(() => {
-    return { ...DEFAULT_PERMISSIONS[currentRole] };
+    const base = { ...DEFAULT_PERMISSIONS[currentRole] };
+    const saved = profile.custom_permissions as PermissionMatrix | null;
+    if (saved && typeof saved === 'object') {
+      // Merge saved over base
+      for (const mod of Object.keys(saved)) {
+        if (base[mod]) {
+          base[mod] = { ...base[mod], ...saved[mod] };
+        }
+      }
+    }
+    return base;
   });
   const [saving, setSaving] = useState(false);
 
@@ -284,10 +318,28 @@ function EditUserForm({ profile, currentUserId, isAdmin, onClose }: {
     toast.info("Permissões restauradas para o padrão do perfil.");
   };
 
+  // Check if permissions differ from role defaults
+  const hasCustomOverrides = useMemo(() => {
+    const defaults = DEFAULT_PERMISSIONS[role];
+    for (const mod of Object.keys(defaults)) {
+      for (const act of ACTIONS) {
+        if (customPerms[mod]?.[act] !== defaults[mod]?.[act]) return true;
+      }
+    }
+    return false;
+  }, [role, customPerms]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase.from("profiles").update({ role }).eq("id", profile.id);
+      const updateData: any = { role };
+      // Only save custom_permissions if they differ from defaults
+      if (hasCustomOverrides) {
+        updateData.custom_permissions = customPerms;
+      } else {
+        updateData.custom_permissions = null;
+      }
+      const { error } = await supabase.from("profiles").update(updateData).eq("id", profile.id);
       if (error) throw error;
       toast.success("Perfil atualizado com sucesso!");
       onClose();
