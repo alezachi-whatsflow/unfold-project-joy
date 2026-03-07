@@ -507,7 +507,9 @@ export default function RevenuePage() {
                         <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                         <TableCell><Badge variant="outline" className="text-[10px]">{r.source === "asaas" ? "Asaas" : "Manual"}</Badge></TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <PermissionGate module="receitas" action="delete">
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          </PermissionGate>
                         </TableCell>
                       </TableRow>
                     );
