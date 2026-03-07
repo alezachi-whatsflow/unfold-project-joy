@@ -419,10 +419,11 @@ export default function ExpensesPage() {
           <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Despesas</h1>
           <p className="text-sm text-muted-foreground">Gerencie as despesas da empresa</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Nova Despesa</Button>
-          </DialogTrigger>
+        <PermissionGate module="despesas" action="create">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Nova Despesa</Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
