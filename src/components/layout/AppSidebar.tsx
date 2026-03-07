@@ -223,18 +223,24 @@ export function AppSidebar() {
                     >
                       <span className="relative shrink-0 flex items-center justify-center">
                         <item.icon className="h-4 w-4 opacity-60" />
-                        {"badgeKey" in item && item.badgeKey === "overdue" && isCollapsed && !isMobile && overdueCount && overdueCount > 0 && (
-                          <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
-                        )}
+                        {"badgeKey" in item && (() => {
+                          const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                          return isCollapsed && !isMobile && count && count > 0 ? (
+                            <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
+                          ) : null;
+                        })()}
                       </span>
                       {(!isCollapsed || isMobile) && (
                         <>
                           <span className="flex-1 truncate">{item.title}</span>
-                          {"badgeKey" in item && item.badgeKey === "overdue" && overdueCount && overdueCount > 0 ? (
-                            <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", lineHeight: 1 }}>
-                              {overdueCount}
-                            </span>
-                          ) : null}
+                          {"badgeKey" in item && (() => {
+                            const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                            return count && count > 0 ? (
+                              <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", lineHeight: 1 }}>
+                                {count}
+                              </span>
+                            ) : null;
+                          })()}
                         </>
                       )}
                     </RouterNavLink>
