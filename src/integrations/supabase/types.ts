@@ -298,6 +298,77 @@ export type Database = {
           },
         ]
       }
+      asaas_revenue: {
+        Row: {
+          asaas_payment_id: string | null
+          billing_type: string | null
+          category: string | null
+          client_name: string | null
+          created_at: string | null
+          date: string
+          description: string
+          due_date: string | null
+          id: string
+          installment_number: number | null
+          installment_total: number | null
+          installments: string | null
+          notes: string | null
+          payment_date: string | null
+          source: string | null
+          status: string | null
+          tenant_id: string
+          value: number
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          billing_type?: string | null
+          category?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          date: string
+          description: string
+          due_date?: string | null
+          id?: string
+          installment_number?: number | null
+          installment_total?: number | null
+          installments?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          source?: string | null
+          status?: string | null
+          tenant_id: string
+          value: number
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          billing_type?: string | null
+          category?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          installment_number?: number | null
+          installment_total?: number | null
+          installments?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          source?: string | null
+          status?: string | null
+          tenant_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_revenue_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asaas_splits: {
         Row: {
           created_at: string | null
