@@ -51,6 +51,8 @@ export default function FiscalPage() {
           <TabsContent key={tab.value} value={tab.value}>
             {tab.value === "tributos" ? (
               <TributosTab />
+            ) : tab.value === "certificados" ? (
+              <CertificadosTab />
             ) : (
               <PlaceholderTab label={tab.label} Icon={tab.icon} />
             )}
