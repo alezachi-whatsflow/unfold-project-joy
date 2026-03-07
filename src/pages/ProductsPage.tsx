@@ -633,7 +633,7 @@ export default function ProductsPage() {
             <div className="h-1 w-4 rounded-full bg-primary" />
             {CATEGORY_LABELS[category as ProductCategory]}
           </h2>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {items!.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
