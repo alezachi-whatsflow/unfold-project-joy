@@ -99,7 +99,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
 
         <section>
           <SectionLabel>Rentabilidade</SectionLabel>
-          <div className="grid grid-cols-3 gap-4 rounded-lg bg-secondary/50 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-lg bg-secondary/50 p-4">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Margem de Contribuição</p>
               <p className="font-display text-lg font-bold text-card-foreground">{formatCurrency(metrics.contributionMargin)}</p>
@@ -129,7 +129,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
         {product.includes && (
           <section>
             <SectionLabel>O Que Está Incluso</SectionLabel>
-            <div className="grid grid-cols-4 gap-3 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <DetailRow label="Dispositivos Web" value={String(product.includes.devicesWeb)} />
               <DetailRow label="Dispositivos Meta" value={String(product.includes.devicesMeta)} />
               <DetailRow label="Atendentes" value={String(product.includes.attendants)} />
@@ -202,7 +202,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Metrics grid */}
-        <div className="grid grid-cols-5 gap-3 rounded-lg bg-secondary/50 p-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 rounded-lg bg-secondary/50 p-3 mb-4">
           <MetricItem label="Preço" value={`${formatCurrency(product.price)}${product.type === "recurring" ? "/mês" : ""}`} />
           <MetricItem label="COGS" value={formatCurrency(product.cogs + product.laborCost + product.supportCost)} />
           <MetricItem
@@ -233,7 +233,7 @@ function ProductCard({ product }: { product: Product }) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs">
@@ -611,7 +611,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <span className="text-xs font-medium text-muted-foreground">Filtrar:</span>
         {(["all", ...CATEGORY_ORDER] as const).map((cat) => (
           <Button
@@ -633,7 +633,7 @@ export default function ProductsPage() {
             <div className="h-1 w-4 rounded-full bg-primary" />
             {CATEGORY_LABELS[category as ProductCategory]}
           </h2>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {items!.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
