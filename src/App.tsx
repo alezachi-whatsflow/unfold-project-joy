@@ -33,6 +33,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
+import VendasPage from "./pages/VendasPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
