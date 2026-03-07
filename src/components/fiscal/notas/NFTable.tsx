@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, FileDown, Mail, XCircle } from "lucide-react";
 import { NotaFiscal, statusColors, statusLabels } from "@/types/notasFiscais";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
