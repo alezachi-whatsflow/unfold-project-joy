@@ -33,6 +33,16 @@ function PlaceholderTab({ label, Icon }: { label: string; Icon: React.ElementTyp
 }
 
 export default function FiscalPage() {
+  const { canEdit } = usePermissions();
+  
+  // Filter tabs based on permissions
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.value === "configuracoes" || tab.value === "certificados") {
+      return canEdit("fiscal");
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       <div>
