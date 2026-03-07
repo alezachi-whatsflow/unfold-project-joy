@@ -9,7 +9,11 @@ interface PermissionGateProps {
 }
 
 export function PermissionGate({ module, action, fallback = null, children }: PermissionGateProps) {
-  const { can } = usePermissions();
+  const { can, isPermissionsLoading } = usePermissions();
+
+  if (isPermissionsLoading) {
+    return null;
+  }
 
   if (!can(module, action)) {
     return <>{fallback}</>;
