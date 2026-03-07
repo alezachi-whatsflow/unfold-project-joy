@@ -55,6 +55,13 @@ export function TenantManagementCard() {
   const [saving, setSaving] = useState(false);
   const [validationResult, setValidationResult] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", cpf_cnpj: "", email: "", document: "" });
+  const [defaultId, setDefaultId] = useState<string | null>(getDefaultTenantId());
+
+  const handleSetDefault = (tenant: Tenant) => {
+    setDefaultTenantId(tenant.id);
+    setDefaultId(tenant.id);
+    toast.success(`"${tenant.name}" definida como empresa padrão`);
+  };
 
   const loadTenants = useCallback(async () => {
     setLoading(true);
