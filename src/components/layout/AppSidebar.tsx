@@ -254,7 +254,7 @@ export function AppSidebar() {
                       <span className="relative shrink-0 flex items-center justify-center">
                         <item.icon className="h-4 w-4 opacity-60" />
                         {"badgeKey" in item && (() => {
-                          const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                          const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : item.badgeKey === "vendas" ? vendasBadgeCount : 0;
                           return isCollapsed && !isMobile && count && count > 0 ? (
                             <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
                           ) : null;
