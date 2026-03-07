@@ -116,6 +116,8 @@ export type Database = {
       }
       asaas_expenses: {
         Row: {
+          attachment_name: string | null
+          attachment_url: string | null
           category: string | null
           cost_center: string | null
           created_at: string | null
@@ -137,6 +139,8 @@ export type Database = {
           value: number
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           category?: string | null
           cost_center?: string | null
           created_at?: string | null
@@ -158,6 +162,8 @@ export type Database = {
           value: number
         }
         Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           category?: string | null
           cost_center?: string | null
           created_at?: string | null
