@@ -77,13 +77,17 @@ export default function NFFilters({ search, onSearchChange, statusFilter, onStat
         </PopoverContent>
       </Popover>
 
-      <Button variant="outline" size="sm" onClick={onExportCSV} className="gap-1.5">
-        <Download className="h-3.5 w-3.5" /> CSV
-      </Button>
+      <PermissionGate module="fiscal" action="export">
+        <Button variant="outline" size="sm" onClick={onExportCSV} className="gap-1.5">
+          <Download className="h-3.5 w-3.5" /> CSV
+        </Button>
+      </PermissionGate>
 
-      <Button size="sm" onClick={onEmitir} className="gap-1.5">
-        <Plus className="h-3.5 w-3.5" /> Emitir Nota Fiscal
-      </Button>
+      <PermissionGate module="fiscal" action="create">
+        <Button size="sm" onClick={onEmitir} className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" /> Emitir Nota Fiscal
+        </Button>
+      </PermissionGate>
     </div>
   );
 }
