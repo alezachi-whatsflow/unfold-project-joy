@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, FileDown, Mail, XCircle } from "lucide-react";
 import { NotaFiscal, statusColors, statusLabels } from "@/types/notasFiscais";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -59,9 +60,11 @@ export default function NFTable({ notas, onView, onDownloadPDF, onResend, onCanc
                   <Button variant="ghost" size="icon" className="h-7 w-7" title="Visualizar" onClick={() => onView(nf)}><Eye className="h-3.5 w-3.5" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={() => onDownloadPDF(nf)}><FileDown className="h-3.5 w-3.5" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" title="Reenviar e-mail" onClick={() => onResend(nf)}><Mail className="h-3.5 w-3.5" /></Button>
-                  {nf.status !== "cancelada" && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Cancelar" onClick={() => onCancel(nf)}><XCircle className="h-3.5 w-3.5" /></Button>
-                  )}
+                  <PermissionGate module="fiscal" action="delete">
+                    {nf.status !== "cancelada" && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Cancelar" onClick={() => onCancel(nf)}><XCircle className="h-3.5 w-3.5" /></Button>
+                    )}
+                  </PermissionGate>
                 </div>
               </TableCell>
             </TableRow>
