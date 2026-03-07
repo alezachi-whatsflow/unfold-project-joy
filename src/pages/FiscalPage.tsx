@@ -52,7 +52,9 @@ export default function FiscalPage() {
 
         {tabs.map((tab) => (
           <TabsContent key={tab.value} value={tab.value}>
-            {tab.value === "notas-fiscais" ? (
+            {tab.value === "visao-geral" ? (
+              <VisaoGeralTab />
+            ) : tab.value === "notas-fiscais" ? (
               <NotasFiscaisTab />
             ) : tab.value === "tributos" ? (
               <TributosTab />
