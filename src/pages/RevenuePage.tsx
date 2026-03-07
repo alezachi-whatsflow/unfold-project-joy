@@ -288,12 +288,14 @@ export default function RevenuePage() {
         </div>
         <div className="flex gap-2">
           <PermissionGate module="receitas" action="edit">
-            <Button variant="outline" size="sm" onClick={() => { syncPayments(); }} disabled={isSyncing}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} /> Sync Asaas
-            </Button>
-            <Button variant="outline" size="sm" onClick={importFromAsaas} disabled={importing}>
-              <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-spin" : ""}`} /> Importar Asaas
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={() => { syncPayments(); }} disabled={isSyncing}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} /> Sync Asaas
+              </Button>
+              <Button variant="outline" size="sm" onClick={importFromAsaas} disabled={importing}>
+                <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-spin" : ""}`} /> Importar Asaas
+              </Button>
+            </>
           </PermissionGate>
           <PermissionGate module="receitas" action="create">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
