@@ -99,7 +99,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
 
         <section>
           <SectionLabel>Rentabilidade</SectionLabel>
-          <div className="grid grid-cols-3 gap-4 rounded-lg bg-secondary/50 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-lg bg-secondary/50 p-4">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Margem de Contribuição</p>
               <p className="font-display text-lg font-bold text-card-foreground">{formatCurrency(metrics.contributionMargin)}</p>
