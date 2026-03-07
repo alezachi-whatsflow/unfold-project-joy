@@ -203,7 +203,7 @@ function ProductCard({ product }: { product: Product }) {
 
         {/* Metrics grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 rounded-lg bg-secondary/50 p-2 sm:p-3 mb-4">
-          <MetricItem label="Preço" value={`${formatCurrency(product.price)}${product.type === "recurring" ? "/mês" : ""}`} />
+          <MetricItem label={product.type === "recurring" ? "Preço/mês" : "Preço"} value={formatCurrency(product.price)} />
           <MetricItem label="COGS" value={formatCurrency(product.cogs + product.laborCost + product.supportCost)} />
           <MetricItem
             label="Margem"
@@ -256,9 +256,9 @@ function ProductCard({ product }: { product: Product }) {
 
 function MetricItem({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className={cn("text-sm font-bold text-card-foreground", className)}>{value}</span>
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{label}</span>
+      <span className={cn("text-xs sm:text-sm font-bold text-card-foreground whitespace-nowrap", className)}>{value}</span>
     </div>
   );
 }
