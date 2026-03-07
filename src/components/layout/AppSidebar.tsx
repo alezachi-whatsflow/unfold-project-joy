@@ -23,6 +23,7 @@ const menuGroups = [
     label: "PRINCIPAL",
     items: [
       { title: "Dashboard", url: "/", icon: LayoutDashboard, end: true, module: "dashboard" },
+      { title: "Vendas", url: "/vendas", icon: ShoppingCart, badgeKey: "vendas" as const, module: "vendas" },
       { title: "Cobranças", url: "/cobrancas", icon: Receipt, badgeKey: "overdue" as const, module: "cobrancas" },
     ],
   },
