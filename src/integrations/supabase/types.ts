@@ -117,34 +117,64 @@ export type Database = {
       asaas_expenses: {
         Row: {
           category: string | null
+          cost_center: string | null
           created_at: string | null
           date: string
           description: string
+          due_date: string | null
           id: string
+          installments: string | null
+          is_paid: boolean | null
           is_recurring: boolean | null
+          is_scheduled: boolean | null
+          notes: string | null
+          payment_account: string | null
+          payment_method: string | null
           recurrence_period: string | null
+          reference_code: string | null
+          supplier: string | null
           tenant_id: string
           value: number
         }
         Insert: {
           category?: string | null
+          cost_center?: string | null
           created_at?: string | null
           date: string
           description: string
+          due_date?: string | null
           id?: string
+          installments?: string | null
+          is_paid?: boolean | null
           is_recurring?: boolean | null
+          is_scheduled?: boolean | null
+          notes?: string | null
+          payment_account?: string | null
+          payment_method?: string | null
           recurrence_period?: string | null
+          reference_code?: string | null
+          supplier?: string | null
           tenant_id: string
           value: number
         }
         Update: {
           category?: string | null
+          cost_center?: string | null
           created_at?: string | null
           date?: string
           description?: string
+          due_date?: string | null
           id?: string
+          installments?: string | null
+          is_paid?: boolean | null
           is_recurring?: boolean | null
+          is_scheduled?: boolean | null
+          notes?: string | null
+          payment_account?: string | null
+          payment_method?: string | null
           recurrence_period?: string | null
+          reference_code?: string | null
+          supplier?: string | null
           tenant_id?: string
           value?: number
         }
