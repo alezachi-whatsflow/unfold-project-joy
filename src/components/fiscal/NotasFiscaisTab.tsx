@@ -8,12 +8,18 @@ import NFTable from "./notas/NFTable";
 import NFViewDialog from "./notas/NFViewDialog";
 import NFCancelDialog from "./notas/NFCancelDialog";
 import NFEmitirDialog from "./notas/NFEmitirDialog";
+import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { DateRange } from "react-day-picker";
 
 export default function NotasFiscaisTab() {
   const [notas, setNotas] = useState<NotaFiscal[]>(loadNotas);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<NFStatus | "todas">("todas");
   const [tipoFilter, setTipoFilter] = useState<NFTipo | "todos">("todos");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
 
   const [viewNF, setViewNF] = useState<NotaFiscal | null>(null);
   const [cancelNF, setCancelNF] = useState<NotaFiscal | null>(null);
@@ -29,8 +35,16 @@ export default function NotasFiscaisTab() {
       const q = search.toLowerCase();
       result = result.filter((n) => n.numero.includes(q) || n.clienteNome.toLowerCase().includes(q) || n.clienteCpfCnpj.includes(q));
     }
+    if (dateRange?.from) {
+      const start = dateRange.from;
+      const end = dateRange.to || dateRange.from;
+      result = result.filter((n) => {
+        const d = new Date(n.dataEmissao);
+        return isWithinInterval(d, { start, end: new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59) });
+      });
+    }
     return result;
-  }, [notas, statusFilter, tipoFilter, search]);
+  }, [notas, statusFilter, tipoFilter, search, dateRange]);
 
   const handleCancel = (nfId: string, motivo: string) => {
     persist(notas.map((n) => (n.id === nfId ? { ...n, status: "cancelada" as const, motivoCancelamento: motivo } : n)));
@@ -75,6 +89,7 @@ export default function NotasFiscaisTab() {
         search={search} onSearchChange={setSearch}
         statusFilter={statusFilter} onStatusChange={setStatusFilter}
         tipoFilter={tipoFilter} onTipoChange={setTipoFilter}
+        dateRange={dateRange} onDateRangeChange={setDateRange}
         onExportCSV={handleExportCSV}
         onEmitir={() => setEmitirOpen(true)}
       />
