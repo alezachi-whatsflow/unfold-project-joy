@@ -13,10 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Loader2, DollarSign } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Trash2, Pencil, Loader2, DollarSign, CalendarIcon } from "lucide-react";
+import { format, parse, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { DEFAULT_COST_LINES } from "@/lib/costLineTemplates";
+import { cn } from "@/lib/utils";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 const CATEGORIES = ["Pessoal", "Software", "Marketing", "Infraestrutura", "Impostos", "Comissões", "Despesas Comerciais", "Despesas Financeiras", "Custos de Prestação do Serviço (CSP)", "Salários / Pessoal", "General & Administrative", "Outros"];
@@ -62,6 +65,111 @@ const defaultForm = {
   notes: "",
 };
 
+/* ─── Helpers ─── */
+function parseLocalDate(dateStr: string): Date {
+  return parse(dateStr, "yyyy-MM-dd", new Date());
+}
+
+function formatDateBR(dateStr: string): string {
+  try {
+    return format(parseLocalDate(dateStr), "dd/MM/yyyy");
+  } catch {
+    return dateStr;
+  }
+}
+
+/* ─── Autocomplete Field ─── */
+function AutocompleteField({
+  value,
+  onChange,
+  suggestions,
+  placeholder,
+  minChars = 4,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  suggestions: string[];
+  placeholder: string;
+  minChars?: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const filtered = useMemo(() => {
+    if (value.length < minChars) return [];
+    const q = value.toLowerCase();
+    return suggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 8);
+  }, [value, suggestions, minChars]);
+
+  return (
+    <Popover open={open && filtered.length > 0} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Input
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(e.target.value.length >= minChars);
+          }}
+          onFocus={() => { if (value.length >= minChars) setOpen(true); }}
+          placeholder={placeholder}
+        />
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <Command>
+          <CommandList>
+            <CommandEmpty>Nenhuma sugestão</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((s) => (
+                <CommandItem key={s} onSelect={() => { onChange(s); setOpen(false); }}>
+                  {s}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/* ─── Date Picker Field ─── */
+function DatePickerField({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+}) {
+  const selected = value ? parseLocalDate(value) : undefined;
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn("w-full justify-start text-left font-normal", !value && "text-muted-foreground")}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {value ? formatDateBR(value) : "Selecione"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selected}
+            onSelect={(d) => { if (d) onChange(format(d, "yyyy-MM-dd")); }}
+            locale={ptBR}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+/* ─── Main Page ─── */
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,22 +177,19 @@ export default function ExpensesPage() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [form, setForm] = useState({ ...defaultForm });
   const [saving, setSaving] = useState(false);
-  const [descQuery, setDescQuery] = useState("");
-  const [descPopoverOpen, setDescPopoverOpen] = useState(false);
 
-  // Build suggestion list from existing expenses + cost line templates
+  // Suggestions
   const descriptionSuggestions = useMemo(() => {
     const fromExpenses = expenses.map((e) => e.description);
     const fromTemplates = DEFAULT_COST_LINES.map((t) => t.subcategory);
-    const unique = Array.from(new Set([...fromExpenses, ...fromTemplates]));
-    return unique.sort();
+    return Array.from(new Set([...fromExpenses, ...fromTemplates])).sort();
   }, [expenses]);
 
-  const filteredSuggestions = useMemo(() => {
-    if (descQuery.length < 3) return [];
-    const q = descQuery.toLowerCase();
-    return descriptionSuggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 10);
-  }, [descQuery, descriptionSuggestions]);
+  const supplierSuggestions = useMemo(() => {
+    const fromExpenses = expenses.map((e) => e.supplier).filter(Boolean) as string[];
+    const fromTemplates = DEFAULT_COST_LINES.map((t) => t.supplier).filter(Boolean);
+    return Array.from(new Set([...fromExpenses, ...fromTemplates])).sort();
+  }, [expenses]);
 
   const loadExpenses = useCallback(async () => {
     setLoading(true);
@@ -103,7 +208,6 @@ export default function ExpensesPage() {
   const openNew = () => {
     setEditing(null);
     setForm({ ...defaultForm, date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(), "yyyy-MM-dd") });
-    setDescQuery("");
     setDialogOpen(true);
   };
 
@@ -127,7 +231,6 @@ export default function ExpensesPage() {
       is_scheduled: e.is_scheduled ?? false,
       notes: e.notes || "",
     });
-    setDescQuery(e.description);
     setDialogOpen(true);
   };
 
@@ -199,54 +302,32 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Fornecedor</Label>
-                    <Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="Nome do fornecedor" />
+                    <AutocompleteField
+                      value={form.supplier}
+                      onChange={(v) => setForm({ ...form, supplier: v })}
+                      suggestions={supplierSuggestions}
+                      placeholder="Nome do fornecedor"
+                      minChars={4}
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Data de competência *</Label>
-                    <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-                  </div>
+                  <DatePickerField
+                    label="Data de competência *"
+                    value={form.date}
+                    onChange={(v) => setForm({ ...form, date: v })}
+                  />
                 </div>
 
-                {/* Descrição com autocomplete + Valor */}
+                {/* Descrição + Valor */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2 space-y-2">
                     <Label>Descrição *</Label>
-                    <Popover open={descPopoverOpen && filteredSuggestions.length > 0} onOpenChange={setDescPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <Input
-                          value={form.description}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setForm({ ...form, description: val });
-                            setDescQuery(val);
-                            setDescPopoverOpen(val.length >= 3);
-                          }}
-                          onFocus={() => { if (form.description.length >= 3) setDescPopoverOpen(true); }}
-                          placeholder="Ex: Servidor AWS"
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-                        <Command>
-                          <CommandList>
-                            <CommandEmpty>Nenhuma sugestão</CommandEmpty>
-                            <CommandGroup heading="Sugestões">
-                              {filteredSuggestions.map((s) => (
-                                <CommandItem
-                                  key={s}
-                                  onSelect={() => {
-                                    setForm({ ...form, description: s });
-                                    setDescQuery(s);
-                                    setDescPopoverOpen(false);
-                                  }}
-                                >
-                                  {s}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <AutocompleteField
+                      value={form.description}
+                      onChange={(v) => setForm({ ...form, description: v })}
+                      suggestions={descriptionSuggestions}
+                      placeholder="Ex: Servidor AWS"
+                      minChars={3}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Valor (R$) *</Label>
@@ -311,10 +392,11 @@ export default function ExpensesPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Vencimento *</Label>
-                    <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-                  </div>
+                  <DatePickerField
+                    label="Vencimento *"
+                    value={form.due_date}
+                    onChange={(v) => setForm({ ...form, due_date: v })}
+                  />
                   <div className="space-y-2">
                     <Label>Forma de pagamento</Label>
                     <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
@@ -394,7 +476,7 @@ export default function ExpensesPage() {
               <TableBody>
                 {expenses.map((e) => (
                   <TableRow key={e.id}>
-                    <TableCell className="text-sm">{format(new Date(e.date + "T12:00:00"), "dd/MM/yyyy")}</TableCell>
+                    <TableCell className="text-sm">{formatDateBR(e.date)}</TableCell>
                     <TableCell>{e.description}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{e.category || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{e.supplier || "—"}</TableCell>
