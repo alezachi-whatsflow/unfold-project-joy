@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, BarChart3, Receipt, ShieldCheck, Settings, Construction } from "lucide-react";
 import TributosTab from "@/components/fiscal/TributosTab";
+import CertificadosTab from "@/components/fiscal/CertificadosTab";
 
 const tabs = [
   { value: "visao-geral", label: "Visão Geral", icon: BarChart3 },
@@ -50,6 +51,8 @@ export default function FiscalPage() {
           <TabsContent key={tab.value} value={tab.value}>
             {tab.value === "tributos" ? (
               <TributosTab />
+            ) : tab.value === "certificados" ? (
+              <CertificadosTab />
             ) : (
               <PlaceholderTab label={tab.label} Icon={tab.icon} />
             )}
