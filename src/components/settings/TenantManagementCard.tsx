@@ -10,7 +10,18 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Loader2, AlertTriangle, CheckCircle2, Search } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Loader2, AlertTriangle, CheckCircle2, Search, Star } from "lucide-react";
+
+const DEFAULT_TENANT_KEY = "whatsflow_default_tenant_id";
+
+function getDefaultTenantId(): string | null {
+  return localStorage.getItem(DEFAULT_TENANT_KEY);
+}
+
+function setDefaultTenantId(id: string) {
+  localStorage.setItem(DEFAULT_TENANT_KEY, id);
+  window.dispatchEvent(new Event("tenant-changed"));
+}
 
 interface Tenant {
   id: string;
@@ -44,6 +55,13 @@ export function TenantManagementCard() {
   const [saving, setSaving] = useState(false);
   const [validationResult, setValidationResult] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", cpf_cnpj: "", email: "", document: "" });
+  const [defaultId, setDefaultId] = useState<string | null>(getDefaultTenantId());
+
+  const handleSetDefault = (tenant: Tenant) => {
+    setDefaultTenantId(tenant.id);
+    setDefaultId(tenant.id);
+    toast.success(`"${tenant.name}" definida como empresa padrão`);
+  };
 
   const loadTenants = useCallback(async () => {
     setLoading(true);
@@ -190,8 +208,8 @@ export function TenantManagementCard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (id === "00000000-0000-0000-0000-000000000001") {
-      toast.error("Não é possível excluir o tenant padrão");
+    if (id === defaultId) {
+      toast.error("Não é possível excluir a empresa padrão");
       return;
     }
     const { error } = await supabase.from("tenants").delete().eq("id", id);
@@ -308,7 +326,7 @@ export function TenantManagementCard() {
                 <TableRow key={t.id}>
                   <TableCell className="text-sm font-medium">
                     {t.name}
-                    {t.id === "00000000-0000-0000-0000-000000000001" && (
+                    {t.id === defaultId && (
                       <Badge variant="secondary" className="ml-2 text-[10px]">Padrão</Badge>
                     )}
                   </TableCell>
@@ -321,8 +339,20 @@ export function TenantManagementCard() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      {t.id !== defaultId && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Definir como padrão"
+                          onClick={() => handleSetDefault(t)}
+                        >
+                          <Star className="h-4 w-4 text-muted-foreground hover:text-yellow-500" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => openEdit(t)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      {t.id !== defaultId && (
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
