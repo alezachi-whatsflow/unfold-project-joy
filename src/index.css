@@ -57,55 +57,55 @@
     --sidebar-ring: 157 83% 40%;
   }
 
-  /* ===== LIGHT THEME ===== */
+  /* ===== LIGHT THEME — Whatsflow Brand ===== */
   .theme-light {
-    --background: 0 0% 98%;
-    --foreground: 224 30% 14%;
+    --background: 180 10% 97%;
+    --foreground: 210 12% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 30% 14%;
+    --card-foreground: 210 12% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 30% 14%;
+    --popover-foreground: 210 12% 11%;
 
-    --primary: 160 84% 36%;
+    --primary: 157 83% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 20% 93%;
-    --secondary-foreground: 215 25% 30%;
+    --secondary: 180 8% 92%;
+    --secondary-foreground: 210 12% 25%;
 
-    --muted: 215 15% 92%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 180 6% 90%;
+    --muted-foreground: 210 8% 45%;
 
-    --accent: 199 89% 42%;
+    --accent: 236 72% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 215 20% 88%;
-    --input: 215 20% 90%;
-    --ring: 160 84% 36%;
+    --border: 180 8% 88%;
+    --input: 180 8% 90%;
+    --ring: 157 83% 40%;
 
-    --success: 160 84% 36%;
+    --success: 157 83% 40%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 38 10% 10%;
 
-    --chart-1: 160 84% 36%;
-    --chart-2: 199 89% 42%;
-    --chart-3: 270 65% 55%;
+    --chart-1: 157 83% 40%;
+    --chart-2: 157 92% 60%;
+    --chart-3: 236 72% 60%;
     --chart-4: 38 92% 50%;
     --chart-5: 0 72% 51%;
 
-    --sidebar-background: 215 20% 96%;
-    --sidebar-foreground: 224 30% 20%;
-    --sidebar-primary: 160 84% 36%;
+    --sidebar-background: 180 8% 96%;
+    --sidebar-foreground: 210 12% 20%;
+    --sidebar-primary: 157 83% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 20% 90%;
-    --sidebar-accent-foreground: 224 30% 14%;
-    --sidebar-border: 215 20% 88%;
-    --sidebar-ring: 160 84% 36%;
+    --sidebar-accent: 180 8% 90%;
+    --sidebar-accent-foreground: 210 12% 11%;
+    --sidebar-border: 180 8% 88%;
+    --sidebar-ring: 157 83% 40%;
   }
 
   /* ===== VIBRANT THEME (saliência + hierarquia visual) ===== */
