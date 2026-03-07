@@ -46,7 +46,7 @@ export default function VisaoGeralTab() {
   const totalImpostos = emitidas.reduce((s, n) => s + n.impostos, 0);
 
   // Certificate status
-  const activeCert = certs.find((c) => c.status === "active");
+  const activeCert = certs.find((c) => c.status === "ativo");
   const certDaysLeft = activeCert ? differenceInDays(new Date(activeCert.validoAte), now) : null;
 
   // Regime

@@ -5,6 +5,7 @@ import TributosTab from "@/components/fiscal/TributosTab";
 import CertificadosTab from "@/components/fiscal/CertificadosTab";
 import ConfiguracoesFiscaisTab from "@/components/fiscal/ConfiguracoesFiscaisTab";
 import NotasFiscaisTab from "@/components/fiscal/NotasFiscaisTab";
+import VisaoGeralTab from "@/components/fiscal/VisaoGeralTab";
 
 const tabs = [
   { value: "visao-geral", label: "Visão Geral", icon: BarChart3 },
