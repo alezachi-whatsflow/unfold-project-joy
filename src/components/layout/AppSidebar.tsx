@@ -1,4 +1,4 @@
-import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp, ChevronLeft, ChevronRight, Menu, X, FileText, User, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp, ChevronLeft, ChevronRight, Menu, X, FileText, User, Moon, Sun, ShoppingCart } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -23,6 +23,7 @@ const menuGroups = [
     label: "PRINCIPAL",
     items: [
       { title: "Dashboard", url: "/", icon: LayoutDashboard, end: true, module: "dashboard" },
+      { title: "Vendas", url: "/vendas", icon: ShoppingCart, badgeKey: "vendas" as const, module: "vendas" },
       { title: "Cobranças", url: "/cobrancas", icon: Receipt, badgeKey: "overdue" as const, module: "cobrancas" },
     ],
   },
@@ -102,6 +103,15 @@ export function AppSidebar() {
     queryKey: ["overdue-payments-count"],
     queryFn: async () => {
       const { count } = await supabase.from("asaas_payments").select("*", { count: "exact", head: true }).eq("status", "OVERDUE");
+      return count ?? 0;
+    },
+    refetchInterval: 60000,
+  });
+
+  const { data: vendasBadgeCount } = useQuery({
+    queryKey: ["vendas-badge-count"],
+    queryFn: async () => {
+      const { count } = await supabase.from("negocios").select("*", { count: "exact", head: true }).in("status", ["proposta", "negociacao"]);
       return count ?? 0;
     },
     refetchInterval: 60000,
@@ -244,7 +254,7 @@ export function AppSidebar() {
                       <span className="relative shrink-0 flex items-center justify-center">
                         <item.icon className="h-4 w-4 opacity-60" />
                         {"badgeKey" in item && (() => {
-                          const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                          const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : item.badgeKey === "vendas" ? vendasBadgeCount : 0;
                           return isCollapsed && !isMobile && count && count > 0 ? (
                             <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
                           ) : null;
@@ -254,7 +264,7 @@ export function AppSidebar() {
                         <>
                           <span className="flex-1 truncate">{item.title}</span>
                           {"badgeKey" in item && (() => {
-                            const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                            const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : item.badgeKey === "vendas" ? vendasBadgeCount : 0;
                             return count && count > 0 ? (
                               <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", lineHeight: 1 }}>
                                 {count}

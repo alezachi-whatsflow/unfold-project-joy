@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DollarSign, BarChart3, Clock, Target, TrendingUp, Flame } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, ACTIVE_STATUSES, type NegocioStatus, type NegocioOrigem } from "@/types/vendas";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, FunnelChart } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 export default function VendasRelatorios() {
   const { negocios } = useNegocios();
