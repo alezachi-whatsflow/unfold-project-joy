@@ -21,14 +21,14 @@ export interface DigitalAnalysisData {
 
 function scoreColor(score: number | null): string {
   if (score === null) return "#6b7280";
-  if (score >= 7.5) return "#34d399";
+  if (score >= 7.5) return "#11bc76";
   if (score >= 5) return "#fbbf24";
   return "#f87171";
 }
 
 function scoreGradient(score: number | null): string {
   if (score === null) return "linear-gradient(135deg, #374151, #4b5563)";
-  if (score >= 7.5) return "linear-gradient(135deg, #10b981, #34d399)";
+  if (score >= 7.5) return "linear-gradient(135deg, #11bc76, #39f7b2)";
   if (score >= 5) return "linear-gradient(135deg, #f59e0b, #fbbf24)";
   return "linear-gradient(135deg, #ef4444, #f87171)";
 }
@@ -160,17 +160,18 @@ export function generateAnalysisHtml(data: DigitalAnalysisData): string {
 *{margin:0;padding:0;box-sizing:border-box}
 
 :root{
-  --bg:#0a0d14;
-  --surface:#111827;
-  --surface-2:#1f2937;
-  --border:#1e293b;
-  --text:#f1f5f9;
+  --bg:#191d20;
+  --surface:#1e2529;
+  --surface-2:#2a3038;
+  --border:#2a3038;
+  --text:#ebefef;
   --text-dim:#94a3b8;
   --text-muted:#64748b;
-  --emerald:#34d399;
+  --emerald:#11bc76;
+  --aqua:#39f7b2;
   --amber:#fbbf24;
   --rose:#f87171;
-  --blue:#60a5fa;
+  --blue:#4f5ae3;
   --purple:#a78bfa;
 }
 
@@ -186,8 +187,8 @@ body{
 /* Ambient background */
 body::before{
   content:'';position:fixed;top:0;left:0;right:0;bottom:0;
-  background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(16,185,129,0.06),transparent),
-              radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,165,250,0.04),transparent);
+  background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(17,188,118,0.08),transparent),
+              radial-gradient(ellipse 60% 40% at 80% 80%,rgba(79,90,227,0.05),transparent);
   pointer-events:none;z-index:0;
 }
 
