@@ -270,31 +270,53 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      {/* Footer — user card with role badge */}
+      {/* Footer — user card with dropdown */}
       <div className="mt-auto p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        {(!isCollapsed || isMobile) ? (
-          <div className="mb-2">
-            <div className="truncate text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{userName}</div>
-            <span
-              className="inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold"
-              style={{ background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
-            >
-              {roleLabel}
-            </span>
-          </div>
-        ) : (
-          <div className="flex justify-center mb-2" title={`${userName} — ${roleLabel}`}>
-            <span
-              className="flex items-center justify-center rounded-full text-[10px] font-bold"
-              style={{ width: 28, height: 28, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
-            >
-              {userName.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
-        <Button variant="ghost" size="sm" onClick={handleLogout} title={isCollapsed && !isMobile ? "Sair" : undefined} className={cn("w-full hover:text-foreground", isCollapsed && !isMobile ? "justify-center px-0" : "justify-start")} style={{ color: "rgba(255,255,255,0.4)" }}>
-          <LogOut className={cn("h-4 w-4", (!isCollapsed || isMobile) && "mr-2")} /> {(!isCollapsed || isMobile) && "Sair"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            {(!isCollapsed || isMobile) ? (
+              <button className="w-full flex items-center gap-2.5 rounded-lg p-2 text-left transition-colors hover:[background:rgba(255,255,255,0.05)] cursor-pointer">
+                <span
+                  className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0"
+                  style={{ width: 32, height: 32, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
+                >
+                  {userName.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{userName}</div>
+                  <span
+                    className="inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    style={{ background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
+                  >
+                    {roleLabel}
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <button className="flex justify-center w-full cursor-pointer" title={`${userName} — ${roleLabel}`}>
+                <span
+                  className="flex items-center justify-center rounded-full text-[10px] font-bold"
+                  style={{ width: 28, height: 28, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
+                >
+                  {userName.charAt(0).toUpperCase()}
+                </span>
+              </button>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-48">
+            <DropdownMenuItem onClick={() => navigate("/perfil")} className="gap-2 cursor-pointer">
+              <User className="h-4 w-4" /> Meu Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {theme === "dark" ? "Tema Claro" : "Tema Escuro"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+              <LogOut className="h-4 w-4" /> Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );
