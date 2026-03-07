@@ -169,7 +169,7 @@ export default function ReportsPage() {
             <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           </TabsList>
 
-          {["todos", "financeiro", "clientes"].map(tab => (
+          {["todos", "financeiro", "clientes", "comissoes"].map(tab => (
             <TabsContent key={tab} value={tab}>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {reports
