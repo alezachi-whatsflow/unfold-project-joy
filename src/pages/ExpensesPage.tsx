@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Loader2, DollarSign, CalendarIcon } from "lucide-react";
-import { format, parse, addMonths } from "date-fns";
+import { Plus, Trash2, Pencil, Loader2, DollarSign, CalendarIcon, Paperclip, Download, Share2, FileText, Image, X } from "lucide-react";
+import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DEFAULT_COST_LINES } from "@/lib/costLineTemplates";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 const CATEGORIES = ["Pessoal", "Software", "Marketing", "Infraestrutura", "Impostos", "Comissões", "Despesas Comerciais", "Despesas Financeiras", "Custos de Prestação do Serviço (CSP)", "Salários / Pessoal", "General & Administrative", "Outros"];
 const INSTALLMENT_OPTIONS = ["À vista", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x", "11x", "12x"];
 const PAYMENT_METHODS = ["PIX", "Boleto", "Cartão de Crédito", "Cartão de Débito", "Transferência", "Dinheiro", "Outro"];
+const ACCEPTED_FILE_TYPES = ".pdf,.png,.jpg,.jpeg,.bmp,.gif,.webp,.tiff";
 
 interface Expense {
   id: string;
@@ -44,6 +45,8 @@ interface Expense {
   is_paid: boolean;
   is_scheduled: boolean;
   notes: string | null;
+  attachment_url: string | null;
+  attachment_name: string | null;
 }
 
 const defaultForm = {
@@ -76,6 +79,12 @@ function formatDateBR(dateStr: string): string {
   } catch {
     return dateStr;
   }
+}
+
+function getFileIcon(name: string) {
+  const ext = name?.split(".").pop()?.toLowerCase();
+  if (ext === "pdf") return <FileText className="h-4 w-4 text-red-400" />;
+  return <Image className="h-4 w-4 text-blue-400" />;
 }
 
 /* ─── Autocomplete Field ─── */
@@ -169,6 +178,94 @@ function DatePickerField({
   );
 }
 
+/* ─── File Attachment Section ─── */
+function AttachmentSection({
+  attachmentUrl,
+  attachmentName,
+  onFileSelect,
+  onRemove,
+  uploading,
+}: {
+  attachmentUrl: string | null;
+  attachmentName: string | null;
+  onFileSelect: (file: File) => void;
+  onRemove: () => void;
+  uploading: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownload = () => {
+    if (attachmentUrl) window.open(attachmentUrl, "_blank");
+  };
+
+  const handleShare = async () => {
+    if (!attachmentUrl) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: attachmentName || "Anexo", url: attachmentUrl });
+      } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(attachmentUrl);
+      toast.success("Link copiado para a área de transferência");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <Paperclip className="h-4 w-4" />
+          Anexos (NF / Comprovante)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_FILE_TYPES}
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onFileSelect(f);
+            e.target.value = "";
+          }}
+        />
+
+        {attachmentUrl && attachmentName ? (
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+            {getFileIcon(attachmentName)}
+            <span className="text-sm truncate flex-1">{attachmentName}</span>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" onClick={handleDownload} title="Baixar">
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleShare} title="Compartilhar">
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onRemove} title="Remover">
+                <X className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full border-dashed"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
+            ) : (
+              <><Paperclip className="mr-2 h-4 w-4" /> Anexar NF ou Comprovante (PDF, JPG, PNG, BMP)</>
+            )}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ─── Main Page ─── */
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -177,6 +274,9 @@ export default function ExpensesPage() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [form, setForm] = useState({ ...defaultForm });
   const [saving, setSaving] = useState(false);
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+  const [attachmentName, setAttachmentName] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Suggestions
   const descriptionSuggestions = useMemo(() => {
@@ -208,6 +308,8 @@ export default function ExpensesPage() {
   const openNew = () => {
     setEditing(null);
     setForm({ ...defaultForm, date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(), "yyyy-MM-dd") });
+    setAttachmentUrl(null);
+    setAttachmentName(null);
     setDialogOpen(true);
   };
 
@@ -231,7 +333,38 @@ export default function ExpensesPage() {
       is_scheduled: e.is_scheduled ?? false,
       notes: e.notes || "",
     });
+    setAttachmentUrl(e.attachment_url || null);
+    setAttachmentName(e.attachment_name || null);
     setDialogOpen(true);
+  };
+
+  const handleFileSelect = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 10MB.");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
+    const path = `${TENANT_ID}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error } = await supabase.storage.from("expense-attachments").upload(path, file);
+    if (error) {
+      toast.error("Erro ao enviar arquivo");
+      console.error(error);
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("expense-attachments").getPublicUrl(path);
+    setAttachmentUrl(urlData.publicUrl);
+    setAttachmentName(file.name);
+    setUploading(false);
+    toast.success("Arquivo anexado com sucesso");
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentUrl(null);
+    setAttachmentName(null);
   };
 
   const handleSave = async () => {
@@ -255,6 +388,8 @@ export default function ExpensesPage() {
       is_paid: form.is_paid,
       is_scheduled: form.is_scheduled,
       notes: form.notes || null,
+      attachment_url: attachmentUrl,
+      attachment_name: attachmentName,
     };
 
     if (editing) {
@@ -298,7 +433,6 @@ export default function ExpensesPage() {
                 <CardTitle className="text-sm font-medium">Informações do lançamento</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Fornecedor + Data competência */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Fornecedor</Label>
@@ -317,7 +451,6 @@ export default function ExpensesPage() {
                   />
                 </div>
 
-                {/* Descrição + Valor */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2 space-y-2">
                     <Label>Descrição *</Label>
@@ -335,7 +468,6 @@ export default function ExpensesPage() {
                   </div>
                 </div>
 
-                {/* Categoria + Centro de custo + Código ref */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Categoria *</Label>
@@ -425,6 +557,15 @@ export default function ExpensesPage() {
               </CardContent>
             </Card>
 
+            {/* Anexos */}
+            <AttachmentSection
+              attachmentUrl={attachmentUrl}
+              attachmentName={attachmentName}
+              onFileSelect={handleFileSelect}
+              onRemove={handleRemoveAttachment}
+              uploading={uploading}
+            />
+
             {/* Observações */}
             <Tabs defaultValue="notes">
               <TabsList>
@@ -470,6 +611,7 @@ export default function ExpensesPage() {
                   <TableHead>Fornecedor</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Anexo</TableHead>
                   <TableHead className="w-24" />
                 </TableRow>
               </TableHeader>
@@ -483,6 +625,15 @@ export default function ExpensesPage() {
                     <TableCell className="text-right font-medium text-destructive">R$ {Number(e.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell className="text-center text-xs">
                       {e.is_paid ? <span className="text-emerald-500">Pago</span> : e.is_scheduled ? <span className="text-yellow-500">Agendado</span> : <span className="text-muted-foreground">Pendente</span>}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {e.attachment_url ? (
+                        <Button variant="ghost" size="icon" onClick={() => window.open(e.attachment_url!, "_blank")} title={e.attachment_name || "Anexo"}>
+                          {getFileIcon(e.attachment_name || "file")}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
