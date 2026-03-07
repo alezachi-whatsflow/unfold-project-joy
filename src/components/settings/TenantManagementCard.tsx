@@ -208,8 +208,8 @@ export function TenantManagementCard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (id === "00000000-0000-0000-0000-000000000001") {
-      toast.error("Não é possível excluir o tenant padrão");
+    if (id === defaultId) {
+      toast.error("Não é possível excluir a empresa padrão");
       return;
     }
     const { error } = await supabase.from("tenants").delete().eq("id", id);
