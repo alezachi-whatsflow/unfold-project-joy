@@ -43,10 +43,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <div className="flex items-center gap-2 border-b border-sidebar-border px-4 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <span className="font-display text-sm font-bold text-primary-foreground">W</span>
-        </div>
+      <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-5">
+        <img src={whatsflowLogo} alt="Whatsflow" className="h-9 w-9 rounded-lg" />
         <div>
           <h2 className="font-display text-sm font-bold text-sidebar-foreground">Whatsflow</h2>
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Finance</p>
