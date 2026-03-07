@@ -54,6 +54,8 @@ export default function FiscalPage() {
               <TributosTab />
             ) : tab.value === "certificados" ? (
               <CertificadosTab />
+            ) : tab.value === "configuracoes" ? (
+              <ConfiguracoesFiscaisTab />
             ) : (
               <PlaceholderTab label={tab.label} Icon={tab.icon} />
             )}
