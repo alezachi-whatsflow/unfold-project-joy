@@ -6,21 +6,26 @@ import type { UserRole } from '@/types/roles';
 import { DEFAULT_PERMISSIONS, type PermissionAction, type AppModule, type ModulePermission, type PermissionMatrix } from '@/config/permissions';
 
 export function usePermissions() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const { data: profile } = useQuery({
-    queryKey: ['user-profile', user?.id],
+    queryKey: ['user-profile', user?.id, session?.access_token],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('role, custom_permissions')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (error) throw error;
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 
   const userRole: UserRole = (profile?.role as UserRole) || 'consultor';
