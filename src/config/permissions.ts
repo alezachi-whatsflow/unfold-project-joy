@@ -108,6 +108,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
 
   consultor: {
     dashboard:     viewOnly,
+    vendas:        { view: true, create: true, edit: true, delete: false, export: false },
     cobrancas:     viewOnly,
     comissoes:     viewOnly,
     receitas:      viewOnly,
