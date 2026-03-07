@@ -129,6 +129,15 @@ export default function ReportsPage() {
       onCSV: () => exportCashFlowCSV(entries),
       category: "financeiro",
     },
+    {
+      id: "comissoes",
+      title: "Fechamento de Comissões",
+      description: "Relatório mensal de comissões por vendedor",
+      icon: <Percent className="h-5 w-5" />,
+      onPDF: async () => { window.location.href = "/comissoes"; },
+      onCSV: () => { window.location.href = "/comissoes"; },
+      category: "financeiro",
+    },
   ];
 
   return (
