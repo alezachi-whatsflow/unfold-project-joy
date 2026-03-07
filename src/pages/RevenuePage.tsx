@@ -67,6 +67,73 @@ const statusMap: Record<string, { label: string; variant: "default" | "secondary
   RECEIVED_IN_CASH: { label: "Recebido", variant: "default" },
 };
 
+/* ── DatePicker Field ── */
+function DatePickerField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const dateObj = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined;
+  const valid = dateObj && !isNaN(dateObj.getTime()) ? dateObj : undefined;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !valid && "text-muted-foreground")}>
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {valid ? format(valid, "dd/MM/yyyy") : "dd/mm/aaaa"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={valid}
+          onSelect={(d) => { if (d) { onChange(format(d, "yyyy-MM-dd")); setOpen(false); } }}
+          locale={ptBR}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/* ── Client Autocomplete ── */
+function ClientAutocomplete({ value, onChange, revenues, customers }: { value: string; onChange: (v: string) => void; revenues: Revenue[]; customers: any[] }) {
+  const [open, setOpen] = useState(false);
+  const suggestions = useMemo(() => {
+    const names = new Set<string>();
+    revenues.forEach((r) => { if (r.client_name) names.add(r.client_name); });
+    customers.forEach((c) => { if (c.name) names.add(c.name); });
+    return Array.from(names).sort();
+  }, [revenues, customers]);
+
+  const filtered = useMemo(() => {
+    if (value.length < 3) return [];
+    const q = value.toLowerCase();
+    return suggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 10);
+  }, [value, suggestions]);
+
+  return (
+    <Popover open={open && filtered.length > 0} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Input
+          value={value}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+          placeholder="Nome do cliente"
+        />
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <Command>
+          <CommandList>
+            <CommandGroup heading="Clientes">
+              {filtered.map((s) => (
+                <CommandItem key={s} onSelect={() => { onChange(s); setOpen(false); }}>{s}</CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function RevenuePage() {
   const [revenues, setRevenues] = useState<Revenue[]>([]);
   const [loading, setLoading] = useState(true);
