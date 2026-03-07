@@ -21,7 +21,7 @@ export interface DigitalAnalysisData {
 
 function scoreColor(score: number | null): string {
   if (score === null) return "#6b7280";
-  if (score >= 7.5) return "#34d399";
+  if (score >= 7.5) return "#11bc76";
   if (score >= 5) return "#fbbf24";
   return "#f87171";
 }
