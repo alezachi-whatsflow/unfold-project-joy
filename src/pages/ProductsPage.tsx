@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { useProducts, calculateProductMetrics } from "@/contexts/ProductContext";
 import {
   Product,
