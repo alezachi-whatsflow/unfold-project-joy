@@ -27,6 +27,7 @@ const menuGroups = [
       { title: "Inserir Dados", url: "/input", icon: PenLine },
       { title: "Receitas", url: "/revenue", icon: TrendingUp },
       { title: "Despesas", url: "/expenses", icon: DollarSign },
+      { title: "Fiscal", url: "/fiscal", icon: FileText },
       { title: "Comissões", url: "/comissoes", icon: UserCheck },
     ],
   },

@@ -62,6 +62,7 @@ const AppRoutes = () => (
     <Route path="/cobrancas" element={<ProtectedRoute><DashboardLayout><CobrancasPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/expenses" element={<ProtectedRoute><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/revenue" element={<ProtectedRoute><DashboardLayout><RevenuePage /></DashboardLayout></ProtectedRoute>} />
+    <Route path="/fiscal" element={<ProtectedRoute><DashboardLayout><FiscalPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/comissoes" element={<ProtectedRoute><DashboardLayout><ComissoesPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/customers" element={<ProtectedRoute><DashboardLayout><CustomersPage /></DashboardLayout></ProtectedRoute>} />
     <Route path="/products" element={<ProtectedRoute><DashboardLayout><ProductsPage /></DashboardLayout></ProtectedRoute>} />
