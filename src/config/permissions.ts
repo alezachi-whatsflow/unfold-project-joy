@@ -33,6 +33,7 @@ export type AppModule = (typeof ALL_MODULES)[number];
 
 export const MODULE_LABELS: Record<AppModule, string> = {
   dashboard:     'Dashboard',
+  vendas:        'Vendas',
   cobrancas:     'Cobranças',
   comissoes:     'Comissões',
   receitas:      'Receitas',
