@@ -29,10 +29,12 @@ export default function CobrancasPage() {
             <Receipt className="h-4 w-4" />
             <span className="hidden sm:inline">Cobranças</span>
           </TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2 text-xs sm:text-sm">
-            <Send className="h-4 w-4" />
-            <span className="hidden sm:inline">Criar</span>
-          </TabsTrigger>
+          <PermissionGate module="cobrancas" action="create">
+            <TabsTrigger value="billing" className="gap-2 text-xs sm:text-sm">
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">Criar</span>
+            </TabsTrigger>
+          </PermissionGate>
           <TabsTrigger value="dunning" className="gap-2 text-xs sm:text-sm">
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">Régua</span>
