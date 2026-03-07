@@ -4,6 +4,7 @@ import { FileText, BarChart3, Receipt, ShieldCheck, Settings, Construction } fro
 import TributosTab from "@/components/fiscal/TributosTab";
 import CertificadosTab from "@/components/fiscal/CertificadosTab";
 import ConfiguracoesFiscaisTab from "@/components/fiscal/ConfiguracoesFiscaisTab";
+import NotasFiscaisTab from "@/components/fiscal/NotasFiscaisTab";
 
 const tabs = [
   { value: "visao-geral", label: "Visão Geral", icon: BarChart3 },
