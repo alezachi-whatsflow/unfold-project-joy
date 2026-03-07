@@ -326,7 +326,7 @@ export function TenantManagementCard() {
                 <TableRow key={t.id}>
                   <TableCell className="text-sm font-medium">
                     {t.name}
-                    {t.id === "00000000-0000-0000-0000-000000000001" && (
+                    {t.id === defaultId && (
                       <Badge variant="secondary" className="ml-2 text-[10px]">Padrão</Badge>
                     )}
                   </TableCell>
@@ -339,8 +339,20 @@ export function TenantManagementCard() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      {t.id !== defaultId && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Definir como padrão"
+                          onClick={() => handleSetDefault(t)}
+                        >
+                          <Star className="h-4 w-4 text-muted-foreground hover:text-yellow-500" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => openEdit(t)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      {t.id !== defaultId && (
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
