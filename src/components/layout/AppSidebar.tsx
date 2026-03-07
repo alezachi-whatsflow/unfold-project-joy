@@ -1,4 +1,4 @@
-import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp, ChevronLeft, ChevronRight, Menu, X, FileText } from "lucide-react";
+import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp, ChevronLeft, ChevronRight, Menu, X, FileText, User, Moon, Sun } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
