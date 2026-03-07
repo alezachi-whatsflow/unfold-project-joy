@@ -12,9 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2, TrendingUp, DollarSign, Clock, CheckCircle, Upload, RefreshCw } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Trash2, Loader2, TrendingUp, DollarSign, Clock, CheckCircle, Upload, RefreshCw, CalendarIcon } from "lucide-react";
+import { format, parse } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { useAsaas } from "@/contexts/AsaasContext";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
