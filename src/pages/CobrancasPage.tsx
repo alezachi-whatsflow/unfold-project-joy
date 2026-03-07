@@ -4,6 +4,7 @@ import { AsaasDunningPanel } from "@/components/asaas/AsaasDunningPanel";
 import { AsaasBillingManagerPanel } from "@/components/asaas/AsaasBillingManagerPanel";
 import { AsaasCockpitPanel } from "@/components/asaas/AsaasCockpitPanel";
 import { AsaasReconciliationPanel } from "@/components/asaas/AsaasReconciliationPanel";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Receipt, Shield, Send, Gauge, ArrowLeftRight } from "lucide-react";
 
 export default function CobrancasPage() {
