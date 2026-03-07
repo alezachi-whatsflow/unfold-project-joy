@@ -136,7 +136,7 @@ export default function ReportsPage() {
       icon: <Percent className="h-5 w-5" />,
       onPDF: async () => { window.location.href = "/comissoes"; },
       onCSV: () => { window.location.href = "/comissoes"; },
-      category: "financeiro",
+      category: "comissoes",
     },
   ];
 
