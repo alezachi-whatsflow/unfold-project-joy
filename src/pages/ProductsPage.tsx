@@ -256,9 +256,9 @@ function ProductCard({ product }: { product: Product }) {
 
 function MetricItem({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className={cn("text-sm font-bold text-card-foreground", className)}>{value}</span>
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{label}</span>
+      <span className={cn("text-xs sm:text-sm font-bold text-card-foreground whitespace-nowrap", className)}>{value}</span>
     </div>
   );
 }
