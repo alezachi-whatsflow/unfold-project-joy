@@ -60,7 +60,7 @@ function InputField({
       <Input
         id={name}
         type="number"
-        step="1"
+        step="any"
         min="0"
         className="h-9 bg-secondary border-border text-foreground font-display text-sm"
         {...register(name, { valueAsNumber: true })}
