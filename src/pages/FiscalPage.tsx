@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, BarChart3, Receipt, ShieldCheck, Settings, Construction } from "lucide-react";
+import TributosTab from "@/components/fiscal/TributosTab";
 
 const tabs = [
   { value: "visao-geral", label: "Visão Geral", icon: BarChart3 },
@@ -12,10 +13,10 @@ const tabs = [
 
 function PlaceholderTab({ label, Icon }: { label: string; Icon: React.ElementType }) {
   return (
-    <Card className="border-[rgba(255,255,255,0.07)]" style={{ borderRadius: 12 }}>
+    <Card className="border-border/40" style={{ borderRadius: 12 }}>
       <CardContent className="flex flex-col items-center justify-center gap-3 py-16">
-        <div className="rounded-full p-4" style={{ background: "rgba(74,222,128,0.08)" }}>
-          <Icon className="h-8 w-8" style={{ color: "#4ade80", opacity: 0.7 }} />
+        <div className="rounded-full p-4 bg-primary/10">
+          <Icon className="h-8 w-8 text-primary opacity-70" />
         </div>
         <Construction className="h-5 w-5 text-muted-foreground" />
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
@@ -47,7 +48,11 @@ export default function FiscalPage() {
 
         {tabs.map((tab) => (
           <TabsContent key={tab.value} value={tab.value}>
-            <PlaceholderTab label={tab.label} Icon={tab.icon} />
+            {tab.value === "tributos" ? (
+              <TributosTab />
+            ) : (
+              <PlaceholderTab label={tab.label} Icon={tab.icon} />
+            )}
           </TabsContent>
         ))}
       </Tabs>
