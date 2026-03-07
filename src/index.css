@@ -3,58 +3,58 @@
 @tailwind utilities;
 
 @layer base {
-  /* ===== DARK THEME (default) ===== */
+  /* ===== DARK THEME (default) — Whatsflow Brand ===== */
   :root,
   .theme-dark {
-    --background: 224 32% 8%;
-    --foreground: 210 20% 92%;
+    --background: 210 12% 11%;
+    --foreground: 180 10% 93%;
 
-    --card: 224 28% 12%;
-    --card-foreground: 210 20% 92%;
+    --card: 210 10% 14%;
+    --card-foreground: 180 10% 93%;
 
-    --popover: 224 28% 14%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 210 10% 16%;
+    --popover-foreground: 180 10% 93%;
 
-    --primary: 160 84% 39%;
+    --primary: 157 83% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 25% 16%;
-    --secondary-foreground: 210 20% 85%;
+    --secondary: 210 12% 18%;
+    --secondary-foreground: 180 10% 85%;
 
-    --muted: 215 20% 14%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 210 10% 16%;
+    --muted-foreground: 210 8% 55%;
 
-    --accent: 199 89% 48%;
+    --accent: 236 72% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 215 20% 16%;
-    --input: 215 20% 18%;
-    --ring: 160 84% 39%;
+    --border: 210 10% 18%;
+    --input: 210 10% 20%;
+    --ring: 157 83% 40%;
 
     --radius: 0.75rem;
 
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    --success: 157 92% 60%;
+    --success-foreground: 210 12% 11%;
     --warning: 38 92% 50%;
     --warning-foreground: 38 10% 10%;
 
-    --chart-1: 160 84% 39%;
-    --chart-2: 199 89% 48%;
-    --chart-3: 270 65% 60%;
+    --chart-1: 157 83% 40%;
+    --chart-2: 157 92% 60%;
+    --chart-3: 236 72% 60%;
     --chart-4: 38 92% 50%;
     --chart-5: 0 72% 51%;
 
-    --sidebar-background: 224 32% 6%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-background: 210 12% 9%;
+    --sidebar-foreground: 180 10% 85%;
+    --sidebar-primary: 157 83% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 25% 14%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 215 20% 14%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-accent: 210 10% 15%;
+    --sidebar-accent-foreground: 180 10% 93%;
+    --sidebar-border: 210 10% 15%;
+    --sidebar-ring: 157 83% 40%;
   }
 
   /* ===== LIGHT THEME ===== */
