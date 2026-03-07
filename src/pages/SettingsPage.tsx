@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAsaas } from "@/contexts/AsaasContext";
 import { callAsaasProxy } from "@/lib/asaasQueries";
 import { toast } from "sonner";
-import { Settings, Webhook, RefreshCw, Shield, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Settings, Webhook, RefreshCw, Shield, Loader2, CheckCircle, XCircle, PanelLeft } from "lucide-react";
 import { TenantManagementCard } from "@/components/settings/TenantManagementCard";
+import { useSidebarPrefs, type SidebarLayout, type SidebarDensity } from "@/contexts/SidebarPrefsContext";
 
 export default function SettingsPage() {
   const { environment, setEnvironment, isSyncing, syncAll } = useAsaas();
