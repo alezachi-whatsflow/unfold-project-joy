@@ -287,16 +287,19 @@ export default function RevenuePage() {
           <p className="text-sm text-muted-foreground">Gestão centralizada de entradas financeiras — Asaas e avulsas</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { syncPayments(); }} disabled={isSyncing}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} /> Sync Asaas
-          </Button>
-          <Button variant="outline" size="sm" onClick={importFromAsaas} disabled={importing}>
-            <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-spin" : ""}`} /> Importar Asaas
-          </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nova Receita</Button>
-            </DialogTrigger>
+          <PermissionGate module="receitas" action="edit">
+            <Button variant="outline" size="sm" onClick={() => { syncPayments(); }} disabled={isSyncing}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} /> Sync Asaas
+            </Button>
+            <Button variant="outline" size="sm" onClick={importFromAsaas} disabled={importing}>
+              <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-spin" : ""}`} /> Importar Asaas
+            </Button>
+          </PermissionGate>
+          <PermissionGate module="receitas" action="create">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nova Receita</Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Nova Receita</DialogTitle>
