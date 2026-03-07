@@ -64,6 +64,7 @@ const AppRoutes = () => (
 
     {/* Protected — each route wrapped with module permission */}
     <Route path="/" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><Index /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/vendas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="vendas"><VendasPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/input" element={<AuthGuard><DashboardLayout><ProtectedRoute module="inserir_dados"><DataInputPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/cobrancas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="cobrancas"><CobrancasPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/expenses" element={<AuthGuard><DashboardLayout><ProtectedRoute module="despesas"><ExpensesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
