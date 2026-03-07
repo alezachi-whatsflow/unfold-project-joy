@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { useProducts, calculateProductMetrics } from "@/contexts/ProductContext";
 import {
   Product,
@@ -242,12 +243,16 @@ function ProductCard({ product }: { product: Product }) {
             </DialogTrigger>
             <ProductDetailDialog product={product} />
           </Dialog>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-            <Pencil className="h-3 w-3" /> Editar
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-            <Copy className="h-3 w-3" /> Duplicar
-          </Button>
+          <PermissionGate module="produtos" action="edit">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Pencil className="h-3 w-3" /> Editar
+            </Button>
+          </PermissionGate>
+          <PermissionGate module="produtos" action="create">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Copy className="h-3 w-3" /> Duplicar
+            </Button>
+          </PermissionGate>
         </div>
       </CardContent>
     </Card>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -286,16 +287,21 @@ export default function RevenuePage() {
           <p className="text-sm text-muted-foreground">Gestão centralizada de entradas financeiras — Asaas e avulsas</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { syncPayments(); }} disabled={isSyncing}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} /> Sync Asaas
-          </Button>
-          <Button variant="outline" size="sm" onClick={importFromAsaas} disabled={importing}>
-            <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-spin" : ""}`} /> Importar Asaas
-          </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nova Receita</Button>
-            </DialogTrigger>
+          <PermissionGate module="receitas" action="edit">
+            <>
+              <Button variant="outline" size="sm" onClick={() => { syncPayments(); }} disabled={isSyncing}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} /> Sync Asaas
+              </Button>
+              <Button variant="outline" size="sm" onClick={importFromAsaas} disabled={importing}>
+                <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-spin" : ""}`} /> Importar Asaas
+              </Button>
+            </>
+          </PermissionGate>
+          <PermissionGate module="receitas" action="create">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nova Receita</Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Nova Receita</DialogTitle>
@@ -411,6 +417,7 @@ export default function RevenuePage() {
               </div>
             </DialogContent>
           </Dialog>
+          </PermissionGate>
         </div>
       </div>
 
@@ -503,7 +510,9 @@ export default function RevenuePage() {
                         <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                         <TableCell><Badge variant="outline" className="text-[10px]">{r.source === "asaas" ? "Asaas" : "Manual"}</Badge></TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <PermissionGate module="receitas" action="delete">
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          </PermissionGate>
                         </TableCell>
                       </TableRow>
                     );

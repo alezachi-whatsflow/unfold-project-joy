@@ -1,6 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, BarChart3, Receipt, ShieldCheck, Settings, Construction } from "lucide-react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
+import { usePermissions } from "@/hooks/usePermissions";
 import TributosTab from "@/components/fiscal/TributosTab";
 import CertificadosTab from "@/components/fiscal/CertificadosTab";
 import ConfiguracoesFiscaisTab from "@/components/fiscal/ConfiguracoesFiscaisTab";
@@ -31,6 +33,16 @@ function PlaceholderTab({ label, Icon }: { label: string; Icon: React.ElementTyp
 }
 
 export default function FiscalPage() {
+  const { canEdit } = usePermissions();
+  
+  // Filter tabs based on permissions
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.value === "configuracoes" || tab.value === "certificados") {
+      return canEdit("fiscal");
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -42,7 +54,7 @@ export default function FiscalPage() {
 
       <Tabs defaultValue="visao-geral" className="w-full">
         <TabsList className="w-full justify-start flex-wrap h-auto gap-1 bg-muted/30">
-          {tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-xs sm:text-sm">
               <tab.icon className="h-3.5 w-3.5" />
               {tab.label}

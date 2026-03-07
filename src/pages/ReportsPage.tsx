@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Download, FileSpreadsheet, TrendingUp, Users, DollarSign, PiggyBank, Loader2, Percent } from "lucide-react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { toast } from "sonner";
 import {
   generateDREReport,
@@ -66,14 +67,16 @@ function ReportCard({ title, description, icon, onPDF, onCSV, disabled }: Report
         </div>
       </CardHeader>
       <CardContent className="flex gap-2 pt-0">
-        <Button size="sm" onClick={handlePDF} disabled={disabled || loading} className="flex-1">
-          {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileText className="mr-1 h-4 w-4" />}
-          PDF
-        </Button>
-        <Button size="sm" variant="outline" onClick={handleCSV} disabled={disabled} className="flex-1">
-          <FileSpreadsheet className="mr-1 h-4 w-4" />
-          CSV
-        </Button>
+        <PermissionGate module="relatorios" action="export">
+          <Button size="sm" onClick={handlePDF} disabled={disabled || loading} className="flex-1">
+            {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileText className="mr-1 h-4 w-4" />}
+            PDF
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleCSV} disabled={disabled} className="flex-1">
+            <FileSpreadsheet className="mr-1 h-4 w-4" />
+            CSV
+          </Button>
+        </PermissionGate>
       </CardContent>
     </Card>
   );

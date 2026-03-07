@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -418,10 +419,11 @@ export default function ExpensesPage() {
           <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Despesas</h1>
           <p className="text-sm text-muted-foreground">Gerencie as despesas da empresa</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Nova Despesa</Button>
-          </DialogTrigger>
+        <PermissionGate module="despesas" action="create">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Nova Despesa</Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
@@ -586,7 +588,8 @@ export default function ExpensesPage() {
               {editing ? "Atualizar" : "Criar"}
             </Button>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       <Card>
@@ -637,8 +640,12 @@ export default function ExpensesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(e)}><Pencil className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        <PermissionGate module="despesas" action="edit">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(e)}><Pencil className="h-4 w-4" /></Button>
+                        </PermissionGate>
+                        <PermissionGate module="despesas" action="delete">
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </PermissionGate>
                       </div>
                     </TableCell>
                   </TableRow>
