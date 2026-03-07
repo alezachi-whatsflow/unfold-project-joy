@@ -108,6 +108,15 @@ export function AppSidebar() {
     refetchInterval: 60000,
   });
 
+  const { data: vendasBadgeCount } = useQuery({
+    queryKey: ["vendas-badge-count"],
+    queryFn: async () => {
+      const { count } = await supabase.from("negocios").select("*", { count: "exact", head: true }).in("status", ["proposta", "negociacao"]);
+      return count ?? 0;
+    },
+    refetchInterval: 60000,
+  });
+
   const nfPendingCount = useMemo(() => {
     try {
       const raw = localStorage.getItem("fiscal_notas_fiscais");
