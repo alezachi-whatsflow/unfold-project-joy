@@ -14,6 +14,7 @@ export type PermissionMatrix = Record<string, ModulePermission>;
 
 export const ALL_MODULES = [
   'dashboard',
+  'vendas',
   'cobrancas',
   'comissoes',
   'receitas',
