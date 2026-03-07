@@ -264,7 +264,7 @@ export function AppSidebar() {
                         <>
                           <span className="flex-1 truncate">{item.title}</span>
                           {"badgeKey" in item && (() => {
-                            const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : 0;
+                            const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : item.badgeKey === "vendas" ? vendasBadgeCount : 0;
                             return count && count > 0 ? (
                               <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", lineHeight: 1 }}>
                                 {count}
