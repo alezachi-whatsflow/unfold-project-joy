@@ -54,7 +54,7 @@ export default function FiscalPage() {
 
       <Tabs defaultValue="visao-geral" className="w-full">
         <TabsList className="w-full justify-start flex-wrap h-auto gap-1 bg-muted/30">
-          {tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-xs sm:text-sm">
               <tab.icon className="h-3.5 w-3.5" />
               {tab.label}

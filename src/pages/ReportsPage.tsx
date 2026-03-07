@@ -67,14 +67,16 @@ function ReportCard({ title, description, icon, onPDF, onCSV, disabled }: Report
         </div>
       </CardHeader>
       <CardContent className="flex gap-2 pt-0">
-        <Button size="sm" onClick={handlePDF} disabled={disabled || loading} className="flex-1">
-          {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileText className="mr-1 h-4 w-4" />}
-          PDF
-        </Button>
-        <Button size="sm" variant="outline" onClick={handleCSV} disabled={disabled} className="flex-1">
-          <FileSpreadsheet className="mr-1 h-4 w-4" />
-          CSV
-        </Button>
+        <PermissionGate module="relatorios" action="export">
+          <Button size="sm" onClick={handlePDF} disabled={disabled || loading} className="flex-1">
+            {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileText className="mr-1 h-4 w-4" />}
+            PDF
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleCSV} disabled={disabled} className="flex-1">
+            <FileSpreadsheet className="mr-1 h-4 w-4" />
+            CSV
+          </Button>
+        </PermissionGate>
       </CardContent>
     </Card>
   );
