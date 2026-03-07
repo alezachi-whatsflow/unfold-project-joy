@@ -260,9 +260,15 @@ export default function RevenuePage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
+                  {/* Client with autocomplete */}
                   <div className="space-y-1">
                     <Label>Cliente</Label>
-                    <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} placeholder="Nome do cliente" />
+                    <ClientAutocomplete
+                      value={form.client_name}
+                      onChange={(v) => setForm({ ...form, client_name: v })}
+                      revenues={revenues}
+                      customers={customers}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Categoria</Label>
@@ -297,11 +303,17 @@ export default function RevenuePage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label>Data Lançamento</Label>
-                    <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                    <DatePickerField
+                      value={form.date}
+                      onChange={(v) => setForm({ ...form, date: v })}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Vencimento</Label>
-                    <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+                    <DatePickerField
+                      value={form.due_date}
+                      onChange={(v) => setForm({ ...form, due_date: v })}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Status</Label>
