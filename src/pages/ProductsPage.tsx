@@ -129,7 +129,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
         {product.includes && (
           <section>
             <SectionLabel>O Que Está Incluso</SectionLabel>
-            <div className="grid grid-cols-4 gap-3 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <DetailRow label="Dispositivos Web" value={String(product.includes.devicesWeb)} />
               <DetailRow label="Dispositivos Meta" value={String(product.includes.devicesMeta)} />
               <DetailRow label="Atendentes" value={String(product.includes.attendants)} />
