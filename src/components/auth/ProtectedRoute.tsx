@@ -10,7 +10,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ module, action = 'view', inline = false, children }: ProtectedRouteProps) {
-  const { can } = usePermissions();
+  const { can, isPermissionsLoading } = usePermissions();
+
+  if (isPermissionsLoading) {
+    return null;
+  }
 
   if (!can(module, action)) {
     if (inline) {

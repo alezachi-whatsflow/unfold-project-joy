@@ -8,7 +8,12 @@ import { DEFAULT_PERMISSIONS, type PermissionAction, type AppModule, type Module
 export function usePermissions() {
   const { user, session } = useAuth();
 
-  const { data: profile } = useQuery({
+  const {
+    data: profile,
+    isLoading: isPermissionsLoading,
+    isFetching: isPermissionsFetching,
+    error: permissionsError,
+  } = useQuery({
     queryKey: ['user-profile', user?.id, session?.access_token],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -23,9 +28,11 @@ export function usePermissions() {
     },
     enabled: !!user?.id,
     staleTime: 0,
+    gcTime: 0,
     refetchOnMount: 'always',
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
+    retry: 1,
   });
 
   const userRole: UserRole = (profile?.role as UserRole) || 'consultor';
