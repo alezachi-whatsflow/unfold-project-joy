@@ -53,6 +53,7 @@ const menuGroups = [
   {
     label: "SISTEMA",
     items: [
+      { title: "Usuários", url: "/usuarios", icon: Users, module: "usuarios" },
       { title: "Configurações", url: "/settings", icon: Settings, module: "configuracoes" },
     ],
   },
