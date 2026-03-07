@@ -23,6 +23,7 @@ import ExpensesPage from "./pages/ExpensesPage";
 import RevenuePage from "./pages/RevenuePage";
 import ReportsPage from "./pages/ReportsPage";
 import ComissoesPage from "./pages/ComissoesPage";
+import FiscalPage from "./pages/FiscalPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
