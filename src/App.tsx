@@ -32,6 +32,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import ProfilePage from "./pages/ProfilePage";
+import UsersPage from "./pages/UsersPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -72,6 +73,7 @@ const AppRoutes = () => (
     <Route path="/products" element={<AuthGuard><DashboardLayout><ProtectedRoute module="produtos"><ProductsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/intelligence" element={<AuthGuard><DashboardLayout><ProtectedRoute module="intelligence"><IntelligencePage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/settings" element={<AuthGuard><DashboardLayout><ProtectedRoute module="configuracoes"><SettingsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/usuarios" element={<AuthGuard><DashboardLayout><ProtectedRoute module="usuarios"><UsersPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/reports" element={<AuthGuard><DashboardLayout><ProtectedRoute module="relatorios"><ReportsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/perfil" element={<AuthGuard><DashboardLayout><ProfilePage /></DashboardLayout></AuthGuard>} />
     <Route path="*" element={<NotFound />} />
