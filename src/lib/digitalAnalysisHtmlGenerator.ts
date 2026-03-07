@@ -28,7 +28,7 @@ function scoreColor(score: number | null): string {
 
 function scoreGradient(score: number | null): string {
   if (score === null) return "linear-gradient(135deg, #374151, #4b5563)";
-  if (score >= 7.5) return "linear-gradient(135deg, #10b981, #34d399)";
+  if (score >= 7.5) return "linear-gradient(135deg, #11bc76, #39f7b2)";
   if (score >= 5) return "linear-gradient(135deg, #f59e0b, #fbbf24)";
   return "linear-gradient(135deg, #ef4444, #f87171)";
 }
