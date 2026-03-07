@@ -1,4 +1,4 @@
-import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp, ChevronLeft, ChevronRight, Menu, X, FileText } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +27,7 @@ const menuGroups = [
       { title: "Inserir Dados", url: "/input", icon: PenLine },
       { title: "Receitas", url: "/revenue", icon: TrendingUp },
       { title: "Despesas", url: "/expenses", icon: DollarSign },
+      { title: "Fiscal", url: "/fiscal", icon: FileText },
       { title: "Comissões", url: "/comissoes", icon: UserCheck },
     ],
   },
