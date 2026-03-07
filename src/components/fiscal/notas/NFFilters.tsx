@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Search, Download, Plus, CalendarIcon } from "lucide-react";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { NFStatus, NFTipo } from "@/types/notasFiscais";
 import { format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
