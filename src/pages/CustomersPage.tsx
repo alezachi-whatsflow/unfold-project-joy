@@ -1,4 +1,5 @@
 import { useCustomers } from "@/contexts/CustomerContext";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { useFinancial } from "@/contexts/FinancialContext";
 import { formatCurrency, getMonthFullLabel } from "@/lib/calculations";
 import {
