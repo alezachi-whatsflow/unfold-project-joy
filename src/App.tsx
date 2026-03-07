@@ -79,6 +79,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <SidebarPrefsProvider>
           <FinancialProvider>
             <CustomerProvider>
               <ProductProvider>
@@ -92,6 +93,7 @@ const App = () => (
               </ProductProvider>
             </CustomerProvider>
           </FinancialProvider>
+          </SidebarPrefsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
