@@ -588,7 +588,8 @@ export default function ExpensesPage() {
               {editing ? "Atualizar" : "Criar"}
             </Button>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       <Card>
