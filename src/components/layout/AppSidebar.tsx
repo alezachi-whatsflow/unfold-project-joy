@@ -1,6 +1,6 @@
 import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
-import { NavLink } from "@/components/NavLink";
+import { NavLink as RouterNavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
@@ -9,19 +9,18 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 const menuGroups = [
   {
     label: "PRINCIPAL",
     items: [
-      { title: "Dashboard", url: "/", icon: LayoutDashboard },
+      { title: "Dashboard", url: "/", icon: LayoutDashboard, end: true },
       { title: "Cobranças", url: "/cobrancas", icon: Receipt, badgeKey: "overdue" as const },
     ],
   },
@@ -56,6 +55,10 @@ const menuGroups = [
   },
 ];
 
+const menuItemBase = "flex items-center gap-2 rounded-lg text-[13px] no-underline transition-all duration-150 ease-in-out";
+const menuItemDefault = "[color:rgba(255,255,255,0.45)] hover:[background:rgba(255,255,255,0.05)] hover:[color:rgba(255,255,255,0.85)]";
+const menuItemActive = "[background:rgba(74,222,128,0.10)] [border:1px_solid_rgba(74,222,128,0.18)] [color:#4ade80] font-medium [&>svg]:opacity-100";
+
 export function AppSidebar() {
   const { signOut, user } = useAuth();
 
@@ -82,7 +85,6 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      {/* Logo header */}
       <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-5">
         <img src={whatsflowLogo} alt="Whatsflow" className="h-9 w-9 rounded-lg" />
         <div>
@@ -94,19 +96,17 @@ export function AppSidebar() {
       <SidebarContent>
         {menuGroups.map((group) => (
           <SidebarGroup key={group.label}>
-            {/* Group label */}
             <span
-              className="select-none"
+              className="select-none block"
               style={{
-                fontSize: "10px",
+                fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.10em",
                 textTransform: "uppercase",
                 color: "rgba(255,255,255,0.25)",
-                paddingTop: "16px",
-                paddingBottom: "4px",
-                paddingLeft: "12px",
-                display: "block",
+                paddingTop: 16,
+                paddingBottom: 4,
+                paddingLeft: 12,
               }}
             >
               {group.label}
@@ -116,26 +116,37 @@ export function AppSidebar() {
               <SidebarMenu>
                 {group.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end={item.url === "/"}
-                        className="flex items-center gap-2 rounded-lg text-[13px] transition-all duration-150 ease-in-out"
-                        activeClassName="!bg-primary/15 !text-primary font-medium [&>svg]:opacity-100"
-                        style={{
-                          padding: "7px 10px",
-                          color: "rgba(255,255,255,0.45)",
-                        }}
-                      >
-                        <item.icon className="h-4 w-4 opacity-60" />
-                        <span className="flex-1">{item.title}</span>
-                        {"badgeKey" in item && item.badgeKey === "overdue" && overdueCount && overdueCount > 0 ? (
-                          <Badge variant="destructive" className="ml-auto h-5 min-w-5 justify-center px-1.5 text-[10px] font-bold">
-                            {overdueCount}
-                          </Badge>
-                        ) : null}
-                      </NavLink>
-                    </SidebarMenuButton>
+                    <RouterNavLink
+                      to={item.url}
+                      end={"end" in item ? item.end : false}
+                      style={{ padding: "7px 10px" }}
+                      className={({ isActive }) =>
+                        cn(
+                          menuItemBase,
+                          isActive ? menuItemActive : menuItemDefault
+                        )
+                      }
+                    >
+                      <item.icon className="h-4 w-4 shrink-0 opacity-60" />
+                      <span className="flex-1">{item.title}</span>
+                      {"badgeKey" in item && item.badgeKey === "overdue" && overdueCount && overdueCount > 0 ? (
+                        <span
+                          className="ml-auto flex items-center justify-center shrink-0"
+                          style={{
+                            background: "#ef4444",
+                            color: "white",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {overdueCount}
+                        </span>
+                      ) : null}
+                    </RouterNavLink>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -144,7 +155,6 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      {/* Footer */}
       <div className="mt-auto border-t border-sidebar-border p-4">
         <div className="mb-2 truncate text-xs text-muted-foreground">{user?.email}</div>
         <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-muted-foreground hover:text-foreground">
