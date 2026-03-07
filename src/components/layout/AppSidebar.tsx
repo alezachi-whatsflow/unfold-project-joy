@@ -66,7 +66,11 @@ export function AppSidebar() {
 
   const [collapsed, setCollapsed] = useState(() => {
     if (isRailLayout) return true;
-    try { return localStorage.getItem(COLLAPSE_KEY) === "collapsed"; } catch { return false; }
+    try {
+      const saved = localStorage.getItem(COLLAPSE_KEY);
+      // Default to collapsed so hover-expand is immediately useful
+      return saved === null ? true : saved === "collapsed";
+    } catch { return true; }
   });
 
   // Mobile drawer state
