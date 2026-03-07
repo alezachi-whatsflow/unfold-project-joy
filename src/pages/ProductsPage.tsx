@@ -202,7 +202,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Metrics grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 rounded-lg bg-secondary/50 p-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 rounded-lg bg-secondary/50 p-2 sm:p-3 mb-4">
           <MetricItem label="Preço" value={`${formatCurrency(product.price)}${product.type === "recurring" ? "/mês" : ""}`} />
           <MetricItem label="COGS" value={formatCurrency(product.cogs + product.laborCost + product.supportCost)} />
           <MetricItem
