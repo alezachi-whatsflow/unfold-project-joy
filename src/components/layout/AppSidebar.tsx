@@ -19,6 +19,7 @@ const navItems = [
   { title: "Inserir Dados", url: "/input", icon: PenLine },
   { title: "Cobranças", url: "/cobrancas", icon: Receipt },
   { title: "Comissões", url: "/comissoes", icon: UserCheck },
+  { title: "Receitas", url: "/revenue", icon: TrendingUp },
   { title: "Despesas", url: "/expenses", icon: DollarSign },
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Produtos", url: "/products", icon: Package },
