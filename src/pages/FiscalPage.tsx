@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, BarChart3, Receipt, ShieldCheck, Settings, Construction } from "lucide-react";
 import TributosTab from "@/components/fiscal/TributosTab";
+import CertificadosTab from "@/components/fiscal/CertificadosTab";
 
 const tabs = [
   { value: "visao-geral", label: "Visão Geral", icon: BarChart3 },
