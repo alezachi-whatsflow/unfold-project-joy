@@ -10,7 +10,18 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Loader2, AlertTriangle, CheckCircle2, Search } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Loader2, AlertTriangle, CheckCircle2, Search, Star } from "lucide-react";
+
+const DEFAULT_TENANT_KEY = "whatsflow_default_tenant_id";
+
+function getDefaultTenantId(): string | null {
+  return localStorage.getItem(DEFAULT_TENANT_KEY);
+}
+
+function setDefaultTenantId(id: string) {
+  localStorage.setItem(DEFAULT_TENANT_KEY, id);
+  window.dispatchEvent(new Event("tenant-changed"));
+}
 
 interface Tenant {
   id: string;
