@@ -53,6 +53,11 @@ function SidebarAppearanceCard() {
           </div>
         </div>
 
+        {/* Custom Layout Panel */}
+        {prefs.layout === 'custom' && (
+          <CustomLayoutPanel />
+        )}
+
         {/* Density */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Densidade</Label>
