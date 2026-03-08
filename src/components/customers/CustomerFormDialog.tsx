@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { format, parse } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import type { Customer } from "@/types/customers";
 
 interface Props {
@@ -110,26 +115,46 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
 
           {/* Dates */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Data Ativação</Label>
-              <Input type="date" value={form.dataAtivacao || ""} onChange={(e) => set("dataAtivacao", e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Data Cancelado</Label>
-              <Input type="date" value={form.dataCancelado || ""} onChange={(e) => set("dataCancelado", e.target.value || null)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Data Bloqueio</Label>
-              <Input type="date" value={form.dataBloqueio || ""} onChange={(e) => set("dataBloqueio", e.target.value || null)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Data Desbloqueio</Label>
-              <Input type="date" value={form.dataDesbloqueio || ""} onChange={(e) => set("dataDesbloqueio", e.target.value || null)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Data Vencimento</Label>
-              <Input type="date" value={form.dataVencimento || ""} onChange={(e) => set("dataVencimento", e.target.value || null)} />
-            </div>
+            {[
+              { key: "dataAtivacao", label: "Data Ativação" },
+              { key: "dataCancelado", label: "Data Cancelado" },
+              { key: "dataBloqueio", label: "Data Bloqueio" },
+              { key: "dataDesbloqueio", label: "Data Desbloqueio" },
+              { key: "dataVencimento", label: "Data Vencimento" },
+            ].map(({ key, label }) => {
+              const value = (form as any)[key];
+              const dateValue = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined;
+              const isValidDate = dateValue && !isNaN(dateValue.getTime());
+              return (
+                <div key={key} className="space-y-1.5">
+                  <Label className="text-xs">{label}</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-10",
+                          !isValidDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {isValidDate ? format(dateValue, "dd/MM/yyyy") : "dd/mm/aaaa"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={isValidDate ? dateValue : undefined}
+                        onSelect={(d) => set(key, d ? format(d, "yyyy-MM-dd") : null)}
+                        locale={ptBR}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              );
+            })}
           </div>
 
           {/* Numbers */}
