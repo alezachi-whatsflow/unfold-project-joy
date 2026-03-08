@@ -12,7 +12,7 @@ export function PermissionGate({ module, action, fallback = null, children }: Pe
   const { can, isPermissionsLoading } = usePermissions();
 
   if (isPermissionsLoading) {
-    return null;
+    return <>{fallback}</>;
   }
 
   if (!can(module, action)) {
@@ -21,3 +21,4 @@ export function PermissionGate({ module, action, fallback = null, children }: Pe
 
   return <>{children}</>;
 }
+

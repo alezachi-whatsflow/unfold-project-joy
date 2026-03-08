@@ -1,6 +1,7 @@
 import { usePermissions } from '@/hooks/usePermissions';
 import type { PermissionAction } from '@/config/permissions';
 import { Navigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   module: string;
@@ -13,7 +14,11 @@ export function ProtectedRoute({ module, action = 'view', inline = false, childr
   const { can, isPermissionsLoading } = usePermissions();
 
   if (isPermissionsLoading) {
-    return null;
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (!can(module, action)) {
@@ -41,3 +46,4 @@ function AccessDeniedInline() {
     </div>
   );
 }
+
