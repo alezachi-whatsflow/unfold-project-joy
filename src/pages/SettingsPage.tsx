@@ -11,6 +11,7 @@ import { callAsaasProxy } from "@/lib/asaasQueries";
 import { toast } from "sonner";
 import { Settings, Webhook, RefreshCw, Shield, Loader2, CheckCircle, XCircle, PanelLeft, Paintbrush, LayoutGrid, Columns2, Search, Palette } from "lucide-react";
 import { TenantManagementCard } from "@/components/settings/TenantManagementCard";
+import { CustomLayoutPanel } from "@/components/settings/CustomLayoutPanel";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import type { SidebarLayout, SidebarDensity, SidebarWidth } from "@/types/sidebar";
 
@@ -52,6 +53,11 @@ function SidebarAppearanceCard() {
             ))}
           </div>
         </div>
+
+        {/* Custom Layout Panel */}
+        {prefs.layout === 'custom' && (
+          <CustomLayoutPanel />
+        )}
 
         {/* Density */}
         <div className="space-y-3">
