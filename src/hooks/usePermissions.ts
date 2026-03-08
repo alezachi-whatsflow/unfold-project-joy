@@ -3,18 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { UserRole } from '@/types/roles';
-import { DEFAULT_PERMISSIONS, type PermissionAction, type AppModule, type ModulePermission, type PermissionMatrix } from '@/config/permissions';
+import { DEFAULT_PERMISSIONS, type PermissionAction, type PermissionMatrix } from '@/config/permissions';
 
 export function usePermissions() {
-  const { user, session } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
 
   const {
     data: profile,
-    isLoading: isPermissionsLoading,
-    isFetching: isPermissionsFetching,
+    isLoading,
     error: permissionsError,
   } = useQuery({
-    queryKey: ['user-profile', user?.id, session?.access_token],
+    queryKey: ['user-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
@@ -26,12 +25,10 @@ export function usePermissions() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
-    refetchOnReconnect: true,
-    refetchOnWindowFocus: true,
+    enabled: !!user?.id && !isAuthLoading,
+    staleTime: 60_000,
+    gcTime: 300_000,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
@@ -41,21 +38,19 @@ export function usePermissions() {
 
   const permissions = useMemo(() => {
     const base = DEFAULT_PERMISSIONS[userRole] || DEFAULT_PERMISSIONS.consultor;
-    // If custom_permissions exist, merge them over the base
     const custom = profile?.custom_permissions as PermissionMatrix | null | undefined;
+
     if (custom && typeof custom === 'object') {
       const merged: PermissionMatrix = {};
       for (const mod of Object.keys(base)) {
         merged[mod] = custom[mod] ? { ...base[mod], ...custom[mod] } : { ...base[mod] };
       }
-      // Also include any modules only in custom
       for (const mod of Object.keys(custom)) {
-        if (!merged[mod]) {
-          merged[mod] = { ...custom[mod] };
-        }
+        if (!merged[mod]) merged[mod] = { ...custom[mod] };
       }
       return merged;
     }
+
     return base;
   }, [userRole, profile?.custom_permissions]);
 
@@ -82,7 +77,8 @@ export function usePermissions() {
     permissions,
     isAdmin: userRole === 'admin',
     isGestor: userRole === 'gestor',
-    isPermissionsLoading: isPermissionsLoading || isPermissionsFetching,
+    isPermissionsLoading: isAuthLoading || (Boolean(user?.id) && isLoading),
     permissionsError,
   };
 }
+
