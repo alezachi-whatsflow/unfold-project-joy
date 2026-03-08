@@ -1,104 +1,30 @@
-import { LayoutDashboard, PenLine, Users, Package, Radar, Receipt, DollarSign, Settings, LogOut, UserCheck, FileBarChart, TrendingUp, ChevronLeft, ChevronRight, Menu, X, FileText, User, Moon, Sun, ShoppingCart } from "lucide-react";
-import whatsflowLogo from "@/assets/whatsflow-logo.png";
+import { useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
+import { LogOut, User, Moon, Sun, ChevronLeft, ChevronRight, X, Menu } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ROLE_LABELS, ROLE_COLORS } from "@/types/roles";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_NAV_CATEGORIES } from "@/config/navigation";
+import { WIDTH_MAP } from "@/types/sidebar";
+import type { NavCategory, NavItem } from "@/types/sidebar";
+import { getIcon } from "@/lib/iconMap";
+import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
-const COLLAPSE_KEY = "wf_sidebar_state";
-
-/** Map each sidebar item to a permission module */
-const menuGroups = [
-  {
-    label: "PRINCIPAL",
-    items: [
-      { title: "Dashboard", url: "/", icon: LayoutDashboard, end: true, module: "dashboard" },
-      { title: "Vendas", url: "/vendas", icon: ShoppingCart, badgeKey: "vendas" as const, module: "vendas" },
-      { title: "Cobranças", url: "/cobrancas", icon: Receipt, badgeKey: "overdue" as const, module: "cobrancas" },
-    ],
-  },
-  {
-    label: "FINANCEIRO",
-    items: [
-      { title: "Inserir Dados", url: "/input", icon: PenLine, module: "inserir_dados" },
-      { title: "Receitas", url: "/revenue", icon: TrendingUp, module: "receitas" },
-      { title: "Despesas", url: "/expenses", icon: DollarSign, module: "despesas" },
-      { title: "Fiscal", url: "/fiscal", icon: FileText, badgeKey: "nfPending" as const, module: "fiscal" },
-      { title: "Comissões", url: "/comissoes", icon: UserCheck, module: "comissoes" },
-    ],
-  },
-  {
-    label: "CLIENTES & PRODUTOS",
-    items: [
-      { title: "Clientes", url: "/customers", icon: Users, module: "clientes" },
-      { title: "Produtos", url: "/products", icon: Package, module: "produtos" },
-    ],
-  },
-  {
-    label: "ANALYTICS",
-    items: [
-      { title: "Intelligence", url: "/intelligence", icon: Radar, module: "intelligence" },
-      { title: "Relatórios", url: "/reports", icon: FileBarChart, module: "relatorios" },
-    ],
-  },
-  {
-    label: "SISTEMA",
-    items: [
-      { title: "Usuários", url: "/usuarios", icon: Users, module: "usuarios" },
-      { title: "Configurações", url: "/settings", icon: Settings, module: "configuracoes" },
-    ],
-  },
-];
-
+// ──────────────────────── shared styles ────────────────────────
 const menuItemBase = "flex items-center no-underline transition-all duration-150 ease-in-out";
 const menuItemDefault = "[color:rgba(255,255,255,0.45)] hover:[background:rgba(255,255,255,0.05)] hover:[color:rgba(255,255,255,0.85)]";
 const menuItemActive = "[background:rgba(74,222,128,0.10)] [border:1px_solid_rgba(74,222,128,0.18)] [color:#4ade80] font-medium [&>svg]:opacity-100";
 
-export function AppSidebar() {
-  const { signOut, user } = useAuth();
-  const { canView, userRole } = usePermissions();
-  const { prefs } = useSidebarPrefs();
-  const { theme, setTheme } = useTheme();
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const location = useLocation();
-
-  const isRailLayout = prefs.layout === "rail";
-
-  const [collapsed, setCollapsed] = useState(() => {
-    if (isRailLayout) return true;
-    try {
-      const saved = localStorage.getItem(COLLAPSE_KEY);
-      if (saved !== null) return saved === "collapsed";
-      return prefs.layout !== "standard";
-    } catch { return false; }
-  });
-
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
-
-  useEffect(() => {
-    if (isRailLayout) { setCollapsed(true); return; }
-  }, [isRailLayout]);
-
-  useEffect(() => {
-    if (!isRailLayout) {
-      try { localStorage.setItem(COLLAPSE_KEY, collapsed ? "collapsed" : "expanded"); } catch {}
-    }
-  }, [collapsed, isRailLayout]);
-
+// ──────────────────────── badge queries ────────────────────────
+function useBadges() {
   const { data: overdueCount } = useQuery({
     queryKey: ["overdue-payments-count"],
     queryFn: async () => {
@@ -107,7 +33,6 @@ export function AppSidebar() {
     },
     refetchInterval: 60000,
   });
-
   const { data: vendasBadgeCount } = useQuery({
     queryKey: ["vendas-badge-count"],
     queryFn: async () => {
@@ -116,67 +41,476 @@ export function AppSidebar() {
     },
     refetchInterval: 60000,
   });
+  const badgeMap: Record<string, number> = {
+    cobrancas: overdueCount ?? 0,
+    vendas: vendasBadgeCount ?? 0,
+  };
+  return badgeMap;
+}
 
-  const nfPendingCount = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("fiscal_notas_fiscais");
-      if (!raw) return 0;
-      const notas = JSON.parse(raw) as { status: string }[];
-      return notas.filter((n) => n.status === "pendente" || n.status === "rejeitada").length;
-    } catch { return 0; }
-  }, [location.pathname]);
+// ──────────────────────── helpers ────────────────────────
+function useFilteredCategories() {
+  const { canView } = usePermissions();
+  const { prefs, categories } = useSidebarPrefs();
+  return useMemo(() => {
+    const cats = (prefs.categoryOrganization === 'custom' && prefs.customCategories?.length)
+      ? prefs.customCategories
+      : categories;
+    return cats
+      .filter(c => c.visible !== false)
+      .map(c => ({
+        ...c,
+        items: c.items.filter(item => item.visible !== false && canView(item.module)),
+      }))
+      .filter(c => c.items.length > 0);
+  }, [canView, prefs.categoryOrganization, prefs.customCategories, categories]);
+}
+
+function usePinnedItems() {
+  const { prefs } = useSidebarPrefs();
+  const { canView } = usePermissions();
+  const allItems = useMemo(() => {
+    const items: NavItem[] = [];
+    for (const cat of DEFAULT_NAV_CATEGORIES) {
+      for (const item of cat.items) items.push(item);
+    }
+    return items;
+  }, []);
+  return useMemo(() => {
+    if (!prefs.pinnedItems?.length) return [];
+    return prefs.pinnedItems
+      .map(id => allItems.find(i => i.id === id))
+      .filter((i): i is NavItem => !!i && canView(i.module));
+  }, [prefs.pinnedItems, allItems, canView]);
+}
+
+// ──────────────────────── user footer ────────────────────────
+function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
+  const { signOut, user } = useAuth();
+  const { userRole } = usePermissions();
+  const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
+  const roleLabel = ROLE_LABELS[userRole] || userRole;
+  const roleColor = ROLE_COLORS[userRole] || '#888';
+  const isCollapsed = collapsed && !isMobile;
 
   const handleLogout = async () => {
     try { await signOut(); toast.success("Logout realizado"); } catch { toast.error("Erro ao sair"); }
   };
 
-  const itemStyle = useMemo(() => {
-    const density = prefs.density;
-    const isCompactLayout = prefs.layout === "compact";
-    if (density === "comfortable") return { padding: isCompactLayout ? "7px 10px" : "10px 12px", fontSize: 14 };
-    if (density === "compact") return { padding: "5px 10px", fontSize: 12 };
-    return { padding: isCompactLayout ? "5px 10px" : "7px 10px", fontSize: 13 };
-  }, [prefs.density, prefs.layout]);
+  return (
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: isCollapsed ? "8px 4px" : "10px 12px" }}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className={cn("flex items-center w-full rounded-lg transition-colors hover:[background:rgba(255,255,255,0.05)]", isCollapsed ? "justify-center p-2" : "gap-3 p-2")}>
+            <span className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0" style={{ width: 32, height: 32, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}>
+              {userName.charAt(0).toUpperCase()}
+            </span>
+            {!isCollapsed && (
+              <div className="min-w-0 text-left flex-1">
+                <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{userName}</p>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}30` }}>
+                  {roleLabel}
+                </span>
+              </div>
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => navigate("/perfil")}><User className="mr-2 h-4 w-4" /> Meu Perfil</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            {theme === "dark" ? "Tema Claro" : "Tema Escuro"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="text-destructive"><LogOut className="mr-2 h-4 w-4" /> Sair</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+// ──────────────────────── sidebar header ────────────────────────
+function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { collapsed: boolean; isMobile: boolean; onCollapse: () => void; onCloseMobile: () => void }) {
+  const isCollapsed = collapsed && !isMobile;
+  return (
+    <div className="flex items-center px-3 py-4 relative" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && "justify-center w-full")}>
+        <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
+        {!isCollapsed && (
+          <div className="min-w-0">
+            <h2 className="font-display text-sm font-bold truncate" style={{ color: "rgba(255,255,255,0.93)" }}>Whatsflow</h2>
+            <p className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.35)" }}>Finance</p>
+          </div>
+        )}
+      </div>
+      {isMobile ? (
+        <button onClick={onCloseMobile} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:[background:rgba(255,255,255,0.07)]" style={{ width: 28, height: 28 }}>
+          <X className="h-4 w-4" style={{ color: "rgba(255,255,255,0.5)" }} />
+        </button>
+      ) : (
+        <button onClick={onCollapse} title={collapsed ? "Expandir" : "Colapsar"} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:[background:rgba(255,255,255,0.07)]" style={{ width: 24, height: 24 }}>
+          {collapsed ? <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.4)" }} /> : <ChevronLeft className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.4)" }} />}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────── nav item renderer ────────────────────────
+function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: NavItem; collapsed: boolean; isMobile: boolean; badgeCount: number; density: string }) {
+  const Icon = getIcon(item.icon);
+  const isCollapsed = collapsed && !isMobile;
+  const location = useLocation();
+  const isActive = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
+
+  const padding = density === 'comfortable' ? "10px 12px" : density === 'compact' ? "5px 10px" : "7px 10px";
+  const fontSize = density === 'comfortable' ? 14 : density === 'compact' ? 12 : 13;
+
+  return (
+    <li>
+      <RouterNavLink
+        to={item.route}
+        end={item.route === '/'}
+        title={isCollapsed ? item.label : undefined}
+        style={{ padding: isCollapsed ? "8px 0" : padding, fontSize: isCollapsed ? 13 : fontSize }}
+        className={() => cn(menuItemBase, "rounded-lg", isCollapsed ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
+      >
+        <span className="relative shrink-0 flex items-center justify-center">
+          <Icon className="h-4 w-4 opacity-60" />
+          {isCollapsed && badgeCount > 0 && (
+            <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
+          )}
+        </span>
+        {!isCollapsed && (
+          <>
+            <span className="flex-1 truncate">{item.label}</span>
+            {badgeCount > 0 && (
+              <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%" }}>
+                {badgeCount}
+              </span>
+            )}
+          </>
+        )}
+      </RouterNavLink>
+    </li>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LAYOUT 1: GROUPED CARDS (default)
+// ═══════════════════════════════════════════════════════════════
+function SidebarGroupedCards({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
+  const filteredGroups = useFilteredCategories();
+  const badges = useBadges();
+  const pinnedItems = usePinnedItems();
+  const { prefs } = useSidebarPrefs();
+  const isCollapsed = collapsed && !isMobile;
+
+  return (
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
+      {/* Pinned items section */}
+      {pinnedItems.length > 0 && (
+        <div className="mb-1">
+          {!isCollapsed && (
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(74,222,128,0.5)", paddingTop: 12, paddingBottom: 4, paddingLeft: 8, display: 'block', fontFamily: 'monospace' }}>
+              📌 Fixados
+            </span>
+          )}
+          <ul className="flex flex-col gap-0.5">
+            {pinnedItems.map(item => (
+              <NavItemRow key={item.id} item={item} collapsed={collapsed} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {filteredGroups.map((group) => (
+        <div key={group.id}>
+          {!isCollapsed ? (
+            <div className="mt-2 mb-1 mx-1 rounded-[10px]" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.055)", padding: 6 }}>
+              {prefs.showLabels && (
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", paddingLeft: 6, paddingBottom: 2, display: 'block', fontFamily: 'monospace' }}>
+                  {group.label}
+                </span>
+              )}
+              <ul className="flex flex-col gap-0.5">
+                {group.items.map((item) => (
+                  <NavItemRow key={item.id} item={item} collapsed={collapsed} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <>
+              <div className="pt-3" />
+              <ul className="flex flex-col gap-0.5">
+                {group.items.map((item) => (
+                  <NavItemRow key={item.id} item={item} collapsed={collapsed} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LAYOUT 2: DUAL RAIL
+// ═══════════════════════════════════════════════════════════════
+function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }) {
+  const filteredGroups = useFilteredCategories();
+  const badges = useBadges();
+  const { prefs } = useSidebarPrefs();
+  const location = useLocation();
+
+  const [activeCatId, setActiveCatId] = useState(() => {
+    for (const cat of filteredGroups) {
+      for (const item of cat.items) {
+        const match = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
+        if (match) return cat.id;
+      }
+    }
+    return filteredGroups[0]?.id || '';
+  });
+
+  const activeCat = filteredGroups.find(c => c.id === activeCatId) || filteredGroups[0];
+
+  // Category badge: sum of item badges
+  const catBadge = (cat: NavCategory) => cat.items.reduce((sum, item) => sum + (badges[item.id] || 0), 0);
+
+  return (
+    <div className="flex h-full">
+      {/* Rail */}
+      <div className="flex flex-col items-center py-3 shrink-0" style={{ width: 58, borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+        <img src={whatsflowLogo} alt="" className="h-7 w-7 rounded-lg mb-4" />
+        <div className="flex-1 flex flex-col gap-1">
+          {filteredGroups.filter(c => c.id !== 'sistema').map(cat => {
+            const CatIcon = getIcon(cat.icon || 'LayoutDashboard');
+            const isActive = cat.id === activeCatId;
+            const badge = catBadge(cat);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCatId(cat.id)}
+                title={cat.label}
+                className={cn("flex items-center justify-center rounded-lg transition-colors relative", isActive ? "[background:rgba(74,222,128,0.12)] [color:#4ade80]" : "[color:rgba(255,255,255,0.35)] hover:[background:rgba(255,255,255,0.05)] hover:[color:rgba(255,255,255,0.7)]")}
+                style={{ width: 40, height: 40 }}
+              >
+                <CatIcon className="h-4.5 w-4.5" />
+                {badge > 0 && <span className="absolute top-1 right-1 rounded-full" style={{ width: 7, height: 7, background: "#ef4444" }} />}
+              </button>
+            );
+          })}
+        </div>
+        {/* System icons at bottom */}
+        {filteredGroups.filter(c => c.id === 'sistema').map(cat => cat.items.map(item => {
+          const Icon = getIcon(item.icon);
+          const isActive = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
+          return (
+            <RouterNavLink key={item.id} to={item.route} title={item.label}
+              className={() => cn("flex items-center justify-center rounded-lg mb-1 transition-colors", isActive ? "[background:rgba(74,222,128,0.12)] [color:#4ade80]" : "[color:rgba(255,255,255,0.35)] hover:[background:rgba(255,255,255,0.05)]")}
+              style={{ width: 40, height: 40 }}>
+              <Icon className="h-4 w-4" />
+            </RouterNavLink>
+          );
+        }))}
+      </div>
+      {/* Panel */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-3 pt-4 pb-2">
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#4ade80", fontFamily: "monospace" }}>
+            {activeCat?.label}
+          </span>
+        </div>
+        <nav className="flex-1 overflow-y-auto px-2">
+          <ul className="flex flex-col gap-0.5" key={activeCatId} style={{ animation: "fadeIn 150ms ease" }}>
+            {activeCat?.items.map(item => (
+              <NavItemRow key={item.id} item={item} collapsed={false} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LAYOUT 3: SPOTLIGHT
+// ═══════════════════════════════════════════════════════════════
+function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
+  const filteredGroups = useFilteredCategories();
+  const badges = useBadges();
+  const { prefs, updateCategoryCollapsed } = useSidebarPrefs();
+  const isCollapsed = collapsed && !isMobile;
+
+  // Get collapsed state from customCategories or default false
+  const getCatCollapsed = (catId: string) => {
+    const custom = prefs.customCategories?.find(c => c.id === catId);
+    return custom?.collapsed ?? false;
+  };
+
+  // Top-level items (first category)
+  const topItems = filteredGroups[0]?.items || [];
+  const accordionGroups = filteredGroups.slice(1);
+
+  return (
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
+      {/* Search bar placeholder */}
+      {!isCollapsed && (
+        <button
+          className="flex items-center gap-2 w-full rounded-lg px-3 py-2 mt-2 mb-3 text-xs transition-colors"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.35)" }}
+          onClick={() => {
+            // Dispatch Cmd+K
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
+          }}
+        >
+          <span>⌕</span>
+          <span className="flex-1 text-left">Buscar ou navegar...</span>
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)" }}>⌘K</kbd>
+        </button>
+      )}
+
+      {/* Top-level items */}
+      <ul className="flex flex-col gap-0.5 mb-1">
+        {topItems.map(item => (
+          <NavItemRow key={item.id} item={item} collapsed={collapsed} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
+        ))}
+      </ul>
+
+      {!isCollapsed && <hr className="border-0 my-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />}
+
+      {/* Accordion groups */}
+      {accordionGroups.map(group => {
+        const isGroupCollapsed = getCatCollapsed(group.id);
+        const GroupIcon = getIcon(group.icon || 'LayoutDashboard');
+        return (
+          <div key={group.id} className="mb-0.5">
+            {!isCollapsed ? (
+              <>
+                <button
+                  onClick={() => updateCategoryCollapsed(group.id, !isGroupCollapsed)}
+                  className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg transition-colors hover:[background:rgba(255,255,255,0.03)]"
+                >
+                  <span
+                    className="transition-transform duration-200"
+                    style={{ transform: isGroupCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', color: "rgba(255,255,255,0.3)", fontSize: 10 }}
+                  >
+                    ▶
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", fontFamily: "monospace" }}>
+                    {group.label}
+                  </span>
+                </button>
+                {!isGroupCollapsed && (
+                  <div className="relative ml-4 pl-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
+                    <ul className="flex flex-col gap-0.5" style={{ animation: "fadeIn 200ms ease" }}>
+                      {group.items.map(item => (
+                        <NavItemRow key={item.id} item={item} collapsed={false} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <ul className="flex flex-col gap-0.5">
+                {group.items.map(item => (
+                  <NavItemRow key={item.id} item={item} collapsed={true} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Quick Actions */}
+      {!isCollapsed && prefs.showQuickActions && prefs.quickActions.length > 0 && (
+        <>
+          <hr className="border-0 my-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+          <div className="flex flex-wrap gap-1.5 px-1">
+            {prefs.quickActions.map(id => {
+              const allItems = DEFAULT_NAV_CATEGORIES.flatMap(c => c.items);
+              const item = allItems.find(i => i.id === id);
+              if (!item) return null;
+              return (
+                <RouterNavLink key={id} to={item.route}
+                  className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
+                  style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.15)" }}
+                >
+                  + {item.label}
+                </RouterNavLink>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </nav>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LAYOUT 4: CUSTOM (same as GroupedCards but with custom order)
+// ═══════════════════════════════════════════════════════════════
+function SidebarCustom({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
+  // Custom layout uses same rendering as GroupedCards but reads from customCategories
+  return <SidebarGroupedCards collapsed={collapsed} isMobile={isMobile} />;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ROOT SIDEBAR — selects layout
+// ═══════════════════════════════════════════════════════════════
+export function AppSidebar() {
+  const { prefs, setPrefs } = useSidebarPrefs();
+  const isMobile = useIsMobile();
+  const location = useLocation();
+
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem("wf_sidebar_state");
+      if (saved !== null) return saved === "collapsed";
+    } catch {}
+    return false;
+  });
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  useEffect(() => {
+    try { localStorage.setItem("wf_sidebar_state", collapsed ? "collapsed" : "expanded"); } catch {}
+  }, [collapsed]);
 
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const handleMouseEnter = useCallback(() => {
-    if (isMobile || isRailLayout) return;
+    if (isMobile) return;
     clearTimeout(hoverTimer.current);
     hoverTimer.current = setTimeout(() => setHoverExpanded(true), 200);
-  }, [isMobile, isRailLayout]);
+  }, [isMobile]);
 
   const handleMouseLeave = useCallback(() => {
-    if (isMobile || isRailLayout) return;
+    if (isMobile) return;
     clearTimeout(hoverTimer.current);
     hoverTimer.current = setTimeout(() => setHoverExpanded(false), 300);
-  }, [isMobile, isRailLayout]);
+  }, [isMobile]);
 
   useEffect(() => () => clearTimeout(hoverTimer.current), []);
 
-  const isCollapsed = isMobile ? false : ((collapsed || isRailLayout) && !hoverExpanded);
-  const sidebarWidth = isCollapsed ? "w-16" : "w-60";
+  const isCollapsed = isMobile ? false : (collapsed && !hoverExpanded);
+  const isDualRail = prefs.layout === 'dual_rail';
+  const sidebarW = isDualRail ? (isCollapsed ? 58 : 248) : (isCollapsed ? 64 : WIDTH_MAP[prefs.width]);
 
-  const isItemActive = useCallback((url: string, end?: boolean) => {
-    if (end) return location.pathname === url;
-    return location.pathname.startsWith(url);
-  }, [location.pathname]);
-
-  // Filter menu groups by permission
-  const filteredGroups = useMemo(() => {
-    return menuGroups
-      .map((group) => ({
-        ...group,
-        items: group.items.filter((item) => canView(item.module)),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [canView]);
-
-  // User display info
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
-  const roleLabel = ROLE_LABELS[userRole] || userRole;
-  const roleColor = ROLE_COLORS[userRole] || '#888';
+  const renderLayout = () => {
+    switch (prefs.layout) {
+      case 'dual_rail':    return <SidebarDualRail collapsed={isCollapsed} isMobile={isMobile} />;
+      case 'spotlight':    return <SidebarSpotlight collapsed={isCollapsed} isMobile={isMobile} />;
+      case 'custom':       return <SidebarCustom collapsed={isCollapsed} isMobile={isMobile} />;
+      default:             return <SidebarGroupedCards collapsed={isCollapsed} isMobile={isMobile} />;
+    }
+  };
 
   const sidebarContent = (
     <aside
@@ -184,183 +518,46 @@ export function AppSidebar() {
       aria-label="Menu principal"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={cn(
-        "flex flex-col h-screen shrink-0 overflow-hidden",
-        isMobile ? "w-60" : sidebarWidth
-      )}
+      className="flex flex-col h-screen shrink-0 overflow-hidden"
       style={{
+        width: isMobile ? 260 : sidebarW,
         background: "#111118",
         borderRight: "1px solid rgba(255,255,255,0.06)",
         transition: isMobile ? "none" : "width 250ms cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
-      {/* Header */}
-      <div className="flex items-center px-3 py-4 relative" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && !isMobile && "justify-center w-full")}>
-          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
-          {(!isCollapsed || isMobile) && (
-            <div className="min-w-0">
-              <h2 className="font-display text-sm font-bold truncate" style={{ color: "rgba(255,255,255,0.93)" }}>Whatsflow</h2>
-              <p className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.35)" }}>Finance</p>
-            </div>
-          )}
-        </div>
-        {isMobile ? (
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:[background:rgba(255,255,255,0.07)] transition-colors"
-            style={{ width: 28, height: 28 }}
-          >
-            <X className="h-4 w-4" style={{ color: "rgba(255,255,255,0.5)" }} />
-          </button>
-        ) : !isRailLayout ? (
-          <button
-            onClick={() => setCollapsed((p) => !p)}
-            title={collapsed ? "Expandir menu" : "Colapsar menu"}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:[background:rgba(255,255,255,0.07)] transition-colors"
-            style={{ width: 24, height: 24, borderRadius: 6 }}
-          >
-            {collapsed ? <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.4)" }} /> : <ChevronLeft className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.4)" }} />}
-          </button>
-        ) : null}
-      </div>
-
-      {/* Menu */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
-        {filteredGroups.map((group) => (
-          <div key={group.label}>
-            {(!isCollapsed || isMobile) && (
-              <span className="select-none block" style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", paddingTop: 16, paddingBottom: 4, paddingLeft: 8 }}>
-                {group.label}
-              </span>
-            )}
-            {isCollapsed && !isMobile && <div className="pt-3" />}
-            <ul className="flex flex-col gap-0.5">
-              {group.items.map((item) => {
-                const active = isItemActive(item.url, "end" in item ? item.end : false);
-                return (
-                  <li key={item.title}>
-                    <RouterNavLink
-                      to={item.url}
-                      end={"end" in item ? item.end : false}
-                      title={isCollapsed && !isMobile ? item.title : undefined}
-                      aria-current={active ? "page" : undefined}
-                      style={{
-                        padding: isCollapsed && !isMobile ? "8px 0" : itemStyle.padding,
-                        fontSize: isCollapsed && !isMobile ? 13 : itemStyle.fontSize,
-                      }}
-                      className={({ isActive }) => cn(menuItemBase, "rounded-lg", isCollapsed && !isMobile ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
-                    >
-                      <span className="relative shrink-0 flex items-center justify-center">
-                        <item.icon className="h-4 w-4 opacity-60" />
-                        {"badgeKey" in item && (() => {
-                          const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : item.badgeKey === "vendas" ? vendasBadgeCount : 0;
-                          return isCollapsed && !isMobile && count && count > 0 ? (
-                            <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
-                          ) : null;
-                        })()}
-                      </span>
-                      {(!isCollapsed || isMobile) && (
-                        <>
-                          <span className="flex-1 truncate">{item.title}</span>
-                          {"badgeKey" in item && (() => {
-                            const count = item.badgeKey === "overdue" ? overdueCount : item.badgeKey === "nfPending" ? nfPendingCount : item.badgeKey === "vendas" ? vendasBadgeCount : 0;
-                            return count && count > 0 ? (
-                              <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", lineHeight: 1 }}>
-                                {count}
-                              </span>
-                            ) : null;
-                          })()}
-                        </>
-                      )}
-                    </RouterNavLink>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer — user card with dropdown */}
-      <div className="mt-auto p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            {(!isCollapsed || isMobile) ? (
-              <button className="w-full flex items-center gap-2.5 rounded-lg p-2 text-left transition-colors hover:[background:rgba(255,255,255,0.05)] cursor-pointer">
-                <span
-                  className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0"
-                  style={{ width: 32, height: 32, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
-                >
-                  {userName.charAt(0).toUpperCase()}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{userName}</div>
-                  <span
-                    className="inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                    style={{ background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
-                  >
-                    {roleLabel}
-                  </span>
-                </div>
-              </button>
-            ) : (
-              <button className="flex justify-center w-full cursor-pointer" title={`${userName} — ${roleLabel}`}>
-                <span
-                  className="flex items-center justify-center rounded-full text-[10px] font-bold"
-                  style={{ width: 28, height: 28, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}
-                >
-                  {userName.charAt(0).toUpperCase()}
-                </span>
-              </button>
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-48">
-            <DropdownMenuItem onClick={() => navigate("/perfil")} className="gap-2 cursor-pointer">
-              <User className="h-4 w-4" /> Meu Perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer">
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              {theme === "dark" ? "Tema Claro" : "Tema Escuro"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-              <LogOut className="h-4 w-4" /> Sair
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {!isDualRail && (
+        <SidebarHeader
+          collapsed={isCollapsed}
+          isMobile={isMobile}
+          onCollapse={() => setCollapsed(p => !p)}
+          onCloseMobile={() => setMobileOpen(false)}
+        />
+      )}
+      {renderLayout()}
+      <UserFooter collapsed={isCollapsed} isMobile={isMobile} />
     </aside>
   );
 
   if (isMobile) {
     return (
       <>
-        <MobileTrigger onOpen={() => setMobileOpen(true)} />
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg"
+          style={{ width: 40, height: 40, background: "#111118", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
+          <Menu className="h-5 w-5" style={{ color: "rgba(255,255,255,0.6)" }} />
+        </button>
         {mobileOpen && (
-          <div className="fixed inset-0 z-50 flex">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-            <div className="relative z-10 animate-slide-in-right" style={{ animationDuration: "200ms" }}>
-              {sidebarContent}
-            </div>
-          </div>
+          <>
+            <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setMobileOpen(false)} />
+            <div className="fixed left-0 top-0 bottom-0 z-50">{sidebarContent}</div>
+          </>
         )}
       </>
     );
   }
 
   return sidebarContent;
-}
-
-function MobileTrigger({ onOpen }: { onOpen: () => void }) {
-  return (
-    <button
-      onClick={onOpen}
-      className="fixed top-3 left-3 z-40 flex items-center justify-center rounded-md md:hidden"
-      style={{ width: 36, height: 36, background: "#111118", border: "1px solid rgba(255,255,255,0.1)" }}
-      aria-label="Abrir menu"
-    >
-      <Menu className="h-5 w-5" style={{ color: "rgba(255,255,255,0.6)" }} />
-    </button>
-  );
 }
