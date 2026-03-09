@@ -47,6 +47,7 @@ export const MODULE_LABELS: Record<AppModule, string> = {
   configuracoes: 'Configurações',
   usuarios:      'Usuários',
   inserir_dados: 'Inserir Dados',
+  mensageria:    'Mensageria',
 };
 
 const full: ModulePermission = { view: true, create: true, edit: true, delete: true, export: true };
