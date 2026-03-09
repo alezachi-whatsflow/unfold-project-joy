@@ -2,16 +2,6 @@ import type { NavCategory, SidebarPreferences } from '@/types/sidebar';
 
 export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
   {
-    id: 'principal',
-    label: 'Principal',
-    icon: 'LayoutDashboard',
-    items: [
-      { id: 'dashboard',  label: 'Dashboard',    icon: 'LayoutDashboard', route: '/',            module: 'dashboard'     },
-      { id: 'vendas',     label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',      module: 'vendas'        },
-      { id: 'cobrancas',  label: 'Cobranças',     icon: 'Receipt',        route: '/cobrancas',   module: 'cobrancas'     },
-    ],
-  },
-  {
     id: 'financeiro',
     label: 'Financeiro',
     icon: 'DollarSign',
@@ -19,6 +9,7 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'inserir',    label: 'Inserir Dados', icon: 'PenLine',        route: '/input',       module: 'inserir_dados' },
       { id: 'receitas',   label: 'Receitas',      icon: 'TrendingUp',     route: '/revenue',     module: 'receitas'      },
       { id: 'despesas',   label: 'Despesas',      icon: 'DollarSign',     route: '/expenses',    module: 'despesas'      },
+      { id: 'cobrancas',  label: 'Cobranças',     icon: 'Receipt',        route: '/cobrancas',   module: 'cobrancas'     },
       { id: 'fiscal',     label: 'Fiscal',        icon: 'FileText',       route: '/fiscal',      module: 'fiscal'        },
       { id: 'comissoes',  label: 'Comissões',     icon: 'UserCheck',      route: '/comissoes',   module: 'comissoes'     },
     ],
@@ -30,6 +21,7 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     items: [
       { id: 'clientes',   label: 'Clientes',      icon: 'Users',          route: '/customers',   module: 'clientes'      },
       { id: 'produtos',   label: 'Produtos',      icon: 'Package',        route: '/products',    module: 'produtos'      },
+      { id: 'vendas',     label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',      module: 'vendas'        },
       { id: 'mensageria', label: 'Mensageria',    icon: 'MessageSquare',  route: '/mensageria',  module: 'mensageria'    },
     ],
   },
@@ -38,8 +30,9 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     label: 'Analytics',
     icon: 'Radar',
     items: [
-      { id: 'intelligence', label: 'Inteligência Digital', icon: 'Radar',  route: '/intelligence', module: 'intelligence' },
-      { id: 'relatorios', label: 'Relatórios',    icon: 'FileBarChart',   route: '/reports',     module: 'relatorios'    },
+      { id: 'dashboard',    label: 'Dashboard',           icon: 'LayoutDashboard', route: '/',             module: 'dashboard'     },
+      { id: 'intelligence', label: 'Inteligência Digital', icon: 'Radar',           route: '/intelligence', module: 'intelligence'  },
+      { id: 'relatorios',   label: 'Relatórios',          icon: 'FileBarChart',    route: '/reports',      module: 'relatorios'    },
     ],
   },
   {
