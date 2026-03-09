@@ -61,9 +61,11 @@ function getScoreColor(score: number): string {
 
 export default function NegocioDrawer({ negocio, onClose }: Props) {
   const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios();
+  const navigate = useNavigate();
   const [newNote, setNewNote] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(negocio.titulo);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
