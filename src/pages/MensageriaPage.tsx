@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wifi, Inbox } from "lucide-react";
 import WhatsAppConnectionsTab from "@/components/mensageria/WhatsAppConnectionsTab";
+import InboxTab from "@/components/mensageria/inbox/InboxTab";
 
 const MensageriaPage = () => {
   return (
@@ -21,11 +22,7 @@ const MensageriaPage = () => {
         </TabsContent>
 
         <TabsContent value="inbox">
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <Inbox className="h-12 w-12 mb-4 opacity-40" />
-            <p className="text-lg font-medium">Caixa de Entrada</p>
-            <p className="text-sm">Em breve — aguardando integração com provedores.</p>
-          </div>
+          <InboxTab />
         </TabsContent>
       </Tabs>
     </div>
