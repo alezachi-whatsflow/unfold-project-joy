@@ -165,6 +165,67 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
                 </span>
               </div>
             )}
+            {/* DI Action Buttons */}
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 text-xs"
+                style={{ borderColor: "#00C896", color: "#00C896" }}
+                onClick={() => {
+                  const site = getSiteFromNotas(negocio.notas);
+                  if (site) {
+                    navigate(`/intelligence?analyze=${encodeURIComponent(site)}`);
+                  } else {
+                    navigate(`/intelligence?analyze=${encodeURIComponent(negocio.cliente_nome || negocio.titulo)}&type=google_maps`);
+                  }
+                }}
+              >
+                <Radar className="h-3 w-3" /> Analisar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 text-xs"
+                style={{ borderColor: "#00C896", color: "#00C896" }}
+                disabled={isGeneratingReport}
+                onClick={() => {
+                  setIsGeneratingReport(true);
+                  try {
+                    const site = getSiteFromNotas(negocio.notas);
+                    const phone = getPhoneFromNotas(negocio.notas);
+                    const niche = getNicheFromNotas(negocio.notas) || "";
+                    const city = getCityFromNotas(negocio.notas) || "";
+                    const html = generateQuickReportHtml({
+                      leadName: negocio.cliente_nome || negocio.titulo,
+                      leadUrl: site,
+                      leadPhone: phone,
+                      leadDescription: null,
+                      score: diScore || 0,
+                      niche,
+                      city,
+                      hasSite: !!site,
+                      hasPhone: !!phone,
+                    });
+                    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `relatorio-${(negocio.cliente_nome || negocio.titulo).replace(/[^a-zA-Z0-9]/g, "-").substring(0, 40)}.html`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Relatório HTML gerado com sucesso!");
+                  } catch (err: any) {
+                    toast.error("Erro ao gerar relatório");
+                  } finally {
+                    setIsGeneratingReport(false);
+                  }
+                }}
+              >
+                {isGeneratingReport ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                Relatório
+              </Button>
+            </div>
           </section>
         )}
 
