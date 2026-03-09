@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, Phone, ExternalLink, Loader2, Plus, Check } from "lucide-react";
+import { Globe, Phone, ExternalLink, Loader2, Plus, Check, Radar, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { generateQuickReportHtml } from "./quickReportGenerator";
 import type { ProspectLead } from "../ProspeccaoTab";
 
 const CRM_SENT_KEY = "crm_sent_leads";
@@ -76,6 +77,7 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
   const [responsible, setResponsible] = useState("Eu (usuário logado)");
   const [estimatedValue, setEstimatedValue] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const stageLabel = PIPELINE_STAGES.find(s => s.value === (sentStage || stage))?.label || sentStage;
 
@@ -123,7 +125,22 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
       setOpen(false);
       setEstimatedValue("");
       onSentToCRM?.();
-      toast({ title: "Lead enviado para o Pipeline com sucesso!", description: `"${lead.name}" adicionado na etapa "${PIPELINE_STAGES.find(s => s.value === stage)?.label}".` });
+      
+      toast({
+        title: "✅ Lead enviado para o Pipeline!",
+        description: `"${lead.name}" → ${PIPELINE_STAGES.find(s => s.value === stage)?.label}`,
+        action: (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1 text-xs shrink-0"
+            style={{ borderColor: "#00C896", color: "#00C896" }}
+            onClick={() => navigate(`/vendas?highlight=${negocioId}`)}
+          >
+            <ExternalLink className="h-3 w-3" /> Ver no CRM
+          </Button>
+        ),
+      });
     } catch (err: any) {
       console.error("CRM send error:", err);
       toast({ title: "Não foi possível enviar para o CRM. Tente novamente.", description: err.message, variant: "destructive" });
@@ -134,6 +151,48 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
 
   const handleViewInCRM = () => {
     navigate(`/vendas?highlight=${sentNegocioId}`);
+  };
+
+  // Navigate to Intelligence page with URL pre-filled for analysis
+  const handleAnalyze = () => {
+    if (lead.url) {
+      navigate(`/intelligence?analyze=${encodeURIComponent(lead.url)}`);
+    } else {
+      navigate(`/intelligence?analyze=${encodeURIComponent(lead.name)}&type=google_maps`);
+    }
+  };
+
+  // Generate a quick HTML report for this lead
+  const handleGenerateReport = () => {
+    setIsGeneratingReport(true);
+    try {
+      const html = generateQuickReportHtml({
+        leadName: lead.name,
+        leadUrl: lead.url || null,
+        leadPhone: lead.phone || null,
+        leadDescription: lead.description || null,
+        score: lead.score,
+        niche,
+        city,
+        hasSite: lead.hasSite,
+        hasPhone: lead.hasPhone,
+      });
+
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `relatorio-${lead.name.replace(/[^a-zA-Z0-9]/g, "-").substring(0, 40)}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Relatório gerado!", description: "O arquivo HTML foi baixado. Envie ao cliente por e-mail ou WhatsApp." });
+    } catch (err: any) {
+      console.error("Report error:", err);
+      toast({ title: "Erro ao gerar relatório", description: err.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
   return (
@@ -170,6 +229,7 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
         <div className="pt-2 border-t border-border space-y-2">
           <p className={`text-xs font-semibold ${meta.color}`}>{meta.label}</p>
 
+          {/* CRM Button */}
           {isSent ? (
             <Button
               size="sm"
@@ -224,6 +284,34 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
             </Popover>
           )}
 
+          {/* Action buttons row */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* Analyze button */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1 text-xs"
+              style={{ borderColor: "#00C896", color: "#00C896" }}
+              onClick={handleAnalyze}
+            >
+              <Radar className="h-3 w-3" /> Analisar
+            </Button>
+
+            {/* Generate Report button */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1 text-xs"
+              style={{ borderColor: "#00C896", color: "#00C896" }}
+              onClick={handleGenerateReport}
+              disabled={isGeneratingReport}
+            >
+              {isGeneratingReport ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+              Relatório
+            </Button>
+          </div>
+
+          {/* Visit site button */}
           {lead.url && (
             <Button size="sm" variant="outline" className="w-full gap-1 text-xs" style={{ borderColor: "#00C896", color: "#00C896" }} asChild>
               <a href={lead.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /> Visitar Site</a>
