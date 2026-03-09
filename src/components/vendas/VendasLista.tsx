@@ -28,15 +28,19 @@ export default function VendasLista() {
   const [perdaModal, setPerdaModal] = useState<Negocio | null>(null);
   const [ganhoModal, setGanhoModal] = useState<Negocio | null>(null);
 
+  const [origemFilter, setOrigemFilter] = useState("all");
+
   const filtered = useMemo(() => {
     let list = negocios;
     if (statusFilter !== "all") list = list.filter(n => n.status === statusFilter);
+    if (origemFilter === "digital_intelligence") list = list.filter(n => n.origem === "digital_intelligence");
+    else if (origemFilter === "manual") list = list.filter(n => n.origem !== "digital_intelligence");
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(n => n.titulo.toLowerCase().includes(q) || (n.cliente_nome || '').toLowerCase().includes(q));
     }
     return list;
-  }, [negocios, statusFilter, search]);
+  }, [negocios, statusFilter, origemFilter, search]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
