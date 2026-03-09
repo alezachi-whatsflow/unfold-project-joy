@@ -6,13 +6,31 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { X, Pencil, Trash2, CheckCircle, XCircle, Send, Phone, Mail, CalendarDays } from "lucide-react";
+import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props {
   negocio: Negocio;
   onClose: () => void;
+}
+
+function getDigitalScoreFromNotas(notas: string | null): number | null {
+  if (!notas) return null;
+  const match = notas.match(/Score Digital:\s*(\d+)\/10/);
+  return match ? parseInt(match[1]) : null;
+}
+
+function getOrigemDetalheFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Origem:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 8) return "#4ade80";
+  if (score >= 5) return "#f59e0b";
+  return "#f87171";
 }
 
 export default function NegocioDrawer({ negocio, onClose }: Props) {
@@ -23,6 +41,10 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
+
+  const isDI = negocio.origem === "digital_intelligence";
+  const diScore = isDI ? getDigitalScoreFromNotas(negocio.notas) : null;
+  const origemDetalhe = isDI ? getOrigemDetalheFromNotas(negocio.notas) : null;
 
   const handleStatusChange = async (newStatus: string) => {
     await changeStatus(negocio, newStatus as NegocioStatus);
@@ -97,6 +119,27 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
+        {/* Digital Intelligence Origin Banner */}
+        {isDI && (
+          <section className="rounded-lg p-3 border" style={{ borderColor: "#00C89640", backgroundColor: "#0D3D2E20" }}>
+            <div className="flex items-center gap-2 mb-1">
+              <Radar className="h-4 w-4" style={{ color: "#00C896" }} />
+              <span className="text-xs font-semibold" style={{ color: "#00C896" }}>Digital Intelligence</span>
+            </div>
+            {origemDetalhe && (
+              <p className="text-[11px] text-muted-foreground">{origemDetalhe}</p>
+            )}
+            {diScore !== null && (
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[11px] text-muted-foreground">Score Digital:</span>
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${getScoreColor(diScore)}20`, color: getScoreColor(diScore) }}>
+                  {diScore}/10
+                </span>
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Financial Summary */}
         <section>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Resumo Financeiro</h3>

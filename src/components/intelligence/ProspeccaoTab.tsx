@@ -214,7 +214,7 @@ export function ProspeccaoTab() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {leads.map((lead) => (
-              <LeadCard key={lead.id} lead={lead} />
+              <LeadCard key={lead.id} lead={lead} niche={nichoQuery} city={city || "São Paulo"} />
             ))}
           </div>
         </>

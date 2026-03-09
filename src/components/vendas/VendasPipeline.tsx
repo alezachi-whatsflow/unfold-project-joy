@@ -1,4 +1,5 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useNegocios } from "@/hooks/useNegocios";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Search, DollarSign, Target, CheckCircle, BarChart3, GripVertical } from "lucide-react";
+import { Plus, Search, DollarSign, Target, CheckCircle, BarChart3, GripVertical, Radar } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, ALL_STATUSES, ACTIVE_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import NegocioCreateModal from "@/components/vendas/NegocioCreateModal";
 import NegocioDrawer from "@/components/vendas/NegocioDrawer";
@@ -20,30 +21,58 @@ import FechamentoGanhoModal from "@/components/vendas/FechamentoGanhoModal";
 
 export default function VendasPipeline() {
   const { negocios, isLoading, changeStatus } = useNegocios();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [showClosed, setShowClosed] = useState(false);
+  const [origemFilter, setOrigemFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedNegocio, setSelectedNegocio] = useState<Negocio | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
-  // Modals for closing
   const [perdaModal, setPerdaModal] = useState<Negocio | null>(null);
   const [ganhoModal, setGanhoModal] = useState<Negocio | null>(null);
 
-  // Drag state
   const dragItem = useRef<Negocio | null>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Handle highlight from URL
+  useEffect(() => {
+    const hId = searchParams.get("highlight");
+    if (hId) {
+      setHighlightId(hId);
+      // Open drawer for highlighted negocio
+      const neg = negocios.find(n => n.id === hId);
+      if (neg) {
+        setSelectedNegocio(neg);
+        setDrawerOpen(true);
+        // Scroll to card
+        setTimeout(() => {
+          cardRefs.current[hId]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 300);
+        // Clear highlight after 2s
+        setTimeout(() => setHighlightId(null), 2000);
+      }
+      // Clean URL
+      searchParams.delete("highlight");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [negocios, searchParams, setSearchParams]);
 
   const visibleStatuses = showClosed ? ALL_STATUSES : ACTIVE_STATUSES;
 
   const filtered = useMemo(() => {
-    if (!search) return negocios;
+    let list = negocios;
+    if (origemFilter === "digital_intelligence") list = list.filter(n => n.origem === "digital_intelligence");
+    else if (origemFilter === "manual") list = list.filter(n => n.origem !== "digital_intelligence");
+    if (!search) return list;
     const q = search.toLowerCase();
-    return negocios.filter(n =>
+    return list.filter(n =>
       n.titulo.toLowerCase().includes(q) ||
       (n.cliente_nome || '').toLowerCase().includes(q) ||
       (n.consultor_nome || '').toLowerCase().includes(q)
     );
-  }, [negocios, search]);
+  }, [negocios, search, origemFilter]);
 
   const columns = useMemo(() => {
     return visibleStatuses.map(status => ({
@@ -53,7 +82,6 @@ export default function VendasPipeline() {
     }));
   }, [filtered, visibleStatuses]);
 
-  // KPIs
   const kpis = useMemo(() => {
     const active = negocios.filter(n => ACTIVE_STATUSES.includes(n.status));
     const now = new Date();
@@ -104,6 +132,19 @@ export default function VendasPipeline() {
     setDrawerOpen(true);
   };
 
+  // Extract score from notas for DI leads
+  function getDigitalScore(neg: Negocio): number | null {
+    if (neg.origem !== "digital_intelligence") return null;
+    const match = (neg.notas || "").match(/Score Digital:\s*(\d+)\/10/);
+    return match ? parseInt(match[1]) : null;
+  }
+
+  function getScoreColor(score: number): string {
+    if (score >= 8) return "#4ade80";
+    if (score >= 5) return "#f59e0b";
+    return "#f87171";
+  }
+
   return (
     <div className="space-y-4">
       {/* KPI Cards */}
@@ -120,6 +161,18 @@ export default function VendasPipeline() {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar negócio..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
         </div>
+        <Select value={origemFilter} onValueChange={setOrigemFilter}>
+          <SelectTrigger className="w-[180px] h-9">
+            <SelectValue placeholder="Origem" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="digital_intelligence">
+              <span className="flex items-center gap-1.5"><Radar className="h-3 w-3" /> Digital Intelligence</span>
+            </SelectItem>
+            <SelectItem value="manual">Manual</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="flex items-center gap-2">
           <Switch checked={showClosed} onCheckedChange={setShowClosed} id="show-closed" />
           <Label htmlFor="show-closed" className="text-xs text-muted-foreground cursor-pointer">Exibir fechados</Label>
@@ -150,43 +203,59 @@ export default function VendasPipeline() {
 
             {/* Cards */}
             <div className="p-2 space-y-2 max-h-[60vh] overflow-y-auto">
-              {col.items.map(neg => (
-                <div
-                  key={neg.id}
-                  draggable
-                  onDragStart={() => { dragItem.current = neg; }}
-                  onDragEnd={() => { dragItem.current = null; }}
-                  onClick={() => openDrawer(neg)}
-                  className="p-3 rounded-lg border border-border/30 bg-card cursor-pointer hover:border-primary/30 transition-colors group"
-                >
-                  <div className="flex items-start justify-between gap-1">
-                    <h4 className="text-xs font-semibold text-foreground leading-tight truncate">{neg.titulo}</h4>
-                    <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground shrink-0" />
-                  </div>
-                  {neg.cliente_nome && (
-                    <p className="text-[11px] text-muted-foreground truncate mt-1">{neg.cliente_nome}</p>
-                  )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-bold text-foreground">{fmt(neg.valor_liquido)}</span>
-                    <ProbabilityBadge value={neg.probabilidade} />
-                  </div>
-                  {neg.consultor_nome && (
-                    <p className="text-[10px] text-muted-foreground mt-1.5 truncate">👤 {neg.consultor_nome}</p>
-                  )}
-                  {neg.data_previsao_fechamento && (
-                    <p className={`text-[10px] mt-0.5 ${new Date(neg.data_previsao_fechamento) < new Date() ? 'text-destructive' : 'text-muted-foreground'}`}>
-                      📅 {new Date(neg.data_previsao_fechamento).toLocaleDateString('pt-BR')}
-                    </p>
-                  )}
-                  {neg.tags.length > 0 && (
-                    <div className="flex gap-1 mt-1.5 flex-wrap">
-                      {neg.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{tag}</span>
-                      ))}
+              {col.items.map(neg => {
+                const diScore = getDigitalScore(neg);
+                const isHighlighted = neg.id === highlightId;
+                return (
+                  <div
+                    key={neg.id}
+                    ref={el => { cardRefs.current[neg.id] = el; }}
+                    draggable
+                    onDragStart={() => { dragItem.current = neg; }}
+                    onDragEnd={() => { dragItem.current = null; }}
+                    onClick={() => openDrawer(neg)}
+                    className={`p-3 rounded-lg border bg-card cursor-pointer hover:border-primary/30 transition-all group ${isHighlighted ? "ring-2 ring-primary border-primary animate-pulse" : "border-border/30"}`}
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <h4 className="text-xs font-semibold text-foreground leading-tight truncate">{neg.titulo}</h4>
+                      <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground shrink-0" />
                     </div>
-                  )}
-                </div>
-              ))}
+                    {neg.cliente_nome && (
+                      <p className="text-[11px] text-muted-foreground truncate mt-1">{neg.cliente_nome}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-sm font-bold text-foreground">{fmt(neg.valor_liquido)}</span>
+                      <ProbabilityBadge value={neg.probabilidade} />
+                    </div>
+                    {neg.origem === "digital_intelligence" && (
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <Radar className="h-3 w-3 text-primary" />
+                        <span className="text-[10px] text-primary">Digital Intelligence</span>
+                        {diScore !== null && (
+                          <span className="text-[10px] font-bold ml-auto px-1.5 py-0.5 rounded-full" style={{ background: `${getScoreColor(diScore)}20`, color: getScoreColor(diScore) }}>
+                            {diScore}/10
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {neg.consultor_nome && (
+                      <p className="text-[10px] text-muted-foreground mt-1.5 truncate">👤 {neg.consultor_nome}</p>
+                    )}
+                    {neg.data_previsao_fechamento && (
+                      <p className={`text-[10px] mt-0.5 ${new Date(neg.data_previsao_fechamento) < new Date() ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        📅 {new Date(neg.data_previsao_fechamento).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                    {neg.tags.length > 0 && (
+                      <div className="flex gap-1 mt-1.5 flex-wrap">
+                        {neg.tags.slice(0, 3).map(tag => (
+                          <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {col.items.length === 0 && (
                 <div className="text-center py-8 text-xs text-muted-foreground/50">Nenhum negócio</div>
               )}

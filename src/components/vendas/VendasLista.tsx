@@ -103,6 +103,14 @@ export default function VendasLista() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={origemFilter} onValueChange={setOrigemFilter}>
+          <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas origens</SelectItem>
+            <SelectItem value="digital_intelligence"><span className="flex items-center gap-1.5"><Radar className="h-3 w-3" /> Digital Intelligence</span></SelectItem>
+            <SelectItem value="manual">Manual</SelectItem>
+          </SelectContent>
+        </Select>
         <PermissionGate module="vendas" action="export">
           <Button variant="outline" size="sm" onClick={exportCSV}><Download className="mr-1.5 h-4 w-4" /> CSV</Button>
         </PermissionGate>
