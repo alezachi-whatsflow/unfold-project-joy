@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Globe, Phone, ExternalLink, Loader2, Plus, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +9,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import type { ProspectLead } from "../ProspeccaoTab";
 
 const CRM_SENT_KEY = "crm_sent_leads";
 
 interface Props {
   lead: ProspectLead;
+  niche: string;
+  city: string;
   onSentToCRM?: () => void;
 }
 
@@ -32,17 +36,22 @@ const scoreMeta: Record<ScoreCategory, { label: string; color: string; bg: strin
   low: { label: "Baixa Prioridade", color: "text-muted-foreground", bg: "bg-muted text-muted-foreground" },
 };
 
-const PIPELINE_STAGES = ["Prospecção", "Qualificado", "Proposta Enviada", "Em Negociação"];
+const PIPELINE_STAGES = [
+  { label: "Prospecção", value: "prospeccao" },
+  { label: "Qualificado", value: "qualificado" },
+  { label: "Proposta Enviada", value: "proposta" },
+  { label: "Em Negociação", value: "negociacao" },
+];
 
-function getSentLeads(): Record<string, { stage: string }> {
+function getSentLeads(): Record<string, { stage: string; negocioId?: string }> {
   try {
     return JSON.parse(localStorage.getItem(CRM_SENT_KEY) || "{}");
   } catch { return {}; }
 }
 
-function markLeadSent(leadId: string, stage: string) {
+function markLeadSent(leadId: string, stage: string, negocioId: string) {
   const data = getSentLeads();
-  data[leadId] = { stage };
+  data[leadId] = { stage, negocioId };
   localStorage.setItem(CRM_SENT_KEY, JSON.stringify(data));
 }
 
@@ -50,33 +59,81 @@ export function getCRMSentCount(): number {
   return Object.keys(getSentLeads()).length;
 }
 
-export function LeadCard({ lead, onSentToCRM }: Props) {
+export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
   const cat = getCategory(lead.score);
   const meta = scoreMeta[cat];
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const savedData = getSentLeads()[lead.id];
   const [sentStage, setSentStage] = useState<string | null>(savedData?.stage ?? null);
+  const [sentNegocioId, setSentNegocioId] = useState<string | null>(savedData?.negocioId ?? null);
   const isSent = sentStage !== null;
 
   const [open, setOpen] = useState(false);
-  const [stage, setStage] = useState("Prospecção");
+  const [stage, setStage] = useState("prospeccao");
   const [responsible, setResponsible] = useState("Eu (usuário logado)");
   const [estimatedValue, setEstimatedValue] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-  const handleConfirm = () => {
+  const stageLabel = PIPELINE_STAGES.find(s => s.value === (sentStage || stage))?.label || sentStage;
+
+  const handleConfirm = async () => {
     setIsSending(true);
-    setTimeout(() => {
-      markLeadSent(lead.id, stage);
+    try {
+      const valor = parseFloat(estimatedValue.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+      const origemDetalhe = `Digital Intelligence — ${niche} — ${city}`;
+      
+      const { data, error } = await supabase.from("negocios").insert({
+        titulo: lead.name,
+        status: stage,
+        origem: "digital_intelligence",
+        cliente_nome: lead.name,
+        consultor_id: user?.id || null,
+        consultor_nome: user?.user_metadata?.full_name || user?.email || null,
+        valor_total: valor,
+        valor_liquido: valor,
+        probabilidade: lead.score >= 8 ? 70 : lead.score >= 5 ? 50 : 30,
+        tags: ["Digital Intelligence"],
+        notas: [
+          `Origem: ${origemDetalhe}`,
+          `Score Digital: ${lead.score}/10`,
+          lead.phone ? `Telefone: ${lead.phone}` : null,
+          lead.url ? `Site: ${lead.url}` : null,
+          `Segmento: ${niche}`,
+          `Cidade: ${city}`,
+        ].filter(Boolean).join("\n"),
+        historico: [{
+          id: crypto.randomUUID(),
+          data: new Date().toISOString(),
+          tipo: "status_change",
+          descricao: `Lead importado do Digital Intelligence — Score: ${lead.score}/10 — ${niche} em ${city}`,
+          usuarioId: user?.id || "",
+          usuarioNome: user?.user_metadata?.full_name || user?.email || "",
+        }],
+      } as any).select("id").single();
+
+      if (error) throw error;
+
+      const negocioId = data?.id;
+      markLeadSent(lead.id, stage, negocioId);
       setSentStage(stage);
-      setIsSending(false);
+      setSentNegocioId(negocioId);
       setOpen(false);
       setEstimatedValue("");
       onSentToCRM?.();
-      toast({ title: "Lead enviado ao CRM", description: `"${lead.name}" adicionado na etapa "${stage}".` });
-    }, 1500);
+      toast({ title: "Lead enviado para o Pipeline com sucesso!", description: `"${lead.name}" adicionado na etapa "${PIPELINE_STAGES.find(s => s.value === stage)?.label}".` });
+    } catch (err: any) {
+      console.error("CRM send error:", err);
+      toast({ title: "Não foi possível enviar para o CRM. Tente novamente.", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleViewInCRM = () => {
+    navigate(`/vendas?highlight=${sentNegocioId}`);
   };
 
   return (
@@ -86,7 +143,7 @@ export function LeadCard({ lead, onSentToCRM }: Props) {
         <Badge className={scoreMeta[cat].bg}>{lead.score}/10</Badge>
         {isSent && (
           <Badge className="text-[10px] py-0.5 px-1.5 border-0" style={{ backgroundColor: "#0D3D2E", color: "#00C896" }}>
-            <Check className="h-2.5 w-2.5 mr-0.5" /> No CRM · {sentStage}
+            <Check className="h-2.5 w-2.5 mr-0.5" /> No CRM · {stageLabel}
           </Badge>
         )}
       </div>
@@ -119,7 +176,7 @@ export function LeadCard({ lead, onSentToCRM }: Props) {
               variant="outline"
               className="w-full gap-1 text-xs"
               style={{ borderColor: "#00C896", color: "#00C896" }}
-              onClick={() => navigate("/vendas")}
+              onClick={handleViewInCRM}
             >
               <ExternalLink className="h-3 w-3" /> Ver no CRM →
             </Button>
@@ -138,7 +195,7 @@ export function LeadCard({ lead, onSentToCRM }: Props) {
                     <Select value={stage} onValueChange={setStage}>
                       <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {PIPELINE_STAGES.map((s) => (<SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>))}
+                        {PIPELINE_STAGES.map((s) => (<SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>

@@ -12,7 +12,8 @@ export type NegocioOrigem =
   | 'inbound'
   | 'representante'
   | 'renovacao'
-  | 'upsell';
+  | 'upsell'
+  | 'digital_intelligence';
 
 export interface NegocioProduto {
   produtoId: string;
@@ -82,6 +83,7 @@ export const NEGOCIO_ORIGEM_LABELS: Record<NegocioOrigem, string> = {
   representante: 'Representante',
   renovacao: 'Renovação',
   upsell: 'Upsell',
+  digital_intelligence: 'Digital Intelligence',
 };
 
 export const FORMAS_PAGAMENTO = [

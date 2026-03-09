@@ -11,7 +11,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Search, Download, Eye, Pencil, Trash2, Copy, Plus, CheckCircle, XCircle } from "lucide-react";
+import { Search, Download, Eye, Pencil, Trash2, Copy, Plus, CheckCircle, XCircle, Radar } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, ALL_STATUSES, NEGOCIO_ORIGEM_LABELS, type Negocio, type NegocioStatus } from "@/types/vendas";
 import NegocioDrawer from "@/components/vendas/NegocioDrawer";
 import NegocioCreateModal from "@/components/vendas/NegocioCreateModal";
@@ -28,15 +28,19 @@ export default function VendasLista() {
   const [perdaModal, setPerdaModal] = useState<Negocio | null>(null);
   const [ganhoModal, setGanhoModal] = useState<Negocio | null>(null);
 
+  const [origemFilter, setOrigemFilter] = useState("all");
+
   const filtered = useMemo(() => {
     let list = negocios;
     if (statusFilter !== "all") list = list.filter(n => n.status === statusFilter);
+    if (origemFilter === "digital_intelligence") list = list.filter(n => n.origem === "digital_intelligence");
+    else if (origemFilter === "manual") list = list.filter(n => n.origem !== "digital_intelligence");
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(n => n.titulo.toLowerCase().includes(q) || (n.cliente_nome || '').toLowerCase().includes(q));
     }
     return list;
-  }, [negocios, statusFilter, search]);
+  }, [negocios, statusFilter, origemFilter, search]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -97,6 +101,14 @@ export default function VendasLista() {
                 </span>
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={origemFilter} onValueChange={setOrigemFilter}>
+          <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas origens</SelectItem>
+            <SelectItem value="digital_intelligence"><span className="flex items-center gap-1.5"><Radar className="h-3 w-3" /> Digital Intelligence</span></SelectItem>
+            <SelectItem value="manual">Manual</SelectItem>
           </SelectContent>
         </Select>
         <PermissionGate module="vendas" action="export">
