@@ -15,6 +15,7 @@ import { WhatsAppButtonCard } from "@/components/intelligence/WhatsAppButtonCard
 import { LegalDataCard } from "@/components/intelligence/LegalDataCard";
 import { NeuromarketingCard } from "@/components/intelligence/NeuromarketingCard";
 import { GoogleBusinessCard, GoogleBusinessData, calculateGMNScore } from "@/components/intelligence/GoogleBusinessCard";
+import { ProspeccaoTab } from "@/components/intelligence/ProspeccaoTab";
 import { SaveAnalysisButton } from "@/components/intelligence/SaveAnalysisButton";
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { SourceType, WebScrap, ProfileAnalysis, AuthorityDiagnostic, AUTHORITY_PILLARS } from "@/types/intelligence";
