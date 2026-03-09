@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar } from "lucide-react";
+import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { generateQuickReportHtml } from "@/components/intelligence/prospeccao/quickReportGenerator";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -27,6 +29,30 @@ function getOrigemDetalheFromNotas(notas: string | null): string | null {
   return match ? match[1].trim() : null;
 }
 
+function getSiteFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Site:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
+function getPhoneFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Telefone:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
+function getNicheFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Segmento:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
+function getCityFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Cidade:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
 function getScoreColor(score: number): string {
   if (score >= 8) return "#4ade80";
   if (score >= 5) return "#f59e0b";
@@ -35,9 +61,11 @@ function getScoreColor(score: number): string {
 
 export default function NegocioDrawer({ negocio, onClose }: Props) {
   const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios();
+  const navigate = useNavigate();
   const [newNote, setNewNote] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(negocio.titulo);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
@@ -137,6 +165,67 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
                 </span>
               </div>
             )}
+            {/* DI Action Buttons */}
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 text-xs"
+                style={{ borderColor: "#00C896", color: "#00C896" }}
+                onClick={() => {
+                  const site = getSiteFromNotas(negocio.notas);
+                  if (site) {
+                    navigate(`/intelligence?analyze=${encodeURIComponent(site)}`);
+                  } else {
+                    navigate(`/intelligence?analyze=${encodeURIComponent(negocio.cliente_nome || negocio.titulo)}&type=google_maps`);
+                  }
+                }}
+              >
+                <Radar className="h-3 w-3" /> Analisar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 text-xs"
+                style={{ borderColor: "#00C896", color: "#00C896" }}
+                disabled={isGeneratingReport}
+                onClick={() => {
+                  setIsGeneratingReport(true);
+                  try {
+                    const site = getSiteFromNotas(negocio.notas);
+                    const phone = getPhoneFromNotas(negocio.notas);
+                    const niche = getNicheFromNotas(negocio.notas) || "";
+                    const city = getCityFromNotas(negocio.notas) || "";
+                    const html = generateQuickReportHtml({
+                      leadName: negocio.cliente_nome || negocio.titulo,
+                      leadUrl: site,
+                      leadPhone: phone,
+                      leadDescription: null,
+                      score: diScore || 0,
+                      niche,
+                      city,
+                      hasSite: !!site,
+                      hasPhone: !!phone,
+                    });
+                    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `relatorio-${(negocio.cliente_nome || negocio.titulo).replace(/[^a-zA-Z0-9]/g, "-").substring(0, 40)}.html`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Relatório HTML gerado com sucesso!");
+                  } catch (err: any) {
+                    toast.error("Erro ao gerar relatório");
+                  } finally {
+                    setIsGeneratingReport(false);
+                  }
+                }}
+              >
+                {isGeneratingReport ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                Relatório
+              </Button>
+            </div>
           </section>
         )}
 
