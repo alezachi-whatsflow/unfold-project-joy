@@ -1,0 +1,350 @@
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
+  Users, Package, ShoppingCart, MessageSquare, LayoutDashboard, Radar,
+  FileBarChart, Settings, Rocket, Bell, Menu, X, Plug,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import whatsflowLogo from "@/assets/whatsflow-logo.png";
+
+/* ── helpers ─────────────────────────────────── */
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Bom dia";
+  if (h < 18) return "Boa tarde";
+  return "Boa noite";
+}
+function todayLabel() {
+  return new Date().toLocaleDateString("pt-BR", {
+    weekday: "long", day: "2-digit", month: "long",
+  });
+}
+
+/* ── types ───────────────────────────────────── */
+interface DockItem {
+  icon: LucideIcon; label: string; route: string; badge?: number; group: number;
+}
+
+/* ── component ───────────────────────────────── */
+export default function HomePage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [mobileMenu, setMobileMenu] = useState(false);
+
+  /* KPI state */
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pipelineCount, setPipelineCount] = useState(0);
+  const [msgsToday, setMsgsToday] = useState(0);
+  const [mrr, setMrr] = useState(0);
+  const [activity, setActivity] = useState<{ text: string; time: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [{ count: pc }, { count: pipe }, { count: msgs }, { data: fin }, { data: logs }] = await Promise.all([
+        supabase.from("asaas_payments").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
+        supabase.from("negocios").select("*", { count: "exact", head: true }).not("status", "in", '("ganho","perdido")'),
+        supabase.from("message_logs").select("*", { count: "exact", head: true }).gte("timestamp", new Date().toISOString().slice(0, 10)),
+        supabase.from("financial_entries").select("mrr").order("month", { ascending: false }).limit(1),
+        supabase.from("message_logs").select("conteudo,timestamp,conversa_id").order("timestamp", { ascending: false }).limit(3),
+      ]);
+      setPendingCount(pc ?? 0);
+      setPipelineCount(pipe ?? 0);
+      setMsgsToday(msgs ?? 0);
+      setMrr(fin?.[0]?.mrr ?? 0);
+      setActivity(
+        (logs ?? []).map((l: any) => ({
+          text: `Msg de ${l.conversa_id?.slice(-4) ?? "?"}`,
+          time: new Date(l.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        }))
+      );
+    })();
+  }, []);
+
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "Usuário";
+
+  /* dock items */
+  const dock: DockItem[] = useMemo(() => [
+    { icon: PenLine, label: "Inserir Dados", route: "/input", group: 1 },
+    { icon: TrendingUp, label: "Receitas", route: "/revenue", group: 1 },
+    { icon: DollarSign, label: "Despesas", route: "/expenses", group: 1 },
+    { icon: Receipt, label: "Cobranças", route: "/cobrancas", badge: pendingCount, group: 1 },
+    { icon: FileText, label: "Fiscal", route: "/fiscal", group: 1 },
+    { icon: UserCheck, label: "Comissões", route: "/comissoes", group: 1 },
+    { icon: Users, label: "Clientes", route: "/customers", group: 2 },
+    { icon: Package, label: "Produtos", route: "/products", group: 2 },
+    { icon: ShoppingCart, label: "Vendas", route: "/vendas", group: 2 },
+    { icon: MessageSquare, label: "Mensageria", route: "/mensageria", group: 2 },
+    { icon: LayoutDashboard, label: "Dashboard", route: "/dashboard", group: 3 },
+    { icon: Radar, label: "Int. Digital", route: "/intelligence", group: 3 },
+    { icon: FileBarChart, label: "Relatórios", route: "/reports", group: 3 },
+  ], [pendingCount]);
+
+  const finLinks = [
+    { icon: PenLine, label: "Inserir Dados", route: "/input" },
+    { icon: TrendingUp, label: "Receitas", route: "/revenue" },
+    { icon: DollarSign, label: "Despesas", route: "/expenses" },
+    { icon: Receipt, label: "Cobranças", route: "/cobrancas", badge: pendingCount },
+    { icon: FileText, label: "Fiscal", route: "/fiscal" },
+    { icon: UserCheck, label: "Comissões", route: "/comissoes" },
+  ];
+
+  const cpLinks = [
+    { icon: Users, label: "Clientes", route: "/customers" },
+    { icon: Package, label: "Produtos", route: "/products" },
+    { icon: ShoppingCart, label: "Vendas", route: "/vendas" },
+    { icon: MessageSquare, label: "Mensageria", route: "/mensageria" },
+  ];
+
+  const analyticsLinks = [
+    { icon: LayoutDashboard, label: "Dashboard", route: "/dashboard" },
+    { icon: Radar, label: "Int. Digital", route: "/intelligence" },
+    { icon: FileBarChart, label: "Relatórios", route: "/reports" },
+  ];
+
+  const go = (r: string) => navigate(r);
+
+  /* ── glass card wrapper ────────────────────── */
+  const Glass = ({ children, className = "", delay = 0, onClick }: {
+    children: React.ReactNode; className?: string; delay?: number; onClick?: () => void;
+  }) => (
+    <div
+      onClick={onClick}
+      className={`glass-card ${className}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+
+  return (
+    <div className="home-page-root">
+      {/* ambient spheres */}
+      <div className="home-sphere home-sphere-1" />
+      <div className="home-sphere home-sphere-2" />
+      <div className="home-sphere home-sphere-3" />
+
+      {/* ── HEADER ───────────────────────────── */}
+      <header className="home-header">
+        <div className="flex items-center gap-3">
+          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg" />
+          <span className="text-sm font-semibold text-[#F0FDF8] hidden sm:inline">Whatsflow</span>
+          <div className="hidden sm:block h-6 w-px bg-[rgba(0,200,150,0.2)]" />
+          <span className="text-sm text-[rgba(240,253,248,0.5)] hidden sm:inline">
+            {greeting()}, {firstName} 👋
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-[rgba(240,253,248,0.4)] hidden md:inline capitalize">
+            {todayLabel()}
+          </span>
+          <div className="hidden md:block h-6 w-px bg-[rgba(0,200,150,0.2)]" />
+          <button className="relative p-2 rounded-xl hover:bg-[rgba(0,200,150,0.1)] transition-colors"
+            onClick={() => go("/cobrancas")}>
+            <Bell size={18} className="text-[rgba(240,253,248,0.6)]" />
+            {pendingCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {pendingCount > 9 ? "9+" : pendingCount}
+              </span>
+            )}
+          </button>
+          <button className="h-8 w-8 rounded-full bg-[rgba(0,200,150,0.2)] flex items-center justify-center text-xs font-bold text-[#00C896]"
+            onClick={() => go("/perfil")}>
+            {firstName[0]?.toUpperCase()}
+          </button>
+          {isMobile && (
+            <button className="p-2 rounded-xl hover:bg-[rgba(0,200,150,0.1)]"
+              onClick={() => setMobileMenu(!mobileMenu)}>
+              {mobileMenu ? <X size={20} className="text-[#F0FDF8]" /> : <Menu size={20} className="text-[#F0FDF8]" />}
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* mobile menu */}
+      {isMobile && mobileMenu && (
+        <div className="fixed inset-0 z-40 bg-[rgba(10,15,13,0.95)] pt-20 px-4 overflow-y-auto">
+          {[...finLinks, ...cpLinks, ...analyticsLinks].map((l) => (
+            <button key={l.route} onClick={() => { go(l.route); setMobileMenu(false); }}
+              className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-sm text-[#F0FDF8] hover:bg-[rgba(0,200,150,0.1)] transition-colors">
+              <l.icon size={18} className="text-[#00C896]" />
+              {l.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── BENTO GRID ───────────────────────── */}
+      <main className="home-grid">
+        {/* Card 1 – Central de Controle */}
+        <Glass className="col-span-12 lg:col-span-8 min-h-[220px]" delay={100}>
+          <div className="flex flex-col justify-between h-full relative z-10">
+            <div>
+              <h1 className="text-2xl sm:text-[32px] font-light text-[#F0FDF8] leading-tight">Central de Controle</h1>
+              <p className="text-sm text-[rgba(240,253,248,0.5)] mt-1">Tudo que importa, em um lugar.</p>
+              <div className="h-px w-16 bg-[rgba(0,200,150,0.3)] mt-4 mb-4" />
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { emoji: "💰", label: "MRR", value: `R$ ${mrr.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` },
+                { emoji: "📊", label: "Pipeline", value: `${pipelineCount} negócio${pipelineCount !== 1 ? "s" : ""}` },
+                { emoji: "💬", label: "Msgs hoje", value: String(msgsToday) },
+                { emoji: "🔔", label: "Cobranças", value: `${pendingCount} pendente${pendingCount !== 1 ? "s" : ""}` },
+              ].map((k) => (
+                <div key={k.label} className="kpi-pill">
+                  <span>{k.emoji}</span>
+                  <span className="text-[rgba(240,253,248,0.5)] text-xs">{k.label}:</span>
+                  <span className="text-[#F0FDF8] text-xs font-medium">{k.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* abstract decoration */}
+          <div className="absolute top-4 right-4 opacity-[0.08] pointer-events-none">
+            <div className="w-32 h-32 rounded-full border-2 border-[#00C896]" />
+            <div className="w-20 h-20 rounded-full border border-[#00C896] absolute -top-4 -right-2" />
+          </div>
+        </Glass>
+
+        {/* Card 2 – Financeiro */}
+        <Glass className="col-span-12 lg:col-span-4 min-h-[220px] border-[rgba(0,200,150,0.20)]!" delay={180}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00C896] mb-3">Financeiro</p>
+          <div className="space-y-1">
+            {finLinks.map((l) => (
+              <button key={l.route} onClick={() => go(l.route)}
+                className="flex w-full items-center gap-3 px-3 py-2 rounded-xl text-sm text-[#F0FDF8] hover:bg-[rgba(0,200,150,0.08)] transition-all group">
+                <l.icon size={16} className="text-[rgba(240,253,248,0.5)] group-hover:text-[#00C896] transition-colors" />
+                <span>{l.label}</span>
+                {l.badge ? (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">{l.badge}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-[rgba(240,253,248,0.3)] mt-3">6 módulos disponíveis</p>
+        </Glass>
+
+        {/* Card 3 – Clientes & Produtos */}
+        <Glass className="col-span-12 sm:col-span-6 lg:col-span-4 min-h-[170px]" delay={260}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00C896] mb-4">Clientes & Produtos</p>
+          <div className="grid grid-cols-2 gap-3">
+            {cpLinks.map((l) => (
+              <button key={l.route} onClick={() => go(l.route)}
+                className="flex flex-col items-center gap-2 py-3 rounded-xl hover:bg-[rgba(0,200,150,0.08)] hover:scale-105 transition-all">
+                <l.icon size={22} className="text-[rgba(240,253,248,0.5)]" />
+                <span className="text-xs text-[rgba(240,253,248,0.6)]">{l.label}</span>
+              </button>
+            ))}
+          </div>
+        </Glass>
+
+        {/* Card 4 – Analytics */}
+        <Glass className="col-span-12 sm:col-span-6 lg:col-span-4 min-h-[170px]" delay={260}
+          onClick={() => go("/dashboard")}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00C896] mb-4">Analytics</p>
+          {/* animated bars */}
+          <div className="flex items-end gap-1.5 h-14 mb-4">
+            {[40, 65, 50, 80, 55, 70, 90].map((h, i) => (
+              <div key={i} className="flex-1 rounded-t bg-[rgba(0,200,150,0.25)] animate-bar-grow"
+                style={{ height: `${h}%`, animationDelay: `${i * 80}ms` }} />
+            ))}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {analyticsLinks.map((l, i) => (
+              <button key={l.route} onClick={(e) => { e.stopPropagation(); go(l.route); }}
+                className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${i === 0 ? "bg-[rgba(0,200,150,0.15)] text-[#00C896]" : "text-[rgba(240,253,248,0.5)] hover:text-[#00C896]"}`}>
+                {l.label}
+              </button>
+            ))}
+          </div>
+        </Glass>
+
+        {/* Card 5 – Atividade Recente */}
+        <Glass className="col-span-12 lg:col-span-4 min-h-[170px]" delay={260}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00C896] mb-3">Atividade Recente</p>
+          <div className="space-y-3">
+            {(activity.length > 0 ? activity : [
+              { text: "Nenhuma atividade", time: "—" },
+            ]).map((a, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="h-7 w-7 rounded-full bg-[rgba(0,200,150,0.12)] flex items-center justify-center text-[10px] text-[#00C896] font-bold">
+                  {a.text[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-[#F0FDF8] truncate">{a.text}</p>
+                </div>
+                <span className="text-[10px] text-[rgba(240,253,248,0.4)] shrink-0">{a.time}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => go("/reports")}
+            className="text-xs text-[#00C896] mt-3 hover:underline">Ver tudo →</button>
+        </Glass>
+
+        {/* Card 6 – Prospecção */}
+        <Glass className="col-span-12 lg:col-span-8 min-h-[90px] home-cta-card" delay={340}>
+          <div className="flex items-center gap-4 h-full">
+            <Rocket size={28} className="text-[#00C896] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[#F0FDF8]">Prospecção ativa</p>
+              <p className="text-xs text-[rgba(240,253,248,0.5)]">Busque leads por segmento agora</p>
+            </div>
+            <button onClick={() => go("/intelligence")}
+              className="shrink-0 px-4 py-2 rounded-[10px] bg-[#00C896] text-[#0A0F0D] text-sm font-semibold hover:bg-[#00e0a8] transition-colors">
+              Abrir Prospecção →
+            </button>
+          </div>
+        </Glass>
+
+        {/* Card 7 – Sistema */}
+        <Glass className="col-span-12 lg:col-span-4 min-h-[90px]" delay={340}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00C896] mb-2">Sistema</p>
+          <div className="flex gap-4">
+            {[
+              { icon: Users, label: "Usuários", route: "/usuarios" },
+              { icon: Settings, label: "Configurações", route: "/settings" },
+              { icon: Plug, label: "Integrações", route: "/settings" },
+            ].map((l) => (
+              <button key={l.label} onClick={() => go(l.route)}
+                className="flex items-center gap-2 text-xs text-[rgba(240,253,248,0.6)] hover:text-[#00C896] transition-colors">
+                <l.icon size={14} /> {l.label}
+              </button>
+            ))}
+          </div>
+        </Glass>
+      </main>
+
+      {/* ── DOCK ─────────────────────────────── */}
+      {!isMobile && (
+        <nav className="home-dock">
+          {dock.map((item, i) => {
+            const showDivider = i > 0 && dock[i - 1].group !== item.group;
+            return (
+              <div key={item.route} className="flex items-center">
+                {showDivider && <div className="h-8 w-px bg-[rgba(0,200,150,0.2)] mx-1" />}
+                <div className="relative group">
+                  <button onClick={() => go(item.route)}
+                    className="dock-icon">
+                    <item.icon size={20} />
+                  </button>
+                  {/* tooltip */}
+                  <div className="dock-tooltip">{item.label}</div>
+                  {/* badge */}
+                  {item.badge ? (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+      )}
+    </div>
+  );
+}
