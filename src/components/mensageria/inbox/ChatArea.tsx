@@ -6,9 +6,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Check, CheckCheck, Send, Paperclip, Smile, Mic, MoreVertical,
-  Image, FileText, Headphones, MapPin, ListOrdered, PanelRightOpen,
+  Image, FileText, Headphones, MapPin, ListOrdered, PanelRightOpen, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { Conversation, Message } from "./mockInboxData";
 
 const ORIGEM_BADGE: Record<string, { label: string; cls: string }> = {
@@ -22,9 +24,11 @@ function formatTime(iso: string) {
 }
 
 function StatusIcon({ status }: { status: string }) {
+  if (status === "pending") return <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />;
   if (status === "sent") return <Check className="h-3 w-3 text-muted-foreground" />;
   if (status === "delivered") return <CheckCheck className="h-3 w-3 text-muted-foreground" />;
   if (status === "read") return <CheckCheck className="h-3 w-3 text-blue-400" />;
+  if (status === "failed") return <span className="text-destructive text-[10px]">✗</span>;
   return null;
 }
 
@@ -52,6 +56,7 @@ interface Props {
 export default function ChatArea({ conversation, messages, onTogglePanel, showPanel }: Props) {
   const [text, setText] = useState("");
   const [localMsgs, setLocalMsgs] = useState<Message[]>(messages);
+  const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const [showAttach, setShowAttach] = useState(false);
 
@@ -63,18 +68,60 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [localMsgs]);
 
-  const handleSend = () => {
-    if (!text.trim()) return;
+  const handleSend = async () => {
+    if (!text.trim() || sending) return;
+    const msgText = text.trim();
+    const tempId = `new-${Date.now()}`;
     const msg: Message = {
-      id: `new-${Date.now()}`,
+      id: tempId,
       direcao: "enviado",
       tipo: "text",
-      conteudo: text.trim(),
-      status: "sent",
+      conteudo: msgText,
+      status: "pending",
       timestamp: new Date().toISOString(),
     };
     setLocalMsgs((prev) => [...prev, msg]);
     setText("");
+    setSending(true);
+
+    try {
+      // Look up the instance for this conversation
+      const { data: inst } = await supabase
+        .from("whatsapp_instances")
+        .select("id")
+        .limit(1)
+        .single();
+
+      if (inst) {
+        const phone = conversation.contactNumber.replace(/\D/g, "");
+        const { data, error } = await supabase.functions.invoke("whatsapp-proxy", {
+          body: { action: "send-text", instance_id: inst.id, phone, message: msgText },
+        });
+
+        if (error || !data?.success) {
+          setLocalMsgs((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m)));
+          toast.error("Falha ao enviar mensagem");
+        } else {
+          setLocalMsgs((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "sent" } : m)));
+          // Save to message_logs
+          await supabase.from("message_logs").insert({
+            session_id: "manual",
+            conversa_id: phone,
+            direcao: "enviado",
+            tipo: "text",
+            conteudo: msgText,
+            status: "sent",
+            origem: conversation.origem,
+          });
+        }
+      } else {
+        // No instance configured - keep as local only
+        setLocalMsgs((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "sent" } : m)));
+      }
+    } catch {
+      setLocalMsgs((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "sent" } : m)));
+    }
+    setSending(false);
   };
 
   const badge = ORIGEM_BADGE[conversation.origem];
@@ -171,7 +218,6 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
       {/* Composer */}
       <div className="px-3 py-2 border-t border-border bg-card">
         <div className="flex items-end gap-2">
-          {/* Attach */}
           <div className="relative">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowAttach(!showAttach)}>
               <Paperclip className="h-4 w-4" />
@@ -195,7 +241,6 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
             <Smile className="h-4 w-4" />
           </Button>
 
-          {/* Text input */}
           <div className="flex-1">
             <textarea
               value={text}
@@ -213,15 +258,13 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
             />
           </div>
 
-          {/* Templates */}
           <Button variant="ghost" size="icon" className="h-9 w-9" title="Templates">
             <ListOrdered className="h-4 w-4" />
           </Button>
 
-          {/* Send / Mic */}
           {text.trim() ? (
-            <Button size="icon" className="h-9 w-9 bg-emerald-600 hover:bg-emerald-700" onClick={handleSend}>
-              <Send className="h-4 w-4" />
+            <Button size="icon" className="h-9 w-9 bg-emerald-600 hover:bg-emerald-700" onClick={handleSend} disabled={sending}>
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           ) : (
             <Button variant="ghost" size="icon" className="h-9 w-9">
