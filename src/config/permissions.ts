@@ -72,6 +72,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: full,
     usuarios:      full,
     inserir_dados: full,
+    mensageria:    full,
   },
 
   gestor: {
