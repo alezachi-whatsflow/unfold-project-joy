@@ -1498,6 +1498,47 @@ export type Database = {
           },
         ]
       }
+      whatsapp_billing_rules: {
+        Row: {
+          created_at: string
+          id: string
+          instance_id: string | null
+          is_active: boolean
+          name: string
+          steps: Json
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          is_active?: boolean
+          name: string
+          steps?: Json
+          tenant_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          is_active?: boolean
+          name?: string
+          steps?: Json
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_billing_rules_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_instances: {
         Row: {
           criado_em: string
