@@ -254,7 +254,7 @@ export default function IntelligencePage() {
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Radar className="h-6 w-6 text-primary" />
-          Digital Intelligence
+          Inteligência Digital
         </h1>
         <p className="text-sm text-muted-foreground">
           Analise a autoridade digital de qualquer site, perfil ou negócio
