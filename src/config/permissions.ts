@@ -126,6 +126,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: noAccess,
     usuarios:      noAccess,
     inserir_dados: noAccess,
+    mensageria:    viewOnly,
   },
 
   representante: {
