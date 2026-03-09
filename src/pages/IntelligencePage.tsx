@@ -1,4 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getCRMSentCount } from "@/components/intelligence/prospeccao/LeadCard";
+import { Badge as UiBadge } from "@/components/ui/badge";
+
+function CrmSentBadge() {
+  const [count, setCount] = useState(getCRMSentCount());
+  useEffect(() => {
+    const interval = setInterval(() => setCount(getCRMSentCount()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+  if (count === 0) return null;
+  return <UiBadge className="ml-1.5 h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground">{count}</UiBadge>;
+}
 import { supabase } from "@/integrations/supabase/client";
 import { Radar } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -304,7 +316,10 @@ export default function IntelligencePage() {
           <TabsTrigger value="instagram" className="text-xs">Instagram</TabsTrigger>
           <TabsTrigger value="google_business" className="text-xs">Perfil da Empresa</TabsTrigger>
           <TabsTrigger value="meta" className="text-xs">Meta & WhatsApp</TabsTrigger>
-          <TabsTrigger value="prospeccao" className="text-xs">Prospecção</TabsTrigger>
+          <TabsTrigger value="prospeccao" className="text-xs relative">
+            Prospecção
+            <CrmSentBadge />
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Overview */}

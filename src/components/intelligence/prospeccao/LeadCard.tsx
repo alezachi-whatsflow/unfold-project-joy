@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe, Phone, ExternalLink, Loader2, Plus, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import type { ProspectLead } from "../ProspeccaoTab";
+
+const CRM_SENT_KEY = "crm_sent_leads";
 
 interface Props {
   lead: ProspectLead;
+  onSentToCRM?: () => void;
 }
 
 type ScoreCategory = "hot" | "medium" | "low";
@@ -30,10 +34,31 @@ const scoreMeta: Record<ScoreCategory, { label: string; color: string; bg: strin
 
 const PIPELINE_STAGES = ["Prospecção", "Qualificado", "Proposta Enviada", "Em Negociação"];
 
-export function LeadCard({ lead }: Props) {
+function getSentLeads(): Record<string, { stage: string }> {
+  try {
+    return JSON.parse(localStorage.getItem(CRM_SENT_KEY) || "{}");
+  } catch { return {}; }
+}
+
+function markLeadSent(leadId: string, stage: string) {
+  const data = getSentLeads();
+  data[leadId] = { stage };
+  localStorage.setItem(CRM_SENT_KEY, JSON.stringify(data));
+}
+
+export function getCRMSentCount(): number {
+  return Object.keys(getSentLeads()).length;
+}
+
+export function LeadCard({ lead, onSentToCRM }: Props) {
   const cat = getCategory(lead.score);
   const meta = scoreMeta[cat];
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const savedData = getSentLeads()[lead.id];
+  const [sentStage, setSentStage] = useState<string | null>(savedData?.stage ?? null);
+  const isSent = sentStage !== null;
 
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState("Prospecção");
@@ -44,25 +69,30 @@ export function LeadCard({ lead }: Props) {
   const handleConfirm = () => {
     setIsSending(true);
     setTimeout(() => {
+      markLeadSent(lead.id, stage);
+      setSentStage(stage);
       setIsSending(false);
       setOpen(false);
       setEstimatedValue("");
-      setStage("Prospecção");
+      onSentToCRM?.();
       toast({ title: "Lead enviado ao CRM", description: `"${lead.name}" adicionado na etapa "${stage}".` });
     }, 1500);
   };
 
-  const handleValueChange = (val: string) => {
-    setEstimatedValue(val.replace(/[^0-9.,]/g, ""));
-  };
-
   return (
     <Card className="relative">
-      <div className="absolute top-3 right-3">
-        <Badge className={meta.bg}>{lead.score}/10</Badge>
+      {/* Score badge */}
+      <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+        <Badge className={scoreMeta[cat].bg}>{lead.score}/10</Badge>
+        {isSent && (
+          <Badge className="text-[10px] py-0.5 px-1.5 border-0" style={{ backgroundColor: "#0D3D2E", color: "#00C896" }}>
+            <Check className="h-2.5 w-2.5 mr-0.5" /> No CRM · {sentStage}
+          </Badge>
+        )}
       </div>
+
       <CardContent className="pt-5 space-y-3">
-        <div className="pr-16">
+        <div className="pr-20">
           <p className="font-medium text-sm truncate">{lead.name}</p>
           {lead.description && (
             <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{lead.description}</p>
@@ -76,105 +106,70 @@ export function LeadCard({ lead }: Props) {
         )}
 
         <div className="flex gap-3 pt-1 border-t border-border items-center">
-          <span className={lead.hasSite ? "text-primary" : "text-muted-foreground/40"}>
-            <Globe className="h-4 w-4" />
-          </span>
-          <span className={lead.hasPhone ? "text-primary" : "text-muted-foreground/40"}>
-            <Phone className="h-4 w-4" />
-          </span>
+          <span className={lead.hasSite ? "text-primary" : "text-muted-foreground/40"}><Globe className="h-4 w-4" /></span>
+          <span className={lead.hasPhone ? "text-primary" : "text-muted-foreground/40"}><Phone className="h-4 w-4" /></span>
         </div>
 
         <div className="pt-2 border-t border-border space-y-2">
           <p className={`text-xs font-semibold ${meta.color}`}>{meta.label}</p>
 
-          {/* CRM Button with Popover */}
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                size="sm"
-                className="w-full gap-1 text-xs text-white"
-                style={{ backgroundColor: "#00C896" }}
-              >
-                <Plus className="h-3 w-3" /> Enviar para CRM
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-4" align="center" side="top">
-              <div className="space-y-3">
-                <p className="font-semibold text-sm">Enviar para o Pipeline de Vendas</p>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Etapa do Pipeline</Label>
-                  <Select value={stage} onValueChange={setStage}>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PIPELINE_STAGES.map((s) => (
-                        <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Responsável</Label>
-                  <Select value={responsible} onValueChange={setResponsible}>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Eu (usuário logado)" className="text-xs">Eu (usuário logado)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Valor estimado</Label>
-                  <Input
-                    className="h-8 text-xs"
-                    placeholder="R$ 0,00"
-                    value={estimatedValue}
-                    onChange={(e) => handleValueChange(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 text-xs h-8"
-                    onClick={() => setOpen(false)}
-                    disabled={isSending}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1 text-xs h-8 text-white gap-1"
-                    style={{ backgroundColor: "#00C896" }}
-                    onClick={handleConfirm}
-                    disabled={isSending}
-                  >
-                    {isSending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                    {isSending ? "Enviando..." : "Confirmar"}
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Visit Site Button */}
-          {lead.url && (
+          {isSent ? (
             <Button
               size="sm"
               variant="outline"
               className="w-full gap-1 text-xs"
               style={{ borderColor: "#00C896", color: "#00C896" }}
-              asChild
+              onClick={() => navigate("/vendas")}
             >
-              <a href={lead.url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3 w-3" /> Visitar Site
-              </a>
+              <ExternalLink className="h-3 w-3" /> Ver no CRM →
+            </Button>
+          ) : (
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button size="sm" className="w-full gap-1 text-xs text-white" style={{ backgroundColor: "#00C896" }}>
+                  <Plus className="h-3 w-3" /> Enviar para CRM
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4" align="center" side="top">
+                <div className="space-y-3">
+                  <p className="font-semibold text-sm">Enviar para o Pipeline de Vendas</p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Etapa do Pipeline</Label>
+                    <Select value={stage} onValueChange={setStage}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PIPELINE_STAGES.map((s) => (<SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Responsável</Label>
+                    <Select value={responsible} onValueChange={setResponsible}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Eu (usuário logado)" className="text-xs">Eu (usuário logado)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Valor estimado</Label>
+                    <Input className="h-8 text-xs" placeholder="R$ 0,00" value={estimatedValue} onChange={(e) => setEstimatedValue(e.target.value.replace(/[^0-9.,]/g, ""))} />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button size="sm" variant="outline" className="flex-1 text-xs h-8" onClick={() => setOpen(false)} disabled={isSending}>Cancelar</Button>
+                    <Button size="sm" className="flex-1 text-xs h-8 text-white gap-1" style={{ backgroundColor: "#00C896" }} onClick={handleConfirm} disabled={isSending}>
+                      {isSending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                      {isSending ? "Enviando..." : "Confirmar"}
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {lead.url && (
+            <Button size="sm" variant="outline" className="w-full gap-1 text-xs" style={{ borderColor: "#00C896", color: "#00C896" }} asChild>
+              <a href={lead.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /> Visitar Site</a>
             </Button>
           )}
         </div>
