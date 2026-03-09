@@ -29,6 +29,30 @@ function getOrigemDetalheFromNotas(notas: string | null): string | null {
   return match ? match[1].trim() : null;
 }
 
+function getSiteFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Site:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
+function getPhoneFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Telefone:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
+function getNicheFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Segmento:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
+function getCityFromNotas(notas: string | null): string | null {
+  if (!notas) return null;
+  const match = notas.match(/Cidade:\s*(.+)/);
+  return match ? match[1].trim() : null;
+}
+
 function getScoreColor(score: number): string {
   if (score >= 8) return "#4ade80";
   if (score >= 5) return "#f59e0b";
