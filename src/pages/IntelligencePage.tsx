@@ -383,6 +383,11 @@ export default function IntelligencePage() {
             )}
           </div>
         </TabsContent>
+
+        {/* Tab 6: Prospecção */}
+        <TabsContent value="prospeccao">
+          <ProspeccaoTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
