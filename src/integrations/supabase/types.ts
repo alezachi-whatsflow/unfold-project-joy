@@ -935,6 +935,48 @@ export type Database = {
         }
         Relationships: []
       }
+      message_logs: {
+        Row: {
+          conteudo: string
+          conversa_id: string
+          direcao: string
+          id: string
+          lead_id: string | null
+          origem: string
+          session_id: string
+          status: string
+          tenant_id: string
+          timestamp: string
+          tipo: string
+        }
+        Insert: {
+          conteudo?: string
+          conversa_id: string
+          direcao?: string
+          id?: string
+          lead_id?: string | null
+          origem?: string
+          session_id: string
+          status?: string
+          tenant_id?: string
+          timestamp?: string
+          tipo?: string
+        }
+        Update: {
+          conteudo?: string
+          conversa_id?: string
+          direcao?: string
+          id?: string
+          lead_id?: string | null
+          origem?: string
+          session_id?: string
+          status?: string
+          tenant_id?: string
+          timestamp?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       negocios: {
         Row: {
           cliente_id: string | null
