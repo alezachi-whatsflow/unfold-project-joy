@@ -90,6 +90,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: noAccess,
     usuarios:      { view: true, create: true, edit: true, delete: false, export: false },
     inserir_dados: { view: true, create: true, edit: true, delete: false, export: false },
+    mensageria:    crudNoDelete(false),
   },
 
   financeiro: {
