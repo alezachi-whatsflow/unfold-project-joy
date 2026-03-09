@@ -27,6 +27,7 @@ export const ALL_MODULES = [
   'configuracoes',
   'usuarios',
   'inserir_dados',
+  'mensageria',
 ] as const;
 
 export type AppModule = (typeof ALL_MODULES)[number];
@@ -46,6 +47,7 @@ export const MODULE_LABELS: Record<AppModule, string> = {
   configuracoes: 'Configurações',
   usuarios:      'Usuários',
   inserir_dados: 'Inserir Dados',
+  mensageria:    'Mensageria',
 };
 
 const full: ModulePermission = { view: true, create: true, edit: true, delete: true, export: true };
@@ -70,6 +72,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: full,
     usuarios:      full,
     inserir_dados: full,
+    mensageria:    full,
   },
 
   gestor: {
@@ -87,6 +90,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: noAccess,
     usuarios:      { view: true, create: true, edit: true, delete: false, export: false },
     inserir_dados: { view: true, create: true, edit: true, delete: false, export: false },
+    mensageria:    crudNoDelete(false),
   },
 
   financeiro: {
@@ -104,6 +108,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: noAccess,
     usuarios:      noAccess,
     inserir_dados: { view: true, create: true, edit: false, delete: false, export: false },
+    mensageria:    viewOnly,
   },
 
   consultor: {
@@ -121,6 +126,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: noAccess,
     usuarios:      noAccess,
     inserir_dados: noAccess,
+    mensageria:    viewOnly,
   },
 
   representante: {
@@ -138,5 +144,6 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes: noAccess,
     usuarios:      noAccess,
     inserir_dados: { view: true, create: true, edit: false, delete: false, export: false },
+    mensageria:    noAccess,
   },
 };

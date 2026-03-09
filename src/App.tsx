@@ -34,6 +34,7 @@ import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
 import VendasPage from "./pages/VendasPage";
+import MensageriaPage from "./pages/MensageriaPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -78,6 +79,7 @@ const AppRoutes = () => (
     <Route path="/usuarios" element={<AuthGuard><DashboardLayout><ProtectedRoute module="usuarios"><UsersPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/reports" element={<AuthGuard><DashboardLayout><ProtectedRoute module="relatorios"><ReportsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/perfil" element={<AuthGuard><DashboardLayout><ProfilePage /></DashboardLayout></AuthGuard>} />
+    <Route path="/mensageria" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
