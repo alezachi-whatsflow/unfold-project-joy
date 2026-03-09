@@ -15,6 +15,7 @@ import { WhatsAppButtonCard } from "@/components/intelligence/WhatsAppButtonCard
 import { LegalDataCard } from "@/components/intelligence/LegalDataCard";
 import { NeuromarketingCard } from "@/components/intelligence/NeuromarketingCard";
 import { GoogleBusinessCard, GoogleBusinessData, calculateGMNScore } from "@/components/intelligence/GoogleBusinessCard";
+import { ProspeccaoTab } from "@/components/intelligence/ProspeccaoTab";
 import { SaveAnalysisButton } from "@/components/intelligence/SaveAnalysisButton";
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { SourceType, WebScrap, ProfileAnalysis, AuthorityDiagnostic, AUTHORITY_PILLARS } from "@/types/intelligence";
@@ -297,12 +298,13 @@ export default function IntelligencePage() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-5">
+        <TabsList className="w-full grid grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
           <TabsTrigger value="website" className="text-xs">Website</TabsTrigger>
           <TabsTrigger value="instagram" className="text-xs">Instagram</TabsTrigger>
           <TabsTrigger value="google_business" className="text-xs">Perfil da Empresa</TabsTrigger>
           <TabsTrigger value="meta" className="text-xs">Meta & WhatsApp</TabsTrigger>
+          <TabsTrigger value="prospeccao" className="text-xs">Prospecção</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Overview */}
@@ -380,6 +382,11 @@ export default function IntelligencePage() {
               <p className="text-sm text-muted-foreground text-center py-12">Analise um website para ver verificação Meta e WhatsApp aqui.</p>
             )}
           </div>
+        </TabsContent>
+
+        {/* Tab 6: Prospecção */}
+        <TabsContent value="prospeccao">
+          <ProspeccaoTab />
         </TabsContent>
       </Tabs>
     </div>
