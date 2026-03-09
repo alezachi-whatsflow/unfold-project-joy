@@ -233,3 +233,175 @@
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== HOME PAGE — Liquid Glass ===== */
+.home-page-root {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top left, #0D1F17, #0A0F0D 70%);
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 100px;
+}
+
+.home-sphere {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+.home-sphere-1 { width: 600px; height: 600px; top: -100px; left: -100px; background: rgba(0,200,150,0.06); }
+.home-sphere-2 { width: 400px; height: 400px; top: 40%; right: -80px; background: rgba(0,168,120,0.04); }
+.home-sphere-3 { width: 300px; height: 300px; bottom: -50px; left: 40%; background: rgba(0,102,68,0.05); }
+
+.home-header {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  height: 56px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: rgba(10,15,13,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0,200,150,0.12);
+  border-radius: 16px;
+  animation: home-slide-down 0.3s ease-out;
+}
+
+.home-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 88px 24px 24px;
+}
+@media (max-width: 1199px) {
+  .home-grid { grid-template-columns: repeat(6, 1fr); }
+}
+@media (max-width: 767px) {
+  .home-grid { grid-template-columns: 1fr; padding: 80px 16px 16px; }
+  .home-grid .col-span-12,
+  .home-grid [class*="lg:col-span"],
+  .home-grid [class*="sm:col-span"] { grid-column: span 1 !important; }
+}
+
+.glass-card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0,200,150,0.10);
+  border-radius: 20px;
+  padding: 24px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+  animation: home-card-in 0.4s ease-out both;
+}
+.glass-card:hover {
+  border-color: rgba(0,200,150,0.25);
+  background: rgba(0,200,150,0.05);
+  transform: translateY(-2px);
+}
+
+.home-cta-card {
+  background: linear-gradient(90deg, rgba(0,200,150,0.12), rgba(0,200,150,0.03)) !important;
+  border-left: 3px solid #00C896 !important;
+}
+
+.kpi-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,200,150,0.08);
+}
+
+/* Dock */
+.home-dock {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 4px;
+  background: rgba(8,12,10,0.85);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(0,200,150,0.20);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,200,150,0.05) inset;
+  animation: home-dock-in 0.5s ease-out 0.4s both;
+}
+
+.dock-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: rgba(240,253,248,0.6);
+  transition: all 0.15s ease;
+  transform-origin: bottom center;
+}
+.dock-icon:hover {
+  background: rgba(0,200,150,0.15);
+  color: #00C896;
+  transform: scale(1.15);
+}
+
+.dock-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  background: rgba(8,12,10,0.9);
+  border: 1px solid rgba(0,200,150,0.15);
+  color: #F0FDF8;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.group:hover .dock-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@keyframes home-slide-down {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-dock-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+.animate-bar-grow {
+  transform-origin: bottom;
+  animation: bar-grow 0.6s ease-out both;
+}

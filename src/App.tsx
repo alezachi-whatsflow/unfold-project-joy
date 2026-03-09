@@ -15,6 +15,7 @@ import { SidebarPrefsProvider } from "@/contexts/SidebarPrefsContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import HomePage from "./pages/HomePage";
 import DataInputPage from "./pages/DataInputPage";
 import CustomersPage from "./pages/CustomersPage";
 import ProductsPage from "./pages/ProductsPage";
