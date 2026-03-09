@@ -1,0 +1,157 @@
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
+import type { WhatsAppInstance } from "./ConnectionCard";
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onSave: (inst: WhatsAppInstance) => void;
+};
+
+const PROVEDOR_TOKEN_LABELS: Record<string, string> = {
+  zapi: "Instance ID / Token Z-API",
+  uazapi: "Token uazapi",
+  evolution: "Instance Name / API Key",
+};
+
+const USO_OPTIONS = [
+  { value: "suporte", label: "Suporte ao cliente" },
+  { value: "prospeccao", label: "Prospecção de leads" },
+  { value: "cobranca", label: "Régua de cobrança" },
+  { value: "massa", label: "Envios em massa" },
+];
+
+export default function NewConnectionModal({ open, onClose, onSave }: Props) {
+  const [label, setLabel] = useState("");
+  const [sessionId, setSessionId] = useState("");
+  const [provedor, setProvedor] = useState<"zapi" | "uazapi" | "evolution">("zapi");
+  const [token, setToken] = useState("");
+  const [serverUrl, setServerUrl] = useState("");
+  const [uso, setUso] = useState("suporte");
+
+  useEffect(() => {
+    setSessionId(label.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""));
+  }, [label]);
+
+  const webhookUrl = sessionId ? `https://seudominio.com/webhook/${sessionId}` : "";
+
+  const copyWebhook = () => {
+    if (webhookUrl) {
+      navigator.clipboard.writeText(webhookUrl);
+      toast.success("Webhook URL copiado!");
+    }
+  };
+
+  const handleSave = () => {
+    if (!label.trim() || !token.trim()) {
+      toast.error("Preencha todos os campos obrigatórios.");
+      return;
+    }
+    const inst: WhatsAppInstance = {
+      id: crypto.randomUUID(),
+      session_id: sessionId,
+      label: label.trim(),
+      numero: null,
+      provedor,
+      status: "qr_pending",
+      webhook_url: webhookUrl,
+      ultimo_ping: null,
+      uso_principal: uso,
+    };
+    onSave(inst);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setLabel("");
+    setSessionId("");
+    setProvedor("zapi");
+    setToken("");
+    setServerUrl("");
+    setUso("suporte");
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Nova Conexão WhatsApp</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Label da Conexão</Label>
+            <Input placeholder="Ex: Cobrança - Pioneira" value={label} onChange={(e) => setLabel(e.target.value)} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Session ID</Label>
+            <Input value={sessionId} onChange={(e) => setSessionId(e.target.value)} className="font-mono text-xs" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Provedor de API</Label>
+            <Select value={provedor} onValueChange={(v) => setProvedor(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="zapi">Z-API</SelectItem>
+                <SelectItem value="uazapi">uazapi</SelectItem>
+                <SelectItem value="evolution">Evolution API</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>{PROVEDOR_TOKEN_LABELS[provedor]}</Label>
+            <Input placeholder="Cole aqui o token/ID" value={token} onChange={(e) => setToken(e.target.value)} />
+          </div>
+
+          {provedor === "evolution" && (
+            <div className="space-y-1.5">
+              <Label>URL do Servidor</Label>
+              <Input placeholder="https://evolution.seudominio.com" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} />
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label>Webhook URL</Label>
+            <div className="flex gap-2">
+              <Input value={webhookUrl} readOnly className="font-mono text-xs bg-muted/50" />
+              <Button variant="outline" size="icon" onClick={copyWebhook} disabled={!webhookUrl}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Uso Principal</Label>
+            <Select value={uso} onValueChange={setUso}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {USO_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>Cancelar</Button>
+          <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700">Salvar e Conectar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
