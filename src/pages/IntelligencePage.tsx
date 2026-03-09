@@ -298,12 +298,13 @@ export default function IntelligencePage() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-5">
+        <TabsList className="w-full grid grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
           <TabsTrigger value="website" className="text-xs">Website</TabsTrigger>
           <TabsTrigger value="instagram" className="text-xs">Instagram</TabsTrigger>
           <TabsTrigger value="google_business" className="text-xs">Perfil da Empresa</TabsTrigger>
           <TabsTrigger value="meta" className="text-xs">Meta & WhatsApp</TabsTrigger>
+          <TabsTrigger value="prospeccao" className="text-xs">Prospecção</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Overview */}
