@@ -304,7 +304,10 @@ export default function IntelligencePage() {
           <TabsTrigger value="instagram" className="text-xs">Instagram</TabsTrigger>
           <TabsTrigger value="google_business" className="text-xs">Perfil da Empresa</TabsTrigger>
           <TabsTrigger value="meta" className="text-xs">Meta & WhatsApp</TabsTrigger>
-          <TabsTrigger value="prospeccao" className="text-xs">Prospecção</TabsTrigger>
+          <TabsTrigger value="prospeccao" className="text-xs relative">
+            Prospecção
+            <CrmSentBadge />
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Overview */}
