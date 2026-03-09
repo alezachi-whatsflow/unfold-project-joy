@@ -1162,6 +1162,42 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_campaigns: {
+        Row: {
+          city: string
+          created_at: string
+          hot_leads: number
+          id: string
+          leads_analyzed: number
+          leads_found: number
+          niche: string
+          results: Json
+          tenant_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          hot_leads?: number
+          id?: string
+          leads_analyzed?: number
+          leads_found?: number
+          niche: string
+          results?: Json
+          tenant_id?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          hot_leads?: number
+          id?: string
+          leads_analyzed?: number
+          leads_found?: number
+          niche?: string
+          results?: Json
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       revenue_rules: {
         Row: {
           billing_type: Database["public"]["Enums"]["billing_type"] | null
