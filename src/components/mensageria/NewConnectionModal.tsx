@@ -8,10 +8,12 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { WhatsAppInstance } from "./ConnectionCard";
 
+type SavePayload = WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string };
+
 type Props = {
   open: boolean;
   onClose: () => void;
-  onSave: (inst: WhatsAppInstance) => void;
+  onSave: (inst: SavePayload) => void;
 };
 
 const PROVEDOR_TOKEN_LABELS: Record<string, string> = {
@@ -32,6 +34,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
   const [sessionId, setSessionId] = useState("");
   const [provedor, setProvedor] = useState<"zapi" | "uazapi" | "evolution">("zapi");
   const [token, setToken] = useState("");
+  const [instanceIdApi, setInstanceIdApi] = useState("");
   const [serverUrl, setServerUrl] = useState("");
   const [uso, setUso] = useState("suporte");
 
@@ -39,7 +42,8 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setSessionId(label.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""));
   }, [label]);
 
-  const webhookUrl = sessionId ? `https://seudominio.com/webhook/${sessionId}` : "";
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "knnwgijcrpbgqhdzmdrp";
+  const webhookUrl = sessionId ? `https://${projectId}.supabase.co/functions/v1/whatsapp-webhook-receiver/${sessionId}/${provedor}` : "";
 
   const copyWebhook = () => {
     if (webhookUrl) {
@@ -53,7 +57,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-    const inst: WhatsAppInstance = {
+    const inst: SavePayload = {
       id: crypto.randomUUID(),
       session_id: sessionId,
       label: label.trim(),
@@ -63,6 +67,9 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
       webhook_url: webhookUrl,
       ultimo_ping: null,
       uso_principal: uso,
+      token_api: token,
+      instance_id_api: provedor === "zapi" ? instanceIdApi : sessionId,
+      server_url: provedor === "evolution" ? serverUrl : undefined,
     };
     onSave(inst);
     resetForm();
@@ -73,6 +80,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setSessionId("");
     setProvedor("zapi");
     setToken("");
+    setInstanceIdApi("");
     setServerUrl("");
     setUso("suporte");
   };
@@ -112,9 +120,16 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
             </Select>
           </div>
 
+          {provedor === "zapi" && (
+            <div className="space-y-1.5">
+              <Label>Instance ID (Z-API)</Label>
+              <Input placeholder="Cole o Instance ID" value={instanceIdApi} onChange={(e) => setInstanceIdApi(e.target.value)} />
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>{PROVEDOR_TOKEN_LABELS[provedor]}</Label>
-            <Input placeholder="Cole aqui o token/ID" value={token} onChange={(e) => setToken(e.target.value)} />
+            <Input placeholder="Cole aqui o token/API Key" value={token} onChange={(e) => setToken(e.target.value)} type="password" />
           </div>
 
           {provedor === "evolution" && (
@@ -132,6 +147,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
+            <p className="text-[10px] text-muted-foreground">Configure este URL no painel do provedor para receber mensagens.</p>
           </div>
 
           <div className="space-y-1.5">
