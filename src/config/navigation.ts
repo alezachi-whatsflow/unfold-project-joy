@@ -37,7 +37,7 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     label: 'Analytics',
     icon: 'Radar',
     items: [
-      { id: 'intelligence', label: 'Intelligence', icon: 'Radar',         route: '/intelligence', module: 'intelligence' },
+      { id: 'intelligence', label: 'Inteligência Digital', icon: 'Radar',  route: '/intelligence', module: 'intelligence' },
       { id: 'relatorios', label: 'Relatórios',    icon: 'FileBarChart',   route: '/reports',     module: 'relatorios'    },
     ],
   },
