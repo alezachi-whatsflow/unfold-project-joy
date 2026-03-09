@@ -27,6 +27,7 @@ export const ALL_MODULES = [
   'configuracoes',
   'usuarios',
   'inserir_dados',
+  'mensageria',
 ] as const;
 
 export type AppModule = (typeof ALL_MODULES)[number];
