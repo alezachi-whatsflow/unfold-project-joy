@@ -59,7 +59,23 @@ export default function IntelligencePage() {
   } = useIntelligence();
 
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const analyzedRef = useRef(false);
+
+  // Handle ?analyze= param from prospecting cards
+  useEffect(() => {
+    const analyzeQuery = searchParams.get("analyze");
+    const analyzeType = searchParams.get("type") as SourceType | null;
+    if (analyzeQuery && !analyzedRef.current) {
+      analyzedRef.current = true;
+      setSearchParams({}, { replace: true });
+      // Small delay to let page render
+      setTimeout(() => {
+        handleSearch(analyzeQuery, analyzeType || "website");
+      }, 300);
+    }
+  }, [searchParams]);
   const [rescuePlan, setRescuePlan] = useState<RescuePlan | null>(null);
   const [websiteThreshold, setWebsiteThreshold] = useState<ChannelThreshold | null>(null);
   const [instagramThreshold, setInstagramThreshold] = useState<ChannelThreshold | null>(null);
