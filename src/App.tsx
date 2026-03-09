@@ -15,6 +15,7 @@ import { SidebarPrefsProvider } from "@/contexts/SidebarPrefsContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import HomePage from "./pages/HomePage";
 import DataInputPage from "./pages/DataInputPage";
 import CustomersPage from "./pages/CustomersPage";
 import ProductsPage from "./pages/ProductsPage";
@@ -64,7 +65,8 @@ const AppRoutes = () => (
     <Route path="/acesso-negado" element={<AuthGuard><AcessoNegadoPage /></AuthGuard>} />
 
     {/* Protected — each route wrapped with module permission */}
-    <Route path="/" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><Index /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/" element={<AuthGuard><HomePage /></AuthGuard>} />
+    <Route path="/dashboard" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><Index /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/vendas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="vendas"><VendasPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/input" element={<AuthGuard><DashboardLayout><ProtectedRoute module="inserir_dados"><DataInputPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/cobrancas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="cobrancas"><CobrancasPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
