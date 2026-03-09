@@ -156,11 +156,9 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
   // Navigate to Intelligence page with URL pre-filled for analysis
   const handleAnalyze = () => {
     if (lead.url) {
-      // Navigate to intelligence page and trigger website analysis
-      navigate(`/inteligencia?analyze=${encodeURIComponent(lead.url)}`);
+      navigate(`/intelligence?analyze=${encodeURIComponent(lead.url)}`);
     } else {
-      // Navigate with the company name for Google Business search
-      navigate(`/inteligencia?analyze=${encodeURIComponent(lead.name)}&type=google_maps`);
+      navigate(`/intelligence?analyze=${encodeURIComponent(lead.name)}&type=google_maps`);
     }
   };
 
