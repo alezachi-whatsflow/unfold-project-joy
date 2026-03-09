@@ -11,7 +11,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Search, Download, Eye, Pencil, Trash2, Copy, Plus, CheckCircle, XCircle } from "lucide-react";
+import { Search, Download, Eye, Pencil, Trash2, Copy, Plus, CheckCircle, XCircle, Radar } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, ALL_STATUSES, NEGOCIO_ORIGEM_LABELS, type Negocio, type NegocioStatus } from "@/types/vendas";
 import NegocioDrawer from "@/components/vendas/NegocioDrawer";
 import NegocioCreateModal from "@/components/vendas/NegocioCreateModal";
