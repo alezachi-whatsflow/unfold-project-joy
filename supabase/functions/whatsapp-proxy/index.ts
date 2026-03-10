@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
           `https://api.uazapi.com/instance/qrcode?session=${sessionId}`,
           { headers: { token } }
         );
-        if (!r.ok) return json({ error: `uazapi QR error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `uazapi QR error ${r.status}`, success: false });
         const d = await r.json();
         return json({ qr_base64: d.qrcode || d.value || null, raw: d });
       }
