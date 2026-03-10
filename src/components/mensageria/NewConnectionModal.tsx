@@ -80,8 +80,9 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
       uso_principal: uso,
       token_api: token,
       instance_id_api: provedor === "zapi" ? instanceIdApi : sessionId,
-      server_url: provedor === "evolution" ? serverUrl : provedor === "uazapi" ? serverUrl : undefined,
+      server_url: (provedor === "evolution" || provedor === "uazapi") ? serverUrl : undefined,
       client_token: provedor === "zapi" ? clientToken : undefined,
+      admin_token: provedor === "uazapi" ? adminToken : undefined,
     };
     onSave(inst);
     resetForm();
