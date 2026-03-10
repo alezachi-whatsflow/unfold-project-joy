@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
       if (action === "qr-code") {
         const r = await fetch(`${base}/qr-code/image`);
-        if (!r.ok) return json({ error: `Z-API QR error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `Z-API QR error ${r.status}`, success: false });
         const d = await r.json();
         return json({ qr_base64: d.value || d.image || null, raw: d });
       }
