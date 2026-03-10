@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       .eq("id", instance_id)
       .single();
 
-    if (instErr || !inst) return json({ error: "Instância não encontrada" }, 404);
+    if (instErr || !inst) return json({ error: "Instância não encontrada", success: false });
 
     const provedor = inst.provedor as string;
     const token = inst.token_api as string;
@@ -50,14 +50,14 @@ Deno.serve(async (req) => {
 
       if (action === "qr-code") {
         const r = await fetch(`${base}/qr-code/image`);
-        if (!r.ok) return json({ error: `Z-API QR error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `Z-API QR error ${r.status}`, success: false });
         const d = await r.json();
         return json({ qr_base64: d.value || d.image || null, raw: d });
       }
 
       if (action === "status") {
         const r = await fetch(`${base}/status`);
-        if (!r.ok) return json({ error: `Z-API status error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `Z-API status error ${r.status}`, success: false });
         const d = await r.json();
         const connected = d.connected === true || d.status === "CONNECTED";
         if (connected) {
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ phone, message }),
         });
         const d = await r.json();
-        if (!r.ok) return json({ error: `Z-API send error`, raw: d }, 502);
+        if (!r.ok) return json({ error: `Z-API send error`, raw: d, success: false });
         return json({ success: true, raw: d });
       }
     }
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
           `https://api.uazapi.com/instance/qrcode?session=${sessionId}`,
           { headers: { token } }
         );
-        if (!r.ok) return json({ error: `uazapi QR error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `uazapi QR error ${r.status}`, success: false });
         const d = await r.json();
         return json({ qr_base64: d.qrcode || d.value || null, raw: d });
       }
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
           `https://api.uazapi.com/instance/status?session=${sessionId}`,
           { headers: { token } }
         );
-        if (!r.ok) return json({ error: `uazapi status error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `uazapi status error ${r.status}`, success: false });
         const d = await r.json();
         const connected = d.status === "CONNECTED" || d.connected === true;
         if (connected) {
@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ session: sessionId, phone, text: message }),
         });
         const d = await r.json();
-        if (!r.ok) return json({ error: `uazapi send error`, raw: d }, 502);
+        if (!r.ok) return json({ error: `uazapi send error`, raw: d, success: false });
         return json({ success: true, raw: d });
       }
 
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
 
     // ─── Evolution API ───
     if (provedor === "evolution") {
-      if (!serverUrl) return json({ error: "server_url não configurada" }, 400);
+      if (!serverUrl) return json({ error: "server_url não configurada", success: false });
 
       if (action === "qr-code" || action === "create-instance") {
         // Create + get QR in one step
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`${serverUrl}/instance/connectionState/${sessionId}`, {
           headers: { apikey: token },
         });
-        if (!r.ok) return json({ error: `Evolution status error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `Evolution status error ${r.status}`, success: false });
         const d = await r.json();
         const connected = d.instance?.state === "open" || d.state === "open";
         if (connected) {
@@ -182,14 +182,14 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ number: phone, text: message }),
         });
         const d = await r.json();
-        if (!r.ok) return json({ error: `Evolution send error`, raw: d }, 502);
+        if (!r.ok) return json({ error: `Evolution send error`, raw: d, success: false });
         return json({ success: true, raw: d });
       }
     }
 
-    return json({ error: `Ação '${action}' não suportada para provedor '${provedor}'` }, 400);
+    return json({ error: `Ação '${action}' não suportada para provedor '${provedor}'`, success: false });
   } catch (err) {
     console.error("whatsapp-proxy error:", err);
-    return json({ error: err instanceof Error ? err.message : "Unknown error" }, 500);
+    return json({ error: err instanceof Error ? err.message : "Unknown error", success: false });
   }
 });
