@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ error: `Ação '${action}' não suportada para provedor '${provedor}'` }, 400);
+    return json({ error: `Ação '${action}' não suportada para provedor '${provedor}'`, success: false });
   } catch (err) {
     console.error("whatsapp-proxy error:", err);
     return json({ error: err instanceof Error ? err.message : "Unknown error" }, 500);
