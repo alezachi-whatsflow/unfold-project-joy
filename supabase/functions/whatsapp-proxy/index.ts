@@ -86,10 +86,26 @@ Deno.serve(async (req) => {
     // ─── uazapi ───
     if (provedor === "uazapi") {
       if (action === "qr-code") {
-        const r = await fetch(
+        // Try to get QR first
+        let r = await fetch(
           `https://api.uazapi.com/instance/qrcode?session=${sessionId}`,
           { headers: { token } }
         );
+        // If 404, create instance first then retry
+        if (r.status === 404) {
+          const cr = await fetch("https://api.uazapi.com/instance/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", token },
+            body: JSON.stringify({ session: sessionId, sessionKey: sessionId }),
+          });
+          const cd = await cr.json();
+          console.log("uazapi create-instance result:", JSON.stringify(cd));
+          // Retry QR after creation
+          r = await fetch(
+            `https://api.uazapi.com/instance/qrcode?session=${sessionId}`,
+            { headers: { token } }
+          );
+        }
         if (!r.ok) return json({ error: `uazapi QR error ${r.status}`, success: false });
         const d = await r.json();
         return json({ qr_base64: d.qrcode || d.value || null, raw: d });
