@@ -48,8 +48,11 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     }
   }, [open]);
 
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "knnwgijcrpbgqhdzmdrp";
-  const webhookUrl = sessionId ? `https://${projectId}.supabase.co/functions/v1/whatsapp-webhook-receiver/${sessionId}/${provedor}` : "";
+  const PROVIDER_WEBHOOK_PLACEHOLDERS: Record<string, string> = {
+    zapi: "https://api.z-api.io/webhook/...",
+    uazapi: "https://api.uazapi.com/webhook/...",
+    evolution: "https://evolution.seudominio.com/webhook/...",
+  };
 
   const copyWebhook = () => {
     if (webhookUrl) {
