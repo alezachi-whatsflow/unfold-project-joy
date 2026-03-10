@@ -38,9 +38,14 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
   const [serverUrl, setServerUrl] = useState("");
   const [uso, setUso] = useState("suporte");
 
+  // Auto-generate a unique session ID when the modal opens
   useEffect(() => {
-    setSessionId(label.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""));
-  }, [label]);
+    if (open) {
+      const uid = crypto.randomUUID().slice(0, 8);
+      const ts = Date.now().toString(36);
+      setSessionId(`sess-${ts}-${uid}`);
+    }
+  }, [open]);
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "knnwgijcrpbgqhdzmdrp";
   const webhookUrl = sessionId ? `https://${projectId}.supabase.co/functions/v1/whatsapp-webhook-receiver/${sessionId}/${provedor}` : "";
@@ -104,8 +109,8 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Session ID</Label>
-            <Input value={sessionId} onChange={(e) => setSessionId(e.target.value)} className="font-mono text-xs" />
+            <Label>Session ID <span className="text-muted-foreground text-[10px]">(gerado automaticamente)</span></Label>
+            <Input value={sessionId} readOnly className="font-mono text-xs bg-muted/50" />
           </div>
 
           <div className="space-y-1.5">
