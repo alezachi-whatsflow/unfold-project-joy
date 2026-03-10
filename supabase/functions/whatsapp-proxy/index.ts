@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
           `https://api.uazapi.com/instance/status?session=${sessionId}`,
           { headers: { token } }
         );
-        if (!r.ok) return json({ error: `uazapi status error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `uazapi status error ${r.status}`, success: false });
         const d = await r.json();
         const connected = d.status === "CONNECTED" || d.connected === true;
         if (connected) {
