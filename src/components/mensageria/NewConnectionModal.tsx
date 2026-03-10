@@ -95,6 +95,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setServerUrl("");
     setWebhookUrl("");
     setUso("suporte");
+    setClientToken("");
   };
 
   const handleClose = () => {
