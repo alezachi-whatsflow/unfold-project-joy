@@ -31,6 +31,7 @@ const USO_OPTIONS = [
 
 export default function NewConnectionModal({ open, onClose, onSave }: Props) {
   const [label, setLabel] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [provedor, setProvedor] = useState<"zapi" | "uazapi" | "evolution">("zapi");
   const [token, setToken] = useState("");
@@ -47,8 +48,11 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     }
   }, [open]);
 
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "knnwgijcrpbgqhdzmdrp";
-  const webhookUrl = sessionId ? `https://${projectId}.supabase.co/functions/v1/whatsapp-webhook-receiver/${sessionId}/${provedor}` : "";
+  const PROVIDER_WEBHOOK_PLACEHOLDERS: Record<string, string> = {
+    zapi: "https://api.z-api.io/webhook/...",
+    uazapi: "https://api.uazapi.com/webhook/...",
+    evolution: "https://evolution.seudominio.com/webhook/...",
+  };
 
   const copyWebhook = () => {
     if (webhookUrl) {
@@ -87,6 +91,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setToken("");
     setInstanceIdApi("");
     setServerUrl("");
+    setWebhookUrl("");
     setUso("suporte");
   };
 
@@ -145,14 +150,19 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
           )}
 
           <div className="space-y-1.5">
-            <Label>Webhook URL</Label>
+            <Label>Webhook URL do Provedor</Label>
             <div className="flex gap-2">
-              <Input value={webhookUrl} readOnly className="font-mono text-xs bg-muted/50" />
+              <Input
+                placeholder={PROVIDER_WEBHOOK_PLACEHOLDERS[provedor] || "Cole a URL do webhook do provedor"}
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                className="font-mono text-xs"
+              />
               <Button variant="outline" size="icon" onClick={copyWebhook} disabled={!webhookUrl}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground">Configure este URL no painel do provedor para receber mensagens.</p>
+            <p className="text-[10px] text-muted-foreground">Cole aqui a URL de webhook gerada pelo provedor de API.</p>
           </div>
 
           <div className="space-y-1.5">
