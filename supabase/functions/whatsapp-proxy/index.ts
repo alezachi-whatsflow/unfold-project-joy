@@ -90,58 +90,100 @@ Deno.serve(async (req) => {
     if (provedor === "uazapi") {
       const base = serverUrl || "https://api.uazapi.com";
       const adminToken = (inst.admin_token as string) || "";
-      const instHeaders: Record<string, string> = { "Content-Type": "application/json", token: token };
 
       if (action === "qr-code" || action === "create-instance") {
-        // Step 1: Create instance on uazapi server if admin token is available
+        let instanceToken = token;
+
+        // ── Step 1: Create instance via POST /instance/init with admintoken ──
         if (adminToken) {
           const instanceName = sessionId || inst.label || `inst-${Date.now()}`;
-          console.log("uazapi: Creating instance with name:", instanceName);
-          
+          console.log("uazapi Step 1: Creating instance with name:", instanceName);
+
           const createR = await fetch(`${base}/instance/init`, {
             method: "POST",
             headers: { "Content-Type": "application/json", admintoken: adminToken },
             body: JSON.stringify({ instanceName }),
           });
           const createText = await createR.text();
-          console.log("uazapi /instance/init:", createR.status, createText.substring(0, 500));
+          console.log("uazapi /instance/init response:", createR.status, createText.substring(0, 800));
 
-          if (createR.ok) {
-            try {
-              const createData = JSON.parse(createText);
-              // If the response contains a token, update it in the database
-              const newToken = createData.token || createData.instance?.token;
-              if (newToken && newToken !== token) {
-                await supabase.from("whatsapp_instances").update({
-                  token_api: newToken,
-                  instance_id_api: createData.instance?.instanceName || createData.instanceName || instanceName,
-                }).eq("id", instance_id);
-                // Update the token for subsequent requests
-                instHeaders.token = newToken;
-              }
-            } catch (e) {
-              console.log("uazapi: Could not parse create response, continuing...");
-            }
-          } else {
-            // Instance might already exist, continue to connect
-            console.log("uazapi: Instance init returned", createR.status, "- may already exist, trying connect...");
+          if (!createR.ok) {
+            return json({
+              error: `Falha ao criar instância na uazapi (${createR.status}): ${createText.substring(0, 300)}`,
+              success: false,
+            });
           }
+
+          try {
+            const createData = JSON.parse(createText);
+            // Extract the instance token from the response
+            const returnedToken = createData.token || createData.instance?.token || createData.data?.token;
+            const returnedName = createData.instanceName || createData.instance?.instanceName || createData.name || instanceName;
+
+            if (returnedToken) {
+              instanceToken = returnedToken;
+              console.log("uazapi: Instance created, token received:", returnedToken.substring(0, 10) + "...");
+
+              // Save the returned token and instance name to DB
+              await supabase.from("whatsapp_instances").update({
+                token_api: returnedToken,
+                instance_id_api: returnedName,
+              }).eq("id", instance_id);
+            } else {
+              console.log("uazapi: Instance created but no token in response. Full response:", createText.substring(0, 500));
+            }
+          } catch (e) {
+            console.error("uazapi: Failed to parse create response:", e);
+            return json({
+              error: `uazapi: resposta inválida ao criar instância: ${createText.substring(0, 300)}`,
+              success: false,
+            });
+          }
+        } else {
+          console.log("uazapi: No admin token, skipping instance creation.");
         }
 
-        // Step 2: Connect instance to get QR code
+        // ── Step 2: Set Webhook via POST /webhook/set with instance token ──
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const webhookReceiverUrl = `${supabaseUrl}/functions/v1/whatsapp-webhook-receiver`;
+        console.log("uazapi Step 2: Setting webhook to:", webhookReceiverUrl);
+
+        const webhookR = await fetch(`${base}/webhook/set`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", token: instanceToken },
+          body: JSON.stringify({
+            url: webhookReceiverUrl,
+            events: ["messages", "connection", "status"],
+          }),
+        });
+        const webhookText = await webhookR.text();
+        console.log("uazapi /webhook/set response:", webhookR.status, webhookText.substring(0, 500));
+
+        if (webhookR.ok) {
+          // Save the webhook URL in the DB
+          await supabase.from("whatsapp_instances").update({
+            webhook_url: webhookReceiverUrl,
+          }).eq("id", instance_id);
+        } else {
+          console.log("uazapi: Webhook set failed, continuing to QR anyway...");
+        }
+
+        // ── Step 3: Connect instance to get QR via POST /instance/connect ──
+        console.log("uazapi Step 3: Connecting instance to get QR...");
+
         const connectR = await fetch(`${base}/instance/connect`, {
           method: "POST",
-          headers: instHeaders,
+          headers: { "Content-Type": "application/json", token: instanceToken },
           body: JSON.stringify({}),
         });
         const connectText = await connectR.text();
-        console.log("uazapi /instance/connect:", connectR.status, connectText.substring(0, 500));
+        console.log("uazapi /instance/connect response:", connectR.status, connectText.substring(0, 500));
 
         try {
           const connectData = JSON.parse(connectText);
           const qr = connectData.qrcode || connectData.qr || connectData.base64 ||
                      connectData.data?.qrcode || connectData.data?.qr || connectData.data?.base64 || null;
-          
+
           const state = connectData.state || connectData.status || connectData.data?.state || "";
           if (state === "connected" || state === "open" || connectData.data?.Connected === true) {
             await supabase.from("whatsapp_instances").update({
@@ -157,16 +199,16 @@ Deno.serve(async (req) => {
             return json({ qr_base64: qrBase64, raw: connectData });
           }
 
-          return json({ 
-            qr_base64: null, 
+          return json({
+            qr_base64: null,
             raw: connectData,
-            message: "Conexão iniciada. Aguarde o QR code ou verifique o token.",
-            success: connectR.ok 
+            message: "Instância criada e webhook configurado. Aguardando QR code.",
+            success: connectR.ok,
           });
         } catch {
-          return json({ 
-            error: `uazapi connect error ${connectR.status}: ${connectText.substring(0, 300)}`, 
-            success: false 
+          return json({
+            error: `uazapi connect error ${connectR.status}: ${connectText.substring(0, 300)}`,
+            success: false,
           });
         }
       }
@@ -179,7 +221,7 @@ Deno.serve(async (req) => {
         if (!r.ok) return json({ error: `uazapi status error ${r.status}`, success: false });
         const d = await r.json();
         const state = d.state || d.status || d.data?.state || "";
-        const connected = state === "connected" || state === "open" || 
+        const connected = state === "connected" || state === "open" ||
                          d.data?.Connected === true || d.data?.LoggedIn === true;
         if (connected) {
           await supabase.from("whatsapp_instances").update({
@@ -195,7 +237,7 @@ Deno.serve(async (req) => {
         const { phone, message } = body as { phone: string; message: string };
         const r = await fetch(`${base}/send/text`, {
           method: "POST",
-          headers: instHeaders,
+          headers: { "Content-Type": "application/json", token: token },
           body: JSON.stringify({ number: phone, text: message }),
         });
         const d = await r.json();
