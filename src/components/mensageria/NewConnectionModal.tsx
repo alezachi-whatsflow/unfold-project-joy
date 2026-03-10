@@ -91,6 +91,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setToken("");
     setInstanceIdApi("");
     setServerUrl("");
+    setWebhookUrl("");
     setUso("suporte");
   };
 
