@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
       if (action === "status") {
         const r = await fetch(`${base}/status`);
-        if (!r.ok) return json({ error: `Z-API status error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `Z-API status error ${r.status}`, success: false });
         const d = await r.json();
         const connected = d.connected === true || d.status === "CONNECTED";
         if (connected) {
