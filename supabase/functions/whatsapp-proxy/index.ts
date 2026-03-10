@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ phone, message }),
         });
         const d = await r.json();
-        if (!r.ok) return json({ error: `Z-API send error`, raw: d }, 502);
+        if (!r.ok) return json({ error: `Z-API send error`, raw: d, success: false });
         return json({ success: true, raw: d });
       }
     }
