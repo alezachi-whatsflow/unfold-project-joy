@@ -38,6 +38,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
   const [instanceIdApi, setInstanceIdApi] = useState("");
   const [serverUrl, setServerUrl] = useState("");
   const [clientToken, setClientToken] = useState("");
+  const [adminToken, setAdminToken] = useState("");
   const [uso, setUso] = useState("suporte");
 
   // Auto-generate a unique session ID when the modal opens
