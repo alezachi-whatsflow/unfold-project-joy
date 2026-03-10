@@ -141,6 +141,9 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
             </div>
           </div>
           <div className="flex gap-1">
+            <PermissionGate module="vendas" action="edit">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => setEditOpen(true)}><Pencil className="h-3.5 w-3.5" /></Button>
+            </PermissionGate>
             <PermissionGate module="vendas" action="delete">
               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
             </PermissionGate>
