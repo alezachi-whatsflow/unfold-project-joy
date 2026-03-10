@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`${serverUrl}/instance/connectionState/${sessionId}`, {
           headers: { apikey: token },
         });
-        if (!r.ok) return json({ error: `Evolution status error ${r.status}` }, 502);
+        if (!r.ok) return json({ error: `Evolution status error ${r.status}`, success: false });
         const d = await r.json();
         const connected = d.instance?.state === "open" || d.state === "open";
         if (connected) {
