@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       .eq("id", instance_id)
       .single();
 
-    if (instErr || !inst) return json({ error: "Instância não encontrada" }, 404);
+    if (instErr || !inst) return json({ error: "Instância não encontrada", success: false });
 
     const provedor = inst.provedor as string;
     const token = inst.token_api as string;
