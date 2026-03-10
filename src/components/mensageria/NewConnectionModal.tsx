@@ -31,6 +31,7 @@ const USO_OPTIONS = [
 
 export default function NewConnectionModal({ open, onClose, onSave }: Props) {
   const [label, setLabel] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [provedor, setProvedor] = useState<"zapi" | "uazapi" | "evolution">("zapi");
   const [token, setToken] = useState("");
