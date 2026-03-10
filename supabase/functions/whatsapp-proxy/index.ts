@@ -171,19 +171,18 @@ Deno.serve(async (req) => {
       }
 
       if (action === "status") {
-        const r = await fetch(`${base}/instance/connectionState/${sessionId}`, {
+        const r = await fetch(`${base}/session/status`, {
           method: "GET",
-          headers: { ...authHeaders },
+          headers: { Token: token },
         });
         if (!r.ok) return json({ error: `uazapi status error ${r.status}`, success: false });
         const d = await r.json();
-        const state = d.state || d.status || d.data?.state || "";
-        const connected = state === "connected" || state === "open";
+        const connected = d.data?.Connected === true || d.data?.LoggedIn === true;
         if (connected) {
           await supabase.from("whatsapp_instances").update({
             status: "connected",
             ultimo_ping: new Date().toISOString(),
-            numero: d.phone || d.number || d.data?.phone || inst.numero,
+            numero: d.data?.Jid?.split("@")?.[0] || inst.numero,
           }).eq("id", instance_id);
         }
         return json({ connected, raw: d });
@@ -191,10 +190,10 @@ Deno.serve(async (req) => {
 
       if (action === "send-text") {
         const { phone, message } = body as { phone: string; message: string };
-        const r = await fetch(`${base}/v1/messages/text`, {
+        const r = await fetch(`${base}/chat/send/text`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders },
-          body: JSON.stringify({ phone, message }),
+          headers: { "Content-Type": "application/json", Token: token },
+          body: JSON.stringify({ Phone: phone, Body: message }),
         });
         const d = await r.json();
         if (!r.ok) return json({ error: `uazapi send error`, raw: d, success: false });
