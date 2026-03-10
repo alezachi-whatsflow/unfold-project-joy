@@ -109,8 +109,8 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Session ID</Label>
-            <Input value={sessionId} onChange={(e) => setSessionId(e.target.value)} className="font-mono text-xs" />
+            <Label>Session ID <span className="text-muted-foreground text-[10px]">(gerado automaticamente)</span></Label>
+            <Input value={sessionId} readOnly className="font-mono text-xs bg-muted/50" />
           </div>
 
           <div className="space-y-1.5">
