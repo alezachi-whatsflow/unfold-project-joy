@@ -64,6 +64,19 @@ export default function NegocioCreateModal({ onClose }: Props) {
     setProdutos([...produtos, { produtoId: crypto.randomUUID(), nome: '', quantidade: 1, valorUnitario: 0, desconto: 0, valorTotal: 0 }]);
   };
 
+  const addProdutoFromCatalog = (productId: string) => {
+    const prod = activeProducts.find(p => p.id === productId);
+    if (!prod) return;
+    setProdutos([...produtos, {
+      produtoId: prod.id,
+      nome: prod.name,
+      quantidade: 1,
+      valorUnitario: prod.price,
+      desconto: 0,
+      valorTotal: prod.price,
+    }]);
+  };
+
   const updateProduto = (index: number, field: string, value: any) => {
     const updated = [...produtos];
     const p = { ...updated[index], [field]: value };
