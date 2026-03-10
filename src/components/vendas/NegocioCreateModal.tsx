@@ -210,7 +210,24 @@ export default function NegocioCreateModal({ onClose }: Props) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label>Produtos</Label>
-            <Button variant="outline" size="sm" onClick={addProduto}><Plus className="mr-1 h-3 w-3" /> Adicionar</Button>
+            <div className="flex gap-2">
+              <Select onValueChange={addProdutoFromCatalog}>
+                <SelectTrigger className="h-8 w-[180px] text-xs">
+                  <SelectValue placeholder="Adicionar do catálogo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeProducts.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center justify-between gap-2">
+                        <span>{p.name}</span>
+                        <span className="text-muted-foreground text-[10px]">{p.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={addProduto}><Plus className="mr-1 h-3 w-3" /> Manual</Button>
+            </div>
           </div>
           {produtos.map((p, i) => (
             <div key={i} className="grid grid-cols-[1fr_60px_80px_60px_80px_32px] gap-2 items-end">
