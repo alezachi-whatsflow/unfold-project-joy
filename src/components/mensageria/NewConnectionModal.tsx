@@ -140,6 +140,13 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
             </div>
           )}
 
+          {provedor === "zapi" && (
+            <div className="space-y-1.5">
+              <Label>Client-Token <span className="text-muted-foreground text-[10px]">(opcional - Token de Segurança da Conta)</span></Label>
+              <Input placeholder="Cole o Client-Token da conta Z-API" value={clientToken} onChange={(e) => setClientToken(e.target.value)} type="password" />
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>{PROVEDOR_TOKEN_LABELS[provedor]}</Label>
             <Input placeholder="Cole aqui o token/API Key" value={token} onChange={(e) => setToken(e.target.value)} type="password" />
