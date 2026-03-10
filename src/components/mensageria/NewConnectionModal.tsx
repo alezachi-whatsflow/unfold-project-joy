@@ -8,7 +8,7 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { WhatsAppInstance } from "./ConnectionCard";
 
-type SavePayload = WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string };
+type SavePayload = WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string; client_token?: string };
 
 type Props = {
   open: boolean;
@@ -37,6 +37,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
   const [token, setToken] = useState("");
   const [instanceIdApi, setInstanceIdApi] = useState("");
   const [serverUrl, setServerUrl] = useState("");
+  const [clientToken, setClientToken] = useState("");
   const [uso, setUso] = useState("suporte");
 
   // Auto-generate a unique session ID when the modal opens
@@ -78,7 +79,8 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
       uso_principal: uso,
       token_api: token,
       instance_id_api: provedor === "zapi" ? instanceIdApi : sessionId,
-      server_url: provedor === "evolution" ? serverUrl : undefined,
+      server_url: provedor === "evolution" ? serverUrl : provedor === "uazapi" ? serverUrl : undefined,
+      client_token: provedor === "zapi" ? clientToken : undefined,
     };
     onSave(inst);
     resetForm();
@@ -93,6 +95,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setServerUrl("");
     setWebhookUrl("");
     setUso("suporte");
+    setClientToken("");
   };
 
   const handleClose = () => {
@@ -134,6 +137,13 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
             <div className="space-y-1.5">
               <Label>Instance ID (Z-API)</Label>
               <Input placeholder="Cole o Instance ID" value={instanceIdApi} onChange={(e) => setInstanceIdApi(e.target.value)} />
+            </div>
+          )}
+
+          {provedor === "zapi" && (
+            <div className="space-y-1.5">
+              <Label>Client-Token <span className="text-muted-foreground text-[10px]">(opcional - Token de Segurança da Conta)</span></Label>
+              <Input placeholder="Cole o Client-Token da conta Z-API" value={clientToken} onChange={(e) => setClientToken(e.target.value)} type="password" />
             </div>
           )}
 

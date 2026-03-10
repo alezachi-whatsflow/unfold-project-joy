@@ -43,20 +43,23 @@ Deno.serve(async (req) => {
     const instanceApiId = inst.instance_id_api as string;
     const sessionId = inst.session_id as string;
     const serverUrl = (inst.server_url as string) || "";
+    const clientToken = (inst.client_token as string) || "";
 
     // ─── Z-API ───
     if (provedor === "zapi") {
       const base = `https://api.z-api.io/instances/${instanceApiId}/token/${token}`;
+      const zapiHeaders: Record<string, string> = {};
+      if (clientToken) zapiHeaders["Client-Token"] = clientToken;
 
       if (action === "qr-code") {
-        const r = await fetch(`${base}/qr-code/image`);
+        const r = await fetch(`${base}/qr-code/image`, { headers: zapiHeaders });
         if (!r.ok) return json({ error: `Z-API QR error ${r.status}`, success: false });
         const d = await r.json();
         return json({ qr_base64: d.value || d.image || null, raw: d });
       }
 
       if (action === "status") {
-        const r = await fetch(`${base}/status`);
+        const r = await fetch(`${base}/status`, { headers: zapiHeaders });
         if (!r.ok) return json({ error: `Z-API status error ${r.status}`, success: false });
         const d = await r.json();
         const connected = d.connected === true || d.status === "CONNECTED";
@@ -74,7 +77,7 @@ Deno.serve(async (req) => {
         const { phone, message } = body as { phone: string; message: string };
         const r = await fetch(`${base}/send-text`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...zapiHeaders },
           body: JSON.stringify({ phone, message }),
         });
         const d = await r.json();
