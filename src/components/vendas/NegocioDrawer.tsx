@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2 } from "lucide-react";
+import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { generateQuickReportHtml } from "@/components/intelligence/prospeccao/quickReportGenerator";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import NegocioEditModal from "./NegocioEditModal";
 
 interface Props {
   negocio: Negocio;
@@ -66,6 +68,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(negocio.titulo);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
@@ -138,6 +141,9 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
             </div>
           </div>
           <div className="flex gap-1">
+            <PermissionGate module="vendas" action="edit">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => setEditOpen(true)}><Pencil className="h-3.5 w-3.5" /></Button>
+            </PermissionGate>
             <PermissionGate module="vendas" action="delete">
               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
             </PermissionGate>
@@ -341,6 +347,13 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
           </>
         )}
       </div>
+
+      {/* Edit Modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <NegocioEditModal negocio={negocio} onClose={() => setEditOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

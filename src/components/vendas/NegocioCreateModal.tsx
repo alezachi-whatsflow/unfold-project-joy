@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useProducts } from "@/contexts/ProductContext";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,8 @@ export default function NegocioCreateModal({ onClose }: Props) {
   const { createNegocio } = useNegocios();
   const { user } = useAuth();
   const { userRole } = usePermissions();
+  const { products: catalogProducts } = useProducts();
+  const activeProducts = catalogProducts.filter(p => p.status === 'active');
   const isRepresentante = userRole === 'representante';
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -59,6 +62,19 @@ export default function NegocioCreateModal({ onClose }: Props) {
 
   const addProduto = () => {
     setProdutos([...produtos, { produtoId: crypto.randomUUID(), nome: '', quantidade: 1, valorUnitario: 0, desconto: 0, valorTotal: 0 }]);
+  };
+
+  const addProdutoFromCatalog = (productId: string) => {
+    const prod = activeProducts.find(p => p.id === productId);
+    if (!prod) return;
+    setProdutos([...produtos, {
+      produtoId: prod.id,
+      nome: prod.name,
+      quantidade: 1,
+      valorUnitario: prod.price,
+      desconto: 0,
+      valorTotal: prod.price,
+    }]);
   };
 
   const updateProduto = (index: number, field: string, value: any) => {
@@ -194,7 +210,24 @@ export default function NegocioCreateModal({ onClose }: Props) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label>Produtos</Label>
-            <Button variant="outline" size="sm" onClick={addProduto}><Plus className="mr-1 h-3 w-3" /> Adicionar</Button>
+            <div className="flex gap-2">
+              <Select onValueChange={addProdutoFromCatalog}>
+                <SelectTrigger className="h-8 w-[180px] text-xs">
+                  <SelectValue placeholder="Adicionar do catálogo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeProducts.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center justify-between gap-2">
+                        <span>{p.name}</span>
+                        <span className="text-muted-foreground text-[10px]">{p.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={addProduto}><Plus className="mr-1 h-3 w-3" /> Manual</Button>
+            </div>
           </div>
           {produtos.map((p, i) => (
             <div key={i} className="grid grid-cols-[1fr_60px_80px_60px_80px_32px] gap-2 items-end">
