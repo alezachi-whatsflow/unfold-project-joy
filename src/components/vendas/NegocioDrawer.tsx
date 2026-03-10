@@ -68,6 +68,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(negocio.titulo);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
