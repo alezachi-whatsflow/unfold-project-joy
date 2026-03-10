@@ -1,0 +1,1 @@
+UPDATE whatsapp_instances SET server_url = 'https://whatsflow.uazapi.com' WHERE id = 'cafc13bc-5ba2-49fd-9b93-ef5eb81051c8';
