@@ -83,85 +83,71 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ─── uazapi ───
+    // ─── uazapi v2 ───
+    // ─── uazapi v2 ───
     if (provedor === "uazapi") {
       const base = serverUrl || "https://api.uazapi.com";
+      const instHeaders: Record<string, string> = { "Content-Type": "application/json", token: token };
 
-      if (action === "qr-code") {
-        // Step 1: Start session first (creates instance + triggers QR generation)
-        const startR = await fetch(`${base}/start`, {
+      if (action === "qr-code" || action === "create-instance") {
+        // POST /instance/connect to initiate connection + QR generation
+        const connectR = await fetch(`${base}/instance/connect`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apitoken: token,
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({
-            session: sessionId,
-            wh_connect: "",
-            wh_qrcode: "",
-            wh_status: "",
-            wh_message: "",
-          }),
+          headers: instHeaders,
+          body: JSON.stringify({}),
         });
-        const startText = await startR.text();
-        console.log("uazapi start result:", startText);
+        const connectText = await connectR.text();
+        console.log("uazapi /instance/connect:", connectR.status, connectText.substring(0, 500));
 
-        // Step 2: Wait briefly for QR generation
-        await new Promise((r) => setTimeout(r, 2000));
-
-        // Step 3: Fetch QR Code image (returns PNG bytes)
-        const r = await fetch(
-          `${base}/getQrCode?session=${sessionId}&sessionkey=${sessionId}`,
-          { headers: { "Content-Type": "application/json" } }
-        );
-
-        if (!r.ok) {
-          return json({ error: `uazapi QR error ${r.status}`, success: false });
-        }
-
-        const contentType = r.headers.get("content-type") || "";
-        // QR is returned as PNG image bytes
-        if (contentType.startsWith("image/")) {
-          const buf = await r.arrayBuffer();
-          const bytes = new Uint8Array(buf);
-          let binary = "";
-          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-          const b64 = btoa(binary);
-          const ext = contentType.includes("png") ? "png" : "jpeg";
-          return json({ qr_base64: `data:image/${ext};base64,${b64}` });
-        }
-
-        // Fallback: try parsing as JSON
-        const rawText = await r.text();
         try {
-          const d = JSON.parse(rawText);
-          return json({ qr_base64: d.qrcode || d.value || null, raw: d });
-        } catch {
-          if (rawText.length > 100) {
-            return json({ qr_base64: `data:image/png;base64,${rawText.trim()}` });
+          const connectData = JSON.parse(connectText);
+          const qr = connectData.qrcode || connectData.qr || connectData.base64 ||
+                     connectData.data?.qrcode || connectData.data?.qr || connectData.data?.base64 || null;
+          
+          const state = connectData.state || connectData.status || connectData.data?.state || "";
+          if (state === "connected" || state === "open" || connectData.data?.Connected === true) {
+            await supabase.from("whatsapp_instances").update({
+              status: "connected",
+              ultimo_ping: new Date().toISOString(),
+              numero: connectData.phone || connectData.data?.phone || inst.numero,
+            }).eq("id", instance_id);
+            return json({ connected: true, raw: connectData });
           }
-          return json({ error: `Resposta inesperada do uazapi: ${rawText.substring(0, 200)}`, success: false });
+
+          if (qr) {
+            const qrBase64 = qr.startsWith("data:") ? qr : `data:image/png;base64,${qr}`;
+            return json({ qr_base64: qrBase64, raw: connectData });
+          }
+
+          return json({ 
+            qr_base64: null, 
+            raw: connectData,
+            message: "Conexão iniciada. Verifique o token da instância.",
+            success: connectR.ok 
+          });
+        } catch {
+          return json({ 
+            error: `uazapi connect error ${connectR.status}: ${connectText.substring(0, 300)}`, 
+            success: false 
+          });
         }
       }
 
       if (action === "status") {
-        const r = await fetch(`${base}/getSessionStatus`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({ session: sessionId }),
+        const r = await fetch(`${base}/instance/status`, {
+          method: "GET",
+          headers: { token: token },
         });
         if (!r.ok) return json({ error: `uazapi status error ${r.status}`, success: false });
         const d = await r.json();
-        const connected = d.status === "isLogged" || d.status === "CONNECTED" || d.connected === true;
+        const state = d.state || d.status || d.data?.state || "";
+        const connected = state === "connected" || state === "open" || 
+                         d.data?.Connected === true || d.data?.LoggedIn === true;
         if (connected) {
           await supabase.from("whatsapp_instances").update({
             status: "connected",
             ultimo_ping: new Date().toISOString(),
-            numero: d.number || d.phone || inst.numero,
+            numero: d.data?.Jid?.split("@")?.[0] || d.phone || inst.numero,
           }).eq("id", instance_id);
         }
         return json({ connected, raw: d });
@@ -169,31 +155,14 @@ Deno.serve(async (req) => {
 
       if (action === "send-text") {
         const { phone, message } = body as { phone: string; message: string };
-        const r = await fetch(`${base}/sendText`, {
+        const r = await fetch(`${base}/send/text`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({ session: sessionId, number: phone, text: message }),
+          headers: instHeaders,
+          body: JSON.stringify({ number: phone, text: message }),
         });
         const d = await r.json();
         if (!r.ok) return json({ error: `uazapi send error`, raw: d, success: false });
         return json({ success: true, raw: d });
-      }
-
-      if (action === "create-instance") {
-        const r = await fetch(`${base}/start`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apitoken: token,
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({ session: sessionId }),
-        });
-        const startText = await r.text();
-        return json({ success: r.ok, raw: startText });
       }
     }
 
