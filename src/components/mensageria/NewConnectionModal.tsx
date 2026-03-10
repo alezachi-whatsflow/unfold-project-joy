@@ -8,7 +8,7 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { WhatsAppInstance } from "./ConnectionCard";
 
-type SavePayload = WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string };
+type SavePayload = WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string; client_token?: string };
 
 type Props = {
   open: boolean;
