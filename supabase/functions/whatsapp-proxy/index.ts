@@ -98,8 +98,9 @@ Deno.serve(async (req) => {
             headers: { "Content-Type": "application/json", token },
             body: JSON.stringify({ session: sessionId, sessionKey: sessionId }),
           });
-          const cd = await cr.json();
-          console.log("uazapi create-instance result:", JSON.stringify(cd));
+          // create response might also be non-JSON
+          const crText = await cr.text();
+          console.log("uazapi create-instance result:", crText);
           // Retry QR after creation
           r = await fetch(
             `https://api.uazapi.com/instance/qrcode?session=${sessionId}`,
@@ -107,8 +108,31 @@ Deno.serve(async (req) => {
           );
         }
         if (!r.ok) return json({ error: `uazapi QR error ${r.status}`, success: false });
-        const d = await r.json();
-        return json({ qr_base64: d.qrcode || d.value || null, raw: d });
+
+        const contentType = r.headers.get("content-type") || "";
+        // If response is an image, convert to base64
+        if (contentType.startsWith("image/")) {
+          const buf = await r.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let binary = "";
+          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+          const b64 = btoa(binary);
+          const ext = contentType.includes("png") ? "png" : "jpeg";
+          return json({ qr_base64: `data:image/${ext};base64,${b64}` });
+        }
+
+        // Try parsing as JSON
+        const rawText = await r.text();
+        try {
+          const d = JSON.parse(rawText);
+          return json({ qr_base64: d.qrcode || d.value || null, raw: d });
+        } catch {
+          // If it's a base64 string directly
+          if (rawText.length > 100) {
+            return json({ qr_base64: `data:image/png;base64,${rawText.trim()}` });
+          }
+          return json({ error: `Resposta inesperada do uazapi: ${rawText.substring(0, 200)}`, success: false });
+        }
       }
 
       if (action === "status") {
