@@ -149,14 +149,19 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
           )}
 
           <div className="space-y-1.5">
-            <Label>Webhook URL</Label>
+            <Label>Webhook URL do Provedor</Label>
             <div className="flex gap-2">
-              <Input value={webhookUrl} readOnly className="font-mono text-xs bg-muted/50" />
+              <Input
+                placeholder={PROVIDER_WEBHOOK_PLACEHOLDERS[provedor] || "Cole a URL do webhook do provedor"}
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                className="font-mono text-xs"
+              />
               <Button variant="outline" size="icon" onClick={copyWebhook} disabled={!webhookUrl}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground">Configure este URL no painel do provedor para receber mensagens.</p>
+            <p className="text-[10px] text-muted-foreground">Cole aqui a URL de webhook gerada pelo provedor de API.</p>
           </div>
 
           <div className="space-y-1.5">
