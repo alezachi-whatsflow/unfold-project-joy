@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_instances ADD COLUMN IF NOT EXISTS admin_token text DEFAULT '';
