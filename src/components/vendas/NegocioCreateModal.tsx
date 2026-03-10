@@ -26,6 +26,8 @@ export default function NegocioCreateModal({ onClose }: Props) {
   const { createNegocio } = useNegocios();
   const { user } = useAuth();
   const { userRole } = usePermissions();
+  const { products: catalogProducts } = useProducts();
+  const activeProducts = catalogProducts.filter(p => p.status === 'active');
   const isRepresentante = userRole === 'representante';
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
