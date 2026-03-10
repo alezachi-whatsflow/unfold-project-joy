@@ -43,10 +43,13 @@ Deno.serve(async (req) => {
     const instanceApiId = inst.instance_id_api as string;
     const sessionId = inst.session_id as string;
     const serverUrl = (inst.server_url as string) || "";
+    const clientToken = (inst.client_token as string) || "";
 
     // ─── Z-API ───
     if (provedor === "zapi") {
       const base = `https://api.z-api.io/instances/${instanceApiId}/token/${token}`;
+      const zapiHeaders: Record<string, string> = {};
+      if (clientToken) zapiHeaders["Client-Token"] = clientToken;
 
       if (action === "qr-code") {
         const r = await fetch(`${base}/qr-code/image`);
