@@ -8,7 +8,7 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { WhatsAppInstance } from "./ConnectionCard";
 
-type SavePayload = WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string; client_token?: string };
+type SavePayload = WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string; client_token?: string; admin_token?: string };
 
 type Props = {
   open: boolean;
@@ -38,6 +38,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
   const [instanceIdApi, setInstanceIdApi] = useState("");
   const [serverUrl, setServerUrl] = useState("");
   const [clientToken, setClientToken] = useState("");
+  const [adminToken, setAdminToken] = useState("");
   const [uso, setUso] = useState("suporte");
 
   // Auto-generate a unique session ID when the modal opens
@@ -79,8 +80,9 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
       uso_principal: uso,
       token_api: token,
       instance_id_api: provedor === "zapi" ? instanceIdApi : sessionId,
-      server_url: provedor === "evolution" ? serverUrl : provedor === "uazapi" ? serverUrl : undefined,
+      server_url: (provedor === "evolution" || provedor === "uazapi") ? serverUrl : undefined,
       client_token: provedor === "zapi" ? clientToken : undefined,
+      admin_token: provedor === "uazapi" ? adminToken : undefined,
     };
     onSave(inst);
     resetForm();
@@ -96,6 +98,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setWebhookUrl("");
     setUso("suporte");
     setClientToken("");
+    setAdminToken("");
   };
 
   const handleClose = () => {
@@ -152,10 +155,21 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
             <Input placeholder="Cole aqui o token/API Key" value={token} onChange={(e) => setToken(e.target.value)} type="password" />
           </div>
 
-          {provedor === "evolution" && (
+          {provedor === "uazapi" && (
+            <div className="space-y-1.5">
+              <Label>Admin Token <span className="text-muted-foreground text-[10px]">(necessário para criar instância)</span></Label>
+              <Input placeholder="Cole o Admin Token do painel uazapi" value={adminToken} onChange={(e) => setAdminToken(e.target.value)} type="password" />
+            </div>
+          )}
+
+          {(provedor === "evolution" || provedor === "uazapi") && (
             <div className="space-y-1.5">
               <Label>URL do Servidor</Label>
-              <Input placeholder="https://evolution.seudominio.com" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} />
+              <Input 
+                placeholder={provedor === "uazapi" ? "https://whatsflow.uazapi.com" : "https://evolution.seudominio.com"} 
+                value={serverUrl} 
+                onChange={(e) => setServerUrl(e.target.value)} 
+              />
             </div>
           )}
 

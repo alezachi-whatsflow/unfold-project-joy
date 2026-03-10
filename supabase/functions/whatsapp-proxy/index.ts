@@ -87,13 +87,48 @@ Deno.serve(async (req) => {
     }
 
     // ─── uazapi v2 ───
-    // ─── uazapi v2 ───
     if (provedor === "uazapi") {
       const base = serverUrl || "https://api.uazapi.com";
+      const adminToken = (inst.admin_token as string) || "";
       const instHeaders: Record<string, string> = { "Content-Type": "application/json", token: token };
 
       if (action === "qr-code" || action === "create-instance") {
-        // POST /instance/connect to initiate connection + QR generation
+        // Step 1: Create instance on uazapi server if admin token is available
+        if (adminToken) {
+          const instanceName = sessionId || inst.label || `inst-${Date.now()}`;
+          console.log("uazapi: Creating instance with name:", instanceName);
+          
+          const createR = await fetch(`${base}/instance/init`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", admintoken: adminToken },
+            body: JSON.stringify({ instanceName }),
+          });
+          const createText = await createR.text();
+          console.log("uazapi /instance/init:", createR.status, createText.substring(0, 500));
+
+          if (createR.ok) {
+            try {
+              const createData = JSON.parse(createText);
+              // If the response contains a token, update it in the database
+              const newToken = createData.token || createData.instance?.token;
+              if (newToken && newToken !== token) {
+                await supabase.from("whatsapp_instances").update({
+                  token_api: newToken,
+                  instance_id_api: createData.instance?.instanceName || createData.instanceName || instanceName,
+                }).eq("id", instance_id);
+                // Update the token for subsequent requests
+                instHeaders.token = newToken;
+              }
+            } catch (e) {
+              console.log("uazapi: Could not parse create response, continuing...");
+            }
+          } else {
+            // Instance might already exist, continue to connect
+            console.log("uazapi: Instance init returned", createR.status, "- may already exist, trying connect...");
+          }
+        }
+
+        // Step 2: Connect instance to get QR code
         const connectR = await fetch(`${base}/instance/connect`, {
           method: "POST",
           headers: instHeaders,
@@ -125,7 +160,7 @@ Deno.serve(async (req) => {
           return json({ 
             qr_base64: null, 
             raw: connectData,
-            message: "Conexão iniciada. Verifique o token da instância.",
+            message: "Conexão iniciada. Aguarde o QR code ou verifique o token.",
             success: connectR.ok 
           });
         } catch {

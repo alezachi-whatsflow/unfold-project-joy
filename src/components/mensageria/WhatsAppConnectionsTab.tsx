@@ -39,7 +39,7 @@ export default function WhatsAppConnectionsTab() {
 
   useEffect(() => { fetchInstances(); }, []);
 
-  const handleSaveNew = async (inst: WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string; client_token?: string }) => {
+  const handleSaveNew = async (inst: WhatsAppInstance & { token_api?: string; server_url?: string; instance_id_api?: string; client_token?: string; admin_token?: string }) => {
     const { error } = await supabase.from("whatsapp_instances").insert({
       session_id: inst.session_id,
       label: inst.label,
@@ -51,6 +51,7 @@ export default function WhatsAppConnectionsTab() {
       instance_id_api: inst.instance_id_api || "",
       server_url: inst.server_url || null,
       client_token: inst.client_token || "",
+      admin_token: inst.admin_token || "",
     });
     if (error) {
       toast.error("Erro ao salvar: " + error.message);

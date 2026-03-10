@@ -1541,6 +1541,7 @@ export type Database = {
       }
       whatsapp_instances: {
         Row: {
+          admin_token: string | null
           client_token: string | null
           criado_em: string
           id: string
@@ -1558,6 +1559,7 @@ export type Database = {
           webhook_url: string
         }
         Insert: {
+          admin_token?: string | null
           client_token?: string | null
           criado_em?: string
           id?: string
@@ -1575,6 +1577,7 @@ export type Database = {
           webhook_url?: string
         }
         Update: {
+          admin_token?: string | null
           client_token?: string | null
           criado_em?: string
           id?: string
