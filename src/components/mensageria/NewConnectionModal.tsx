@@ -98,6 +98,7 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
     setWebhookUrl("");
     setUso("suporte");
     setClientToken("");
+    setAdminToken("");
   };
 
   const handleClose = () => {
