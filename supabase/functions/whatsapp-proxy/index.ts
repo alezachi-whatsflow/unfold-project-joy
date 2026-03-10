@@ -86,20 +86,42 @@ Deno.serve(async (req) => {
     // ─── uazapi v2 ───
     if (provedor === "uazapi") {
       const base = serverUrl || "https://api.uazapi.com";
-      // uazapi v2 uses header "token" for instance auth, "admintoken" for admin endpoints
-      const authHeaders = { token: token };
 
+      // Try multiple auth approaches - uazapi v2 may use "token" or "admintoken"
       if (action === "qr-code" || action === "create-instance") {
-        // GET /instance/connectionState/{instance} returns status + QR code
-        const r = await fetch(`${base}/instance/connectionState/${sessionId}`, {
+        // Step 1: Try to list instances to find the right one and discover auth
+        const listR = await fetch(`${base}/v1/instances`, {
           method: "GET",
-          headers: { ...authHeaders },
+          headers: { admintoken: token },
         });
-        const rawText = await r.text();
-        console.log("uazapi connectionState response:", r.status, rawText.substring(0, 500));
+        const listText = await listR.text();
+        console.log("uazapi list instances:", listR.status, listText.substring(0, 500));
+
+        // Step 2: Try connectionState with different auth headers
+        const instanceName = instanceApiId || sessionId;
+        let r: Response | null = null;
+        let rawText = "";
+
+        // Try with "token" header
+        r = await fetch(`${base}/v1/instance/qr`, {
+          method: "GET",
+          headers: { token: token },
+        });
+        rawText = await r.text();
+        console.log("uazapi /v1/instance/qr (token):", r.status, rawText.substring(0, 500));
 
         if (!r.ok) {
-          return json({ error: `uazapi connectionState error ${r.status}: ${rawText.substring(0, 200)}`, success: false });
+          // Try with admintoken header on connectionState
+          r = await fetch(`${base}/instance/connectionState/${instanceName}`, {
+            method: "GET",
+            headers: { admintoken: token },
+          });
+          rawText = await r.text();
+          console.log("uazapi connectionState (admintoken):", r.status, rawText.substring(0, 500));
+        }
+
+        if (!r.ok) {
+          return json({ error: `uazapi QR error ${r.status}: ${rawText.substring(0, 300)}`, success: false, debug: { listInstances: listText.substring(0, 300) } });
         }
 
         try {
