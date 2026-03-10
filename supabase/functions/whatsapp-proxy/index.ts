@@ -83,85 +83,96 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ─── uazapi ───
+    // ─── uazapi v2 ───
     if (provedor === "uazapi") {
       const base = serverUrl || "https://api.uazapi.com";
+      // uazapi v2 uses header "token" for instance auth, "admintoken" for admin endpoints
+      const authHeaders = { token: token };
 
-      if (action === "qr-code") {
-        // Step 1: Start session first (creates instance + triggers QR generation)
-        const startR = await fetch(`${base}/start`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apitoken: token,
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({
-            session: sessionId,
-            wh_connect: "",
-            wh_qrcode: "",
-            wh_status: "",
-            wh_message: "",
-          }),
+      if (action === "qr-code" || action === "create-instance") {
+        // GET /instance/connectionState/{instance} returns status + QR code
+        const r = await fetch(`${base}/instance/connectionState/${sessionId}`, {
+          method: "GET",
+          headers: { ...authHeaders },
         });
-        const startText = await startR.text();
-        console.log("uazapi start result:", startText);
-
-        // Step 2: Wait briefly for QR generation
-        await new Promise((r) => setTimeout(r, 2000));
-
-        // Step 3: Fetch QR Code image (returns PNG bytes)
-        const r = await fetch(
-          `${base}/getQrCode?session=${sessionId}&sessionkey=${sessionId}`,
-          { headers: { "Content-Type": "application/json" } }
-        );
+        const rawText = await r.text();
+        console.log("uazapi connectionState response:", r.status, rawText.substring(0, 500));
 
         if (!r.ok) {
-          return json({ error: `uazapi QR error ${r.status}`, success: false });
+          return json({ error: `uazapi connectionState error ${r.status}: ${rawText.substring(0, 200)}`, success: false });
         }
 
-        const contentType = r.headers.get("content-type") || "";
-        // QR is returned as PNG image bytes
-        if (contentType.startsWith("image/")) {
-          const buf = await r.arrayBuffer();
-          const bytes = new Uint8Array(buf);
-          let binary = "";
-          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-          const b64 = btoa(binary);
-          const ext = contentType.includes("png") ? "png" : "jpeg";
-          return json({ qr_base64: `data:image/${ext};base64,${b64}` });
-        }
-
-        // Fallback: try parsing as JSON
-        const rawText = await r.text();
         try {
           const d = JSON.parse(rawText);
-          return json({ qr_base64: d.qrcode || d.value || null, raw: d });
-        } catch {
-          if (rawText.length > 100) {
-            return json({ qr_base64: `data:image/png;base64,${rawText.trim()}` });
+          // Extract QR code from response
+          const qr = d.qrcode || d.qr || d.base64 || d.data?.qrcode || d.data?.qr || null;
+          const state = d.state || d.status || d.data?.state || "";
+          
+          if (state === "connected" || state === "open") {
+            await supabase.from("whatsapp_instances").update({
+              status: "connected",
+              ultimo_ping: new Date().toISOString(),
+              numero: d.phone || d.number || d.data?.phone || inst.numero,
+            }).eq("id", instance_id);
+            return json({ connected: true, raw: d });
           }
-          return json({ error: `Resposta inesperada do uazapi: ${rawText.substring(0, 200)}`, success: false });
+
+          if (qr) {
+            const qrBase64 = qr.startsWith("data:") ? qr : `data:image/png;base64,${qr}`;
+            return json({ qr_base64: qrBase64, raw: d });
+          }
+
+          // If no QR yet, try /v1/instance/qr endpoint
+          const qrR = await fetch(`${base}/v1/instance/qr`, {
+            method: "GET",
+            headers: { ...authHeaders },
+          });
+          const qrText = await qrR.text();
+          console.log("uazapi /v1/instance/qr response:", qrR.status, qrText.substring(0, 500));
+
+          if (qrR.ok) {
+            const contentType = qrR.headers.get("content-type") || "";
+            if (contentType.startsWith("image/")) {
+              // Binary image response
+              const encoder = new TextEncoder();
+              const bytes = encoder.encode(qrText);
+              const b64 = btoa(String.fromCharCode(...new Uint8Array(bytes)));
+              return json({ qr_base64: `data:image/png;base64,${b64}` });
+            }
+            try {
+              const qrData = JSON.parse(qrText);
+              const qrCode = qrData.qrcode || qrData.qr || qrData.base64 || qrData.data?.qrcode || null;
+              if (qrCode) {
+                return json({ qr_base64: qrCode.startsWith("data:") ? qrCode : `data:image/png;base64,${qrCode}` });
+              }
+              return json({ qr_base64: null, raw: qrData });
+            } catch {
+              if (qrText.length > 100) {
+                return json({ qr_base64: `data:image/png;base64,${qrText.trim()}` });
+              }
+            }
+          }
+
+          return json({ qr_base64: null, raw: d, message: "QR não disponível ainda. Tente novamente em alguns segundos." });
+        } catch {
+          return json({ error: `Resposta inesperada: ${rawText.substring(0, 200)}`, success: false });
         }
       }
 
       if (action === "status") {
-        const r = await fetch(`${base}/getSessionStatus`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({ session: sessionId }),
+        const r = await fetch(`${base}/instance/connectionState/${sessionId}`, {
+          method: "GET",
+          headers: { ...authHeaders },
         });
         if (!r.ok) return json({ error: `uazapi status error ${r.status}`, success: false });
         const d = await r.json();
-        const connected = d.status === "isLogged" || d.status === "CONNECTED" || d.connected === true;
+        const state = d.state || d.status || d.data?.state || "";
+        const connected = state === "connected" || state === "open";
         if (connected) {
           await supabase.from("whatsapp_instances").update({
             status: "connected",
             ultimo_ping: new Date().toISOString(),
-            numero: d.number || d.phone || inst.numero,
+            numero: d.phone || d.number || d.data?.phone || inst.numero,
           }).eq("id", instance_id);
         }
         return json({ connected, raw: d });
@@ -169,31 +180,14 @@ Deno.serve(async (req) => {
 
       if (action === "send-text") {
         const { phone, message } = body as { phone: string; message: string };
-        const r = await fetch(`${base}/sendText`, {
+        const r = await fetch(`${base}/v1/messages/text`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({ session: sessionId, number: phone, text: message }),
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify({ phone, message }),
         });
         const d = await r.json();
         if (!r.ok) return json({ error: `uazapi send error`, raw: d, success: false });
         return json({ success: true, raw: d });
-      }
-
-      if (action === "create-instance") {
-        const r = await fetch(`${base}/start`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apitoken: token,
-            sessionkey: sessionId,
-          },
-          body: JSON.stringify({ session: sessionId }),
-        });
-        const startText = await r.text();
-        return json({ success: r.ok, raw: startText });
       }
     }
 
