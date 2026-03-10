@@ -28,13 +28,34 @@ export default function QRCodeModal({ instance, onClose, onStatusChange }: Props
       const { data, error } = await supabase.functions.invoke("whatsapp-proxy", {
         body: { action: "qr-code", instance_id: instance.id },
       });
-      if (error) throw error;
+      if (error) {
+        // Extract useful message from FunctionsHttpError
+        let msg = "Erro ao buscar QR Code";
+        if (error instanceof Error) {
+          msg = error.message;
+        }
+        // Try to parse response body for more details
+        if (typeof (error as any).context?.body === "string") {
+          try {
+            const parsed = JSON.parse((error as any).context.body);
+            msg = parsed?.error || msg;
+          } catch {}
+        }
+        setErrorMsg(msg);
+        setStatus("error");
+        return;
+      }
+      if (data?.error) {
+        setErrorMsg(data.error);
+        setStatus("error");
+        return;
+      }
       if (data?.qr_base64) {
         const base64 = data.qr_base64;
         setQrImage(base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`);
         setStatus("waiting");
       } else {
-        setErrorMsg("QR não retornado pela API. Verifique as credenciais.");
+        setErrorMsg("QR não retornado pela API. Verifique as credenciais e se a instância existe no provedor.");
         setStatus("error");
       }
     } catch (err: any) {
