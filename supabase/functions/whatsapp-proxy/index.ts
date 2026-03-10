@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
 
     // ─── Evolution API ───
     if (provedor === "evolution") {
-      if (!serverUrl) return json({ error: "server_url não configurada" }, 400);
+      if (!serverUrl) return json({ error: "server_url não configurada", success: false });
 
       if (action === "qr-code" || action === "create-instance") {
         // Create + get QR in one step
