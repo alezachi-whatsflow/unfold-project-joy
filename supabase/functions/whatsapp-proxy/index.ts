@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ session: sessionId, phone, text: message }),
         });
         const d = await r.json();
-        if (!r.ok) return json({ error: `uazapi send error`, raw: d }, 502);
+        if (!r.ok) return json({ error: `uazapi send error`, raw: d, success: false });
         return json({ success: true, raw: d });
       }
 
