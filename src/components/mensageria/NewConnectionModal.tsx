@@ -155,10 +155,21 @@ export default function NewConnectionModal({ open, onClose, onSave }: Props) {
             <Input placeholder="Cole aqui o token/API Key" value={token} onChange={(e) => setToken(e.target.value)} type="password" />
           </div>
 
-          {provedor === "evolution" && (
+          {provedor === "uazapi" && (
+            <div className="space-y-1.5">
+              <Label>Admin Token <span className="text-muted-foreground text-[10px]">(necessário para criar instância)</span></Label>
+              <Input placeholder="Cole o Admin Token do painel uazapi" value={adminToken} onChange={(e) => setAdminToken(e.target.value)} type="password" />
+            </div>
+          )}
+
+          {(provedor === "evolution" || provedor === "uazapi") && (
             <div className="space-y-1.5">
               <Label>URL do Servidor</Label>
-              <Input placeholder="https://evolution.seudominio.com" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} />
+              <Input 
+                placeholder={provedor === "uazapi" ? "https://whatsflow.uazapi.com" : "https://evolution.seudominio.com"} 
+                value={serverUrl} 
+                onChange={(e) => setServerUrl(e.target.value)} 
+              />
             </div>
           )}
 
