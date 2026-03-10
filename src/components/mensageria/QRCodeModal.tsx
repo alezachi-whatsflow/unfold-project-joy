@@ -29,19 +29,8 @@ export default function QRCodeModal({ instance, onClose, onStatusChange }: Props
         body: { action: "qr-code", instance_id: instance.id },
       });
       if (error) {
-        // Extract useful message from FunctionsHttpError
-        let msg = "Erro ao buscar QR Code";
-        if (error instanceof Error) {
-          msg = error.message;
-        }
-        // Try to parse response body for more details
-        if (typeof (error as any).context?.body === "string") {
-          try {
-            const parsed = JSON.parse((error as any).context.body);
-            msg = parsed?.error || msg;
-          } catch {}
-        }
-        setErrorMsg(msg);
+        console.error("QR invoke error:", error);
+        setErrorMsg("Erro de conexão com o servidor. Tente novamente.");
         setStatus("error");
         return;
       }
