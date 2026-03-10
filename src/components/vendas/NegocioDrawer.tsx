@@ -347,6 +347,13 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
           </>
         )}
       </div>
+
+      {/* Edit Modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <NegocioEditModal negocio={negocio} onClose={() => setEditOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
