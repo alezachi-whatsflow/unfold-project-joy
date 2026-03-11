@@ -41,15 +41,30 @@ export default function WhatsAppLayout() {
   const [rightOpen, setRightOpen] = useState(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSyncRef = useRef<string>("1970-01-01T00:00:00Z");
+  const didBootstrapSyncRef = useRef(false);
 
   /* ── fetch conversations (distinct remote_jid) ──── */
   const fetchConversations = useCallback(async () => {
     // Get latest message per remote_jid
-    const { data: allMsgs } = await supabase
+    let { data: allMsgs } = await supabase
       .from("whatsapp_messages")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1000);
+
+    // Bootstrap sync (1x) if banco ainda vazio
+    if ((!allMsgs || allMsgs.length === 0) && !didBootstrapSyncRef.current) {
+      didBootstrapSyncRef.current = true;
+      const { error: syncError } = await supabase.functions.invoke("sync-uazapi-messages");
+      if (!syncError) {
+        const { data: reloaded } = await supabase
+          .from("whatsapp_messages")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(1000);
+        allMsgs = reloaded ?? [];
+      }
+    }
 
     if (!allMsgs || allMsgs.length === 0) {
       setConversations([]);
