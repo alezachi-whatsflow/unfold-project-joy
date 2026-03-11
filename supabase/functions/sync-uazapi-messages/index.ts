@@ -110,7 +110,9 @@ Deno.serve(async (req) => {
           const remoteJid = msg?.key?.remoteJid || msg?.remoteJid || msg?.chatid || chat.wa_chatid || jid;
           if (!remoteJid) continue;
 
-          const messageId = msg?.key?.id || msg?.id || msg?.messageid || `${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
+          const messageId =
+            normalizeMessageId(msg?.key?.id || msg?.messageid || msg?.id) ||
+            `${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
           const fromMe = Boolean(msg?.key?.fromMe ?? msg?.fromMe ?? false);
 
           const rawType = msg.messageType ?? msg.type ?? chat.wa_lastMessageType ?? "text";
