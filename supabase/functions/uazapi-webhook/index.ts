@@ -10,6 +10,106 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "content-type",
 };
 
+type AnyRecord = Record<string, any>;
+
+const messageStatusMap: Record<string, number> = {
+  ERROR: 0,
+  PENDING: 1,
+  SERVER_ACK: 2,
+  DELIVERY_ACK: 3,
+  READ: 4,
+  PLAYED: 4,
+};
+
+const asArray = <T>(value: T | T[] | null | undefined): T[] => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+const toIso = (value: unknown) => {
+  if (value === null || value === undefined || value === "") {
+    return new Date().toISOString();
+  }
+
+  const asNumber = Number(value);
+  if (!Number.isNaN(asNumber) && asNumber > 0) {
+    const ms = asNumber > 1_000_000_000_000 ? asNumber : asNumber * 1000;
+    return new Date(ms).toISOString();
+  }
+
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
+const getEventName = (payload: AnyRecord) =>
+  payload.event || payload.EventType || payload.eventType || payload.type || payload.action || "";
+
+const getInstanceName = (payload: AnyRecord) =>
+  payload.instance || payload.instanceName || payload.name || payload.token || "";
+
+const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) => {
+  const chatPayload = payload.chat || {};
+
+  const remoteJid =
+    msg?.key?.remoteJid ||
+    msg?.remoteJid ||
+    msg?.chatid ||
+    msg?.chatId ||
+    chatPayload?.wa_chatid ||
+    chatPayload?.jid ||
+    chatPayload?.id ||
+    null;
+
+  if (!remoteJid) return null;
+
+  const fromMe = Boolean(
+    msg?.key?.fromMe ??
+      msg?.fromMe ??
+      msg?.sentByMe ??
+      (msg?.sender && payload?.owner && String(msg.sender).includes(String(payload.owner)))
+  );
+
+  const messageId =
+    msg?.key?.id ||
+    msg?.id ||
+    msg?.messageid ||
+    msg?.messageId ||
+    `${instance || "unknown"}-${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
+
+  const body =
+    msg?.body ??
+    msg?.text ??
+    msg?.content?.text ??
+    msg?.message?.conversation ??
+    msg?.message?.extendedTextMessage?.text ??
+    chatPayload?.wa_lastMessageTextVote ??
+    chatPayload?.wa_lastMsg ??
+    null;
+
+  const type =
+    msg?.messageType ??
+    msg?.type ??
+    msg?.content?.type ??
+    chatPayload?.wa_lastMessageType ??
+    (body ? "text" : "unknown");
+
+  return {
+    instance_name: instance,
+    remote_jid: remoteJid,
+    message_id: String(messageId),
+    direction: fromMe ? "outgoing" : "incoming",
+    type,
+    body,
+    media_url: msg?.mediaUrl ?? msg?.media?.url ?? null,
+    caption: msg?.caption ?? msg?.message?.imageMessage?.caption ?? msg?.message?.videoMessage?.caption ?? null,
+    status: typeof msg?.status === "number" ? msg.status : fromMe ? 2 : 4,
+    track_source: msg?.trackSource ?? msg?.track_source ?? null,
+    track_id: msg?.trackId ?? msg?.track_id ?? null,
+    raw_payload: msg,
+    created_at: toIso(msg?.messageTimestamp ?? msg?.timestamp ?? chatPayload?.wa_lastMsgTimestamp),
+  };
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,71 +121,28 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const payload = await req.json();
-    
-    // Log raw payload structure for debugging
+    const payload: AnyRecord = await req.json();
+
     console.log("uazapi-webhook raw keys:", Object.keys(payload).join(","));
     console.log("uazapi-webhook raw:", JSON.stringify(payload).substring(0, 500));
 
-    // uazapi v2 may use different field names
-    const event = payload.event || payload.type || payload.action || "";
-    const instance = payload.instance || payload.instanceName || payload.name || "";
-    const data = payload.data || payload.message || payload.messages || payload;
+    const event = getEventName(payload);
+    const instance = getInstanceName(payload);
+    const data = payload.data ?? payload.message ?? payload.messages ?? payload;
 
     console.log(`uazapi-webhook: event=${event}, instance=${instance}`);
 
-    if (!event) {
-      // Try to detect event from payload structure
-      if (payload.key?.remoteJid || payload.remoteJid || (Array.isArray(payload) && payload[0]?.key)) {
-        // Direct message payload
-        console.log("uazapi-webhook: detected direct message payload");
-        const msgs = Array.isArray(payload) ? payload : [payload];
-        
-        // Try to find instance from URL or use first instance
-        const { data: firstInst } = await supabase
-          .from("whatsapp_instances")
-          .select("instance_name")
-          .eq("provedor", "uazapi")
-          .limit(1)
-          .single();
-        
-        const instName = firstInst?.instance_name || "unknown";
-        
-        for (const msg of msgs) {
-          const remoteJid = msg.key?.remoteJid || msg.remoteJid;
-          if (!remoteJid) continue;
-          
-          const { error } = await supabase.from("whatsapp_messages").upsert(
-            {
-              instance_name: instName,
-              remote_jid: remoteJid,
-              message_id: msg.key?.id || msg.id || `${remoteJid}-${Date.now()}`,
-              direction: msg.key?.fromMe || msg.fromMe ? "outgoing" : "incoming",
-              type: msg.messageType ?? msg.type ?? "text",
-              body: msg.body ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? msg.text ?? null,
-              media_url: msg.mediaUrl ?? null,
-              caption: msg.message?.imageMessage?.caption ?? msg.caption ?? null,
-              status: (msg.key?.fromMe || msg.fromMe) ? 2 : 4,
-              raw_payload: msg,
-              created_at: msg.messageTimestamp
-                ? new Date(msg.messageTimestamp * 1000).toISOString()
-                : new Date().toISOString(),
-            },
-            { onConflict: "message_id" }
-          );
-          if (error) console.error("uazapi-webhook: direct msg upsert error:", error);
-        }
-        
-        return new Response("OK", { status: 200, headers: corsHeaders });
+    if (!event && payload.message) {
+      const normalized = normalizeMessage(payload.message, payload, instance);
+      if (normalized) {
+        await supabase.from("whatsapp_messages").upsert(normalized, { onConflict: "message_id" });
       }
-      
       return new Response("OK", { status: 200, headers: corsHeaders });
     }
 
     switch (event) {
-      // ─── Conexão ───────────────────────────────────────────
       case "connection": {
-        const instData = data?.instance || data;
+        const instData = data?.instance || data || {};
         const status = instData?.status ?? data?.state ?? "disconnected";
         const updateData: Record<string, unknown> = {
           status,
@@ -110,12 +167,10 @@ Deno.serve(async (req) => {
 
         if (status === "disconnected" || status === "close") {
           updateData.last_disconnect = new Date().toISOString();
-          updateData.last_disconnect_reason = instData?.lastDisconnectReason || data?.reason || data?.statusReason || null;
+          updateData.last_disconnect_reason =
+            instData?.lastDisconnectReason || data?.reason || data?.statusReason || null;
         }
 
-        console.log(`uazapi-webhook: connection update for ${instance}:`, JSON.stringify(updateData).substring(0, 300));
-
-        // Try matching by instance_name first, then by instance_token
         const { data: matched } = await supabase
           .from("whatsapp_instances")
           .select("id")
@@ -124,10 +179,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (matched) {
-          await supabase
-            .from("whatsapp_instances")
-            .update(updateData)
-            .eq("id", matched.id);
+          await supabase.from("whatsapp_instances").update(updateData).eq("id", matched.id);
         } else {
           console.warn(`uazapi-webhook: No instance found for: ${instance}`);
         }
@@ -135,41 +187,49 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // ─── Mensagens novas / histórico ───────────────────────
       case "messages":
       case "messages.upsert": {
-        const msgs = Array.isArray(data) ? data : [data];
+        const msgs = asArray(data).flatMap((item) => {
+          if (item?.message) return asArray(item.message);
+          return [item];
+        });
+
+        let saved = 0;
 
         for (const msg of msgs) {
-          if (!msg?.key?.remoteJid) continue;
+          const normalized = normalizeMessage(msg, payload, instance);
+          if (!normalized) continue;
 
-          const { error } = await supabase.from("whatsapp_messages").upsert(
-            {
-              instance_name: instance,
-              remote_jid: msg.key.remoteJid,
-              message_id: msg.key.id,
-              direction: msg.key.fromMe ? "outgoing" : "incoming",
-              type: msg.messageType ?? "text",
-              body: msg.body ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? null,
-              media_url: msg.mediaUrl ?? null,
-              caption: msg.message?.imageMessage?.caption ?? msg.message?.videoMessage?.caption ?? null,
-              status: msg.key.fromMe ? 2 : 4,
-              track_source: msg.trackSource ?? null,
-              track_id: msg.trackId ?? null,
-              raw_payload: msg,
-              created_at: msg.messageTimestamp
-                ? new Date(msg.messageTimestamp * 1000).toISOString()
-                : new Date().toISOString(),
-            },
-            { onConflict: "message_id" }
-          );
+          const { error } = await supabase
+            .from("whatsapp_messages")
+            .upsert(normalized, { onConflict: "message_id" });
 
           if (error) {
             console.error("uazapi-webhook: message upsert error:", error);
+          } else {
+            saved += 1;
           }
         }
 
-        // Atualizar último ping da instância
+        // fallback: cria um snapshot com último conteúdo do chat quando payload vem sem message detalhada
+        if (saved === 0 && payload?.chat?.wa_chatid) {
+          const chatSnapshot = normalizeMessage(
+            {
+              chatid: payload.chat.wa_chatid,
+              messageType: payload.chat.wa_lastMessageType ?? "text",
+              text: payload.chat.wa_lastMessageTextVote ?? payload.chat.wa_lastMsg ?? "",
+              messageTimestamp: payload.chat.wa_lastMsgTimestamp,
+              fromMe: false,
+            },
+            payload,
+            instance
+          );
+
+          if (chatSnapshot) {
+            await supabase.from("whatsapp_messages").upsert(chatSnapshot, { onConflict: "message_id" });
+          }
+        }
+
         await supabase
           .from("whatsapp_instances")
           .update({ ultimo_ping: new Date().toISOString() })
@@ -178,35 +238,26 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // ─── Atualização de status de mensagem ─────────────────
       case "messages_update":
       case "messages.update": {
-        const updates = Array.isArray(data) ? data : [data];
+        const updates = asArray(data);
 
         for (const upd of updates) {
-          if (!upd?.key?.id) continue;
+          const messageId = upd?.key?.id || upd?.id || upd?.messageid || upd?.messageId;
+          if (!messageId) continue;
 
-          const statusMap: Record<string, number> = {
-            ERROR: 0,
-            PENDING: 1,
-            SERVER_ACK: 2,
-            DELIVERY_ACK: 3,
-            READ: 4,
-            PLAYED: 4,
-          };
-
-          const newStatus = statusMap[upd.update?.status] ?? undefined;
+          const statusKey = upd?.update?.status || upd?.status;
+          const newStatus = messageStatusMap[String(statusKey)] ?? undefined;
           if (newStatus !== undefined) {
             await supabase
               .from("whatsapp_messages")
               .update({ status: newStatus })
-              .eq("message_id", upd.key.id);
+              .eq("message_id", String(messageId));
           }
         }
         break;
       }
 
-      // ─── Leads (CRM embutido) ─────────────────────────────
       case "leads": {
         const lead = data;
         if (!lead?.wa_chatid) break;
@@ -236,6 +287,6 @@ Deno.serve(async (req) => {
     return new Response("OK", { status: 200, headers: corsHeaders });
   } catch (err) {
     console.error("uazapi-webhook error:", err);
-    return new Response("OK", { status: 200, headers: corsHeaders }); // Sempre 200
+    return new Response("OK", { status: 200, headers: corsHeaders });
   }
 });
