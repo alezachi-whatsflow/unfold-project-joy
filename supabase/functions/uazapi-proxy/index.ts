@@ -24,6 +24,13 @@ const ADMIN_ENDPOINTS = [
 const isAdminEndpoint = (path: string) =>
   ADMIN_ENDPOINTS.some((ep) => path === ep || path.startsWith(ep));
 
+const normalizeMessageId = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  return raw.replace(/^\d+:/, "");
+};
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
