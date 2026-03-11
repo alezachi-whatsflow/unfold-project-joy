@@ -274,47 +274,34 @@ export default function WhatsAppLayout() {
         "postgres_changes",
         { event: "*", schema: "public", table: "whatsapp_messages" },
         (payload) => {
-          const newMsg = payload.new as any;
-          if (!newMsg) return;
+          void (async () => {
+            const newMsg = payload.new as any;
+            if (!newMsg) return;
 
-          // Refresh conversations list
-          fetchConversations();
+            // Refresh conversations list
+            fetchConversations();
 
-          // If the new message belongs to the selected conversation, append it
-          if (selectedJid && newMsg.remote_jid === selectedJid && payload.eventType === "INSERT") {
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === newMsg.id)) return prev;
-              return [
-                ...prev,
-                {
-                  id: newMsg.id,
-                  conversationId: newMsg.remote_jid,
-                  content: newMsg.body || newMsg.caption || `[${newMsg.type}]`,
-                  timestamp: new Date(newMsg.created_at).toLocaleString("pt-BR", {
-                    day: "2-digit", month: "2-digit", year: "numeric",
-                    hour: "2-digit", minute: "2-digit",
-                  }),
-                  direction: newMsg.direction === "outgoing" ? "outgoing" : "incoming",
-                  type: mapMessageType(newMsg.type),
-                  status: statusNumToLabel(newMsg.status ?? 0),
-                  senderName: newMsg.direction === "incoming" ? jidToPhone(newMsg.remote_jid) : undefined,
-                  mediaUrl: newMsg.media_url || null,
-                  caption: newMsg.caption || null,
-                },
-              ];
-            });
-          }
+            // If the new message belongs to the selected conversation, append it
+            if (selectedJid && newMsg.remote_jid === selectedJid && payload.eventType === "INSERT") {
+              const resolvedMediaUrl = await resolveMessageMediaUrl(newMsg);
 
-          // Update status on UPDATE events
-          if (payload.eventType === "UPDATE" && selectedJid && newMsg.remote_jid === selectedJid) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
-              )
-            );
-          }
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === newMsg.id)) return prev;
+                return [...prev, mapDbMessageToUi(newMsg, resolvedMediaUrl)];
+              });
+            }
 
-          pollInterval = 3000; // reset
+            // Update status on UPDATE events
+            if (payload.eventType === "UPDATE" && selectedJid && newMsg.remote_jid === selectedJid) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
+                )
+              );
+            }
+
+            pollInterval = 3000; // reset
+          })();
         }
       )
       .subscribe();
@@ -322,7 +309,9 @@ export default function WhatsAppLayout() {
     // Polling fallback
     const poll = async () => {
       if (!isActive) return;
+
       await fetchConversations();
+
       if (selectedJid) {
         const { data } = await supabase
           .from("whatsapp_messages")
@@ -332,36 +321,33 @@ export default function WhatsAppLayout() {
           .order("created_at", { ascending: true });
 
         if (data && data.length > 0) {
+          const resolvedRows = await Promise.all(
+            data.map(async (row: any) => ({
+              row,
+              resolvedMediaUrl: await resolveMessageMediaUrl(row),
+            }))
+          );
+
           setMessages((prev) => {
             const existingIds = new Set(prev.map((m) => m.id));
-            const newMsgs: Message[] = data
-              .filter((m: any) => !existingIds.has(m.id))
-              .map((m: any) => ({
-                id: m.id,
-                conversationId: m.remote_jid,
-                content: m.body || m.caption || `[${m.type}]`,
-                timestamp: new Date(m.created_at).toLocaleString("pt-BR", {
-                  day: "2-digit", month: "2-digit", year: "numeric",
-                  hour: "2-digit", minute: "2-digit",
-                }),
-                direction: m.direction === "outgoing" ? "outgoing" : "incoming",
-                type: mapMessageType(m.type),
-                status: statusNumToLabel(m.status ?? 0),
-                senderName: m.direction === "incoming" ? jidToPhone(m.remote_jid) : undefined,
-                mediaUrl: m.media_url || null,
-                caption: m.caption || null,
-              }));
+            const newMsgs: Message[] = resolvedRows
+              .filter(({ row }) => !existingIds.has(row.id))
+              .map(({ row, resolvedMediaUrl }) => mapDbMessageToUi(row, resolvedMediaUrl));
+
             if (newMsgs.length > 0) {
               lastSyncRef.current = data[data.length - 1].created_at;
               return [...prev, ...newMsgs];
             }
+
             return prev;
           });
+
           pollInterval = 3000;
         } else {
           pollInterval = Math.min(pollInterval * 1.5, 15000);
         }
       }
+
       if (isActive) {
         pollTimeoutRef.current = setTimeout(poll, pollInterval);
       }
@@ -374,7 +360,7 @@ export default function WhatsAppLayout() {
       clearTimeout(pollTimeoutRef.current);
       supabase.removeChannel(channel);
     };
-  }, [selectedJid, fetchConversations]);
+  }, [selectedJid, fetchConversations, mapDbMessageToUi, resolveMessageMediaUrl]);
 
   /* ── send message via uazapi ────────────────────── */
   const handleSend = async (text: string) => {
