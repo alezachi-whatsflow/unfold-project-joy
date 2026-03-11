@@ -210,9 +210,11 @@ export default function WhatsAppLayout() {
                     hour: "2-digit", minute: "2-digit",
                   }),
                   direction: newMsg.direction === "outgoing" ? "outgoing" : "incoming",
-                  type: newMsg.type === "audio" ? "audio" : newMsg.type === "image" ? "image" : "text",
+                  type: mapMessageType(newMsg.type),
                   status: statusNumToLabel(newMsg.status ?? 0),
                   senderName: newMsg.direction === "incoming" ? jidToPhone(newMsg.remote_jid) : undefined,
+                  mediaUrl: newMsg.media_url || null,
+                  caption: newMsg.caption || null,
                 },
               ];
             });
