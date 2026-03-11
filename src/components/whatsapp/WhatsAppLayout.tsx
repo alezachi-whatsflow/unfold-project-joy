@@ -446,13 +446,15 @@ export default function WhatsAppLayout() {
       return;
     }
 
+    // For groups, send using the full JID; for contacts, use phone number
+    const isGroup = isGroupJid(selectedJid);
     const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
       body: {
         instanceName: conv.instanceName,
         path: "/send/text",
         method: "POST",
         body: {
-          number: jidToPhone(selectedJid),
+          number: isGroup ? selectedJid : jidToPhone(selectedJid),
           text,
         },
       },
