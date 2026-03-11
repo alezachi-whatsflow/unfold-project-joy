@@ -324,23 +324,21 @@ Deno.serve(async (req) => {
           const pushName = hasIncoming ? (msgs[0]?.senderName || msgs[0]?.pushName || null) : null;
           const contactName = leadName || pushName || null;
 
-          // Always upsert lead record (even without name) to track ticket/status
           await supabase.from("whatsapp_leads").upsert(
             {
               instance_name: instance,
               chat_id: chat.wa_chatid,
               lead_name: chat.lead_name || (hasIncoming ? pushName : null) || undefined,
               lead_full_name: chat.lead_fullName || (hasIncoming ? pushName : null) || undefined,
-                lead_status: chat.lead_status || null,
-                is_ticket_open: chat.lead_isTicketOpen ?? false,
-                assigned_attendant_id: chat.lead_assignedAttendant_id || null,
-                kanban_order: chat.lead_kanbanOrder ?? 0,
-                lead_tags: chat.lead_tags || [],
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "instance_name,chat_id" }
-            );
-          }
+              lead_status: chat.lead_status || null,
+              is_ticket_open: chat.lead_isTicketOpen ?? false,
+              assigned_attendant_id: chat.lead_assignedAttendant_id || null,
+              kanban_order: chat.lead_kanbanOrder ?? 0,
+              lead_tags: chat.lead_tags || [],
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "instance_name,chat_id" }
+          );
         }
 
         await supabase
