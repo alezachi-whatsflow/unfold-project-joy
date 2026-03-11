@@ -14,6 +14,7 @@ interface ChatPanelProps {
   onToggleRight: () => void;
   onSend: (text: string) => void;
   onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
+  onNewConversation?: () => void;
 }
 
 // Quick action chips
