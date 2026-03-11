@@ -86,12 +86,44 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     chatPayload?.wa_lastMsg ??
     null;
 
-  const type =
+  // Extract media URL from various possible locations
+  const mediaUrl =
+    msg?.mediaUrl ??
+    msg?.media?.url ??
+    msg?.message?.imageMessage?.url ??
+    msg?.message?.videoMessage?.url ??
+    msg?.message?.documentMessage?.url ??
+    msg?.message?.audioMessage?.url ??
+    msg?.message?.stickerMessage?.url ??
+    null;
+
+  // Extract caption from media messages
+  const captionVal =
+    msg?.caption ??
+    msg?.message?.imageMessage?.caption ??
+    msg?.message?.videoMessage?.caption ??
+    msg?.message?.documentMessage?.caption ??
+    msg?.content?.caption ??
+    null;
+
+  const rawType =
     msg?.messageType ??
     msg?.type ??
     msg?.content?.type ??
     chatPayload?.wa_lastMessageType ??
-    (body ? "text" : "unknown");
+    "";
+
+  // Normalize message type to simple categories
+  const normalizedType = rawType.toLowerCase();
+  let type = "text";
+  if (normalizedType.includes("image")) type = "image";
+  else if (normalizedType.includes("video") || normalizedType === "ptv") type = "video";
+  else if (normalizedType.includes("audio") || normalizedType === "ptt") type = "audio";
+  else if (normalizedType.includes("document")) type = "document";
+  else if (normalizedType.includes("sticker")) type = "sticker";
+  else if (body) type = "text";
+  else if (mediaUrl) type = "media";
+  else type = rawType || "unknown";
 
   return {
     instance_name: instance,
@@ -99,9 +131,9 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     message_id: String(messageId),
     direction: fromMe ? "outgoing" : "incoming",
     type,
-    body,
-    media_url: msg?.mediaUrl ?? msg?.media?.url ?? null,
-    caption: msg?.caption ?? msg?.message?.imageMessage?.caption ?? msg?.message?.videoMessage?.caption ?? null,
+    body: body || captionVal,
+    media_url: mediaUrl,
+    caption: captionVal,
     status: typeof msg?.status === "number" ? msg.status : fromMe ? 2 : 4,
     track_source: msg?.trackSource ?? msg?.track_source ?? null,
     track_id: msg?.trackId ?? msg?.track_id ?? null,

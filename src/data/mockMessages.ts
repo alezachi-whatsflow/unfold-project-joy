@@ -4,10 +4,12 @@ export interface Message {
   content: string;
   timestamp: string;
   direction: "incoming" | "outgoing" | "typing";
-  type: "text" | "audio" | "image" | "document" | "system" | "transfer";
+  type: "text" | "audio" | "image" | "document" | "video" | "system" | "transfer";
   status?: "pending" | "sent" | "delivered" | "read";
   senderName?: string;
   audioDuration?: string;
+  mediaUrl?: string | null;
+  caption?: string | null;
   replyTo?: { id: string; content: string; senderName: string };
 }
 

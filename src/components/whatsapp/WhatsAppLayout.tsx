@@ -28,6 +28,15 @@ function statusNumToLabel(n: number): Message["status"] {
   return "pending";
 }
 
+function mapMessageType(t: string): Message["type"] {
+  const lower = (t || "").toLowerCase();
+  if (lower.includes("image")) return "image";
+  if (lower.includes("video") || lower === "ptv") return "video";
+  if (lower.includes("audio") || lower === "ptt") return "audio";
+  if (lower.includes("document")) return "document";
+  return "text";
+}
+
 function formatTime(iso: string) {
   const d = new Date(iso);
   return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -142,9 +151,11 @@ export default function WhatsAppLayout() {
           hour: "2-digit", minute: "2-digit",
         }),
         direction: m.direction === "outgoing" ? "outgoing" : "incoming",
-        type: m.type === "audio" ? "audio" : m.type === "image" ? "image" : "text",
+        type: mapMessageType(m.type),
         status: statusNumToLabel(m.status ?? 0),
         senderName: m.direction === "incoming" ? jidToPhone(m.remote_jid) : undefined,
+        mediaUrl: m.media_url || null,
+        caption: m.caption || null,
       }));
       setMessages(mapped);
       if (data.length > 0) {
@@ -199,9 +210,11 @@ export default function WhatsAppLayout() {
                     hour: "2-digit", minute: "2-digit",
                   }),
                   direction: newMsg.direction === "outgoing" ? "outgoing" : "incoming",
-                  type: newMsg.type === "audio" ? "audio" : newMsg.type === "image" ? "image" : "text",
+                  type: mapMessageType(newMsg.type),
                   status: statusNumToLabel(newMsg.status ?? 0),
                   senderName: newMsg.direction === "incoming" ? jidToPhone(newMsg.remote_jid) : undefined,
+                  mediaUrl: newMsg.media_url || null,
+                  caption: newMsg.caption || null,
                 },
               ];
             });
@@ -247,9 +260,11 @@ export default function WhatsAppLayout() {
                   hour: "2-digit", minute: "2-digit",
                 }),
                 direction: m.direction === "outgoing" ? "outgoing" : "incoming",
-                type: m.type === "audio" ? "audio" : m.type === "image" ? "image" : "text",
+                type: mapMessageType(m.type),
                 status: statusNumToLabel(m.status ?? 0),
                 senderName: m.direction === "incoming" ? jidToPhone(m.remote_jid) : undefined,
+                mediaUrl: m.media_url || null,
+                caption: m.caption || null,
               }));
             if (newMsgs.length > 0) {
               lastSyncRef.current = data[data.length - 1].created_at;
