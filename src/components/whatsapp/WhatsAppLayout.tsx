@@ -552,6 +552,7 @@ export default function WhatsAppLayout() {
   };
 
   const selectedConv = conversations.find((c) => c.id === selectedJid) || null;
+  const [newConvOpen, setNewConvOpen] = useState(false);
 
   return (
     <div className="flex h-full overflow-hidden" style={{ backgroundColor: "var(--wa-bg-deep)" }}>
@@ -560,6 +561,8 @@ export default function WhatsAppLayout() {
           conversations={conversations}
           selectedId={selectedJid}
           onSelect={setSelectedJid}
+          newConvOpen={newConvOpen}
+          onNewConvOpenChange={setNewConvOpen}
           onNewConversationStarted={(jid) => {
             fetchConversations();
             setSelectedJid(jid);
@@ -573,6 +576,7 @@ export default function WhatsAppLayout() {
         onToggleRight={() => setRightOpen(!rightOpen)}
         onSend={handleSend}
         onSendAttachment={handleSendAttachment}
+        onNewConversation={() => setNewConvOpen(true)}
       />
       <RightPanel
         conversation={selectedConv}
