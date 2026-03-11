@@ -536,6 +536,7 @@ export default function WhatsAppLayout() {
         isRightOpen={rightOpen}
         onToggleRight={() => setRightOpen(!rightOpen)}
         onSend={handleSend}
+        onSendAttachment={handleSendAttachment}
       />
       <RightPanel
         conversation={selectedConv}
