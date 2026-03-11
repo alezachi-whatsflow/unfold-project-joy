@@ -9,10 +9,10 @@ interface FilterTabsProps {
 }
 
 const tabs = [
-  { id: "all", icon: MessageCircle, label: "Todas" },
-  { id: "unassigned", icon: User, label: "Não atribuídas" },
+  { id: "inbox", icon: MessageCircle, label: "Caixa de entrada" },
+  { id: "queue", icon: User, label: "Fila de atendimento" },
   { id: "groups", icon: Users, label: "Grupos" },
-  { id: "unread", icon: Hash, label: "Não lidas" },
+  { id: "resolved", icon: Hash, label: "Finalizados" },
   { id: "more", icon: MoreHorizontal, label: "Mais" },
 ];
 
@@ -22,7 +22,7 @@ export default function FilterTabs({ active, onChange, totalCount, unreadCount }
       {tabs.map((tab) => {
         const isActive = active === tab.id;
         const Icon = tab.icon;
-        const count = tab.id === "all" ? totalCount : tab.id === "unread" ? unreadCount : undefined;
+        const count = tab.id === "inbox" ? totalCount : tab.id === "queue" ? unreadCount : undefined;
         return (
           <Tooltip key={tab.id}>
             <TooltipTrigger asChild>
