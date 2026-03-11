@@ -219,36 +219,35 @@ export default function WhatsAppLayout() {
   }, []);
 
   /* ── fetch messages for selected conversation ──── */
-  const fetchMessages = useCallback(async (jid: string) => {
-    const { data } = await supabase
-      .from("whatsapp_messages")
-      .select("*")
-      .eq("remote_jid", jid)
-      .order("created_at", { ascending: true })
-      .limit(500);
+  const fetchMessages = useCallback(
+    async (jid: string) => {
+      const { data } = await supabase
+        .from("whatsapp_messages")
+        .select("*")
+        .eq("remote_jid", jid)
+        .order("created_at", { ascending: true })
+        .limit(500);
 
-    if (data) {
-      const mapped: Message[] = data.map((m: any) => ({
-        id: m.id,
-        conversationId: m.remote_jid,
-        content: m.body || m.caption || `[${m.type}]`,
-        timestamp: new Date(m.created_at).toLocaleString("pt-BR", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit",
-        }),
-        direction: m.direction === "outgoing" ? "outgoing" : "incoming",
-        type: mapMessageType(m.type),
-        status: statusNumToLabel(m.status ?? 0),
-        senderName: m.direction === "incoming" ? jidToPhone(m.remote_jid) : undefined,
-        mediaUrl: m.media_url || null,
-        caption: m.caption || null,
-      }));
-      setMessages(mapped);
-      if (data.length > 0) {
-        lastSyncRef.current = data[data.length - 1].created_at;
+      if (data) {
+        const resolvedRows = await Promise.all(
+          data.map(async (row: any) => ({
+            row,
+            resolvedMediaUrl: await resolveMessageMediaUrl(row),
+          }))
+        );
+
+        const mapped: Message[] = resolvedRows.map(({ row, resolvedMediaUrl }) =>
+          mapDbMessageToUi(row, resolvedMediaUrl)
+        );
+
+        setMessages(mapped);
+        if (data.length > 0) {
+          lastSyncRef.current = data[data.length - 1].created_at;
+        }
       }
-    }
-  }, []);
+    },
+    [mapDbMessageToUi, resolveMessageMediaUrl]
+  );
 
   /* ── initial load ───────────────────────────────── */
   useEffect(() => {
