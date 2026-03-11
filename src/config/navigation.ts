@@ -22,7 +22,6 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'clientes',   label: 'Clientes',      icon: 'Users',          route: '/customers',   module: 'clientes'      },
       { id: 'produtos',   label: 'Produtos',      icon: 'Package',        route: '/products',    module: 'produtos'      },
       { id: 'vendas',     label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',      module: 'vendas'        },
-      { id: 'mensageria', label: 'Mensageria',    icon: 'MessageSquare',  route: '/mensageria',  module: 'mensageria'    },
     ],
   },
   {
