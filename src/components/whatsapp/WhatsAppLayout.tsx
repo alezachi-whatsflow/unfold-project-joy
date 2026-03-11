@@ -28,6 +28,15 @@ function statusNumToLabel(n: number): Message["status"] {
   return "pending";
 }
 
+function mapMessageType(t: string): Message["type"] {
+  const lower = (t || "").toLowerCase();
+  if (lower.includes("image")) return "image";
+  if (lower.includes("video") || lower === "ptv") return "video";
+  if (lower.includes("audio") || lower === "ptt") return "audio";
+  if (lower.includes("document")) return "document";
+  return "text";
+}
+
 function formatTime(iso: string) {
   const d = new Date(iso);
   return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
