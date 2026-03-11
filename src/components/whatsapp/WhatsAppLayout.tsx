@@ -128,24 +128,49 @@ export default function WhatsAppLayout() {
   }, []);
 
   const mapDbMessageToUi = useCallback(
-    (row: any, mediaUrlOverride?: string | null): Message => ({
-      id: row.id,
-      conversationId: row.remote_jid,
-      content: row.body || row.caption || `[${row.type}]`,
-      timestamp: new Date(row.created_at).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      direction: row.direction === "outgoing" ? "outgoing" : "incoming",
-      type: mapMessageType(row.type),
-      status: statusNumToLabel(row.status ?? 0),
-      senderName: row.direction === "incoming" ? jidToPhone(row.remote_jid) : undefined,
-      mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
-      caption: row.caption || null,
-    }),
+    (row: any, mediaUrlOverride?: string | null): Message => {
+      // For group messages, extract sender name from raw_payload
+      const rawPayload = row.raw_payload || {};
+      const isGroup = isGroupJid(row.remote_jid || "");
+      let senderName: string | undefined;
+
+      if (row.direction === "incoming") {
+        if (isGroup) {
+          // In groups, show the actual sender's name (pushName/senderName/participant)
+          senderName =
+            rawPayload?.senderName ||
+            rawPayload?.pushName ||
+            rawPayload?.verifiedBizName ||
+            rawPayload?.key?.participant?.replace(/@.*$/, "") ||
+            rawPayload?.participant?.replace(/@.*$/, "") ||
+            jidToPhone(row.remote_jid);
+        } else {
+          senderName = undefined; // Individual chats don't need sender name on incoming
+        }
+      } else if (row.direction === "outgoing") {
+        // For outgoing in groups, we can show the device owner's name
+        senderName = rawPayload?.senderName || rawPayload?.pushName || undefined;
+      }
+
+      return {
+        id: row.id,
+        conversationId: row.remote_jid,
+        content: row.body || row.caption || `[${row.type}]`,
+        timestamp: new Date(row.created_at).toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        direction: row.direction === "outgoing" ? "outgoing" : "incoming",
+        type: mapMessageType(row.type),
+        status: statusNumToLabel(row.status ?? 0),
+        senderName,
+        mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
+        caption: row.caption || null,
+      };
+    },
     []
   );
 
