@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         const msgsData = await msgsRes.json();
         const msgs = Array.isArray(msgsData) ? msgsData : msgsData?.messages || [];
 
-        for (const msg of (Array.isArray(msgs) ? msgs : [])) {
+        for (const msg of msgs) {
           if (!msg?.key?.remoteJid) continue;
 
           const { error } = await supabase.from("whatsapp_messages").upsert(
