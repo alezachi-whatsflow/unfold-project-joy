@@ -81,6 +81,7 @@ export default function WhatsAppLayout() {
   const [rightOpen, setRightOpen] = useState(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSyncRef = useRef<string>("1970-01-01T00:00:00Z");
+  const lastStatusSyncRef = useRef<string>("1970-01-01T00:00:00Z");
   const didBootstrapSyncRef = useRef(false);
   const mediaUrlCacheRef = useRef<Map<string, string>>(new Map());
 
