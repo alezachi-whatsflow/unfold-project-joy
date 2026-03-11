@@ -62,7 +62,7 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
       </div>
 
       <SearchBar value={search} onChange={setSearch} />
-      <FilterTabs active={filter} onChange={setFilter} totalCount={conversations.length} unreadCount={unreadCount} />
+      <FilterTabs active={filter} onChange={setFilter} totalCount={inboxCount} unreadCount={queueCount} groupCount={groupCount} resolvedCount={resolvedCount} />
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
