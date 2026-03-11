@@ -1,5 +1,23 @@
-import { useState, useRef, useEffect } from "react";
-import { Smile, Paperclip, Mic, Send, X, Image, FileText, MapPin, User, BarChart3, Music, ArrowLeft, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, type CSSProperties, type ChangeEvent } from "react";
+import {
+  Smile,
+  Paperclip,
+  Mic,
+  Send,
+  X,
+  Image,
+  FileText,
+  MapPin,
+  User,
+  BarChart3,
+  Music,
+  ArrowLeft,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type AttachmentPayload =
   | { type: "media"; mediaType: "image" | "video" | "document" | "audio"; file: string; text?: string }
@@ -16,15 +34,31 @@ interface ChatInputProps {
 
 type AttachMode = null | "media" | "document" | "location" | "contact" | "poll" | "audio";
 
+const MAX_FILES = 5;
+const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+function sanitizeFileName(name: string) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+}
+
+function getAcceptByMode(mode: AttachMode) {
+  if (mode === "media") return "image/*,video/*";
+  if (mode === "audio") return "audio/*";
+  if (mode === "document") return ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx";
+  return "*/*";
+}
+
 export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelReply }: ChatInputProps) {
   const [text, setText] = useState("");
   const [showAttach, setShowAttach] = useState(false);
   const [attachMode, setAttachMode] = useState<AttachMode>(null);
   const [sending, setSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Attachment form fields
-  const [mediaUrl, setMediaUrl] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [mediaCaption, setMediaCaption] = useState("");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
@@ -50,7 +84,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
   const resetAttach = () => {
     setAttachMode(null);
     setShowAttach(false);
-    setMediaUrl("");
+    setSelectedFiles([]);
     setMediaCaption("");
     setLat("");
     setLng("");
@@ -61,49 +95,162 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     setPollOptions(["", "", ""]);
   };
 
-  const handleSendAttachment = async () => {
-    if (!onSendAttachment) return;
-    setSending(true);
-    try {
-      switch (attachMode) {
-        case "media":
-          if (!mediaUrl.trim()) return;
-          await onSendAttachment({ type: "media", mediaType: "image", file: mediaUrl, text: mediaCaption });
-          break;
-        case "document":
-          if (!mediaUrl.trim()) return;
-          await onSendAttachment({ type: "media", mediaType: "document", file: mediaUrl, text: mediaCaption });
-          break;
-        case "audio":
-          if (!mediaUrl.trim()) return;
-          await onSendAttachment({ type: "media", mediaType: "audio", file: mediaUrl });
-          break;
-        case "location":
-          if (!lat.trim() || !lng.trim()) return;
-          await onSendAttachment({ type: "location", latitude: Number(lat), longitude: Number(lng), name: locName });
-          break;
-        case "contact":
-          if (!contactName.trim() || !contactPhone.trim()) return;
-          await onSendAttachment({ type: "contact", name: contactName, phone: contactPhone });
-          break;
-        case "poll":
-          if (!pollQuestion.trim()) return;
-          const validOpts = pollOptions.filter((o) => o.trim());
-          if (validOpts.length < 2) return;
-          await onSendAttachment({ type: "poll", question: pollQuestion, options: validOpts });
-          break;
+  const isFileMode = attachMode === "media" || attachMode === "document" || attachMode === "audio";
+
+  const uploadFileAndGetUrl = async (file: File) => {
+    const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+    const safeName = sanitizeFileName(file.name);
+    const path = `chat-attachments/${Date.now()}_${crypto.randomUUID()}.${ext}_${safeName}`;
+
+    const { error } = await supabase.storage.from("expense-attachments").upload(path, file, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+    if (error) throw new Error(`Falha no upload de ${file.name}`);
+
+    const { data } = supabase.storage.from("expense-attachments").getPublicUrl(path);
+    if (!data?.publicUrl) throw new Error(`Falha ao obter URL de ${file.name}`);
+
+    return data.publicUrl;
+  };
+
+  const handleSelectAttachment = (mode: AttachMode) => {
+    setAttachMode(mode);
+    setShowAttach(false);
+  };
+
+  const handlePickFiles = () => {
+    if (!isFileMode) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(event.target.files || []);
+    event.target.value = "";
+
+    if (!incoming.length) return;
+
+    const remainingSlots = MAX_FILES - selectedFiles.length;
+    if (remainingSlots <= 0) {
+      toast.error(`Limite atingido: máximo de ${MAX_FILES} arquivos.`);
+      return;
+    }
+
+    const sliced = incoming.slice(0, remainingSlots);
+    if (incoming.length > remainingSlots) {
+      toast.error(`Você pode anexar no máximo ${MAX_FILES} arquivos por envio.`);
+    }
+
+    const valid: File[] = [];
+    const invalidNames: string[] = [];
+
+    for (const file of sliced) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        invalidNames.push(file.name);
+      } else {
+        valid.push(file);
       }
-      resetAttach();
-    } catch (e) {
-      console.error("Attachment send error:", e);
-    } finally {
-      setSending(false);
+    }
+
+    if (invalidNames.length) {
+      toast.error(`Arquivo acima de ${MAX_FILE_SIZE_MB}MB: ${invalidNames[0]}${invalidNames.length > 1 ? ` (+${invalidNames.length - 1})` : ""}`);
+    }
+
+    if (valid.length) {
+      setSelectedFiles((prev) => [...prev, ...valid]);
     }
   };
 
-  const selectAttachment = (mode: AttachMode) => {
-    setAttachMode(mode);
-    setShowAttach(false);
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSendAttachment = async () => {
+    if (!onSendAttachment || !attachMode) return;
+
+    setSending(true);
+    try {
+      if (attachMode === "media" || attachMode === "document" || attachMode === "audio") {
+        if (!selectedFiles.length) {
+          toast.error("Adicione pelo menos 1 arquivo.");
+          return;
+        }
+
+        const mediaType = attachMode === "media" ? "image" : attachMode === "document" ? "document" : "audio";
+
+        for (const file of selectedFiles) {
+          const fileUrl = await uploadFileAndGetUrl(file);
+          await onSendAttachment({
+            type: "media",
+            mediaType,
+            file: fileUrl,
+            text: mediaType === "audio" ? undefined : mediaCaption || file.name,
+          });
+        }
+
+        toast.success("Anexo(s) enviado(s) com sucesso.");
+        resetAttach();
+        return;
+      }
+
+      if (attachMode === "location") {
+        const latitude = Number(lat);
+        const longitude = Number(lng);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          toast.error("Informe latitude e longitude válidas.");
+          return;
+        }
+
+        await onSendAttachment({
+          type: "location",
+          latitude,
+          longitude,
+          name: locName.trim() || undefined,
+        });
+        toast.success("Localização enviada.");
+        resetAttach();
+        return;
+      }
+
+      if (attachMode === "contact") {
+        if (!contactName.trim() || !contactPhone.trim()) {
+          toast.error("Informe nome e telefone do contato.");
+          return;
+        }
+
+        await onSendAttachment({
+          type: "contact",
+          name: contactName.trim().slice(0, 100),
+          phone: contactPhone.replace(/\D/g, "").slice(0, 20),
+        });
+        toast.success("Contato enviado.");
+        resetAttach();
+        return;
+      }
+
+      if (attachMode === "poll") {
+        const question = pollQuestion.trim();
+        const options = pollOptions.map((o) => o.trim()).filter(Boolean).slice(0, 12);
+
+        if (!question) {
+          toast.error("Informe a pergunta da enquete.");
+          return;
+        }
+        if (options.length < 2) {
+          toast.error("A enquete precisa de pelo menos 2 opções.");
+          return;
+        }
+
+        await onSendAttachment({ type: "poll", question: question.slice(0, 300), options });
+        toast.success("Enquete enviada.");
+        resetAttach();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao enviar anexo.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const attachmentItems = [
@@ -115,7 +262,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     { icon: Music, label: "Áudio", color: "#00A884", mode: "audio" as AttachMode },
   ];
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     backgroundColor: "var(--wa-bg-input)",
     color: "var(--wa-text-primary)",
     fontSize: 13,
@@ -128,20 +275,15 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
   return (
     <div style={{ backgroundColor: "var(--wa-bg-header)", borderTop: "1px solid var(--wa-border)" }}>
-      {/* Attachment menu grid */}
       {showAttach && !attachMode && (
         <div
           className="mx-4 mt-2 rounded-xl p-3 grid grid-cols-3 gap-2"
-          style={{
-            backgroundColor: "#233138",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-            animation: "messageIn 200ms ease-out",
-          }}
+          style={{ backgroundColor: "#233138", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "messageIn 200ms ease-out" }}
         >
           {attachmentItems.map((item) => (
             <button
               key={item.label}
-              onClick={() => selectAttachment(item.mode)}
+              onClick={() => handleSelectAttachment(item.mode)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
               style={{ color: "var(--wa-text-primary)" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-bg-hover)")}
@@ -151,27 +293,13 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
               {item.label}
             </button>
           ))}
-          <button
-            onClick={() => setShowAttach(false)}
-            className="col-span-3 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs mt-1 transition-colors"
-            style={{ color: "var(--wa-text-secondary)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-bg-hover)")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-          >
-            <X size={14} /> Fechar
-          </button>
         </div>
       )}
 
-      {/* Attachment inline form */}
       {attachMode && (
         <div
           className="mx-4 mt-2 rounded-xl p-3 space-y-2"
-          style={{
-            backgroundColor: "#233138",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-            animation: "messageIn 200ms ease-out",
-          }}
+          style={{ backgroundColor: "#233138", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "messageIn 200ms ease-out" }}
         >
           <div className="flex items-center justify-between mb-1">
             <button onClick={resetAttach} className="flex items-center gap-1 text-xs" style={{ color: "var(--wa-text-secondary)" }}>
@@ -187,49 +315,79 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
             </span>
           </div>
 
-          {/* Media / Document / Audio form */}
-          {(attachMode === "media" || attachMode === "document" || attachMode === "audio") && (
+          {isFileMode && (
             <div className="space-y-2">
               <input
-                style={inputStyle}
-                placeholder="URL do arquivo (https://...)"
-                value={mediaUrl}
-                onChange={(e) => setMediaUrl(e.target.value)}
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={getAcceptByMode(attachMode)}
+                onChange={handleFileChange}
+                className="hidden"
               />
+
+              <button
+                onClick={handlePickFiles}
+                className="w-full rounded-lg py-2 text-sm flex items-center justify-center gap-2"
+                style={{ backgroundColor: "var(--wa-bg-input)", color: "var(--wa-text-primary)" }}
+              >
+                <Plus size={16} /> Adicionar arquivo(s)
+              </button>
+
+              <p className="text-[11px]" style={{ color: "var(--wa-text-secondary)" }}>
+                Máximo {MAX_FILES} arquivos por envio • até {MAX_FILE_SIZE_MB}MB por arquivo
+              </p>
+
+              {selectedFiles.length > 0 && (
+                <div className="max-h-28 overflow-auto space-y-1 pr-1">
+                  {selectedFiles.map((file, index) => (
+                    <div key={`${file.name}-${index}`} className="flex items-center justify-between rounded px-2 py-1" style={{ backgroundColor: "var(--wa-bg-input)" }}>
+                      <div className="min-w-0">
+                        <p className="text-xs truncate" style={{ color: "var(--wa-text-primary)" }}>{file.name}</p>
+                        <p className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>
+                          {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button onClick={() => removeFile(index)} aria-label="Remover arquivo" style={{ color: "var(--wa-text-secondary)" }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {attachMode !== "audio" && (
                 <input
                   style={inputStyle}
                   placeholder="Legenda (opcional)"
                   value={mediaCaption}
                   onChange={(e) => setMediaCaption(e.target.value)}
+                  maxLength={300}
                 />
               )}
             </div>
           )}
 
-          {/* Location form */}
           {attachMode === "location" && (
             <div className="space-y-2">
               <div className="flex gap-2">
                 <input style={inputStyle} placeholder="Latitude" type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} />
                 <input style={inputStyle} placeholder="Longitude" type="number" step="any" value={lng} onChange={(e) => setLng(e.target.value)} />
               </div>
-              <input style={inputStyle} placeholder="Nome do local (opcional)" value={locName} onChange={(e) => setLocName(e.target.value)} />
+              <input style={inputStyle} placeholder="Nome do local (opcional)" value={locName} onChange={(e) => setLocName(e.target.value)} maxLength={120} />
             </div>
           )}
 
-          {/* Contact form */}
           {attachMode === "contact" && (
             <div className="space-y-2">
-              <input style={inputStyle} placeholder="Nome do contato" value={contactName} onChange={(e) => setContactName(e.target.value)} />
-              <input style={inputStyle} placeholder="Telefone (5511999999999)" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+              <input style={inputStyle} placeholder="Nome do contato" value={contactName} onChange={(e) => setContactName(e.target.value)} maxLength={100} />
+              <input style={inputStyle} placeholder="Telefone (5511999999999)" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} maxLength={20} />
             </div>
           )}
 
-          {/* Poll form */}
           {attachMode === "poll" && (
             <div className="space-y-2">
-              <input style={inputStyle} placeholder="Pergunta da enquete" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} />
+              <input style={inputStyle} placeholder="Pergunta da enquete" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} maxLength={300} />
               {pollOptions.map((opt, i) => (
                 <input
                   key={i}
@@ -241,21 +399,17 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
                     copy[i] = e.target.value;
                     setPollOptions(copy);
                   }}
+                  maxLength={120}
                 />
               ))}
               {pollOptions.length < 12 && (
-                <button
-                  onClick={() => setPollOptions([...pollOptions, ""])}
-                  className="text-xs"
-                  style={{ color: "var(--wa-green)" }}
-                >
+                <button onClick={() => setPollOptions([...pollOptions, ""])} className="text-xs" style={{ color: "var(--wa-green)" }}>
                   + Adicionar opção
                 </button>
               )}
             </div>
           )}
 
-          {/* Send / Cancel buttons */}
           <div className="flex gap-2 pt-1">
             <button
               onClick={resetAttach}
@@ -277,15 +431,10 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         </div>
       )}
 
-      {/* Reply preview */}
       {replyTo && (
         <div
           className="mx-4 mt-2 flex items-center justify-between rounded-t-lg px-3 py-2"
-          style={{
-            backgroundColor: "rgba(0,0,0,0.2)",
-            borderLeft: "3px solid var(--wa-green)",
-            animation: "messageIn 150ms ease-out",
-          }}
+          style={{ backgroundColor: "rgba(0,0,0,0.2)", borderLeft: "3px solid var(--wa-green)", animation: "messageIn 150ms ease-out" }}
         >
           <div className="min-w-0">
             <p className="text-xs font-semibold" style={{ color: "var(--wa-green)" }}>Respondendo para {replyTo.senderName}</p>
@@ -297,7 +446,6 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         </div>
       )}
 
-      {/* Input area */}
       <div className="flex items-end gap-2 px-4 py-2.5">
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => { setShowAttach(false); setAttachMode(null); }} aria-label="Emoji" style={{ color: "var(--wa-text-secondary)" }}>
@@ -313,17 +461,15 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
           }}
           placeholder="Digite uma mensagem"
           rows={1}
           className="flex-1 resize-none border-none outline-none rounded-[10px] px-3 py-2"
-          style={{
-            backgroundColor: "var(--wa-bg-input)",
-            color: "var(--wa-text-primary)",
-            fontSize: 15,
-            maxHeight: 120,
-          }}
+          style={{ backgroundColor: "var(--wa-bg-input)", color: "var(--wa-text-primary)", fontSize: 15, maxHeight: 120 }}
         />
 
         {text.trim() ? (

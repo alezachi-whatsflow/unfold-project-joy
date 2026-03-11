@@ -31,6 +31,12 @@ const normalizeMessageId = (value: unknown): string | null => {
   return raw.replace(/^\d+:/, "");
 };
 
+const isSafeMediaUrl = (value: unknown): value is string => {
+  if (typeof value !== "string") return false;
+  if (!value || value.length > 2048) return false;
+  return /^https?:\/\//i.test(value);
+};
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -78,6 +84,15 @@ Deno.serve(async (req) => {
     ];
     if (!ALLOWED_PREFIXES.some((p) => path.startsWith(p) || path === p.replace(/\/$/, ""))) {
       return json({ error: "Path not allowed" }, 403);
+    }
+
+    if (path === "/send/media") {
+      if (!isSafeMediaUrl(body?.file)) {
+        return json({ error: "Invalid media file URL" }, 400);
+      }
+      if (typeof body?.text === "string" && body.text.length > 1000) {
+        return json({ error: "Caption too long" }, 400);
+      }
     }
 
     // Selecionar o token correto e o header correto
@@ -208,8 +223,25 @@ Deno.serve(async (req) => {
       const providerMessageId = normalizeMessageId(
         rd?.messageid ?? rd?.messageId ?? rd?.id ?? rd?.key?.id ?? null
       );
-      const messageType = rd?.messageType || (path === "/send/text" ? "text" : "unknown");
-      const messageBody = rd?.text || rd?.content?.text || body?.text || null;
+      const fallbackTypeFromPath =
+        path === "/send/text"
+          ? "text"
+          : path === "/send/location"
+          ? "location"
+          : path === "/send/contact"
+          ? "contact"
+          : path === "/send/menu"
+          ? "menu"
+          : path === "/send/media"
+          ? String(body?.type || "media")
+          : "unknown";
+      const messageType = String(rd?.messageType || fallbackTypeFromPath);
+      const messageBody = rd?.text || rd?.content?.text || body?.text || body?.name || null;
+      const mediaUrl =
+        path === "/send/media"
+          ? body?.file || rd?.fileURL || rd?.fileUrl || null
+          : rd?.fileURL || rd?.fileUrl || null;
+      const caption = typeof body?.text === "string" ? body.text : null;
 
       if (remoteJid && providerMessageId) {
         await supabase.from("whatsapp_messages").upsert(
@@ -220,6 +252,8 @@ Deno.serve(async (req) => {
             direction: "outgoing",
             type: messageType,
             body: messageBody,
+            media_url: mediaUrl,
+            caption,
             status: 2,
             raw_payload: rd,
             created_at: messageIso,
