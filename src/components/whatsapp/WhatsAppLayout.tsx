@@ -34,6 +34,7 @@ function mapMessageType(t: string): Message["type"] {
   if (lower.includes("video") || lower === "ptv") return "video";
   if (lower.includes("audio") || lower === "ptt") return "audio";
   if (lower.includes("document")) return "document";
+  if (lower === "media") return "image";
   return "text";
 }
 
