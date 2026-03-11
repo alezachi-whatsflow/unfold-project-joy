@@ -7,12 +7,19 @@ export const callProxy = async (
   body?: object,
   instanceName?: string
 ) => {
-  const { data: { session } } = await supabase.auth.getSession();
   const resp = await supabase.functions.invoke("uazapi-proxy", {
     body: { path, method, body, instanceName },
   });
   if (resp.error) throw resp.error;
-  return resp.data;
+  const envelope = resp.data;
+  // Proxy now wraps upstream response: { data, upstream_status, ok }
+  if (envelope && typeof envelope.ok !== "undefined") {
+    if (!envelope.ok) {
+      console.warn(`uazapi upstream ${envelope.upstream_status}:`, envelope.data);
+    }
+    return envelope.data;
+  }
+  return envelope;
 };
 
 export const instanceService = {
