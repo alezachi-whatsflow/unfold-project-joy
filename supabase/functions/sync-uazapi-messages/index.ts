@@ -49,19 +49,20 @@ Deno.serve(async (req) => {
       const chats = Array.isArray(chatsData) ? chatsData : chatsData?.chats || [];
       let totalSaved = 0;
 
-      // For each chat, fetch messages
-      for (const chat of (Array.isArray(chats) ? chats : [])) {
-        const jid = chat.id || chat.jid;
-        if (!jid || jid.includes("@g.us")) continue; // skip groups for now
+      for (const chat of chats) {
+        const jid = chat.wa_chatid || chat.id || chat.jid;
+        if (!jid || jid.includes("@g.us")) continue;
 
-        const msgsRes = await fetch(`${serverUrl}/chat/fetchMessages`, {
+        // Fetch messages for this chat via /chat/messages
+        const msgsRes = await fetch(`${serverUrl}/chat/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json", token },
-          body: JSON.stringify({ phone: jid.replace(/@.*/, ""), count: 20 }),
+          body: JSON.stringify({ id: jid, limit: 20 }),
         });
 
         if (!msgsRes.ok) continue;
-        const msgs = await msgsRes.json();
+        const msgsData = await msgsRes.json();
+        const msgs = Array.isArray(msgsData) ? msgsData : msgsData?.messages || [];
 
         for (const msg of (Array.isArray(msgs) ? msgs : [])) {
           if (!msg?.key?.remoteJid) continue;
