@@ -39,10 +39,19 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
       >
         <WaAvatar initials="AZ" color="#00A884" size={32} />
         <div className="flex items-center gap-4">
-          {[MessageSquarePlus, Users, MoreVertical].map((Icon, i) => (
-            <button key={i} className="transition-colors" style={{ color: "var(--wa-text-secondary)" }} aria-label="action">
-              <Icon size={22} />
-            </button>
+          {[
+            { Icon: MessageSquarePlus, label: "Nova conversa" },
+            { Icon: Users, label: "Nova comunidade" },
+            { Icon: MoreVertical, label: "Mais opções" },
+          ].map(({ Icon, label }, i) => (
+            <Tooltip key={i}>
+              <TooltipTrigger asChild>
+                <button className="transition-colors" style={{ color: "var(--wa-text-secondary)" }}>
+                  <Icon size={22} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">{label}</TooltipContent>
+            </Tooltip>
           ))}
         </div>
       </div>
