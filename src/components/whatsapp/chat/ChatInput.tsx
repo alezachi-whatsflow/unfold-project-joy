@@ -125,7 +125,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const incoming = Array.from(event.target.files || []);
     event.target.value = "";
 
