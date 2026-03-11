@@ -43,6 +43,24 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
+const WHATSAPP_CDN_REGEX = /(?:^https?:\/\/)?(?:mmg\.whatsapp\.net|[^/]*\.cdn\.whatsapp\.net)/i;
+
+function isMediaType(type: Message["type"]) {
+  return type === "image" || type === "video" || type === "audio" || type === "document";
+}
+
+function extractDownloadUrl(payload: any): string | null {
+  return (
+    payload?.fileURL ??
+    payload?.fileUrl ??
+    payload?.url ??
+    payload?.data?.fileURL ??
+    payload?.data?.fileUrl ??
+    payload?.data?.url ??
+    null
+  );
+}
+
 /* ── main component ────────────────────────────────── */
 export default function WhatsAppLayout() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
