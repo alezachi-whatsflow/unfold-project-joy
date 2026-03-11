@@ -14,6 +14,7 @@ import CampaignsTab from "@/components/mensageria/CampaignsTab";
 
 const MensageriaPage = () => {
   const [provider, setProvider] = useState<Provider>("uazapi");
+  const [activeTab, setActiveTab] = useState("instancias");
 
   return (
     <div className="space-y-6">
@@ -22,7 +23,7 @@ const MensageriaPage = () => {
         <p className="text-muted-foreground text-sm">Gerencie suas conexões WhatsApp, instâncias, caixa de entrada, envios e leads.</p>
       </div>
 
-      <Tabs defaultValue="instancias" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="instancias" className="gap-2"><Wifi className="h-4 w-4" /> Instâncias</TabsTrigger>
           <TabsTrigger value="inbox" className="gap-2"><Inbox className="h-4 w-4" /> Caixa de Entrada</TabsTrigger>
@@ -49,7 +50,7 @@ const MensageriaPage = () => {
         </TabsContent>
 
         <TabsContent value="inbox"><InboxTab /></TabsContent>
-        <TabsContent value="enviar"><MessageComposer /></TabsContent>
+        <TabsContent value="enviar"><MessageComposer onClose={() => setActiveTab("instancias")} /></TabsContent>
         <TabsContent value="campanhas"><CampaignsTab /></TabsContent>
         <TabsContent value="leads"><LeadKanban /></TabsContent>
         <TabsContent value="contatos"><ContactChecker /></TabsContent>

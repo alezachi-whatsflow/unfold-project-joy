@@ -10,9 +10,13 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { messageService, formatPhone } from "@/services/messageService";
 import { toast } from "sonner";
-import { Send, Loader2, Type, Image, MapPin, User, CreditCard, List } from "lucide-react";
+import { Send, Loader2, Type, Image, MapPin, User, CreditCard, ArrowLeft } from "lucide-react";
 
-export default function MessageComposer() {
+interface MessageComposerProps {
+  onClose?: () => void;
+}
+
+export default function MessageComposer({ onClose }: MessageComposerProps) {
   const [instances, setInstances] = useState<any[]>([]);
   const [selectedInstance, setSelectedInstance] = useState("");
   const [phone, setPhone] = useState("");
@@ -22,33 +26,40 @@ export default function MessageComposer() {
   const [trackSource, setTrackSource] = useState("financeiro");
   const [trackId, setTrackId] = useState("");
 
-  // Text fields
+  // Text
   const [text, setText] = useState("");
-  // Media fields
+  // Media
   const [mediaType, setMediaType] = useState<"image" | "video" | "document" | "audio">("image");
   const [mediaUrl, setMediaUrl] = useState("");
   const [caption, setCaption] = useState("");
-  // Location fields
+  // Location
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [locName, setLocName] = useState("");
-  // Contact fields
+  // Contact
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
-  // PIX fields
+  // PIX
   const [pixType, setPixType] = useState<"CPF" | "CNPJ" | "PHONE" | "EMAIL" | "EVP">("EVP");
   const [pixKey, setPixKey] = useState("");
   const [pixName, setPixName] = useState("Pix");
 
   useEffect(() => {
-    supabase.from("whatsapp_instances").select("*").eq("provedor", "uazapi").eq("status", "connected")
-      .then(({ data }) => { if (data) setInstances(data); });
+    supabase
+      .from("whatsapp_instances")
+      .select("*")
+      .eq("provedor", "uazapi")
+      .eq("status", "connected")
+      .then(({ data }) => {
+        if (data) setInstances(data);
+      });
   }, []);
 
-  const getTrackFields = () => trackEnabled ? { track_source: trackSource, track_id: trackId || undefined } : {};
+  const getTrackFields = () =>
+    trackEnabled ? { track_source: trackSource, track_id: trackId || undefined } : {};
 
   const handleSend = async () => {
-    if (!selectedInstance || !phone) {
+    if (!selectedInstance || !phone.trim()) {
       toast.error("Selecione uma instância e informe o número.");
       return;
     }
@@ -59,19 +70,38 @@ export default function MessageComposer() {
 
       switch (msgType) {
         case "text":
+          if (!text.trim()) { toast.error("Digite uma mensagem."); return; }
           await messageService.sendText(selectedInstance, phone, text, getTrackFields());
           break;
         case "media":
-          await messageService.sendMedia(selectedInstance, phone, { type: mediaType, file: mediaUrl, text: caption, ...getTrackFields() });
+          if (!mediaUrl.trim()) { toast.error("Informe a URL do arquivo."); return; }
+          await messageService.sendMedia(selectedInstance, phone, {
+            type: mediaType,
+            file: mediaUrl,
+            text: caption,
+            ...getTrackFields(),
+          });
           break;
         case "location":
+          if (!lat.trim() || !lng.trim()) { toast.error("Informe latitude e longitude."); return; }
           await messageService.sendLocation(selectedInstance, phone, Number(lat), Number(lng), locName, getTrackFields());
           break;
         case "contact":
-          await messageService.sendContact(selectedInstance, phone, { name: contactName, phone: contactPhone, ...getTrackFields() });
+          if (!contactName.trim() || !contactPhone.trim()) { toast.error("Informe nome e telefone do contato."); return; }
+          await messageService.sendContact(selectedInstance, phone, {
+            name: contactName,
+            phone: contactPhone,
+            ...getTrackFields(),
+          });
           break;
         case "pix":
-          await messageService.sendPixButton(selectedInstance, phone, { pixType, pixKey, pixName, ...getTrackFields() });
+          if (!pixKey.trim()) { toast.error("Informe a chave PIX."); return; }
+          await messageService.sendPixButton(selectedInstance, phone, {
+            pixType,
+            pixKey,
+            pixName,
+            ...getTrackFields(),
+          });
           break;
       }
       toast.success("Mensagem enviada!");
@@ -82,16 +112,18 @@ export default function MessageComposer() {
     }
   };
 
-  const typeIcons: Record<string, any> = {
-    text: Type, media: Image, location: MapPin, contact: User, pix: CreditCard, menu: List,
-  };
-
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-lg">Enviar Mensagem</CardTitle>
+        {onClose && (
+          <Button variant="ghost" size="sm" onClick={onClose} className="gap-1.5">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Instance + Phone */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Instância</Label>
@@ -112,16 +144,14 @@ export default function MessageComposer() {
           </div>
         </div>
 
+        {/* Message type tabs */}
         <Tabs value={msgType} onValueChange={setMsgType}>
-          <TabsList className="flex-wrap">
-            {["text", "media", "location", "contact", "pix"].map((t) => {
-              const Icon = typeIcons[t] || Type;
-              return (
-                <TabsTrigger key={t} value={t} className="gap-1 capitalize">
-                  <Icon className="h-3.5 w-3.5" /> {t === "pix" ? "PIX" : t === "media" ? "Mídia" : t === "location" ? "Localização" : t === "contact" ? "Contato" : "Texto"}
-                </TabsTrigger>
-              );
-            })}
+          <TabsList className="flex-wrap h-auto gap-1">
+            <TabsTrigger value="text" className="gap-1"><Type className="h-3.5 w-3.5" /> Texto</TabsTrigger>
+            <TabsTrigger value="media" className="gap-1"><Image className="h-3.5 w-3.5" /> Mídia</TabsTrigger>
+            <TabsTrigger value="location" className="gap-1"><MapPin className="h-3.5 w-3.5" /> Localização</TabsTrigger>
+            <TabsTrigger value="contact" className="gap-1"><User className="h-3.5 w-3.5" /> Contato</TabsTrigger>
+            <TabsTrigger value="pix" className="gap-1"><CreditCard className="h-3.5 w-3.5" /> PIX</TabsTrigger>
           </TabsList>
 
           <TabsContent value="text" className="space-y-3 pt-3">
@@ -214,10 +244,17 @@ export default function MessageComposer() {
           )}
         </div>
 
-        <Button onClick={handleSend} disabled={sending} className="w-full bg-emerald-600 hover:bg-emerald-700 gap-2">
-          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Enviar
-        </Button>
+        <div className="flex gap-2">
+          {onClose && (
+            <Button variant="outline" onClick={onClose} className="flex-1 gap-2">
+              <ArrowLeft className="h-4 w-4" /> Sair
+            </Button>
+          )}
+          <Button onClick={handleSend} disabled={sending} className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-2">
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Enviar
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
