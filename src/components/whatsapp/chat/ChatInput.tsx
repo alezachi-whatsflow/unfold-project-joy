@@ -468,7 +468,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
           }}
           placeholder="Digite uma mensagem"
           rows={1}
-          className="flex-1 resize-none border-none outline-none rounded-[10px] px-3 py-2"
+          className="flex-1 min-w-0 resize-none border-none outline-none rounded-[10px] px-3 py-2"
           style={{ backgroundColor: "var(--wa-bg-input)", color: "var(--wa-text-primary)", fontSize: 15, maxHeight: 120 }}
         />
 

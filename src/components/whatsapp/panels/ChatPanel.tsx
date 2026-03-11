@@ -50,7 +50,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
   const c = conversation;
 
   return (
-    <div className="flex-1 flex flex-col" style={{ minWidth: 480 }}>
+    <div className="flex-1 flex flex-col min-w-0">
       {/* Chat Header */}
       <div style={{ backgroundColor: "var(--wa-bg-header)", borderBottom: "1px solid var(--wa-border)" }}>
         <div className="flex items-center justify-between px-4" style={{ height: 60 }}>
