@@ -474,8 +474,51 @@ export default function WhatsAppLayout() {
       return;
     }
 
-    // A persistência já é feita no uazapi-proxy (upsert automático após envio).
-    // Apenas recarregamos as mensagens para refletir no painel.
+    // Recarregar
+    await fetchConversations();
+    await fetchMessages(selectedJid);
+  };
+
+  /* ── send attachment via uazapi ──────────────────── */
+  const handleSendAttachment = async (payload: AttachmentPayload) => {
+    if (!selectedJid) return;
+    const conv = conversations.find((c) => c.id === selectedJid);
+    if (!conv?.instanceName) return;
+
+    const isGroup = isGroupJid(selectedJid);
+    const number = isGroup ? selectedJid : jidToPhone(selectedJid);
+
+    let path = "/send/text";
+    let body: Record<string, any> = { number };
+
+    switch (payload.type) {
+      case "media":
+        path = "/send/media";
+        body = { number, type: payload.mediaType, file: payload.file, text: payload.text || "" };
+        break;
+      case "location":
+        path = "/send/location";
+        body = { number, latitude: payload.latitude, longitude: payload.longitude, name: payload.name || "" };
+        break;
+      case "contact":
+        path = "/send/contact";
+        body = { number, name: payload.name, phone: payload.phone };
+        break;
+      case "poll":
+        path = "/send/menu";
+        body = { number, type: "poll", text: payload.question, choices: payload.options.map((o) => ({ label: o })), selectableCount: 1 };
+        break;
+    }
+
+    const { error } = await supabase.functions.invoke("uazapi-proxy", {
+      body: { instanceName: conv.instanceName, path, method: "POST", body },
+    });
+
+    if (error) {
+      console.error("Attachment send error:", error);
+      throw error;
+    }
+
     await fetchConversations();
     await fetchMessages(selectedJid);
   };
