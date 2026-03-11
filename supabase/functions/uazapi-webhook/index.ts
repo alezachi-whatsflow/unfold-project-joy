@@ -19,6 +19,12 @@ const messageStatusMap: Record<string, number> = {
   DELIVERY_ACK: 3,
   READ: 4,
   PLAYED: 4,
+  "0": 0,
+  "1": 1,
+  "2": 2,
+  "3": 3,
+  "4": 4,
+  "5": 4,
 };
 
 const asArray = <T>(value: T | T[] | null | undefined): T[] => {
