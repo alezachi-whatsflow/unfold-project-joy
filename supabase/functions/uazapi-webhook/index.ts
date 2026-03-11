@@ -22,11 +22,63 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
-    const { event, instance, data } = payload;
+    
+    // Log raw payload structure for debugging
+    console.log("uazapi-webhook raw keys:", Object.keys(payload).join(","));
+    console.log("uazapi-webhook raw:", JSON.stringify(payload).substring(0, 500));
+
+    // uazapi v2 may use different field names
+    const event = payload.event || payload.type || payload.action || "";
+    const instance = payload.instance || payload.instanceName || payload.name || "";
+    const data = payload.data || payload.message || payload.messages || payload;
 
     console.log(`uazapi-webhook: event=${event}, instance=${instance}`);
 
-    if (!event || !instance) {
+    if (!event) {
+      // Try to detect event from payload structure
+      if (payload.key?.remoteJid || payload.remoteJid || (Array.isArray(payload) && payload[0]?.key)) {
+        // Direct message payload
+        console.log("uazapi-webhook: detected direct message payload");
+        const msgs = Array.isArray(payload) ? payload : [payload];
+        
+        // Try to find instance from URL or use first instance
+        const { data: firstInst } = await supabase
+          .from("whatsapp_instances")
+          .select("instance_name")
+          .eq("provedor", "uazapi")
+          .limit(1)
+          .single();
+        
+        const instName = firstInst?.instance_name || "unknown";
+        
+        for (const msg of msgs) {
+          const remoteJid = msg.key?.remoteJid || msg.remoteJid;
+          if (!remoteJid) continue;
+          
+          const { error } = await supabase.from("whatsapp_messages").upsert(
+            {
+              instance_name: instName,
+              remote_jid: remoteJid,
+              message_id: msg.key?.id || msg.id || `${remoteJid}-${Date.now()}`,
+              direction: msg.key?.fromMe || msg.fromMe ? "outgoing" : "incoming",
+              type: msg.messageType ?? msg.type ?? "text",
+              body: msg.body ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? msg.text ?? null,
+              media_url: msg.mediaUrl ?? null,
+              caption: msg.message?.imageMessage?.caption ?? msg.caption ?? null,
+              status: (msg.key?.fromMe || msg.fromMe) ? 2 : 4,
+              raw_payload: msg,
+              created_at: msg.messageTimestamp
+                ? new Date(msg.messageTimestamp * 1000).toISOString()
+                : new Date().toISOString(),
+            },
+            { onConflict: "message_id" }
+          );
+          if (error) console.error("uazapi-webhook: direct msg upsert error:", error);
+        }
+        
+        return new Response("OK", { status: 200, headers: corsHeaders });
+      }
+      
       return new Response("OK", { status: 200, headers: corsHeaders });
     }
 
