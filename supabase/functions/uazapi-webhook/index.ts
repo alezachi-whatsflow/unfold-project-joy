@@ -303,7 +303,13 @@ Deno.serve(async (req) => {
         const updates = asArray(data);
 
         for (const upd of updates) {
-          const messageId = upd?.key?.id || upd?.id || upd?.messageid || upd?.messageId;
+          const rawMessageId =
+            upd?.key?.id ||
+            upd?.messageid ||
+            upd?.messageId ||
+            upd?.id ||
+            null;
+          const messageId = normalizeMessageId(rawMessageId);
           if (!messageId) continue;
 
           const statusKey = upd?.update?.status || upd?.status;
