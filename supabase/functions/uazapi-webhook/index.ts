@@ -75,6 +75,8 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
 
   if (!remoteJid) return null;
 
+  const isGroup = String(remoteJid).endsWith("@g.us");
+
   const fromMe = Boolean(
     msg?.key?.fromMe ??
       msg?.fromMe ??
@@ -159,6 +161,29 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     else type = "document";
   }
 
+  // For group messages, capture participant (actual sender) and group subject
+  const participant =
+    msg?.key?.participant ||
+    msg?.participant ||
+    msg?.sender ||
+    null;
+
+  const groupSubject =
+    chatPayload?.name ||
+    chatPayload?.subject ||
+    msg?.groupSubject ||
+    payload?.groupSubject ||
+    null;
+
+  // Enrich raw_payload with group metadata for UI consumption
+  const enrichedPayload = {
+    ...msg,
+    ...(isGroup && participant ? { participant } : {}),
+    ...(isGroup && groupSubject ? { groupSubject } : {}),
+    ...(msg?.pushName ? { pushName: msg.pushName } : {}),
+    ...(msg?.senderName ? { senderName: msg.senderName } : {}),
+  };
+
   return {
     instance_name: instance,
     remote_jid: remoteJid,
@@ -171,7 +196,7 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     status: typeof msg?.status === "number" ? msg.status : fromMe ? 2 : 4,
     track_source: msg?.trackSource ?? msg?.track_source ?? null,
     track_id: msg?.trackId ?? msg?.track_id ?? null,
-    raw_payload: msg,
+    raw_payload: enrichedPayload,
     created_at: toIso(msg?.messageTimestamp ?? msg?.timestamp ?? chatPayload?.wa_lastMsgTimestamp),
   };
 };

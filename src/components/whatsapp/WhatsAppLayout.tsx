@@ -7,12 +7,23 @@ import type { Conversation } from "@/data/mockConversations";
 import type { Message } from "@/data/mockMessages";
 
 /* ── helpers ───────────────────────────────────────── */
+function isGroupJid(jid: string) {
+  return jid?.endsWith("@g.us") ?? false;
+}
 function jidToPhone(jid: string) {
   return jid?.replace(/@.*$/, "") ?? "";
 }
 function phoneInitials(phone: string) {
   const clean = phone.replace(/\D/g, "");
   return clean.slice(-2).toUpperCase() || "??";
+}
+function groupInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase() || "GP";
 }
 const palette = ["#00A884", "#7C3AED", "#F59E0B", "#EF4444", "#0EA5E9", "#EC4899"];
 function colorFromJid(jid: string) {
@@ -117,24 +128,49 @@ export default function WhatsAppLayout() {
   }, []);
 
   const mapDbMessageToUi = useCallback(
-    (row: any, mediaUrlOverride?: string | null): Message => ({
-      id: row.id,
-      conversationId: row.remote_jid,
-      content: row.body || row.caption || `[${row.type}]`,
-      timestamp: new Date(row.created_at).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      direction: row.direction === "outgoing" ? "outgoing" : "incoming",
-      type: mapMessageType(row.type),
-      status: statusNumToLabel(row.status ?? 0),
-      senderName: row.direction === "incoming" ? jidToPhone(row.remote_jid) : undefined,
-      mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
-      caption: row.caption || null,
-    }),
+    (row: any, mediaUrlOverride?: string | null): Message => {
+      // For group messages, extract sender name from raw_payload
+      const rawPayload = row.raw_payload || {};
+      const isGroup = isGroupJid(row.remote_jid || "");
+      let senderName: string | undefined;
+
+      if (row.direction === "incoming") {
+        if (isGroup) {
+          // In groups, show the actual sender's name (pushName/senderName/participant)
+          senderName =
+            rawPayload?.senderName ||
+            rawPayload?.pushName ||
+            rawPayload?.verifiedBizName ||
+            rawPayload?.key?.participant?.replace(/@.*$/, "") ||
+            rawPayload?.participant?.replace(/@.*$/, "") ||
+            jidToPhone(row.remote_jid);
+        } else {
+          senderName = undefined; // Individual chats don't need sender name on incoming
+        }
+      } else if (row.direction === "outgoing") {
+        // For outgoing in groups, we can show the device owner's name
+        senderName = rawPayload?.senderName || rawPayload?.pushName || undefined;
+      }
+
+      return {
+        id: row.id,
+        conversationId: row.remote_jid,
+        content: row.body || row.caption || `[${row.type}]`,
+        timestamp: new Date(row.created_at).toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        direction: row.direction === "outgoing" ? "outgoing" : "incoming",
+        type: mapMessageType(row.type),
+        status: statusNumToLabel(row.status ?? 0),
+        senderName,
+        mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
+        caption: row.caption || null,
+      };
+    },
     []
   );
 
@@ -190,6 +226,7 @@ export default function WhatsAppLayout() {
       const phone = jidToPhone(jid);
       const lead = leadMap.get(jid) as any;
       const contact = contactMap.get(jid) as any;
+      const isGroup = isGroupJid(jid);
 
       // Try to get name from: lead > contact > incoming message senderName/pushName > phone
       const senderNameFromMsg = sorted.find((m: any) =>
@@ -197,13 +234,31 @@ export default function WhatsAppLayout() {
       );
       const msgName = senderNameFromMsg?.raw_payload?.senderName || senderNameFromMsg?.raw_payload?.pushName || null;
 
-      const name =
-        lead?.lead_full_name ||
-        lead?.lead_name ||
-        contact?.push_name ||
-        contact?.name ||
-        msgName ||
-        phone;
+      // For groups, try to get group subject from raw_payload
+      let groupSubject: string | null = null;
+      if (isGroup) {
+        for (const m of sorted) {
+          const rp = m.raw_payload;
+          groupSubject =
+            rp?.groupSubject ||
+            rp?.subject ||
+            rp?.groupName ||
+            rp?.chat?.name ||
+            rp?.chat?.subject ||
+            rp?.key?.groupSubject ||
+            null;
+          if (groupSubject) break;
+        }
+      }
+
+      const name = isGroup
+        ? groupSubject || lead?.lead_full_name || lead?.lead_name || `Grupo ${phone}`
+        : lead?.lead_full_name ||
+          lead?.lead_name ||
+          contact?.push_name ||
+          contact?.name ||
+          msgName ||
+          phone;
 
       convs.push({
         id: jid,
@@ -215,7 +270,7 @@ export default function WhatsAppLayout() {
         unreadCount: unread,
         isOnline: false,
         avatarColor: colorFromJid(jid),
-        avatarInitials: phoneInitials(phone),
+        avatarInitials: isGroup ? groupInitials(name) : phoneInitials(phone),
         instanceName: latest.instance_name,
         tags: lead?.lead_tags?.length
           ? lead.lead_tags.map((t: string) => ({ label: t, color: "lead" as const }))
@@ -223,6 +278,7 @@ export default function WhatsAppLayout() {
         isTicketOpen: lead?.is_ticket_open ?? false,
         assignedTo: lead?.assigned_attendant_id ?? undefined,
         status: lead?.lead_status === "resolved" ? "resolved" : "open",
+        isGroup,
       });
     }
 
@@ -390,13 +446,15 @@ export default function WhatsAppLayout() {
       return;
     }
 
+    // For groups, send using the full JID; for contacts, use phone number
+    const isGroup = isGroupJid(selectedJid);
     const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
       body: {
         instanceName: conv.instanceName,
         path: "/send/text",
         method: "POST",
         body: {
-          number: jidToPhone(selectedJid),
+          number: isGroup ? selectedJid : jidToPhone(selectedJid),
           text,
         },
       },

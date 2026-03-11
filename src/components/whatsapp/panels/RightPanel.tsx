@@ -18,14 +18,22 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
 
   if (!conversation || !isOpen) return null;
   const c = conversation;
+  const isGroup = c.isGroup ?? false;
 
-  const fields = [
-    { label: "Status no funil", value: "Qualificado" },
-    { label: "Nome", value: c.name },
-    { label: "Telefone", value: c.phone },
-    { label: "Email", value: "—" },
-    { label: "CPF/CNPJ", value: "—" },
-  ];
+  const fields = isGroup
+    ? [
+        { label: "Tipo", value: "Grupo" },
+        { label: "Nome do Grupo", value: c.name },
+        { label: "ID do Grupo", value: c.phone },
+        ...(c.participantCount ? [{ label: "Participantes", value: String(c.participantCount) }] : []),
+      ]
+    : [
+        { label: "Status no funil", value: "Qualificado" },
+        { label: "Nome", value: c.name },
+        { label: "Telefone", value: c.phone },
+        { label: "Email", value: "—" },
+        { label: "CPF/CNPJ", value: "—" },
+      ];
 
   return (
     <div
@@ -38,7 +46,9 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
     >
       {/* Close button */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--wa-border)" }}>
-        <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>Informações do contato</span>
+        <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
+          {isGroup ? "Informações do grupo" : "Informações do contato"}
+        </span>
         <button onClick={onClose} aria-label="Fechar painel">
           <X size={18} style={{ color: "var(--wa-text-secondary)" }} />
         </button>
@@ -99,7 +109,9 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
       {/* Lead Info Section */}
       <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
         <button onClick={() => toggleSection("info")} className="w-full flex items-center justify-between px-4 py-3">
-          <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>Informações do Lead</span>
+          <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
+            {isGroup ? "Informações do Grupo" : "Informações do Lead"}
+          </span>
           {openSections.info ? <ChevronUp size={16} style={{ color: "var(--wa-text-secondary)" }} /> : <ChevronDown size={16} style={{ color: "var(--wa-text-secondary)" }} />}
         </button>
         {openSections.info && (
