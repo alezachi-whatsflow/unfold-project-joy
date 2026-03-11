@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
 import { MessageSquarePlus, Users, MoreVertical } from "lucide-react";
 import WaAvatar from "../shared/Avatar";
-import SearchBar from "./SearchBar";
-import FilterTabs from "./FilterTabs";
-import ConversationItem from "./ConversationItem";
+import SearchBar from "../left/SearchBar";
+import FilterTabs from "../left/FilterTabs";
+import ConversationItem from "../left/ConversationItem";
 import type { Conversation } from "@/data/mockConversations";
 
 interface LeftPanelProps {
