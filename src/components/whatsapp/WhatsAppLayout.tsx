@@ -34,9 +34,9 @@ function colorFromJid(jid: string) {
 }
 
 function statusNumToLabel(n: number): Message["status"] {
-  if (n >= 4) return "read";
-  if (n === 3) return "delivered";
-  if (n === 2) return "sent";
+  if (n >= 3) return "read";
+  if (n === 2) return "delivered";
+  if (n === 1) return "sent";
   return "pending";
 }
 
