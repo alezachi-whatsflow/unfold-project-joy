@@ -28,7 +28,50 @@ const normalizeMessageId = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   const raw = String(value).trim();
   if (!raw) return null;
-  return raw.replace(/^\d+:/, "");
+
+  const withoutJidPrefix = raw.replace(/^\d+:/, "").replace(/^(true|false)_/i, "");
+  const parts = withoutJidPrefix.split("_");
+  const tail = parts[parts.length - 1];
+
+  if (parts.length > 1 && /^[A-Za-z0-9]{10,}$/.test(tail)) {
+    return tail;
+  }
+
+  return withoutJidPrefix;
+};
+
+const toMessageStatus = (value: unknown): number | undefined => {
+  if (value === null || value === undefined || value === "") return undefined;
+
+  const normalizedKey = String(value).trim().toUpperCase();
+  const mapped: Record<string, number> = {
+    ERROR: 0,
+    PENDING: 0,
+    SERVER_ACK: 1,
+    SENT: 1,
+    DELIVERY_ACK: 2,
+    DELIVERED: 2,
+    READ: 3,
+    PLAYED: 3,
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 3,
+    "5": 3,
+  };
+
+  if (normalizedKey in mapped) return mapped[normalizedKey];
+
+  const numericStatus = Number(value);
+  if (!Number.isNaN(numericStatus)) {
+    if (numericStatus <= 0) return 0;
+    if (numericStatus === 1) return 1;
+    if (numericStatus === 2) return 2;
+    return 3;
+  }
+
+  return undefined;
 };
 
 const isSafeMediaUrl = (value: unknown): value is string => {
