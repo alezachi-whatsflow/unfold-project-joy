@@ -260,9 +260,11 @@ export default function WhatsAppLayout() {
                   hour: "2-digit", minute: "2-digit",
                 }),
                 direction: m.direction === "outgoing" ? "outgoing" : "incoming",
-                type: m.type === "audio" ? "audio" : m.type === "image" ? "image" : "text",
+                type: mapMessageType(m.type),
                 status: statusNumToLabel(m.status ?? 0),
                 senderName: m.direction === "incoming" ? jidToPhone(m.remote_jid) : undefined,
+                mediaUrl: m.media_url || null,
+                caption: m.caption || null,
               }));
             if (newMsgs.length > 0) {
               lastSyncRef.current = data[data.length - 1].created_at;
