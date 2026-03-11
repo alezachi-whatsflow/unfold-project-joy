@@ -269,6 +269,25 @@ Deno.serve(async (req) => {
           } else {
             saved += 1;
           }
+
+          // Upsert contact info from incoming messages
+          if (normalized.direction === "incoming" && normalized.remote_jid) {
+            const contactName = msg?.senderName || msg?.pushName || msg?.verifiedBizName || null;
+            if (contactName) {
+              const phone = normalized.remote_jid.replace(/@.*$/, "");
+              await supabase.from("whatsapp_contacts").upsert(
+                {
+                  instance_name: instance,
+                  phone,
+                  jid: normalized.remote_jid,
+                  push_name: msg?.pushName || contactName,
+                  name: msg?.senderName || msg?.verifiedBizName || contactName,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "instance_name,phone" }
+              );
+            }
+          }
         }
 
         // fallback: cria um snapshot com último conteúdo do chat quando payload vem sem message detalhada
