@@ -405,3 +405,55 @@
   transform-origin: bottom;
   animation: bar-grow 0.6s ease-out both;
 }
+
+/* ===== WhatsApp Messenger Theme ===== */
+:root {
+  --wa-bg-deep: #111B21;
+  --wa-bg-panel: #1F2C34;
+  --wa-bg-chat: #0B141A;
+  --wa-bg-header: #202C33;
+  --wa-bg-input: #2A3942;
+  --wa-bg-hover: #2A3942;
+  --wa-bg-selected: #2A3942;
+  --wa-bg-msg-out: #005C4B;
+  --wa-bg-msg-in: #1E2A30;
+  --wa-bg-system: rgba(11,20,26,0.7);
+  --wa-text-primary: #E9EDEF;
+  --wa-text-secondary: #8696A0;
+  --wa-text-tertiary: #667781;
+  --wa-text-link: #53BDEB;
+  --wa-green: #00A884;
+  --wa-green-dark: #008069;
+  --wa-teal: #00BCD4;
+  --wa-blue-read: #53BDEB;
+  --wa-border: #222D34;
+  --wa-border-input: #3B4A54;
+  --tag-ai: #7C3AED;
+  --tag-client: #0EA5E9;
+  --tag-lead: #10B981;
+  --tag-support: #F59E0B;
+  --tag-transfer: #EF4444;
+}
+
+.chat-wallpaper {
+  background-color: var(--wa-bg-chat);
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.4'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+@keyframes messageIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.message-bubble { animation: messageIn 200ms ease-out; }
+
+.conv-item { transition: background-color 150ms ease; }
+.tick-icon { transition: color 300ms ease; }
+.right-panel-wa { transition: width 280ms cubic-bezier(0.4,0,0.2,1), opacity 280ms ease; }
+
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+.typing-dot:nth-child(1) { animation: typingDot 1.2s 0.0s infinite; }
+.typing-dot:nth-child(2) { animation: typingDot 1.2s 0.2s infinite; }
+.typing-dot:nth-child(3) { animation: typingDot 1.2s 0.4s infinite; }

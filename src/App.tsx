@@ -36,6 +36,7 @@ import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
 import VendasPage from "./pages/VendasPage";
 import MensageriaPage from "./pages/MensageriaPage";
+import WhatsAppPage from "./pages/WhatsAppPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -83,6 +84,7 @@ const AppRoutes = () => (
     <Route path="/perfil" element={<AuthGuard><DashboardLayout><ProfilePage /></DashboardLayout></AuthGuard>} />
     <Route path="/mensageria" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/integracoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/whatsapp" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
