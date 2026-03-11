@@ -190,16 +190,18 @@ Deno.serve(async (req) => {
           ? body.number
           : `${body?.number}@s.whatsapp.net`);
 
-      const messageId = rd?.messageid || rd?.id || `${instanceName}-${Date.now()}`;
+      const providerMessageId = normalizeMessageId(
+        rd?.messageid ?? rd?.messageId ?? rd?.id ?? rd?.key?.id ?? null
+      );
       const messageType = rd?.messageType || (path === "/send/text" ? "text" : "unknown");
       const messageBody = rd?.text || rd?.content?.text || body?.text || null;
 
-      if (remoteJid && messageId) {
+      if (remoteJid && providerMessageId) {
         await supabase.from("whatsapp_messages").upsert(
           {
             instance_name: instanceName,
             remote_jid: remoteJid,
-            message_id: String(messageId),
+            message_id: providerMessageId,
             direction: "outgoing",
             type: messageType,
             body: messageBody,
@@ -209,6 +211,8 @@ Deno.serve(async (req) => {
           },
           { onConflict: "message_id" }
         );
+      } else {
+        console.warn("uazapi-proxy: skipped snapshot persistence due to missing canonical message id");
       }
     }
 
