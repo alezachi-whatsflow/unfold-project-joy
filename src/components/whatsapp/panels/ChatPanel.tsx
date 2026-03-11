@@ -39,7 +39,8 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
           Suas mensagens são protegidas com<br />criptografia de ponta a ponta
         </p>
         <button
-          className="mt-6 px-6 py-2 rounded-full border text-sm font-medium"
+          onClick={onNewConversation}
+          className="mt-6 px-6 py-2 rounded-full border text-sm font-medium transition-colors hover:bg-[var(--wa-green)] hover:text-white"
           style={{ borderColor: "var(--wa-green)", color: "var(--wa-green)" }}
         >
           + Nova Conversa
