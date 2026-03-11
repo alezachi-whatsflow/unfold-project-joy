@@ -46,7 +46,9 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
     >
       {/* Close button */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--wa-border)" }}>
-        <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>Informações do contato</span>
+        <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
+          {isGroup ? "Informações do grupo" : "Informações do contato"}
+        </span>
         <button onClick={onClose} aria-label="Fechar painel">
           <X size={18} style={{ color: "var(--wa-text-secondary)" }} />
         </button>
