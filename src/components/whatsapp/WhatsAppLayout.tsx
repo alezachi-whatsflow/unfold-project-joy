@@ -226,6 +226,7 @@ export default function WhatsAppLayout() {
       const phone = jidToPhone(jid);
       const lead = leadMap.get(jid) as any;
       const contact = contactMap.get(jid) as any;
+      const isGroup = isGroupJid(jid);
 
       // Try to get name from: lead > contact > incoming message senderName/pushName > phone
       const senderNameFromMsg = sorted.find((m: any) =>
@@ -233,13 +234,31 @@ export default function WhatsAppLayout() {
       );
       const msgName = senderNameFromMsg?.raw_payload?.senderName || senderNameFromMsg?.raw_payload?.pushName || null;
 
-      const name =
-        lead?.lead_full_name ||
-        lead?.lead_name ||
-        contact?.push_name ||
-        contact?.name ||
-        msgName ||
-        phone;
+      // For groups, try to get group subject from raw_payload
+      let groupSubject: string | null = null;
+      if (isGroup) {
+        for (const m of sorted) {
+          const rp = m.raw_payload;
+          groupSubject =
+            rp?.groupSubject ||
+            rp?.subject ||
+            rp?.groupName ||
+            rp?.chat?.name ||
+            rp?.chat?.subject ||
+            rp?.key?.groupSubject ||
+            null;
+          if (groupSubject) break;
+        }
+      }
+
+      const name = isGroup
+        ? groupSubject || lead?.lead_full_name || lead?.lead_name || `Grupo ${phone}`
+        : lead?.lead_full_name ||
+          lead?.lead_name ||
+          contact?.push_name ||
+          contact?.name ||
+          msgName ||
+          phone;
 
       convs.push({
         id: jid,
@@ -251,7 +270,7 @@ export default function WhatsAppLayout() {
         unreadCount: unread,
         isOnline: false,
         avatarColor: colorFromJid(jid),
-        avatarInitials: phoneInitials(phone),
+        avatarInitials: isGroup ? groupInitials(name) : phoneInitials(phone),
         instanceName: latest.instance_name,
         tags: lead?.lead_tags?.length
           ? lead.lead_tags.map((t: string) => ({ label: t, color: "lead" as const }))
@@ -259,6 +278,7 @@ export default function WhatsAppLayout() {
         isTicketOpen: lead?.is_ticket_open ?? false,
         assignedTo: lead?.assigned_attendant_id ?? undefined,
         status: lead?.lead_status === "resolved" ? "resolved" : "open",
+        isGroup,
       });
     }
 

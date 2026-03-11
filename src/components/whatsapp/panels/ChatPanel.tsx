@@ -58,7 +58,9 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
             <div className="min-w-0">
               <p className="text-[15px] font-semibold truncate" style={{ color: "var(--wa-text-primary)" }}>{c.name}</p>
               <p className="text-[13px]" style={{ color: "var(--wa-text-secondary)" }}>
-                {c.isOnline ? "online" : "visto por último recentemente"}
+                {c.isGroup
+                  ? `Grupo${c.participantCount ? ` · ${c.participantCount} participantes` : ""}`
+                  : c.isOnline ? "online" : "visto por último recentemente"}
               </p>
             </div>
           </div>

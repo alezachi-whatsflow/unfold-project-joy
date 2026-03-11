@@ -109,7 +109,9 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
       {/* Lead Info Section */}
       <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
         <button onClick={() => toggleSection("info")} className="w-full flex items-center justify-between px-4 py-3">
-          <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>Informações do Lead</span>
+          <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
+            {isGroup ? "Informações do Grupo" : "Informações do Lead"}
+          </span>
           {openSections.info ? <ChevronUp size={16} style={{ color: "var(--wa-text-secondary)" }} /> : <ChevronDown size={16} style={{ color: "var(--wa-text-secondary)" }} />}
         </button>
         {openSections.info && (

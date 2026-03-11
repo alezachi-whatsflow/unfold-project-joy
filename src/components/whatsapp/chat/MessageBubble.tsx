@@ -232,7 +232,7 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
           borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
         }}
       >
-        {showSender && m.senderName && isOut && (
+        {showSender && m.senderName && (
           <p className="text-xs font-semibold mb-0.5" style={{ color: nameColor(m.senderName) }}>
             {m.senderName}
           </p>
