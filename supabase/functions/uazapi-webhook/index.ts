@@ -76,11 +76,15 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
       (msg?.sender && payload?.owner && String(msg.sender).includes(String(payload.owner)))
   );
 
-  const messageId =
+  const rawMessageId =
     msg?.key?.id ||
-    msg?.id ||
     msg?.messageid ||
     msg?.messageId ||
+    msg?.id ||
+    null;
+
+  const messageId =
+    normalizeMessageId(rawMessageId) ||
     `${instance || "unknown"}-${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
 
   const body =
