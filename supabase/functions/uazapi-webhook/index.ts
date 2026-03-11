@@ -271,10 +271,7 @@ Deno.serve(async (req) => {
       const rawMessageId = payload?.id?.id || payload?.messageId || payload?.messageid || null;
       const messageId = normalizeMessageId(rawMessageId);
       const statusKey = payload.ack ?? payload.status;
-      let newStatus: number | undefined = messageStatusMap[String(statusKey)];
-      if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
-        newStatus = Math.min(statusKey, 4);
-      }
+      const newStatus = toMessageStatus(statusKey);
       if (messageId && newStatus !== undefined) {
         console.log(`uazapi-webhook: no-event status update ${messageId} -> ${newStatus}`);
         await supabase.from("whatsapp_messages").update({ status: newStatus }).eq("message_id", String(messageId));
