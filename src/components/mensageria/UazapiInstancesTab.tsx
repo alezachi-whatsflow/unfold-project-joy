@@ -24,7 +24,7 @@ export default function UazapiInstancesTab() {
       .from("whatsapp_instances")
       .select("*")
       .eq("provedor", "uazapi")
-      .order("criado_em", { ascending: false });
+      .order("api_created_at", { ascending: false, nullsFirst: false });
 
     if (data) {
       setInstances(data.map((d: any) => ({
