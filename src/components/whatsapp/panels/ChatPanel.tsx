@@ -32,7 +32,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
   // Empty state
   if (!conversation) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center chat-wallpaper" style={{ minWidth: 480 }}>
+      <div className="flex-1 flex flex-col items-center justify-center chat-wallpaper min-w-0">
         <Lock size={48} style={{ color: "var(--wa-border-input)" }} />
         <p className="mt-4 text-lg font-light" style={{ color: "var(--wa-text-secondary)" }}>
           Suas mensagens são protegidas com<br />criptografia de ponta a ponta
@@ -50,7 +50,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
   const c = conversation;
 
   return (
-    <div className="flex-1 flex flex-col" style={{ minWidth: 480 }}>
+    <div className="flex-1 flex flex-col min-w-0">
       {/* Chat Header */}
       <div style={{ backgroundColor: "var(--wa-bg-header)", borderBottom: "1px solid var(--wa-border)" }}>
         <div className="flex items-center justify-between px-4" style={{ height: 60 }}>
