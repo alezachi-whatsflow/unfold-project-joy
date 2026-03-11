@@ -363,8 +363,12 @@ Deno.serve(async (req) => {
           const messageId = normalizeMessageId(rawMessageId);
           if (!messageId) continue;
 
-          const statusKey = upd?.update?.status || upd?.status;
-          const newStatus = messageStatusMap[String(statusKey)] ?? undefined;
+          const statusKey = upd?.update?.status ?? upd?.status;
+          let newStatus: number | undefined = messageStatusMap[String(statusKey)];
+          // Also handle when uazapi sends raw numeric status directly
+          if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
+            newStatus = Math.min(statusKey, 4);
+          }
           if (newStatus !== undefined) {
             await supabase
               .from("whatsapp_messages")
