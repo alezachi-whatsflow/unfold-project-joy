@@ -47,6 +47,13 @@ const getEventName = (payload: AnyRecord) =>
 const getInstanceName = (payload: AnyRecord) =>
   payload.instance || payload.instanceName || payload.name || payload.token || "";
 
+const normalizeMessageId = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  return raw.replace(/^\d+:/, "");
+};
+
 const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) => {
   const chatPayload = payload.chat || {};
 
@@ -69,11 +76,15 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
       (msg?.sender && payload?.owner && String(msg.sender).includes(String(payload.owner)))
   );
 
-  const messageId =
+  const rawMessageId =
     msg?.key?.id ||
-    msg?.id ||
     msg?.messageid ||
     msg?.messageId ||
+    msg?.id ||
+    null;
+
+  const messageId =
+    normalizeMessageId(rawMessageId) ||
     `${instance || "unknown"}-${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
 
   const body =
@@ -292,7 +303,13 @@ Deno.serve(async (req) => {
         const updates = asArray(data);
 
         for (const upd of updates) {
-          const messageId = upd?.key?.id || upd?.id || upd?.messageid || upd?.messageId;
+          const rawMessageId =
+            upd?.key?.id ||
+            upd?.messageid ||
+            upd?.messageId ||
+            upd?.id ||
+            null;
+          const messageId = normalizeMessageId(rawMessageId);
           if (!messageId) continue;
 
           const statusKey = upd?.update?.status || upd?.status;

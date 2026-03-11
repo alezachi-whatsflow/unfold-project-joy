@@ -5,6 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const normalizeMessageId = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  return raw.replace(/^\d+:/, "");
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -76,7 +83,9 @@ Deno.serve(async (req) => {
           const fromMe = Boolean(lastSender && owner && lastSender.includes(owner));
 
           if (lastText || chat.wa_lastMsgTimestamp) {
-            const fallbackMessageId = chat.wa_lastMsgId || `${jid}-${chat.wa_lastMsgTimestamp || Date.now()}`;
+            const fallbackMessageId =
+              normalizeMessageId(chat.wa_lastMsgId) ||
+              `${jid}-${chat.wa_lastMsgTimestamp || Date.now()}`;
             const { error } = await supabase.from("whatsapp_messages").upsert(
               {
                 instance_name: inst.instance_name,
@@ -101,7 +110,9 @@ Deno.serve(async (req) => {
           const remoteJid = msg?.key?.remoteJid || msg?.remoteJid || msg?.chatid || chat.wa_chatid || jid;
           if (!remoteJid) continue;
 
-          const messageId = msg?.key?.id || msg?.id || msg?.messageid || `${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
+          const messageId =
+            normalizeMessageId(msg?.key?.id || msg?.messageid || msg?.id) ||
+            `${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
           const fromMe = Boolean(msg?.key?.fromMe ?? msg?.fromMe ?? false);
 
           const rawType = msg.messageType ?? msg.type ?? chat.wa_lastMessageType ?? "text";
