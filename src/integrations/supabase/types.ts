@@ -935,6 +935,56 @@ export type Database = {
         }
         Relationships: []
       }
+      licenses: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          features: Json
+          id: string
+          max_instances: number
+          max_users: number
+          plan: string
+          starts_at: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          features?: Json
+          id?: string
+          max_instances?: number
+          max_users?: number
+          plan?: string
+          starts_at?: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          features?: Json
+          id?: string
+          max_instances?: number
+          max_users?: number
+          plan?: string
+          starts_at?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_logs: {
         Row: {
           conteudo: string
