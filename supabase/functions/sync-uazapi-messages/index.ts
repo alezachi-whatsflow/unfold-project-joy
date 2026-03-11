@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get all uazapi instances
     const { data: instances } = await supabase
       .from("whatsapp_instances")
       .select("*")
@@ -33,7 +32,7 @@ Deno.serve(async (req) => {
       const serverUrl = inst.server_url || Deno.env.get("UAZAPI_BASE_URL");
       if (!token || !serverUrl) continue;
 
-      // Fetch recent chats via /chat/find
+      // Fetch recent chats
       const chatsRes = await fetch(`${serverUrl}/chat/find`, {
         method: "POST",
         headers: { "Content-Type": "application/json", token },
@@ -48,25 +47,53 @@ Deno.serve(async (req) => {
       const chatsData = await chatsRes.json();
       const chats = Array.isArray(chatsData) ? chatsData : chatsData?.chats || [];
       let totalSaved = 0;
+      const debugInfo: any[] = [];
 
-      for (const chat of chats) {
+      for (const chat of chats.slice(0, 15)) {
         const jid = chat.wa_chatid || chat.id || chat.jid;
         if (!jid || jid.includes("@g.us")) continue;
 
-        // Fetch messages for this chat via /chat/messages
-        const msgsRes = await fetch(`${serverUrl}/chat/messages`, {
+        // Get chat details which includes recent messages
+        const detailsRes = await fetch(`${serverUrl}/chat/details`, {
           method: "POST",
           headers: { "Content-Type": "application/json", token },
-          body: JSON.stringify({ id: jid, limit: 20 }),
+          body: JSON.stringify({ id: jid }),
         });
 
-        if (!msgsRes.ok) continue;
-        const msgsData = await msgsRes.json();
-        const msgs = Array.isArray(msgsData) ? msgsData : msgsData?.messages || [];
+        if (!detailsRes.ok) {
+          debugInfo.push({ jid, error: `details: ${detailsRes.status}` });
+          continue;
+        }
+
+        const details = await detailsRes.json();
+        const msgs = details?.messages || details?.msgs || [];
+
+        if (msgs.length === 0) {
+          // If no messages array, try to extract last message from chat data
+          if (chat.wa_lastMsgBody || chat.wa_lastMsg) {
+            const lastMsgId = chat.wa_lastMsgId || `${jid}-${Date.now()}`;
+            const { error } = await supabase.from("whatsapp_messages").upsert(
+              {
+                instance_name: inst.instance_name,
+                remote_jid: jid,
+                message_id: lastMsgId,
+                direction: chat.wa_lastMsgFromMe ? "outgoing" : "incoming",
+                type: "text",
+                body: chat.wa_lastMsgBody || chat.wa_lastMsg || "",
+                status: chat.wa_lastMsgFromMe ? 2 : 4,
+                created_at: chat.wa_lastMsgTimestamp
+                  ? new Date(chat.wa_lastMsgTimestamp * 1000).toISOString()
+                  : new Date().toISOString(),
+              },
+              { onConflict: "message_id" }
+            );
+            if (!error) totalSaved++;
+          }
+          continue;
+        }
 
         for (const msg of msgs) {
           if (!msg?.key?.remoteJid) continue;
-
           const { error } = await supabase.from("whatsapp_messages").upsert(
             {
               instance_name: inst.instance_name,
@@ -85,12 +112,17 @@ Deno.serve(async (req) => {
             },
             { onConflict: "message_id" }
           );
-
           if (!error) totalSaved++;
         }
       }
 
-      results.push({ instance: inst.instance_name, chatsFetched: chats?.length || 0, messagesSaved: totalSaved });
+      results.push({
+        instance: inst.instance_name,
+        chatsFetched: chats.length,
+        messagesSaved: totalSaved,
+        sampleChat: chats[0] ? Object.keys(chats[0]).join(",") : "none",
+        sampleChatData: chats[0] ? JSON.stringify(chats[0]).substring(0, 500) : "none",
+      });
     }
 
     return new Response(JSON.stringify({ results }), {
