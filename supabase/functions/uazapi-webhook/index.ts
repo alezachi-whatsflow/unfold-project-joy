@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
         await supabase
           .from("whatsapp_instances")
           .update({ ultimo_ping: new Date().toISOString() })
-          .eq("instance_name", instance);
+          .or(`instance_name.eq.${instance},instance_token.eq.${instance},session_id.eq.${instance}`);
 
         break;
       }
