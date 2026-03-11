@@ -14,17 +14,19 @@ type AnyRecord = Record<string, any>;
 
 const messageStatusMap: Record<string, number> = {
   ERROR: 0,
-  PENDING: 1,
-  SERVER_ACK: 2,
-  DELIVERY_ACK: 3,
-  READ: 4,
-  PLAYED: 4,
+  PENDING: 0,
+  SERVER_ACK: 1,
+  SENT: 1,
+  DELIVERY_ACK: 2,
+  DELIVERED: 2,
+  READ: 3,
+  PLAYED: 3,
   "0": 0,
   "1": 1,
   "2": 2,
   "3": 3,
-  "4": 4,
-  "5": 4,
+  "4": 3,
+  "5": 3,
 };
 
 const asArray = <T>(value: T | T[] | null | undefined): T[] => {
@@ -57,7 +59,35 @@ const normalizeMessageId = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   const raw = String(value).trim();
   if (!raw) return null;
-  return raw.replace(/^\d+:/, "");
+
+  const withoutJidPrefix = raw.replace(/^\d+:/, "").replace(/^(true|false)_/i, "");
+  const parts = withoutJidPrefix.split("_");
+  const tail = parts[parts.length - 1];
+
+  if (parts.length > 1 && /^[A-Za-z0-9]{10,}$/.test(tail)) {
+    return tail;
+  }
+
+  return withoutJidPrefix;
+};
+
+const toMessageStatus = (value: unknown): number | undefined => {
+  if (value === null || value === undefined || value === "") return undefined;
+
+  const normalizedKey = String(value).trim().toUpperCase();
+  if (normalizedKey in messageStatusMap) {
+    return messageStatusMap[normalizedKey];
+  }
+
+  const numericStatus = Number(value);
+  if (!Number.isNaN(numericStatus)) {
+    if (numericStatus <= 0) return 0;
+    if (numericStatus === 1) return 1;
+    if (numericStatus === 2) return 2;
+    return 3;
+  }
+
+  return undefined;
 };
 
 const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) => {
@@ -184,6 +214,10 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     ...(msg?.senderName ? { senderName: msg.senderName } : {}),
   };
 
+  const parsedStatus = toMessageStatus(
+    msg?.status ?? msg?.ack ?? msg?.chatMessageStatusCode ?? msg?.messageStatus ?? msg?.content?.status ?? null
+  );
+
   return {
     instance_name: instance,
     remote_jid: remoteJid,
@@ -193,7 +227,7 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     body: body || captionVal,
     media_url: mediaUrl,
     caption: captionVal,
-    status: typeof msg?.status === "number" ? msg.status : fromMe ? 2 : 4,
+    status: parsedStatus ?? (fromMe ? 1 : 4),
     track_source: msg?.trackSource ?? msg?.track_source ?? null,
     track_id: msg?.trackId ?? msg?.track_id ?? null,
     raw_payload: enrichedPayload,
@@ -237,10 +271,7 @@ Deno.serve(async (req) => {
       const rawMessageId = payload?.id?.id || payload?.messageId || payload?.messageid || null;
       const messageId = normalizeMessageId(rawMessageId);
       const statusKey = payload.ack ?? payload.status;
-      let newStatus: number | undefined = messageStatusMap[String(statusKey)];
-      if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
-        newStatus = Math.min(statusKey, 4);
-      }
+      const newStatus = toMessageStatus(statusKey);
       if (messageId && newStatus !== undefined) {
         console.log(`uazapi-webhook: no-event status update ${messageId} -> ${newStatus}`);
         await supabase.from("whatsapp_messages").update({ status: newStatus }).eq("message_id", String(messageId));
@@ -405,6 +436,7 @@ Deno.serve(async (req) => {
         for (const upd of updates) {
           const rawMessageId =
             upd?.key?.id ||
+            upd?.update?.key?.id ||
             upd?.id?.id ||
             upd?.messageid ||
             upd?.messageId ||
@@ -422,13 +454,10 @@ Deno.serve(async (req) => {
             upd?.status ??
             upd?.ack ??
             upd?.chatMessageStatusCode ??
+            upd?.messageStatus ??
             null;
 
-          let newStatus: number | undefined = messageStatusMap[String(statusKey)];
-          // Handle raw numeric status
-          if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
-            newStatus = Math.min(statusKey, 4);
-          }
+          const newStatus = toMessageStatus(statusKey);
 
           if (newStatus !== undefined) {
             console.log(`uazapi-webhook: updating message ${messageId} status to ${newStatus}`);
