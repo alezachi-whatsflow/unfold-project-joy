@@ -23,8 +23,8 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
       const q = search.toLowerCase();
       list = list.filter((c) => c.name.toLowerCase().includes(q) || c.phone.includes(q));
     }
-    if (filter === "inbox") list = list.filter((c) => c.status === "open" || c.status === "pending");
-    if (filter === "queue") list = list.filter((c) => !c.assignedTo);
+    if (filter === "inbox") list = list.filter((c) => !c.isGroup && (c.status === "open" || c.status === "pending"));
+    if (filter === "queue") list = list.filter((c) => !c.isGroup && !c.assignedTo);
     if (filter === "groups") list = list.filter((c) => c.isGroup);
     if (filter === "resolved") list = list.filter((c) => c.status === "resolved");
     return list;
