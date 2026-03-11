@@ -84,7 +84,7 @@ const AppRoutes = () => (
     <Route path="/perfil" element={<AuthGuard><DashboardLayout><ProfilePage /></DashboardLayout></AuthGuard>} />
     <Route path="/mensageria" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/integracoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/whatsapp" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
