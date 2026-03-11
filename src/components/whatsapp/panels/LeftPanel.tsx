@@ -30,7 +30,10 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
     return list;
   }, [conversations, search, filter]);
 
-  const unreadCount = conversations.reduce((a, c) => a + (c.unreadCount > 0 ? 1 : 0), 0);
+  const inboxCount = conversations.filter((c) => !c.isGroup && (c.status === "open" || c.status === "pending")).length;
+  const queueCount = conversations.filter((c) => !c.isGroup && !c.assignedTo).length;
+  const groupCount = conversations.filter((c) => c.isGroup).length;
+  const resolvedCount = conversations.filter((c) => c.status === "resolved").length;
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: "var(--wa-bg-panel)", borderRight: "1px solid var(--wa-border)" }}>
@@ -59,7 +62,7 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
       </div>
 
       <SearchBar value={search} onChange={setSearch} />
-      <FilterTabs active={filter} onChange={setFilter} totalCount={conversations.length} unreadCount={unreadCount} />
+      <FilterTabs active={filter} onChange={setFilter} totalCount={inboxCount} unreadCount={queueCount} groupCount={groupCount} resolvedCount={resolvedCount} />
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">

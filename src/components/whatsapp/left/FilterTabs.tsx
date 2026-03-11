@@ -6,23 +6,27 @@ interface FilterTabsProps {
   onChange: (tab: string) => void;
   totalCount: number;
   unreadCount: number;
+  groupCount: number;
+  resolvedCount: number;
 }
 
 const tabs = [
-  { id: "inbox", icon: MessageCircle, label: "Caixa de entrada" },
-  { id: "queue", icon: User, label: "Fila de atendimento" },
-  { id: "groups", icon: Users, label: "Grupos" },
-  { id: "resolved", icon: Hash, label: "Finalizados" },
-  { id: "more", icon: MoreHorizontal, label: "Mais" },
-];
+  { id: "inbox", icon: MessageCircle, label: "Caixa de entrada", countKey: "totalCount" },
+  { id: "queue", icon: User, label: "Fila de atendimento", countKey: "unreadCount" },
+  { id: "groups", icon: Users, label: "Grupos", countKey: "groupCount" },
+  { id: "resolved", icon: Hash, label: "Finalizados", countKey: "resolvedCount" },
+  { id: "more", icon: MoreHorizontal, label: "Mais", countKey: null },
+] as const;
 
-export default function FilterTabs({ active, onChange, totalCount, unreadCount }: FilterTabsProps) {
+export default function FilterTabs({ active, onChange, totalCount, unreadCount, groupCount, resolvedCount }: FilterTabsProps) {
+  const counts: Record<string, number> = { totalCount, unreadCount, groupCount, resolvedCount };
+
   return (
     <div className="flex items-center gap-1 px-3 py-1" style={{ borderBottom: "1px solid var(--wa-border)" }}>
       {tabs.map((tab) => {
         const isActive = active === tab.id;
         const Icon = tab.icon;
-        const count = tab.id === "inbox" ? totalCount : tab.id === "queue" ? unreadCount : undefined;
+        const count = tab.countKey ? counts[tab.countKey] : undefined;
         return (
           <Tooltip key={tab.id}>
             <TooltipTrigger asChild>
