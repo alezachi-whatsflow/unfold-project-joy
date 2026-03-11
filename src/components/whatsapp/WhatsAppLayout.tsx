@@ -372,9 +372,6 @@ export default function WhatsAppLayout() {
       return;
     }
 
-    const nowIso = new Date().toISOString();
-    const fallbackMessageId = `${conv.instanceName}-${selectedJid}-${Date.now()}`;
-
     const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
       body: {
         instanceName: conv.instanceName,
