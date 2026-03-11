@@ -86,6 +86,15 @@ Deno.serve(async (req) => {
       return json({ error: "Path not allowed" }, 403);
     }
 
+    if (path === "/send/media") {
+      if (!isSafeMediaUrl(body?.file)) {
+        return json({ error: "Invalid media file URL" }, 400);
+      }
+      if (typeof body?.text === "string" && body.text.length > 1000) {
+        return json({ error: "Caption too long" }, 400);
+      }
+    }
+
     // Selecionar o token correto e o header correto
     let authTokenHeader: Record<string, string> = {};
 
