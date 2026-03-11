@@ -131,9 +131,9 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
           setTimeout(() => onClose(), 1500);
         }
       } catch {}
-    }, 8000);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [instance, status, onStatusChange]);
+  }, [instance, status, onStatusChange, onClose]);
 
   useEffect(() => {
     if (instance) fetchQR();
