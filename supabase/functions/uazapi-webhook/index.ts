@@ -231,6 +231,23 @@ Deno.serve(async (req) => {
       return new Response("OK", { status: 200, headers: corsHeaders });
     }
 
+    // Handle status update payloads that don't have a named event
+    // e.g. { id: { id: "xxx" }, ack: 3 } or { messageId: "xxx", status: "READ" }
+    if (!event && (payload.ack !== undefined || (payload.id && payload.status !== undefined))) {
+      const rawMessageId = payload?.id?.id || payload?.messageId || payload?.messageid || null;
+      const messageId = normalizeMessageId(rawMessageId);
+      const statusKey = payload.ack ?? payload.status;
+      let newStatus: number | undefined = messageStatusMap[String(statusKey)];
+      if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
+        newStatus = Math.min(statusKey, 4);
+      }
+      if (messageId && newStatus !== undefined) {
+        console.log(`uazapi-webhook: no-event status update ${messageId} -> ${newStatus}`);
+        await supabase.from("whatsapp_messages").update({ status: newStatus }).eq("message_id", String(messageId));
+      }
+      return new Response("OK", { status: 200, headers: corsHeaders });
+    }
+
     switch (event) {
       case "connection": {
         const instData = data?.instance || data || {};
