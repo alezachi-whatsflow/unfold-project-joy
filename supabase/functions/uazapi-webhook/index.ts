@@ -75,6 +75,8 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
 
   if (!remoteJid) return null;
 
+  const isGroup = String(remoteJid).endsWith("@g.us");
+
   const fromMe = Boolean(
     msg?.key?.fromMe ??
       msg?.fromMe ??
