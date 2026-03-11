@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wifi, Inbox, Receipt, ScrollText, Send, Users, Kanban, Server } from "lucide-react";
+import { Wifi, Inbox, Receipt, ScrollText, Send, Users, Kanban, Server, Megaphone } from "lucide-react";
 import WhatsAppConnectionsTab from "@/components/mensageria/WhatsAppConnectionsTab";
 import UazapiInstancesTab from "@/components/mensageria/UazapiInstancesTab";
 import InboxTab from "@/components/mensageria/inbox/InboxTab";
@@ -8,6 +8,7 @@ import LogsTab from "@/components/mensageria/LogsTab";
 import MessageComposer from "@/components/mensageria/MessageComposer";
 import ContactChecker from "@/components/mensageria/ContactChecker";
 import LeadKanban from "@/components/mensageria/LeadKanban";
+import CampaignsTab from "@/components/mensageria/CampaignsTab";
 
 const MensageriaPage = () => {
   return (
@@ -23,6 +24,7 @@ const MensageriaPage = () => {
           <TabsTrigger value="conexoes" className="gap-2"><Wifi className="h-4 w-4" /> Conexões</TabsTrigger>
           <TabsTrigger value="inbox" className="gap-2"><Inbox className="h-4 w-4" /> Caixa de Entrada</TabsTrigger>
           <TabsTrigger value="enviar" className="gap-2"><Send className="h-4 w-4" /> Enviar</TabsTrigger>
+          <TabsTrigger value="campanhas" className="gap-2"><Megaphone className="h-4 w-4" /> Campanhas</TabsTrigger>
           <TabsTrigger value="leads" className="gap-2"><Kanban className="h-4 w-4" /> Leads</TabsTrigger>
           <TabsTrigger value="contatos" className="gap-2"><Users className="h-4 w-4" /> Contatos</TabsTrigger>
           <TabsTrigger value="cobranca" className="gap-2"><Receipt className="h-4 w-4" /> Cobrança</TabsTrigger>
@@ -43,6 +45,10 @@ const MensageriaPage = () => {
 
         <TabsContent value="enviar">
           <MessageComposer />
+        </TabsContent>
+
+        <TabsContent value="campanhas">
+          <CampaignsTab />
         </TabsContent>
 
         <TabsContent value="leads">
