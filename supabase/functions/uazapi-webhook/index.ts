@@ -33,27 +33,32 @@ Deno.serve(async (req) => {
     switch (event) {
       // ─── Conexão ───────────────────────────────────────────
       case "connection": {
-        const status = data?.state ?? data?.status ?? "disconnected";
+        const instData = data?.instance || data;
+        const status = instData?.status ?? data?.state ?? "disconnected";
         const updateData: Record<string, unknown> = {
           status,
           api_updated_at: new Date().toISOString(),
           ultimo_ping: new Date().toISOString(),
         };
 
-        if (data?.qrcode) updateData.qr_code = data.qrcode;
-        if (data?.paircode) updateData.pair_code = data.paircode;
-        if (data?.profileName) updateData.profile_name = data.profileName;
-        if (data?.profilePicUrl) updateData.profile_pic_url = data.profilePicUrl;
-        if (data?.phone) updateData.phone_number = data.phone;
+        if (instData?.qrcode) updateData.qr_code = instData.qrcode;
+        if (instData?.paircode) updateData.pair_code = instData.paircode;
+        if (instData?.profileName) updateData.profile_name = instData.profileName;
+        if (instData?.profilePicUrl) updateData.profile_pic_url = instData.profilePicUrl;
+        if (instData?.phone || data?.phone) updateData.phone_number = instData?.phone || data?.phone;
+        if (instData?.isBusiness !== undefined) updateData.is_business = instData.isBusiness;
+        if (instData?.plataform) updateData.platform = instData.plataform;
+        if (instData?.currentPresence) updateData.current_presence = instData.currentPresence;
+        if (instData?.owner) updateData.owner_email = instData.owner;
 
-        if (status === "connected") {
+        if (status === "connected" || status === "open") {
           updateData.qr_code = null;
           updateData.pair_code = null;
         }
 
         if (status === "disconnected" || status === "close") {
           updateData.last_disconnect = new Date().toISOString();
-          updateData.last_disconnect_reason = data?.reason || data?.statusReason || null;
+          updateData.last_disconnect_reason = instData?.lastDisconnectReason || data?.reason || data?.statusReason || null;
         }
 
         console.log(`uazapi-webhook: connection update for ${instance}:`, JSON.stringify(updateData).substring(0, 300));

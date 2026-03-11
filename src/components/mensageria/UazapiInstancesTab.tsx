@@ -24,7 +24,7 @@ export default function UazapiInstancesTab() {
       .from("whatsapp_instances")
       .select("*")
       .eq("provedor", "uazapi")
-      .order("criado_em", { ascending: false });
+      .order("api_created_at", { ascending: false, nullsFirst: false });
 
     if (data) {
       setInstances(data.map((d: any) => ({
@@ -56,7 +56,21 @@ export default function UazapiInstancesTab() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchInstances(); }, []);
+  // Subscribe to realtime updates on whatsapp_instances
+  useEffect(() => {
+    fetchInstances();
+    const channel = supabase
+      .channel("uazapi-instances-rt")
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "whatsapp_instances",
+      }, () => {
+        fetchInstances();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const handleCreate = async () => {
     if (!newName.trim()) {
