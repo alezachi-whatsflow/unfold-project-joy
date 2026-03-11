@@ -98,18 +98,23 @@ Deno.serve(async (req) => {
         }
 
         for (const msg of msgs) {
-          if (!msg?.key?.remoteJid) continue;
+          const remoteJid = msg?.key?.remoteJid || msg?.remoteJid || msg?.chatid || chat.wa_chatid || jid;
+          if (!remoteJid) continue;
+
+          const messageId = msg?.key?.id || msg?.id || msg?.messageid || `${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
+          const fromMe = Boolean(msg?.key?.fromMe ?? msg?.fromMe ?? false);
+
           const { error } = await supabase.from("whatsapp_messages").upsert(
             {
               instance_name: inst.instance_name,
-              remote_jid: msg.key.remoteJid,
-              message_id: msg.key.id,
-              direction: msg.key.fromMe ? "outgoing" : "incoming",
-              type: msg.messageType ?? "text",
-              body: msg.body ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? null,
-              media_url: msg.mediaUrl ?? null,
-              caption: msg.message?.imageMessage?.caption ?? msg.message?.videoMessage?.caption ?? null,
-              status: msg.key.fromMe ? 2 : 4,
+              remote_jid: remoteJid,
+              message_id: messageId,
+              direction: fromMe ? "outgoing" : "incoming",
+              type: msg.messageType ?? msg.type ?? chat.wa_lastMessageType ?? "text",
+              body: msg.body ?? msg.text ?? msg.content?.text ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? null,
+              media_url: msg.mediaUrl ?? msg.media?.url ?? null,
+              caption: msg.caption ?? msg.message?.imageMessage?.caption ?? msg.message?.videoMessage?.caption ?? null,
+              status: fromMe ? 2 : 4,
               raw_payload: msg,
               created_at: msg.messageTimestamp
                 ? new Date(msg.messageTimestamp * 1000).toISOString()
