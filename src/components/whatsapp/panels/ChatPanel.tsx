@@ -14,6 +14,7 @@ interface ChatPanelProps {
   onToggleRight: () => void;
   onSend: (text: string) => void;
   onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
+  onNewConversation?: () => void;
 }
 
 // Quick action chips
@@ -26,7 +27,7 @@ const quickActions = [
   { id: "more", label: "Mais", icon: MoreHorizontal, bg: "rgba(100,116,139,0.1)", text: "#8696A0", border: "rgba(100,116,139,0.3)" },
 ];
 
-export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment }: ChatPanelProps) {
+export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
 
   // Empty state
@@ -38,7 +39,8 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
           Suas mensagens são protegidas com<br />criptografia de ponta a ponta
         </p>
         <button
-          className="mt-6 px-6 py-2 rounded-full border text-sm font-medium"
+          onClick={onNewConversation}
+          className="mt-6 px-6 py-2 rounded-full border text-sm font-medium transition-colors hover:bg-[var(--wa-green)] hover:text-white"
           style={{ borderColor: "var(--wa-green)", color: "var(--wa-green)" }}
         >
           + Nova Conversa
