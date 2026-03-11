@@ -32,7 +32,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
   // Empty state
   if (!conversation) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center chat-wallpaper" style={{ minWidth: 480 }}>
+      <div className="flex-1 flex flex-col items-center justify-center chat-wallpaper min-w-0">
         <Lock size={48} style={{ color: "var(--wa-border-input)" }} />
         <p className="mt-4 text-lg font-light" style={{ color: "var(--wa-text-secondary)" }}>
           Suas mensagens são protegidas com<br />criptografia de ponta a ponta
