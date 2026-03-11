@@ -86,10 +86,11 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     chatPayload?.wa_lastMsg ??
     null;
 
-  // Extract media URL from various possible locations
   const mediaUrl =
     msg?.mediaUrl ??
     msg?.media?.url ??
+    msg?.content?.URL ??
+    msg?.content?.url ??
     msg?.message?.imageMessage?.url ??
     msg?.message?.videoMessage?.url ??
     msg?.message?.documentMessage?.url ??

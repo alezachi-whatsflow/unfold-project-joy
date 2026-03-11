@@ -104,16 +104,38 @@ Deno.serve(async (req) => {
           const messageId = msg?.key?.id || msg?.id || msg?.messageid || `${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
           const fromMe = Boolean(msg?.key?.fromMe ?? msg?.fromMe ?? false);
 
+          const rawType = msg.messageType ?? msg.type ?? chat.wa_lastMessageType ?? "text";
+          const mimetype = msg?.mimetype ?? msg?.content?.mimetype ?? null;
+          let normalizedType = String(rawType);
+
+          if ((normalizedType === "media" || normalizedType === "unknown") && mimetype) {
+            if (String(mimetype).startsWith("image/")) normalizedType = "image";
+            else if (String(mimetype).startsWith("video/")) normalizedType = "video";
+            else if (String(mimetype).startsWith("audio/")) normalizedType = "audio";
+            else normalizedType = "document";
+          }
+
+          const mediaUrl =
+            msg.mediaUrl ??
+            msg.media?.url ??
+            msg.content?.URL ??
+            msg.content?.url ??
+            msg.message?.imageMessage?.url ??
+            msg.message?.videoMessage?.url ??
+            msg.message?.documentMessage?.url ??
+            msg.message?.audioMessage?.url ??
+            null;
+
           const { error } = await supabase.from("whatsapp_messages").upsert(
             {
               instance_name: inst.instance_name,
               remote_jid: remoteJid,
               message_id: messageId,
               direction: fromMe ? "outgoing" : "incoming",
-              type: msg.messageType ?? msg.type ?? chat.wa_lastMessageType ?? "text",
+              type: normalizedType,
               body: msg.body ?? msg.text ?? msg.content?.text ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? null,
-              media_url: msg.mediaUrl ?? msg.media?.url ?? null,
-              caption: msg.caption ?? msg.message?.imageMessage?.caption ?? msg.message?.videoMessage?.caption ?? null,
+              media_url: mediaUrl,
+              caption: msg.caption ?? msg.message?.imageMessage?.caption ?? msg.message?.videoMessage?.caption ?? msg.content?.caption ?? null,
               status: fromMe ? 2 : 4,
               raw_payload: msg,
               created_at: msg.messageTimestamp
