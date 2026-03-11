@@ -13,12 +13,16 @@ interface LeftPanelProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onNewConversationStarted?: (jid: string) => void;
+  newConvOpen?: boolean;
+  onNewConvOpenChange?: (open: boolean) => void;
 }
 
-export default function LeftPanel({ conversations, selectedId, onSelect, onNewConversationStarted }: LeftPanelProps) {
+export default function LeftPanel({ conversations, selectedId, onSelect, onNewConversationStarted, newConvOpen: externalOpen, onNewConvOpenChange }: LeftPanelProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("inbox");
-  const [newConvOpen, setNewConvOpen] = useState(false);
+
+  const newConvOpen = externalOpen ?? false;
+  const setNewConvOpen = (v: boolean) => onNewConvOpenChange?.(v);
 
   const filtered = useMemo(() => {
     let list = conversations;
