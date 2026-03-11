@@ -285,11 +285,11 @@ export default function WhatsAppLayout() {
     const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
       body: {
         instanceName: conv.instanceName,
-        path: "/sendText",
+        path: "/send/text",
         method: "POST",
         body: {
-          phone: jidToPhone(selectedJid),
-          message: text,
+          number: jidToPhone(selectedJid),
+          text: text,
         },
       },
     });
