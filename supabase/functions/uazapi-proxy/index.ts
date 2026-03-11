@@ -223,8 +223,25 @@ Deno.serve(async (req) => {
       const providerMessageId = normalizeMessageId(
         rd?.messageid ?? rd?.messageId ?? rd?.id ?? rd?.key?.id ?? null
       );
-      const messageType = rd?.messageType || (path === "/send/text" ? "text" : "unknown");
-      const messageBody = rd?.text || rd?.content?.text || body?.text || null;
+      const fallbackTypeFromPath =
+        path === "/send/text"
+          ? "text"
+          : path === "/send/location"
+          ? "location"
+          : path === "/send/contact"
+          ? "contact"
+          : path === "/send/menu"
+          ? "menu"
+          : path === "/send/media"
+          ? String(body?.type || "media")
+          : "unknown";
+      const messageType = String(rd?.messageType || fallbackTypeFromPath);
+      const messageBody = rd?.text || rd?.content?.text || body?.text || body?.name || null;
+      const mediaUrl =
+        path === "/send/media"
+          ? body?.file || rd?.fileURL || rd?.fileUrl || null
+          : rd?.fileURL || rd?.fileUrl || null;
+      const caption = typeof body?.text === "string" ? body.text : null;
 
       if (remoteJid && providerMessageId) {
         await supabase.from("whatsapp_messages").upsert(
@@ -235,6 +252,8 @@ Deno.serve(async (req) => {
             direction: "outgoing",
             type: messageType,
             body: messageBody,
+            media_url: mediaUrl,
+            caption,
             status: 2,
             raw_payload: rd,
             created_at: messageIso,
