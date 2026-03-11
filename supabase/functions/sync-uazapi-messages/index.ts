@@ -83,7 +83,9 @@ Deno.serve(async (req) => {
           const fromMe = Boolean(lastSender && owner && lastSender.includes(owner));
 
           if (lastText || chat.wa_lastMsgTimestamp) {
-            const fallbackMessageId = chat.wa_lastMsgId || `${jid}-${chat.wa_lastMsgTimestamp || Date.now()}`;
+            const fallbackMessageId =
+              normalizeMessageId(chat.wa_lastMsgId) ||
+              `${jid}-${chat.wa_lastMsgTimestamp || Date.now()}`;
             const { error } = await supabase.from("whatsapp_messages").upsert(
               {
                 instance_name: inst.instance_name,
