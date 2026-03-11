@@ -81,6 +81,7 @@ export default function WhatsAppLayout() {
   const [rightOpen, setRightOpen] = useState(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSyncRef = useRef<string>("1970-01-01T00:00:00Z");
+  const lastStatusSyncRef = useRef<string>("1970-01-01T00:00:00Z");
   const didBootstrapSyncRef = useRef(false);
   const mediaUrlCacheRef = useRef<Map<string, string>>(new Map());
 
@@ -332,6 +333,7 @@ export default function WhatsAppLayout() {
   /* ── load messages when selecting a conversation ── */
   useEffect(() => {
     if (selectedJid) {
+      lastStatusSyncRef.current = "1970-01-01T00:00:00Z";
       fetchMessages(selectedJid);
     } else {
       setMessages([]);
@@ -388,6 +390,7 @@ export default function WhatsAppLayout() {
       await fetchConversations();
 
       if (selectedJid) {
+        // 1) Fetch NEW messages by created_at
         const { data } = await supabase
           .from("whatsapp_messages")
           .select("*")
@@ -418,7 +421,32 @@ export default function WhatsAppLayout() {
           });
 
           pollInterval = 3000;
-        } else {
+        }
+
+        // 2) Fetch STATUS UPDATES via updated_at (catches ack/read changes)
+        const { data: updatedMsgs } = await supabase
+          .from("whatsapp_messages")
+          .select("id, status, updated_at")
+          .eq("remote_jid", selectedJid)
+          .gt("updated_at", lastStatusSyncRef.current)
+          .order("updated_at", { ascending: true });
+
+        if (updatedMsgs && updatedMsgs.length > 0) {
+          const statusMap = new Map(updatedMsgs.map((m: any) => [m.id, m.status]));
+          setMessages((prev) =>
+            prev.map((m) => {
+              const newStatus = statusMap.get(m.id);
+              if (newStatus !== undefined) {
+                return { ...m, status: statusNumToLabel(newStatus) };
+              }
+              return m;
+            })
+          );
+          lastStatusSyncRef.current = updatedMsgs[updatedMsgs.length - 1].updated_at;
+          pollInterval = 3000;
+        }
+
+        if ((!data || data.length === 0) && (!updatedMsgs || updatedMsgs.length === 0)) {
           pollInterval = Math.min(pollInterval * 1.5, 15000);
         }
       }
