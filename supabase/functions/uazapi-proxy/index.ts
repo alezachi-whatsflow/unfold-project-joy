@@ -1,0 +1,177 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const UAZAPI_BASE_URL = Deno.env.get("UAZAPI_BASE_URL")!;
+const UAZAPI_ADMIN_TOKEN = Deno.env.get("UAZAPI_ADMIN_TOKEN")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// Endpoints que requerem admintoken (header: admintoken)
+const ADMIN_ENDPOINTS = [
+  "/instance/init",
+  "/instance/all",
+  "/instance/updateAdminFields",
+  "/globalwebhook",
+  "/admin/restart",
+];
+
+const isAdminEndpoint = (path: string) =>
+  ADMIN_ENDPOINTS.some((ep) => path === ep || path.startsWith(ep));
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Verificar autenticação do usuário Supabase
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+
+    if (authError || !user) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
+    const { path, method = "GET", body, instanceName } = await req.json();
+
+    if (!path) {
+      return json({ error: "path is required" }, 400);
+    }
+
+    // Selecionar o token correto e o header correto
+    let authTokenHeader: Record<string, string> = {};
+
+    if (isAdminEndpoint(path)) {
+      // Endpoints admin: header admintoken
+      authTokenHeader = { admintoken: UAZAPI_ADMIN_TOKEN };
+    } else {
+      // Endpoints de instância: header token
+      if (!instanceName) {
+        return json({ error: "instanceName required for instance endpoints" }, 400);
+      }
+      // Buscar token da instância no banco
+      const { data: inst } = await supabase
+        .from("whatsapp_instances")
+        .select("instance_token")
+        .eq("instance_name", instanceName)
+        .single();
+
+      if (!inst?.instance_token) {
+        return json({ error: `Instance token not found for: ${instanceName}` }, 404);
+      }
+      authTokenHeader = { token: inst.instance_token };
+    }
+
+    // Fazer chamada para a uazapi
+    const uazapiUrl = `${UAZAPI_BASE_URL}${path}`;
+    console.log(`uazapi-proxy: ${method} ${uazapiUrl}`);
+
+    const fetchOptions: RequestInit = {
+      method: method.toUpperCase(),
+      headers: {
+        "Content-Type": "application/json",
+        ...authTokenHeader,
+      },
+    };
+
+    if (body && method.toUpperCase() !== "GET") {
+      fetchOptions.body = JSON.stringify(body);
+    }
+
+    const uazapiResponse = await fetch(uazapiUrl, fetchOptions);
+    const responseText = await uazapiResponse.text();
+
+    let responseData: unknown;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch {
+      responseData = { raw: responseText };
+    }
+
+    console.log(`uazapi-proxy response: ${uazapiResponse.status}`, JSON.stringify(responseData).substring(0, 500));
+
+    // Se foi criação de instância, salvar no banco automaticamente
+    if (path === "/instance/init" && uazapiResponse.ok && responseData) {
+      const rd = responseData as Record<string, any>;
+      const inst = rd.instance || {};
+      const instanceToken = rd.token; // Token SEMPRE na raiz
+
+      if (instanceToken) {
+        const instanceData = {
+          instance_name: rd.name || body?.name,
+          instance_token: instanceToken,
+          status: inst.status || "disconnected",
+          qr_code: inst.qrcode || null,
+          pair_code: inst.paircode || null,
+          profile_name: inst.profileName || null,
+          profile_pic_url: inst.profilePicUrl || null,
+          is_business: inst.isBusiness || false,
+          platform: inst.plataform || null,
+          system_name: inst.systemName || "uazapiGO",
+          owner_email: inst.owner || null,
+          current_presence: inst.currentPresence || "available",
+          chatbot_enabled: inst.chatbot_enabled || false,
+          chatbot_ignore_groups: inst.chatbot_ignoreGroups ?? true,
+          chatbot_stop_keyword: inst.chatbot_stopConversation || "parar",
+          chatbot_stop_minutes: inst.chatbot_stopMinutes || 60,
+          openai_apikey: inst.openai_apikey || null,
+          api_created_at: inst.created || null,
+          api_updated_at: inst.updated || null,
+          // Campos legados para compatibilidade
+          label: rd.name || body?.name,
+          session_id: rd.name || body?.name,
+          provedor: "uazapi",
+          token_api: instanceToken,
+          server_url: UAZAPI_BASE_URL,
+          admin_token: UAZAPI_ADMIN_TOKEN,
+        };
+
+        console.log("uazapi-proxy: Saving instance to DB:", JSON.stringify(instanceData).substring(0, 300));
+
+        const { error: upsertErr } = await supabase
+          .from("whatsapp_instances")
+          .upsert(instanceData, { onConflict: "session_id" });
+
+        if (upsertErr) {
+          console.error("uazapi-proxy: Failed to save instance:", upsertErr);
+        }
+      }
+    }
+
+    // Se foi configuração de webhook, salvar a URL
+    if (path === "/webhook" && method.toUpperCase() === "POST" && uazapiResponse.ok && instanceName) {
+      const webhookUrl = body?.url || body?.webhookUrl || "";
+      if (webhookUrl) {
+        await supabase
+          .from("whatsapp_instances")
+          .update({ webhook_url: webhookUrl })
+          .eq("instance_name", instanceName);
+      }
+    }
+
+    return json(responseData, uazapiResponse.status);
+  } catch (err) {
+    console.error("uazapi-proxy error:", err);
+    return json({ error: err instanceof Error ? err.message : "Unknown error" }, 500);
+  }
+});
