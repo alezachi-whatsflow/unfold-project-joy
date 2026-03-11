@@ -1539,19 +1539,145 @@ export type Database = {
           },
         ]
       }
+      whatsapp_campaigns: {
+        Row: {
+          created_at: string | null
+          delay_max: number | null
+          delay_min: number | null
+          failed_count: number | null
+          folder_id: string | null
+          id: string
+          info: string | null
+          instance_name: string
+          message_type: string | null
+          name: string | null
+          scheduled_for: number | null
+          sent_count: number | null
+          status: string | null
+          total_contacts: number | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delay_max?: number | null
+          delay_min?: number | null
+          failed_count?: number | null
+          folder_id?: string | null
+          id?: string
+          info?: string | null
+          instance_name: string
+          message_type?: string | null
+          name?: string | null
+          scheduled_for?: number | null
+          sent_count?: number | null
+          status?: string | null
+          total_contacts?: number | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delay_max?: number | null
+          delay_min?: number | null
+          failed_count?: number | null
+          folder_id?: string | null
+          id?: string
+          info?: string | null
+          instance_name?: string
+          message_type?: string | null
+          name?: string | null
+          scheduled_for?: number | null
+          sent_count?: number | null
+          status?: string | null
+          total_contacts?: number | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string | null
+          has_whatsapp: boolean | null
+          id: string
+          instance_name: string
+          is_business: boolean | null
+          is_group: boolean | null
+          jid: string | null
+          name: string | null
+          phone: string
+          profile_pic_url: string | null
+          push_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          has_whatsapp?: boolean | null
+          id?: string
+          instance_name: string
+          is_business?: boolean | null
+          is_group?: boolean | null
+          jid?: string | null
+          name?: string | null
+          phone: string
+          profile_pic_url?: string | null
+          push_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          has_whatsapp?: boolean | null
+          id?: string
+          instance_name?: string
+          is_business?: boolean | null
+          is_group?: boolean | null
+          jid?: string | null
+          name?: string | null
+          phone?: string
+          profile_pic_url?: string | null
+          push_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_instances: {
         Row: {
+          admin_field01: string | null
+          admin_field02: string | null
           admin_token: string | null
+          api_created_at: string | null
+          api_updated_at: string | null
+          chatbot_enabled: boolean | null
+          chatbot_ignore_groups: boolean | null
+          chatbot_stop_keyword: string | null
+          chatbot_stop_minutes: number | null
+          chatbot_stop_when_send: number | null
           client_token: string | null
           criado_em: string
+          current_presence: string | null
           id: string
           instance_id_api: string
+          instance_name: string | null
+          instance_token: string | null
+          is_business: boolean | null
           label: string
+          last_disconnect: string | null
+          last_disconnect_reason: string | null
           numero: string | null
+          openai_apikey: string | null
+          owner_email: string | null
+          pair_code: string | null
+          phone_number: string | null
+          platform: string | null
+          profile_name: string | null
+          profile_pic_url: string | null
           provedor: string
+          qr_code: string | null
           server_url: string | null
           session_id: string
           status: string
+          system_name: string | null
           tenant_id: string
           token_api: string
           ultimo_ping: string | null
@@ -1559,17 +1685,41 @@ export type Database = {
           webhook_url: string
         }
         Insert: {
+          admin_field01?: string | null
+          admin_field02?: string | null
           admin_token?: string | null
+          api_created_at?: string | null
+          api_updated_at?: string | null
+          chatbot_enabled?: boolean | null
+          chatbot_ignore_groups?: boolean | null
+          chatbot_stop_keyword?: string | null
+          chatbot_stop_minutes?: number | null
+          chatbot_stop_when_send?: number | null
           client_token?: string | null
           criado_em?: string
+          current_presence?: string | null
           id?: string
           instance_id_api?: string
+          instance_name?: string | null
+          instance_token?: string | null
+          is_business?: boolean | null
           label: string
+          last_disconnect?: string | null
+          last_disconnect_reason?: string | null
           numero?: string | null
+          openai_apikey?: string | null
+          owner_email?: string | null
+          pair_code?: string | null
+          phone_number?: string | null
+          platform?: string | null
+          profile_name?: string | null
+          profile_pic_url?: string | null
           provedor?: string
+          qr_code?: string | null
           server_url?: string | null
           session_id: string
           status?: string
+          system_name?: string | null
           tenant_id?: string
           token_api?: string
           ultimo_ping?: string | null
@@ -1577,22 +1727,160 @@ export type Database = {
           webhook_url?: string
         }
         Update: {
+          admin_field01?: string | null
+          admin_field02?: string | null
           admin_token?: string | null
+          api_created_at?: string | null
+          api_updated_at?: string | null
+          chatbot_enabled?: boolean | null
+          chatbot_ignore_groups?: boolean | null
+          chatbot_stop_keyword?: string | null
+          chatbot_stop_minutes?: number | null
+          chatbot_stop_when_send?: number | null
           client_token?: string | null
           criado_em?: string
+          current_presence?: string | null
           id?: string
           instance_id_api?: string
+          instance_name?: string | null
+          instance_token?: string | null
+          is_business?: boolean | null
           label?: string
+          last_disconnect?: string | null
+          last_disconnect_reason?: string | null
           numero?: string | null
+          openai_apikey?: string | null
+          owner_email?: string | null
+          pair_code?: string | null
+          phone_number?: string | null
+          platform?: string | null
+          profile_name?: string | null
+          profile_pic_url?: string | null
           provedor?: string
+          qr_code?: string | null
           server_url?: string | null
           session_id?: string
           status?: string
+          system_name?: string | null
           tenant_id?: string
           token_api?: string
           ultimo_ping?: string | null
           uso_principal?: string
           webhook_url?: string
+        }
+        Relationships: []
+      }
+      whatsapp_leads: {
+        Row: {
+          assigned_attendant_id: string | null
+          chat_id: string
+          chatbot_disable_until: number | null
+          created_at: string | null
+          id: string
+          instance_name: string
+          is_ticket_open: boolean | null
+          kanban_order: number | null
+          lead_field01: string | null
+          lead_field02: string | null
+          lead_field03: string | null
+          lead_field04: string | null
+          lead_field05: string | null
+          lead_full_name: string | null
+          lead_name: string | null
+          lead_status: string | null
+          lead_tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_attendant_id?: string | null
+          chat_id: string
+          chatbot_disable_until?: number | null
+          created_at?: string | null
+          id?: string
+          instance_name: string
+          is_ticket_open?: boolean | null
+          kanban_order?: number | null
+          lead_field01?: string | null
+          lead_field02?: string | null
+          lead_field03?: string | null
+          lead_field04?: string | null
+          lead_field05?: string | null
+          lead_full_name?: string | null
+          lead_name?: string | null
+          lead_status?: string | null
+          lead_tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_attendant_id?: string | null
+          chat_id?: string
+          chatbot_disable_until?: number | null
+          created_at?: string | null
+          id?: string
+          instance_name?: string
+          is_ticket_open?: boolean | null
+          kanban_order?: number | null
+          lead_field01?: string | null
+          lead_field02?: string | null
+          lead_field03?: string | null
+          lead_field04?: string | null
+          lead_field05?: string | null
+          lead_full_name?: string | null
+          lead_name?: string | null
+          lead_status?: string | null
+          lead_tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          caption: string | null
+          created_at: string | null
+          direction: string
+          id: string
+          instance_name: string
+          media_url: string | null
+          message_id: string | null
+          raw_payload: Json | null
+          remote_jid: string
+          status: number | null
+          track_id: string | null
+          track_source: string | null
+          type: string | null
+        }
+        Insert: {
+          body?: string | null
+          caption?: string | null
+          created_at?: string | null
+          direction: string
+          id?: string
+          instance_name: string
+          media_url?: string | null
+          message_id?: string | null
+          raw_payload?: Json | null
+          remote_jid: string
+          status?: number | null
+          track_id?: string | null
+          track_source?: string | null
+          type?: string | null
+        }
+        Update: {
+          body?: string | null
+          caption?: string | null
+          created_at?: string | null
+          direction?: string
+          id?: string
+          instance_name?: string
+          media_url?: string | null
+          message_id?: string | null
+          raw_payload?: Json | null
+          remote_jid?: string
+          status?: number | null
+          track_id?: string | null
+          track_source?: string | null
+          type?: string | null
         }
         Relationships: []
       }
