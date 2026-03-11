@@ -319,16 +319,18 @@ Deno.serve(async (req) => {
         const chat = payload?.chat;
         if (chat?.wa_chatid) {
           const leadName = chat.lead_name || chat.lead_fullName || null;
-          const pushName = msgs[0]?.senderName || msgs[0]?.pushName || null;
+          // Only use pushName from incoming messages to avoid saving device owner's name
+          const hasIncoming = msgs.some((m: AnyRecord) => !Boolean(m?.key?.fromMe ?? m?.fromMe ?? m?.sentByMe));
+          const pushName = hasIncoming ? (msgs[0]?.senderName || msgs[0]?.pushName || null) : null;
           const contactName = leadName || pushName || null;
 
-          if (contactName) {
-            await supabase.from("whatsapp_leads").upsert(
-              {
-                instance_name: instance,
-                chat_id: chat.wa_chatid,
-                lead_name: chat.lead_name || pushName || null,
-                lead_full_name: chat.lead_fullName || pushName || null,
+          // Always upsert lead record (even without name) to track ticket/status
+          await supabase.from("whatsapp_leads").upsert(
+            {
+              instance_name: instance,
+              chat_id: chat.wa_chatid,
+              lead_name: chat.lead_name || (hasIncoming ? pushName : null) || undefined,
+              lead_full_name: chat.lead_fullName || (hasIncoming ? pushName : null) || undefined,
                 lead_status: chat.lead_status || null,
                 is_ticket_open: chat.lead_isTicketOpen ?? false,
                 assigned_attendant_id: chat.lead_assignedAttendant_id || null,
