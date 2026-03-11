@@ -169,6 +169,42 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Se foi envio de mensagem, persistir snapshot para refletir instantaneamente no painel
+    if (path.startsWith("/send/") && uazapiResponse.ok && instanceName) {
+      const rd = responseData as Record<string, any>;
+      const messageTimestamp = Number(rd?.messageTimestamp ?? Date.now());
+      const messageIso = new Date(
+        messageTimestamp > 1_000_000_000_000 ? messageTimestamp : messageTimestamp * 1000
+      ).toISOString();
+
+      const remoteJid =
+        rd?.chatid ||
+        (typeof body?.number === "string" && body.number.includes("@")
+          ? body.number
+          : `${body?.number}@s.whatsapp.net`);
+
+      const messageId = rd?.messageid || rd?.id || `${instanceName}-${Date.now()}`;
+      const messageType = rd?.messageType || (path === "/send/text" ? "text" : "unknown");
+      const messageBody = rd?.text || rd?.content?.text || body?.text || null;
+
+      if (remoteJid && messageId) {
+        await supabase.from("whatsapp_messages").upsert(
+          {
+            instance_name: instanceName,
+            remote_jid: remoteJid,
+            message_id: String(messageId),
+            direction: "outgoing",
+            type: messageType,
+            body: messageBody,
+            status: 2,
+            raw_payload: rd,
+            created_at: messageIso,
+          },
+          { onConflict: "message_id" }
+        );
+      }
+    }
+
     // Always return 200 to avoid supabase.functions.invoke treating non-2xx as errors
     return json({ data: responseData, upstream_status: uazapiResponse.status, ok: uazapiResponse.ok });
   } catch (err) {

@@ -41,15 +41,30 @@ export default function WhatsAppLayout() {
   const [rightOpen, setRightOpen] = useState(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSyncRef = useRef<string>("1970-01-01T00:00:00Z");
+  const didBootstrapSyncRef = useRef(false);
 
   /* ── fetch conversations (distinct remote_jid) ──── */
   const fetchConversations = useCallback(async () => {
     // Get latest message per remote_jid
-    const { data: allMsgs } = await supabase
+    let { data: allMsgs } = await supabase
       .from("whatsapp_messages")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1000);
+
+    // Bootstrap sync (1x) if banco ainda vazio
+    if ((!allMsgs || allMsgs.length === 0) && !didBootstrapSyncRef.current) {
+      didBootstrapSyncRef.current = true;
+      const { error: syncError } = await supabase.functions.invoke("sync-uazapi-messages");
+      if (!syncError) {
+        const { data: reloaded } = await supabase
+          .from("whatsapp_messages")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(1000);
+        allMsgs = reloaded ?? [];
+      }
+    }
 
     if (!allMsgs || allMsgs.length === 0) {
       setConversations([]);
@@ -265,23 +280,15 @@ export default function WhatsAppLayout() {
   const handleSend = async (text: string) => {
     if (!selectedJid || !text.trim()) return;
 
-    // Find the instance for this conversation
     const conv = conversations.find((c) => c.id === selectedJid);
-    if (!conv?.instanceName) return;
-
-    // Get instance token
-    const { data: inst } = await supabase
-      .from("whatsapp_instances")
-      .select("server_url, token_api")
-      .eq("instance_name", conv.instanceName)
-      .single();
-
-    if (!inst?.server_url || !inst?.token_api) {
-      console.error("Instance not found or missing credentials");
+    if (!conv?.instanceName) {
+      console.error("Instance not found for selected conversation");
       return;
     }
 
-    // Send via uazapi-proxy
+    const nowIso = new Date().toISOString();
+    const fallbackMessageId = `${conv.instanceName}-${selectedJid}-${Date.now()}`;
+
     const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
       body: {
         instanceName: conv.instanceName,
@@ -289,14 +296,51 @@ export default function WhatsAppLayout() {
         method: "POST",
         body: {
           number: jidToPhone(selectedJid),
-          text: text,
+          text,
         },
       },
     });
 
     if (error) {
       console.error("Send error:", error);
+      return;
     }
+
+    const upstream = (result as any)?.data ?? result;
+    const upstreamOk = Boolean((result as any)?.ok ?? true);
+
+    if (!upstreamOk) {
+      console.error("uazapi returned non-ok response:", result);
+      return;
+    }
+
+    const outgoingMessage = {
+      instance_name: conv.instanceName,
+      remote_jid: (upstream as any)?.chatid || selectedJid,
+      message_id: String((upstream as any)?.messageid || (upstream as any)?.id || fallbackMessageId),
+      direction: "outgoing" as const,
+      type: (upstream as any)?.messageType || "text",
+      body: (upstream as any)?.text || text,
+      status: 2,
+      created_at: (upstream as any)?.messageTimestamp
+        ? new Date((upstream as any).messageTimestamp > 1_000_000_000_000
+            ? (upstream as any).messageTimestamp
+            : (upstream as any).messageTimestamp * 1000).toISOString()
+        : nowIso,
+      raw_payload: upstream,
+    };
+
+    const { error: upsertError } = await supabase
+      .from("whatsapp_messages")
+      .upsert(outgoingMessage, { onConflict: "message_id" });
+
+    if (upsertError) {
+      console.error("Failed to persist outgoing message:", upsertError);
+      return;
+    }
+
+    await fetchConversations();
+    await fetchMessages(selectedJid);
   };
 
   const selectedConv = conversations.find((c) => c.id === selectedJid) || null;

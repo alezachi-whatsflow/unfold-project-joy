@@ -69,18 +69,23 @@ Deno.serve(async (req) => {
         const msgs = details?.messages || details?.msgs || [];
 
         if (msgs.length === 0) {
-          // If no messages array, try to extract last message from chat data
-          if (chat.wa_lastMsgBody || chat.wa_lastMsg) {
-            const lastMsgId = chat.wa_lastMsgId || `${jid}-${Date.now()}`;
+          const lastText = chat.wa_lastMsgBody || chat.wa_lastMessageTextVote || chat.wa_lastMsg || "";
+          const lastType = chat.wa_lastMessageType || "text";
+          const lastSender = String(chat.wa_lastMessageSender || "").toLowerCase();
+          const owner = String(chat.owner || "").toLowerCase();
+          const fromMe = Boolean(lastSender && owner && lastSender.includes(owner));
+
+          if (lastText || chat.wa_lastMsgTimestamp) {
+            const fallbackMessageId = chat.wa_lastMsgId || `${jid}-${chat.wa_lastMsgTimestamp || Date.now()}`;
             const { error } = await supabase.from("whatsapp_messages").upsert(
               {
                 instance_name: inst.instance_name,
-                remote_jid: jid,
-                message_id: lastMsgId,
-                direction: chat.wa_lastMsgFromMe ? "outgoing" : "incoming",
-                type: "text",
-                body: chat.wa_lastMsgBody || chat.wa_lastMsg || "",
-                status: chat.wa_lastMsgFromMe ? 2 : 4,
+                remote_jid: chat.wa_chatid || jid,
+                message_id: fallbackMessageId,
+                direction: fromMe ? "outgoing" : "incoming",
+                type: lastType,
+                body: lastText,
+                status: fromMe ? 2 : 4,
                 created_at: chat.wa_lastMsgTimestamp
                   ? new Date(chat.wa_lastMsgTimestamp * 1000).toISOString()
                   : new Date().toISOString(),
@@ -93,18 +98,23 @@ Deno.serve(async (req) => {
         }
 
         for (const msg of msgs) {
-          if (!msg?.key?.remoteJid) continue;
+          const remoteJid = msg?.key?.remoteJid || msg?.remoteJid || msg?.chatid || chat.wa_chatid || jid;
+          if (!remoteJid) continue;
+
+          const messageId = msg?.key?.id || msg?.id || msg?.messageid || `${remoteJid}-${msg?.messageTimestamp || Date.now()}`;
+          const fromMe = Boolean(msg?.key?.fromMe ?? msg?.fromMe ?? false);
+
           const { error } = await supabase.from("whatsapp_messages").upsert(
             {
               instance_name: inst.instance_name,
-              remote_jid: msg.key.remoteJid,
-              message_id: msg.key.id,
-              direction: msg.key.fromMe ? "outgoing" : "incoming",
-              type: msg.messageType ?? "text",
-              body: msg.body ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? null,
-              media_url: msg.mediaUrl ?? null,
-              caption: msg.message?.imageMessage?.caption ?? msg.message?.videoMessage?.caption ?? null,
-              status: msg.key.fromMe ? 2 : 4,
+              remote_jid: remoteJid,
+              message_id: messageId,
+              direction: fromMe ? "outgoing" : "incoming",
+              type: msg.messageType ?? msg.type ?? chat.wa_lastMessageType ?? "text",
+              body: msg.body ?? msg.text ?? msg.content?.text ?? msg.message?.conversation ?? msg.message?.extendedTextMessage?.text ?? null,
+              media_url: msg.mediaUrl ?? msg.media?.url ?? null,
+              caption: msg.caption ?? msg.message?.imageMessage?.caption ?? msg.message?.videoMessage?.caption ?? null,
+              status: fromMe ? 2 : 4,
               raw_payload: msg,
               created_at: msg.messageTimestamp
                 ? new Date(msg.messageTimestamp * 1000).toISOString()
