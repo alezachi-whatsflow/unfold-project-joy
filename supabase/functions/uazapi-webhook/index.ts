@@ -214,6 +214,10 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     ...(msg?.senderName ? { senderName: msg.senderName } : {}),
   };
 
+  const parsedStatus = toMessageStatus(
+    msg?.status ?? msg?.ack ?? msg?.chatMessageStatusCode ?? msg?.messageStatus ?? msg?.content?.status ?? null
+  );
+
   return {
     instance_name: instance,
     remote_jid: remoteJid,
@@ -223,7 +227,7 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     body: body || captionVal,
     media_url: mediaUrl,
     caption: captionVal,
-    status: typeof msg?.status === "number" ? msg.status : fromMe ? 2 : 4,
+    status: parsedStatus ?? (fromMe ? 1 : 4),
     track_source: msg?.trackSource ?? msg?.track_source ?? null,
     track_id: msg?.trackId ?? msg?.track_id ?? null,
     raw_payload: enrichedPayload,
