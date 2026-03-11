@@ -43,6 +43,24 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
+const WHATSAPP_CDN_REGEX = /(?:^https?:\/\/)?(?:mmg\.whatsapp\.net|[^/]*\.cdn\.whatsapp\.net)/i;
+
+function isMediaType(type: Message["type"]) {
+  return type === "image" || type === "video" || type === "audio" || type === "document";
+}
+
+function extractDownloadUrl(payload: any): string | null {
+  return (
+    payload?.fileURL ??
+    payload?.fileUrl ??
+    payload?.url ??
+    payload?.data?.fileURL ??
+    payload?.data?.fileUrl ??
+    payload?.data?.url ??
+    null
+  );
+}
+
 /* ── main component ────────────────────────────────── */
 export default function WhatsAppLayout() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -52,6 +70,73 @@ export default function WhatsAppLayout() {
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSyncRef = useRef<string>("1970-01-01T00:00:00Z");
   const didBootstrapSyncRef = useRef(false);
+  const mediaUrlCacheRef = useRef<Map<string, string>>(new Map());
+
+  const resolveMessageMediaUrl = useCallback(async (row: any): Promise<string | null> => {
+    const mappedType = mapMessageType(row?.type);
+    const currentUrl = row?.media_url || null;
+
+    if (!isMediaType(mappedType)) return currentUrl;
+    if (currentUrl && !WHATSAPP_CDN_REGEX.test(currentUrl)) return currentUrl;
+
+    const cacheKey = String(row?.message_id || row?.id || "");
+    if (cacheKey && mediaUrlCacheRef.current.has(cacheKey)) {
+      return mediaUrlCacheRef.current.get(cacheKey)!;
+    }
+
+    if (!row?.instance_name || !row?.message_id) return currentUrl;
+
+    const rawMessageId = String(row.message_id);
+    const fallbackMessageId = rawMessageId.includes(":") ? rawMessageId.split(":").pop() : null;
+    const candidateIds = [...new Set([rawMessageId, fallbackMessageId].filter(Boolean) as string[])];
+
+    for (const candidateId of candidateIds) {
+      const { data, error } = await supabase.functions.invoke("uazapi-proxy", {
+        body: {
+          instanceName: row.instance_name,
+          path: "/message/download",
+          method: "POST",
+          body: {
+            id: candidateId,
+            return_link: true,
+            return_base64: false,
+          },
+        },
+      });
+
+      if (error) continue;
+
+      const resolvedUrl = extractDownloadUrl((data as any)?.data ?? data);
+      if (resolvedUrl) {
+        if (cacheKey) mediaUrlCacheRef.current.set(cacheKey, resolvedUrl);
+        return resolvedUrl;
+      }
+    }
+
+    return currentUrl;
+  }, []);
+
+  const mapDbMessageToUi = useCallback(
+    (row: any, mediaUrlOverride?: string | null): Message => ({
+      id: row.id,
+      conversationId: row.remote_jid,
+      content: row.body || row.caption || `[${row.type}]`,
+      timestamp: new Date(row.created_at).toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      direction: row.direction === "outgoing" ? "outgoing" : "incoming",
+      type: mapMessageType(row.type),
+      status: statusNumToLabel(row.status ?? 0),
+      senderName: row.direction === "incoming" ? jidToPhone(row.remote_jid) : undefined,
+      mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
+      caption: row.caption || null,
+    }),
+    []
+  );
 
   /* ── fetch conversations (distinct remote_jid) ──── */
   const fetchConversations = useCallback(async () => {
@@ -134,36 +219,35 @@ export default function WhatsAppLayout() {
   }, []);
 
   /* ── fetch messages for selected conversation ──── */
-  const fetchMessages = useCallback(async (jid: string) => {
-    const { data } = await supabase
-      .from("whatsapp_messages")
-      .select("*")
-      .eq("remote_jid", jid)
-      .order("created_at", { ascending: true })
-      .limit(500);
+  const fetchMessages = useCallback(
+    async (jid: string) => {
+      const { data } = await supabase
+        .from("whatsapp_messages")
+        .select("*")
+        .eq("remote_jid", jid)
+        .order("created_at", { ascending: true })
+        .limit(500);
 
-    if (data) {
-      const mapped: Message[] = data.map((m: any) => ({
-        id: m.id,
-        conversationId: m.remote_jid,
-        content: m.body || m.caption || `[${m.type}]`,
-        timestamp: new Date(m.created_at).toLocaleString("pt-BR", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit",
-        }),
-        direction: m.direction === "outgoing" ? "outgoing" : "incoming",
-        type: mapMessageType(m.type),
-        status: statusNumToLabel(m.status ?? 0),
-        senderName: m.direction === "incoming" ? jidToPhone(m.remote_jid) : undefined,
-        mediaUrl: m.media_url || null,
-        caption: m.caption || null,
-      }));
-      setMessages(mapped);
-      if (data.length > 0) {
-        lastSyncRef.current = data[data.length - 1].created_at;
+      if (data) {
+        const resolvedRows = await Promise.all(
+          data.map(async (row: any) => ({
+            row,
+            resolvedMediaUrl: await resolveMessageMediaUrl(row),
+          }))
+        );
+
+        const mapped: Message[] = resolvedRows.map(({ row, resolvedMediaUrl }) =>
+          mapDbMessageToUi(row, resolvedMediaUrl)
+        );
+
+        setMessages(mapped);
+        if (data.length > 0) {
+          lastSyncRef.current = data[data.length - 1].created_at;
+        }
       }
-    }
-  }, []);
+    },
+    [mapDbMessageToUi, resolveMessageMediaUrl]
+  );
 
   /* ── initial load ───────────────────────────────── */
   useEffect(() => {
@@ -190,47 +274,34 @@ export default function WhatsAppLayout() {
         "postgres_changes",
         { event: "*", schema: "public", table: "whatsapp_messages" },
         (payload) => {
-          const newMsg = payload.new as any;
-          if (!newMsg) return;
+          void (async () => {
+            const newMsg = payload.new as any;
+            if (!newMsg) return;
 
-          // Refresh conversations list
-          fetchConversations();
+            // Refresh conversations list
+            fetchConversations();
 
-          // If the new message belongs to the selected conversation, append it
-          if (selectedJid && newMsg.remote_jid === selectedJid && payload.eventType === "INSERT") {
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === newMsg.id)) return prev;
-              return [
-                ...prev,
-                {
-                  id: newMsg.id,
-                  conversationId: newMsg.remote_jid,
-                  content: newMsg.body || newMsg.caption || `[${newMsg.type}]`,
-                  timestamp: new Date(newMsg.created_at).toLocaleString("pt-BR", {
-                    day: "2-digit", month: "2-digit", year: "numeric",
-                    hour: "2-digit", minute: "2-digit",
-                  }),
-                  direction: newMsg.direction === "outgoing" ? "outgoing" : "incoming",
-                  type: mapMessageType(newMsg.type),
-                  status: statusNumToLabel(newMsg.status ?? 0),
-                  senderName: newMsg.direction === "incoming" ? jidToPhone(newMsg.remote_jid) : undefined,
-                  mediaUrl: newMsg.media_url || null,
-                  caption: newMsg.caption || null,
-                },
-              ];
-            });
-          }
+            // If the new message belongs to the selected conversation, append it
+            if (selectedJid && newMsg.remote_jid === selectedJid && payload.eventType === "INSERT") {
+              const resolvedMediaUrl = await resolveMessageMediaUrl(newMsg);
 
-          // Update status on UPDATE events
-          if (payload.eventType === "UPDATE" && selectedJid && newMsg.remote_jid === selectedJid) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
-              )
-            );
-          }
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === newMsg.id)) return prev;
+                return [...prev, mapDbMessageToUi(newMsg, resolvedMediaUrl)];
+              });
+            }
 
-          pollInterval = 3000; // reset
+            // Update status on UPDATE events
+            if (payload.eventType === "UPDATE" && selectedJid && newMsg.remote_jid === selectedJid) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
+                )
+              );
+            }
+
+            pollInterval = 3000; // reset
+          })();
         }
       )
       .subscribe();
@@ -238,7 +309,9 @@ export default function WhatsAppLayout() {
     // Polling fallback
     const poll = async () => {
       if (!isActive) return;
+
       await fetchConversations();
+
       if (selectedJid) {
         const { data } = await supabase
           .from("whatsapp_messages")
@@ -248,36 +321,33 @@ export default function WhatsAppLayout() {
           .order("created_at", { ascending: true });
 
         if (data && data.length > 0) {
+          const resolvedRows = await Promise.all(
+            data.map(async (row: any) => ({
+              row,
+              resolvedMediaUrl: await resolveMessageMediaUrl(row),
+            }))
+          );
+
           setMessages((prev) => {
             const existingIds = new Set(prev.map((m) => m.id));
-            const newMsgs: Message[] = data
-              .filter((m: any) => !existingIds.has(m.id))
-              .map((m: any) => ({
-                id: m.id,
-                conversationId: m.remote_jid,
-                content: m.body || m.caption || `[${m.type}]`,
-                timestamp: new Date(m.created_at).toLocaleString("pt-BR", {
-                  day: "2-digit", month: "2-digit", year: "numeric",
-                  hour: "2-digit", minute: "2-digit",
-                }),
-                direction: m.direction === "outgoing" ? "outgoing" : "incoming",
-                type: mapMessageType(m.type),
-                status: statusNumToLabel(m.status ?? 0),
-                senderName: m.direction === "incoming" ? jidToPhone(m.remote_jid) : undefined,
-                mediaUrl: m.media_url || null,
-                caption: m.caption || null,
-              }));
+            const newMsgs: Message[] = resolvedRows
+              .filter(({ row }) => !existingIds.has(row.id))
+              .map(({ row, resolvedMediaUrl }) => mapDbMessageToUi(row, resolvedMediaUrl));
+
             if (newMsgs.length > 0) {
               lastSyncRef.current = data[data.length - 1].created_at;
               return [...prev, ...newMsgs];
             }
+
             return prev;
           });
+
           pollInterval = 3000;
         } else {
           pollInterval = Math.min(pollInterval * 1.5, 15000);
         }
       }
+
       if (isActive) {
         pollTimeoutRef.current = setTimeout(poll, pollInterval);
       }
@@ -290,7 +360,7 @@ export default function WhatsAppLayout() {
       clearTimeout(pollTimeoutRef.current);
       supabase.removeChannel(channel);
     };
-  }, [selectedJid, fetchConversations]);
+  }, [selectedJid, fetchConversations, mapDbMessageToUi, resolveMessageMediaUrl]);
 
   /* ── send message via uazapi ────────────────────── */
   const handleSend = async (text: string) => {
@@ -301,9 +371,6 @@ export default function WhatsAppLayout() {
       console.error("Instance not found for selected conversation");
       return;
     }
-
-    const nowIso = new Date().toISOString();
-    const fallbackMessageId = `${conv.instanceName}-${selectedJid}-${Date.now()}`;
 
     const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
       body: {
