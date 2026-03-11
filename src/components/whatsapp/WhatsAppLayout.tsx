@@ -556,7 +556,15 @@ export default function WhatsAppLayout() {
   return (
     <div className="flex h-full overflow-hidden" style={{ backgroundColor: "var(--wa-bg-deep)" }}>
       <div className="shrink-0 h-full hidden md:flex" style={{ width: 360 }}>
-        <LeftPanel conversations={conversations} selectedId={selectedJid} onSelect={setSelectedJid} />
+        <LeftPanel
+          conversations={conversations}
+          selectedId={selectedJid}
+          onSelect={setSelectedJid}
+          onNewConversationStarted={(jid) => {
+            fetchConversations();
+            setSelectedJid(jid);
+          }}
+        />
       </div>
       <ChatPanel
         conversation={selectedConv}
