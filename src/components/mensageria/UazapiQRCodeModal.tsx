@@ -121,10 +121,14 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
     const interval = setInterval(async () => {
       try {
         const data = await instanceService.getStatus(instance.instance_name);
-        const state = data?.state || data?.status || data?.instance?.state || "";
-        if (state === "connected" || state === "open") {
+        const state = data?.state || data?.status || data?.instance?.state || data?.status?.state || "";
+        const connected = state === "connected" || state === "open" || data?.status?.connected === true;
+        if (connected) {
           setStatus("connected");
+          toast.success("Instância conectada com sucesso!");
+          await supabase.from("whatsapp_instances").update({ status: "connected" }).eq("id", instance.id);
           onStatusChange?.();
+          setTimeout(() => onClose(), 1500);
         }
       } catch {}
     }, 8000);
