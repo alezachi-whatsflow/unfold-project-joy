@@ -56,7 +56,21 @@ export default function UazapiInstancesTab() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchInstances(); }, []);
+  // Subscribe to realtime updates on whatsapp_instances
+  useEffect(() => {
+    fetchInstances();
+    const channel = supabase
+      .channel("uazapi-instances-rt")
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "whatsapp_instances",
+      }, () => {
+        fetchInstances();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const handleCreate = async () => {
     if (!newName.trim()) {
