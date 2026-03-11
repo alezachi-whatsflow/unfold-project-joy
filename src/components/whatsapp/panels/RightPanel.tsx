@@ -18,14 +18,22 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
 
   if (!conversation || !isOpen) return null;
   const c = conversation;
+  const isGroup = c.isGroup ?? false;
 
-  const fields = [
-    { label: "Status no funil", value: "Qualificado" },
-    { label: "Nome", value: c.name },
-    { label: "Telefone", value: c.phone },
-    { label: "Email", value: "—" },
-    { label: "CPF/CNPJ", value: "—" },
-  ];
+  const fields = isGroup
+    ? [
+        { label: "Tipo", value: "Grupo" },
+        { label: "Nome do Grupo", value: c.name },
+        { label: "ID do Grupo", value: c.phone },
+        ...(c.participantCount ? [{ label: "Participantes", value: String(c.participantCount) }] : []),
+      ]
+    : [
+        { label: "Status no funil", value: "Qualificado" },
+        { label: "Nome", value: c.name },
+        { label: "Telefone", value: c.phone },
+        { label: "Email", value: "—" },
+        { label: "CPF/CNPJ", value: "—" },
+      ];
 
   return (
     <div
