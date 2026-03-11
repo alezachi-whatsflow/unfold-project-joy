@@ -36,9 +36,13 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
     try {
       const data = await instanceService.connect(instance.instance_name);
 
-      if (data?.instance?.status === "connected" || data?.state === "connected" || data?.status === "connected") {
+      if (data?.instance?.status === "connected" || data?.state === "connected" || data?.status === "connected" || data?.status?.connected === true) {
         setStatus("connected");
+        toast.success("Instância conectada com sucesso!");
+        // Update DB status
+        await supabase.from("whatsapp_instances").update({ status: "connected" }).eq("id", instance.id);
         onStatusChange?.();
+        setTimeout(() => onClose(), 1500);
         return;
       }
 
@@ -97,7 +101,9 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
       }, (payload: any) => {
         if (payload.new?.status === "connected") {
           setStatus("connected");
+          toast.success("Instância conectada com sucesso!");
           onStatusChange?.();
+          setTimeout(() => onClose(), 1500);
         }
         if (payload.new?.qr_code) {
           const qr = payload.new.qr_code;
@@ -107,7 +113,7 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [instance, status, onStatusChange]);
+  }, [instance, status, onStatusChange, onClose]);
 
   // Fallback poll
   useEffect(() => {
@@ -115,15 +121,19 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
     const interval = setInterval(async () => {
       try {
         const data = await instanceService.getStatus(instance.instance_name);
-        const state = data?.state || data?.status || data?.instance?.state || "";
-        if (state === "connected" || state === "open") {
+        const state = data?.state || data?.status || data?.instance?.state || data?.status?.state || "";
+        const connected = state === "connected" || state === "open" || data?.status?.connected === true;
+        if (connected) {
           setStatus("connected");
+          toast.success("Instância conectada com sucesso!");
+          await supabase.from("whatsapp_instances").update({ status: "connected" }).eq("id", instance.id);
           onStatusChange?.();
+          setTimeout(() => onClose(), 1500);
         }
       } catch {}
-    }, 8000);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [instance, status, onStatusChange]);
+  }, [instance, status, onStatusChange, onClose]);
 
   useEffect(() => {
     if (instance) fetchQR();
