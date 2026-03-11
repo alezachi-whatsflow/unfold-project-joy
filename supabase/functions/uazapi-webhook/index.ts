@@ -436,6 +436,7 @@ Deno.serve(async (req) => {
         for (const upd of updates) {
           const rawMessageId =
             upd?.key?.id ||
+            upd?.update?.key?.id ||
             upd?.id?.id ||
             upd?.messageid ||
             upd?.messageId ||
@@ -453,13 +454,10 @@ Deno.serve(async (req) => {
             upd?.status ??
             upd?.ack ??
             upd?.chatMessageStatusCode ??
+            upd?.messageStatus ??
             null;
 
-          let newStatus: number | undefined = messageStatusMap[String(statusKey)];
-          // Handle raw numeric status
-          if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
-            newStatus = Math.min(statusKey, 4);
-          }
+          const newStatus = toMessageStatus(statusKey);
 
           if (newStatus !== undefined) {
             console.log(`uazapi-webhook: updating message ${messageId} status to ${newStatus}`);
