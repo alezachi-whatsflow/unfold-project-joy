@@ -13,6 +13,7 @@ interface ChatPanelProps {
   isRightOpen: boolean;
   onToggleRight: () => void;
   onSend: (text: string) => void;
+  onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
 }
 
 // Quick action chips
