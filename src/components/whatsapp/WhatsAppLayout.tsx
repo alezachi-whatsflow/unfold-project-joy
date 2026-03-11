@@ -314,31 +314,8 @@ export default function WhatsAppLayout() {
       return;
     }
 
-    const outgoingMessage = {
-      instance_name: conv.instanceName,
-      remote_jid: (upstream as any)?.chatid || selectedJid,
-      message_id: String((upstream as any)?.messageid || (upstream as any)?.id || fallbackMessageId),
-      direction: "outgoing" as const,
-      type: (upstream as any)?.messageType || "text",
-      body: (upstream as any)?.text || text,
-      status: 2,
-      created_at: (upstream as any)?.messageTimestamp
-        ? new Date((upstream as any).messageTimestamp > 1_000_000_000_000
-            ? (upstream as any).messageTimestamp
-            : (upstream as any).messageTimestamp * 1000).toISOString()
-        : nowIso,
-      raw_payload: upstream,
-    };
-
-    const { error: upsertError } = await supabase
-      .from("whatsapp_messages")
-      .upsert(outgoingMessage, { onConflict: "message_id" });
-
-    if (upsertError) {
-      console.error("Failed to persist outgoing message:", upsertError);
-      return;
-    }
-
+    // A persistência já é feita no uazapi-proxy (upsert automático após envio).
+    // Apenas recarregamos as mensagens para refletir no painel.
     await fetchConversations();
     await fetchMessages(selectedJid);
   };
