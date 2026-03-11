@@ -47,6 +47,13 @@ const getEventName = (payload: AnyRecord) =>
 const getInstanceName = (payload: AnyRecord) =>
   payload.instance || payload.instanceName || payload.name || payload.token || "";
 
+const normalizeMessageId = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  return raw.replace(/^\d+:/, "");
+};
+
 const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) => {
   const chatPayload = payload.chat || {};
 
