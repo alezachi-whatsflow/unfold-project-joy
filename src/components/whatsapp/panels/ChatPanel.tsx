@@ -5,7 +5,7 @@ import type { Message } from "@/data/mockMessages";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
 import MessageList from "../chat/MessageList";
-import ChatInput from "../chat/ChatInput";
+import ChatInput, { type AttachmentPayload } from "../chat/ChatInput";
 
 interface ChatPanelProps {
   conversation: Conversation | null;
