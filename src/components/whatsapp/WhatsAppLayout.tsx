@@ -70,6 +70,73 @@ export default function WhatsAppLayout() {
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSyncRef = useRef<string>("1970-01-01T00:00:00Z");
   const didBootstrapSyncRef = useRef(false);
+  const mediaUrlCacheRef = useRef<Map<string, string>>(new Map());
+
+  const resolveMessageMediaUrl = useCallback(async (row: any): Promise<string | null> => {
+    const mappedType = mapMessageType(row?.type);
+    const currentUrl = row?.media_url || null;
+
+    if (!isMediaType(mappedType)) return currentUrl;
+    if (currentUrl && !WHATSAPP_CDN_REGEX.test(currentUrl)) return currentUrl;
+
+    const cacheKey = String(row?.message_id || row?.id || "");
+    if (cacheKey && mediaUrlCacheRef.current.has(cacheKey)) {
+      return mediaUrlCacheRef.current.get(cacheKey)!;
+    }
+
+    if (!row?.instance_name || !row?.message_id) return currentUrl;
+
+    const rawMessageId = String(row.message_id);
+    const fallbackMessageId = rawMessageId.includes(":") ? rawMessageId.split(":").pop() : null;
+    const candidateIds = [...new Set([rawMessageId, fallbackMessageId].filter(Boolean) as string[])];
+
+    for (const candidateId of candidateIds) {
+      const { data, error } = await supabase.functions.invoke("uazapi-proxy", {
+        body: {
+          instanceName: row.instance_name,
+          path: "/message/download",
+          method: "POST",
+          body: {
+            id: candidateId,
+            return_link: true,
+            return_base64: false,
+          },
+        },
+      });
+
+      if (error) continue;
+
+      const resolvedUrl = extractDownloadUrl((data as any)?.data ?? data);
+      if (resolvedUrl) {
+        if (cacheKey) mediaUrlCacheRef.current.set(cacheKey, resolvedUrl);
+        return resolvedUrl;
+      }
+    }
+
+    return currentUrl;
+  }, []);
+
+  const mapDbMessageToUi = useCallback(
+    (row: any, mediaUrlOverride?: string | null): Message => ({
+      id: row.id,
+      conversationId: row.remote_jid,
+      content: row.body || row.caption || `[${row.type}]`,
+      timestamp: new Date(row.created_at).toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      direction: row.direction === "outgoing" ? "outgoing" : "incoming",
+      type: mapMessageType(row.type),
+      status: statusNumToLabel(row.status ?? 0),
+      senderName: row.direction === "incoming" ? jidToPhone(row.remote_jid) : undefined,
+      mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
+      caption: row.caption || null,
+    }),
+    []
+  );
 
   /* ── fetch conversations (distinct remote_jid) ──── */
   const fetchConversations = useCallback(async () => {
