@@ -284,12 +284,12 @@ export default function WhatsAppLayout() {
     // Send via uazapi-proxy
     const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
       body: {
-        instanceId: conv.instanceName,
-        endpoint: "/sendText",
+        instanceName: conv.instanceName,
+        path: "/send/text",
         method: "POST",
-        payload: {
-          phone: jidToPhone(selectedJid),
-          message: text,
+        body: {
+          number: jidToPhone(selectedJid),
+          text: text,
         },
       },
     });
