@@ -14,6 +14,7 @@ import CampaignsTab from "@/components/mensageria/CampaignsTab";
 
 const MensageriaPage = () => {
   const [provider, setProvider] = useState<Provider>("uazapi");
+  const [activeTab, setActiveTab] = useState("instancias");
 
   return (
     <div className="space-y-6">
