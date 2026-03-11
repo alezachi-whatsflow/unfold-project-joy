@@ -285,6 +285,7 @@ Deno.serve(async (req) => {
           ? body?.file || rd?.fileURL || rd?.fileUrl || null
           : rd?.fileURL || rd?.fileUrl || null;
       const caption = typeof body?.text === "string" ? body.text : null;
+      const snapshotStatus = toMessageStatus(rd?.status ?? rd?.ack ?? rd?.chatMessageStatusCode ?? null) ?? 1;
 
       if (remoteJid && providerMessageId) {
         await supabase.from("whatsapp_messages").upsert(
@@ -297,7 +298,7 @@ Deno.serve(async (req) => {
             body: messageBody,
             media_url: mediaUrl,
             caption,
-            status: 2,
+            status: snapshotStatus,
             raw_payload: rd,
             created_at: messageIso,
           },
