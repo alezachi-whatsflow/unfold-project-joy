@@ -5,7 +5,7 @@ import type { Message } from "@/data/mockMessages";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
 import MessageList from "../chat/MessageList";
-import ChatInput from "../chat/ChatInput";
+import ChatInput, { type AttachmentPayload } from "../chat/ChatInput";
 
 interface ChatPanelProps {
   conversation: Conversation | null;
@@ -13,6 +13,7 @@ interface ChatPanelProps {
   isRightOpen: boolean;
   onToggleRight: () => void;
   onSend: (text: string) => void;
+  onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
 }
 
 // Quick action chips
@@ -25,7 +26,7 @@ const quickActions = [
   { id: "more", label: "Mais", icon: MoreHorizontal, bg: "rgba(100,116,139,0.1)", text: "#8696A0", border: "rgba(100,116,139,0.3)" },
 ];
 
-export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend }: ChatPanelProps) {
+export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
 
   // Empty state
@@ -101,7 +102,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       <MessageList messages={messages} />
 
       {/* Input */}
-      <ChatInput onSend={onSend} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+      <ChatInput onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
     </div>
   );
 }
