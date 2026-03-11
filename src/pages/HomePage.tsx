@@ -97,7 +97,7 @@ export default function HomePage() {
     { icon: Users, label: "Clientes", route: "/customers" },
     { icon: Package, label: "Produtos", route: "/products" },
     { icon: ShoppingCart, label: "Vendas", route: "/vendas" },
-    { icon: MessageSquare, label: "Mensageria", route: "/mensageria" },
+    { icon: MessageSquare, label: "Mensageria", route: "/whatsapp" },
   ];
 
   const analyticsLinks = [
