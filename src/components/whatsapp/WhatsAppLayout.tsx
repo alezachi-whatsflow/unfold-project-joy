@@ -7,12 +7,23 @@ import type { Conversation } from "@/data/mockConversations";
 import type { Message } from "@/data/mockMessages";
 
 /* ── helpers ───────────────────────────────────────── */
+function isGroupJid(jid: string) {
+  return jid?.endsWith("@g.us") ?? false;
+}
 function jidToPhone(jid: string) {
   return jid?.replace(/@.*$/, "") ?? "";
 }
 function phoneInitials(phone: string) {
   const clean = phone.replace(/\D/g, "");
   return clean.slice(-2).toUpperCase() || "??";
+}
+function groupInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase() || "GP";
 }
 const palette = ["#00A884", "#7C3AED", "#F59E0B", "#EF4444", "#0EA5E9", "#EC4899"];
 function colorFromJid(jid: string) {
