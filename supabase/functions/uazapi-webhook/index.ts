@@ -63,10 +63,22 @@ Deno.serve(async (req) => {
 
         console.log(`uazapi-webhook: connection update for ${instance}:`, JSON.stringify(updateData).substring(0, 300));
 
-        await supabase
+        // Try matching by instance_name first, then by instance_token
+        const { data: matched } = await supabase
           .from("whatsapp_instances")
-          .update(updateData)
-          .eq("instance_name", instance);
+          .select("id")
+          .or(`instance_name.eq.${instance},instance_token.eq.${instance},session_id.eq.${instance}`)
+          .limit(1)
+          .single();
+
+        if (matched) {
+          await supabase
+            .from("whatsapp_instances")
+            .update(updateData)
+            .eq("id", matched.id);
+        } else {
+          console.warn(`uazapi-webhook: No instance found for: ${instance}`);
+        }
 
         break;
       }
