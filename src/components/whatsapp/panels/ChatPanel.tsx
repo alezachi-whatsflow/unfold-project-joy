@@ -27,7 +27,7 @@ const quickActions = [
   { id: "more", label: "Mais", icon: MoreHorizontal, bg: "rgba(100,116,139,0.1)", text: "#8696A0", border: "rgba(100,116,139,0.3)" },
 ];
 
-export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment }: ChatPanelProps) {
+export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
 
   // Empty state
