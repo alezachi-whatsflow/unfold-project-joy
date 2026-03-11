@@ -22,7 +22,6 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'clientes',   label: 'Clientes',      icon: 'Users',          route: '/customers',   module: 'clientes'      },
       { id: 'produtos',   label: 'Produtos',      icon: 'Package',        route: '/products',    module: 'produtos'      },
       { id: 'vendas',     label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',      module: 'vendas'        },
-      { id: 'mensageria', label: 'Mensageria',    icon: 'MessageSquare',  route: '/mensageria',  module: 'mensageria'    },
     ],
   },
   {
@@ -40,8 +39,9 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     label: 'Sistema',
     icon: 'Settings',
     items: [
-      { id: 'usuarios',       label: 'Usuários',      icon: 'Users',    route: '/usuarios',  module: 'usuarios'      },
-      { id: 'configuracoes',  label: 'Configurações', icon: 'Settings',  route: '/settings',  module: 'configuracoes' },
+      { id: 'usuarios',       label: 'Usuários',      icon: 'Users',         route: '/usuarios',     module: 'usuarios'      },
+      { id: 'integracoes',    label: 'Integrações',   icon: 'Puzzle',        route: '/integracoes',  module: 'mensageria'    },
+      { id: 'configuracoes',  label: 'Configurações', icon: 'Settings',      route: '/settings',     module: 'configuracoes' },
     ],
   },
 ];
