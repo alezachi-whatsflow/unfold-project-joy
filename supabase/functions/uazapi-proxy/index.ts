@@ -61,8 +61,23 @@ Deno.serve(async (req) => {
 
     const { path, method = "GET", body, instanceName } = await req.json();
 
-    if (!path) {
-      return json({ error: "path is required" }, 400);
+    if (!path || typeof path !== "string") {
+      return json({ error: "path is required and must be a string" }, 400);
+    }
+
+    // Validação de segurança: bloquear path traversal e caracteres perigosos
+    if (path.includes("..") || path.includes("//") || /[<>"'`;|&]/.test(path)) {
+      return json({ error: "Invalid path" }, 400);
+    }
+
+    // Whitelist de prefixos permitidos
+    const ALLOWED_PREFIXES = [
+      "/instance", "/send/", "/webhook", "/group", "/chat",
+      "/contact", "/queue", "/message", "/admin", "/globalwebhook",
+      "/status", "/profile", "/qrcode", "/paircode",
+    ];
+    if (!ALLOWED_PREFIXES.some((p) => path.startsWith(p) || path === p.replace(/\/$/, ""))) {
+      return json({ error: "Path not allowed" }, 403);
     }
 
     // Selecionar o token correto e o header correto

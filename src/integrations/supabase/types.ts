@@ -935,6 +935,56 @@ export type Database = {
         }
         Relationships: []
       }
+      licenses: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          features: Json
+          id: string
+          max_instances: number
+          max_users: number
+          plan: string
+          starts_at: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          features?: Json
+          id?: string
+          max_instances?: number
+          max_users?: number
+          plan?: string
+          starts_at?: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          features?: Json
+          id?: string
+          max_instances?: number
+          max_users?: number
+          plan?: string
+          starts_at?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_logs: {
         Row: {
           conteudo: string
@@ -1405,6 +1455,38 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_tenants: {
+        Row: {
+          created_at: string
+          id: string
+          is_owner: boolean
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_owner?: boolean
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_owner?: boolean
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tenants_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       web_scraps: {
         Row: {
@@ -1890,6 +1972,7 @@ export type Database = {
     }
     Functions: {
       get_my_role: { Args: never; Returns: string }
+      get_my_tenant_ids: { Args: never; Returns: string[] }
     }
     Enums: {
       asaas_environment: "sandbox" | "production"
