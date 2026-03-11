@@ -269,6 +269,25 @@ Deno.serve(async (req) => {
           } else {
             saved += 1;
           }
+
+          // Upsert contact info from incoming messages
+          if (normalized.direction === "incoming" && normalized.remote_jid) {
+            const contactName = msg?.senderName || msg?.pushName || msg?.verifiedBizName || null;
+            if (contactName) {
+              const phone = normalized.remote_jid.replace(/@.*$/, "");
+              await supabase.from("whatsapp_contacts").upsert(
+                {
+                  instance_name: instance,
+                  phone,
+                  jid: normalized.remote_jid,
+                  push_name: msg?.pushName || contactName,
+                  name: msg?.senderName || msg?.verifiedBizName || contactName,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "instance_name,phone" }
+              );
+            }
+          }
         }
 
         // fallback: cria um snapshot com último conteúdo do chat quando payload vem sem message detalhada
@@ -287,6 +306,32 @@ Deno.serve(async (req) => {
 
           if (chatSnapshot) {
             await supabase.from("whatsapp_messages").upsert(chatSnapshot, { onConflict: "message_id" });
+          }
+        }
+
+        // Also upsert lead info from the chat object that comes with every messages event
+        const chat = payload?.chat;
+        if (chat?.wa_chatid) {
+          const leadName = chat.lead_name || chat.lead_fullName || null;
+          const pushName = msgs[0]?.senderName || msgs[0]?.pushName || null;
+          const contactName = leadName || pushName || null;
+
+          if (contactName) {
+            await supabase.from("whatsapp_leads").upsert(
+              {
+                instance_name: instance,
+                chat_id: chat.wa_chatid,
+                lead_name: chat.lead_name || pushName || null,
+                lead_full_name: chat.lead_fullName || pushName || null,
+                lead_status: chat.lead_status || null,
+                is_ticket_open: chat.lead_isTicketOpen ?? false,
+                assigned_attendant_id: chat.lead_assignedAttendant_id || null,
+                kanban_order: chat.lead_kanbanOrder ?? 0,
+                lead_tags: chat.lead_tags || [],
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "instance_name,chat_id" }
+            );
           }
         }
 

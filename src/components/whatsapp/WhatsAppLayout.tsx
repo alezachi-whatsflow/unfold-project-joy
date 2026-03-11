@@ -174,9 +174,13 @@ export default function WhatsAppLayout() {
       grouped.get(jid)!.push(m);
     }
 
-    // Also fetch lead info
-    const { data: leads } = await supabase.from("whatsapp_leads").select("*");
+    // Also fetch lead info and contacts
+    const [{ data: leads }, { data: contacts }] = await Promise.all([
+      supabase.from("whatsapp_leads").select("*"),
+      supabase.from("whatsapp_contacts").select("*"),
+    ]);
     const leadMap = new Map((leads ?? []).map((l: any) => [l.chat_id, l]));
+    const contactMap = new Map((contacts ?? []).map((c: any) => [c.jid, c]));
 
     const convs: Conversation[] = [];
     for (const [jid, jidMsgs] of grouped) {
@@ -185,7 +189,21 @@ export default function WhatsAppLayout() {
       const unread = sorted.filter((m: any) => m.direction === "incoming" && (m.status ?? 0) < 4).length;
       const phone = jidToPhone(jid);
       const lead = leadMap.get(jid) as any;
-      const name = lead?.lead_full_name || lead?.lead_name || phone;
+      const contact = contactMap.get(jid) as any;
+
+      // Try to get name from: lead > contact > incoming message senderName/pushName > phone
+      const senderNameFromMsg = sorted.find((m: any) =>
+        m.direction === "incoming" && (m.raw_payload?.senderName || m.raw_payload?.pushName)
+      );
+      const msgName = senderNameFromMsg?.raw_payload?.senderName || senderNameFromMsg?.raw_payload?.pushName || null;
+
+      const name =
+        lead?.lead_full_name ||
+        lead?.lead_name ||
+        contact?.push_name ||
+        contact?.name ||
+        msgName ||
+        phone;
 
       convs.push({
         id: jid,
