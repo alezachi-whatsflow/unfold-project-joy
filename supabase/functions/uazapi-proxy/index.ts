@@ -169,7 +169,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json(responseData, uazapiResponse.status);
+    // Always return 200 to avoid supabase.functions.invoke treating non-2xx as errors
+    return json({ data: responseData, upstream_status: uazapiResponse.status, ok: uazapiResponse.ok });
   } catch (err) {
     console.error("uazapi-proxy error:", err);
     return json({ error: err instanceof Error ? err.message : "Unknown error" }, 500);
