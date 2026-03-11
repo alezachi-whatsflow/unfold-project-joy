@@ -375,30 +375,54 @@ Deno.serve(async (req) => {
       }
 
       case "messages_update":
-      case "messages.update": {
+      case "messages.update":
+      case "message.update":
+      case "message_ack":
+      case "message-ack":
+      case "ack":
+      case "message_status":
+      case "status": {
+        // Handle both array and single object payloads
         const updates = asArray(data);
 
         for (const upd of updates) {
           const rawMessageId =
             upd?.key?.id ||
+            upd?.id?.id ||
             upd?.messageid ||
             upd?.messageId ||
             upd?.id ||
             null;
           const messageId = normalizeMessageId(rawMessageId);
-          if (!messageId) continue;
+          if (!messageId) {
+            console.warn("uazapi-webhook: status update without messageId:", JSON.stringify(upd).substring(0, 200));
+            continue;
+          }
 
-          const statusKey = upd?.update?.status ?? upd?.status;
+          // Try multiple paths for status value
+          const statusKey =
+            upd?.update?.status ??
+            upd?.status ??
+            upd?.ack ??
+            upd?.chatMessageStatusCode ??
+            null;
+
           let newStatus: number | undefined = messageStatusMap[String(statusKey)];
-          // Also handle when uazapi sends raw numeric status directly
+          // Handle raw numeric status
           if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
             newStatus = Math.min(statusKey, 4);
           }
+
           if (newStatus !== undefined) {
-            await supabase
+            console.log(`uazapi-webhook: updating message ${messageId} status to ${newStatus}`);
+            const { error: updateError } = await supabase
               .from("whatsapp_messages")
               .update({ status: newStatus })
               .eq("message_id", String(messageId));
+
+            if (updateError) {
+              console.error("uazapi-webhook: status update error:", updateError);
+            }
           }
         }
         break;
