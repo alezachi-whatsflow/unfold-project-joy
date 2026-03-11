@@ -104,6 +104,116 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
     );
   }
 
+  // Image message
+  if (m.type === "image") {
+    return (
+      <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1`}>
+        <div
+          className="max-w-[65%] overflow-hidden"
+          style={{
+            backgroundColor: isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)",
+            borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
+          }}
+        >
+          {m.mediaUrl ? (
+            <img
+              src={m.mediaUrl}
+              alt={m.caption || "Imagem"}
+              className="w-full max-h-[300px] object-cover cursor-pointer"
+              onClick={() => window.open(m.mediaUrl!, "_blank")}
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[150px] bg-black/20">
+              <span className="text-xs" style={{ color: "var(--wa-text-secondary)" }}>📷 Imagem</span>
+            </div>
+          )}
+          {(m.caption || m.content) && m.content !== "[image]" && m.content !== "[ImageMessage]" && (
+            <p className="text-[14.5px] leading-5 whitespace-pre-wrap px-2.5 pt-1" style={{ color: "var(--wa-text-primary)" }}>
+              {m.caption || m.content}
+            </p>
+          )}
+          <div className="flex items-center justify-end gap-1 px-2.5 pb-1">
+            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
+              {m.timestamp.split(" ")[1]}
+            </span>
+            {isOut && <TickIcons status={m.status} />}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Video message
+  if (m.type === "video") {
+    return (
+      <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1`}>
+        <div
+          className="max-w-[65%] overflow-hidden"
+          style={{
+            backgroundColor: isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)",
+            borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
+          }}
+        >
+          {m.mediaUrl ? (
+            <video
+              src={m.mediaUrl}
+              controls
+              className="w-full max-h-[300px]"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[150px] bg-black/20">
+              <span className="text-xs" style={{ color: "var(--wa-text-secondary)" }}>🎥 Vídeo</span>
+            </div>
+          )}
+          {m.caption && (
+            <p className="text-[14.5px] leading-5 whitespace-pre-wrap px-2.5 pt-1" style={{ color: "var(--wa-text-primary)" }}>
+              {m.caption}
+            </p>
+          )}
+          <div className="flex items-center justify-end gap-1 px-2.5 pb-1">
+            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
+              {m.timestamp.split(" ")[1]}
+            </span>
+            {isOut && <TickIcons status={m.status} />}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Document message
+  if (m.type === "document") {
+    return (
+      <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1`}>
+        <div
+          className="max-w-[65%] px-2.5 pt-1.5 pb-1"
+          style={{
+            backgroundColor: isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)",
+            borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
+          }}
+        >
+          <div
+            className="flex items-center gap-2 p-2 rounded cursor-pointer"
+            style={{ backgroundColor: "rgba(0,0,0,0.15)" }}
+            onClick={() => m.mediaUrl && window.open(m.mediaUrl, "_blank")}
+          >
+            <span className="text-2xl">📄</span>
+            <span className="text-sm truncate" style={{ color: "var(--wa-text-primary)" }}>
+              {m.caption || m.content || "Documento"}
+            </span>
+          </div>
+          <div className="flex items-center justify-end gap-1 mt-1">
+            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
+              {m.timestamp.split(" ")[1]}
+            </span>
+            {isOut && <TickIcons status={m.status} />}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Reply preview
   const replyBlock = m.replyTo ? (
     <div className="mb-1 px-2 py-1 rounded text-xs" style={{ backgroundColor: "rgba(0,0,0,0.2)", borderLeft: "3px solid var(--wa-green)" }}>
