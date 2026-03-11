@@ -15,7 +15,7 @@ interface LeftPanelProps {
 
 export default function LeftPanel({ conversations, selectedId, onSelect }: LeftPanelProps) {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("inbox");
 
   const filtered = useMemo(() => {
     let list = conversations;
@@ -23,8 +23,10 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
       const q = search.toLowerCase();
       list = list.filter((c) => c.name.toLowerCase().includes(q) || c.phone.includes(q));
     }
-    if (filter === "unread") list = list.filter((c) => c.unreadCount > 0);
-    if (filter === "unassigned") list = list.filter((c) => !c.assignedTo);
+    if (filter === "inbox") list = list.filter((c) => c.status === "open" || c.status === "pending");
+    if (filter === "queue") list = list.filter((c) => !c.assignedTo);
+    if (filter === "groups") list = list.filter((c) => c.isGroup);
+    if (filter === "resolved") list = list.filter((c) => c.status === "resolved");
     return list;
   }, [conversations, search, filter]);
 

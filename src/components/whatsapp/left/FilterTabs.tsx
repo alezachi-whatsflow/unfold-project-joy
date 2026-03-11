@@ -22,7 +22,7 @@ export default function FilterTabs({ active, onChange, totalCount, unreadCount }
       {tabs.map((tab) => {
         const isActive = active === tab.id;
         const Icon = tab.icon;
-        const count = tab.id === "all" ? totalCount : tab.id === "unread" ? unreadCount : undefined;
+        const count = tab.id === "inbox" ? totalCount : tab.id === "queue" ? unreadCount : undefined;
         return (
           <Tooltip key={tab.id}>
             <TooltipTrigger asChild>
