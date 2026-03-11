@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { MessageSquarePlus, Users, MoreVertical } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import WaAvatar from "../shared/Avatar";
 import SearchBar from "../left/SearchBar";
 import FilterTabs from "../left/FilterTabs";
