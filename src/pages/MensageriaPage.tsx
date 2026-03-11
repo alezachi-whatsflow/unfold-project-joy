@@ -50,7 +50,7 @@ const MensageriaPage = () => {
         </TabsContent>
 
         <TabsContent value="inbox"><InboxTab /></TabsContent>
-        <TabsContent value="enviar"><MessageComposer /></TabsContent>
+        <TabsContent value="enviar"><MessageComposer onClose={() => setActiveTab("instancias")} /></TabsContent>
         <TabsContent value="campanhas"><CampaignsTab /></TabsContent>
         <TabsContent value="leads"><LeadKanban /></TabsContent>
         <TabsContent value="contatos"><ContactChecker /></TabsContent>
