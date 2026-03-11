@@ -1,0 +1,1 @@
+UPDATE whatsapp_leads SET lead_name = NULL, lead_full_name = NULL WHERE chat_id = '554396304063@s.whatsapp.net' AND lead_name = 'Alessandro Zachi | Whatsflow';

@@ -19,6 +19,12 @@ const messageStatusMap: Record<string, number> = {
   DELIVERY_ACK: 3,
   READ: 4,
   PLAYED: 4,
+  "0": 0,
+  "1": 1,
+  "2": 2,
+  "3": 3,
+  "4": 4,
+  "5": 4,
 };
 
 const asArray = <T>(value: T | T[] | null | undefined): T[] => {
@@ -313,26 +319,26 @@ Deno.serve(async (req) => {
         const chat = payload?.chat;
         if (chat?.wa_chatid) {
           const leadName = chat.lead_name || chat.lead_fullName || null;
-          const pushName = msgs[0]?.senderName || msgs[0]?.pushName || null;
+          // Only use pushName from incoming messages to avoid saving device owner's name
+          const hasIncoming = msgs.some((m: AnyRecord) => !Boolean(m?.key?.fromMe ?? m?.fromMe ?? m?.sentByMe));
+          const pushName = hasIncoming ? (msgs[0]?.senderName || msgs[0]?.pushName || null) : null;
           const contactName = leadName || pushName || null;
 
-          if (contactName) {
-            await supabase.from("whatsapp_leads").upsert(
-              {
-                instance_name: instance,
-                chat_id: chat.wa_chatid,
-                lead_name: chat.lead_name || pushName || null,
-                lead_full_name: chat.lead_fullName || pushName || null,
-                lead_status: chat.lead_status || null,
-                is_ticket_open: chat.lead_isTicketOpen ?? false,
-                assigned_attendant_id: chat.lead_assignedAttendant_id || null,
-                kanban_order: chat.lead_kanbanOrder ?? 0,
-                lead_tags: chat.lead_tags || [],
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "instance_name,chat_id" }
-            );
-          }
+          await supabase.from("whatsapp_leads").upsert(
+            {
+              instance_name: instance,
+              chat_id: chat.wa_chatid,
+              lead_name: chat.lead_name || (hasIncoming ? pushName : null) || undefined,
+              lead_full_name: chat.lead_fullName || (hasIncoming ? pushName : null) || undefined,
+              lead_status: chat.lead_status || null,
+              is_ticket_open: chat.lead_isTicketOpen ?? false,
+              assigned_attendant_id: chat.lead_assignedAttendant_id || null,
+              kanban_order: chat.lead_kanbanOrder ?? 0,
+              lead_tags: chat.lead_tags || [],
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "instance_name,chat_id" }
+          );
         }
 
         await supabase
@@ -357,8 +363,12 @@ Deno.serve(async (req) => {
           const messageId = normalizeMessageId(rawMessageId);
           if (!messageId) continue;
 
-          const statusKey = upd?.update?.status || upd?.status;
-          const newStatus = messageStatusMap[String(statusKey)] ?? undefined;
+          const statusKey = upd?.update?.status ?? upd?.status;
+          let newStatus: number | undefined = messageStatusMap[String(statusKey)];
+          // Also handle when uazapi sends raw numeric status directly
+          if (newStatus === undefined && typeof statusKey === "number" && statusKey >= 0 && statusKey <= 5) {
+            newStatus = Math.min(statusKey, 4);
+          }
           if (newStatus !== undefined) {
             await supabase
               .from("whatsapp_messages")
