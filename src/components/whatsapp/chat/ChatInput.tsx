@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type CSSProperties } from "react";
+import { useState, useRef, useEffect, type CSSProperties, type ChangeEvent } from "react";
 import {
   Smile,
   Paperclip,
