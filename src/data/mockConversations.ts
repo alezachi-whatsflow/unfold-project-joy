@@ -17,6 +17,8 @@ export interface Conversation {
   isTicketOpen: boolean;
   assignedTo?: string;
   status: "open" | "pending" | "resolved" | "transferred";
+  isGroup?: boolean;
+  participantCount?: number;
 }
 
 export const mockConversations: Conversation[] = [
