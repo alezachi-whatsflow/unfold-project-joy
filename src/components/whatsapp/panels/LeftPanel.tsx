@@ -5,17 +5,20 @@ import WaAvatar from "../shared/Avatar";
 import SearchBar from "../left/SearchBar";
 import FilterTabs from "../left/FilterTabs";
 import ConversationItem from "../left/ConversationItem";
+import NewConversationDialog from "../left/NewConversationDialog";
 import type { Conversation } from "@/data/mockConversations";
 
 interface LeftPanelProps {
   conversations: Conversation[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onNewConversationStarted?: (jid: string) => void;
 }
 
-export default function LeftPanel({ conversations, selectedId, onSelect }: LeftPanelProps) {
+export default function LeftPanel({ conversations, selectedId, onSelect, onNewConversationStarted }: LeftPanelProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("inbox");
+  const [newConvOpen, setNewConvOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let list = conversations;
@@ -35,8 +38,13 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
   const groupCount = conversations.filter((c) => c.isGroup).length;
   const resolvedCount = conversations.filter((c) => c.status === "resolved").length;
 
+  const handleNewConvStarted = (jid: string) => {
+    onNewConversationStarted?.(jid);
+    onSelect(jid);
+  };
+
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "var(--wa-bg-panel)", borderRight: "1px solid var(--wa-border)" }}>
+    <div className="relative flex flex-col h-full" style={{ backgroundColor: "var(--wa-bg-panel)", borderRight: "1px solid var(--wa-border)" }}>
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 shrink-0"
@@ -44,8 +52,19 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
       >
         <WaAvatar initials="AZ" color="#00A884" size={32} />
         <div className="flex items-center gap-4">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="transition-colors"
+                style={{ color: "var(--wa-text-secondary)" }}
+                onClick={() => setNewConvOpen(true)}
+              >
+                <MessageSquarePlus size={22} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Nova conversa</TooltipContent>
+          </Tooltip>
           {[
-            { Icon: MessageSquarePlus, label: "Nova conversa" },
             { Icon: Users, label: "Nova comunidade" },
             { Icon: MoreVertical, label: "Mais opções" },
           ].map(({ Icon, label }, i) => (
@@ -75,6 +94,13 @@ export default function LeftPanel({ conversations, selectedId, onSelect }: LeftP
           />
         ))}
       </div>
+
+      {/* New Conversation Dialog */}
+      <NewConversationDialog
+        open={newConvOpen}
+        onClose={() => setNewConvOpen(false)}
+        onConversationStarted={handleNewConvStarted}
+      />
     </div>
   );
 }
