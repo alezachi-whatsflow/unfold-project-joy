@@ -31,6 +31,12 @@ const normalizeMessageId = (value: unknown): string | null => {
   return raw.replace(/^\d+:/, "");
 };
 
+const isSafeMediaUrl = (value: unknown): value is string => {
+  if (typeof value !== "string") return false;
+  if (!value || value.length > 2048) return false;
+  return /^https?:\/\//i.test(value);
+};
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
