@@ -113,7 +113,7 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [instance, status, onStatusChange]);
+  }, [instance, status, onStatusChange, onClose]);
 
   // Fallback poll
   useEffect(() => {
