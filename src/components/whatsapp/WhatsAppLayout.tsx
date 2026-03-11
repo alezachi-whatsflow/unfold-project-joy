@@ -5,6 +5,7 @@ import ChatPanel from "./panels/ChatPanel";
 import RightPanel from "./panels/RightPanel";
 import type { Conversation } from "@/data/mockConversations";
 import type { Message } from "@/data/mockMessages";
+import type { AttachmentPayload } from "./chat/ChatInput";
 
 /* ── helpers ───────────────────────────────────────── */
 function isGroupJid(jid: string) {
