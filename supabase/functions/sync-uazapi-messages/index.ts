@@ -33,19 +33,20 @@ Deno.serve(async (req) => {
       const serverUrl = inst.server_url || Deno.env.get("UAZAPI_BASE_URL");
       if (!token || !serverUrl) continue;
 
-      // Fetch recent chats
-      const chatsRes = await fetch(`${serverUrl}/chat/fetchChats`, {
+      // Fetch recent chats via /chat/find
+      const chatsRes = await fetch(`${serverUrl}/chat/find`, {
         method: "POST",
         headers: { "Content-Type": "application/json", token },
-        body: JSON.stringify({ count: 30 }),
+        body: JSON.stringify({ sort: "-wa_lastMsgTimestamp", limit: 30 }),
       });
 
       if (!chatsRes.ok) {
-        results.push({ instance: inst.instance_name, error: `fetchChats: ${chatsRes.status}` });
+        results.push({ instance: inst.instance_name, error: `chat/find: ${chatsRes.status}` });
         continue;
       }
 
-      const chats = await chatsRes.json();
+      const chatsData = await chatsRes.json();
+      const chats = Array.isArray(chatsData) ? chatsData : chatsData?.chats || [];
       let totalSaved = 0;
 
       // For each chat, fetch messages
