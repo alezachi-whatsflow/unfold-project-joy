@@ -23,7 +23,7 @@ const MensageriaPage = () => {
         <p className="text-muted-foreground text-sm">Gerencie suas conexões WhatsApp, instâncias, caixa de entrada, envios e leads.</p>
       </div>
 
-      <Tabs defaultValue="instancias" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="instancias" className="gap-2"><Wifi className="h-4 w-4" /> Instâncias</TabsTrigger>
           <TabsTrigger value="inbox" className="gap-2"><Inbox className="h-4 w-4" /> Caixa de Entrada</TabsTrigger>
