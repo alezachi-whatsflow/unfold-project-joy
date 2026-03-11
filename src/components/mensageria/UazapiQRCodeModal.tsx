@@ -101,7 +101,9 @@ export default function UazapiQRCodeModal({ instance, onClose, onStatusChange }:
       }, (payload: any) => {
         if (payload.new?.status === "connected") {
           setStatus("connected");
+          toast.success("Instância conectada com sucesso!");
           onStatusChange?.();
+          setTimeout(() => onClose(), 1500);
         }
         if (payload.new?.qr_code) {
           const qr = payload.new.qr_code;
