@@ -125,6 +125,22 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
   else if (mediaUrl) type = "media";
   else type = rawType || "unknown";
 
+  const mimetype =
+    msg?.mimetype ??
+    msg?.content?.mimetype ??
+    msg?.message?.imageMessage?.mimetype ??
+    msg?.message?.videoMessage?.mimetype ??
+    msg?.message?.documentMessage?.mimetype ??
+    null;
+
+  // When API sends generic "media", infer by mimetype
+  if ((type === "media" || type === "unknown") && mimetype) {
+    if (String(mimetype).startsWith("image/")) type = "image";
+    else if (String(mimetype).startsWith("video/")) type = "video";
+    else if (String(mimetype).startsWith("audio/")) type = "audio";
+    else type = "document";
+  }
+
   return {
     instance_name: instance,
     remote_jid: remoteJid,
