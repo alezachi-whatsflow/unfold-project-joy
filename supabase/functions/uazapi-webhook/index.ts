@@ -86,12 +86,44 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     chatPayload?.wa_lastMsg ??
     null;
 
-  const type =
+  // Extract media URL from various possible locations
+  const mediaUrl =
+    msg?.mediaUrl ??
+    msg?.media?.url ??
+    msg?.message?.imageMessage?.url ??
+    msg?.message?.videoMessage?.url ??
+    msg?.message?.documentMessage?.url ??
+    msg?.message?.audioMessage?.url ??
+    msg?.message?.stickerMessage?.url ??
+    null;
+
+  // Extract caption from media messages
+  const captionVal =
+    msg?.caption ??
+    msg?.message?.imageMessage?.caption ??
+    msg?.message?.videoMessage?.caption ??
+    msg?.message?.documentMessage?.caption ??
+    msg?.content?.caption ??
+    null;
+
+  const rawType =
     msg?.messageType ??
     msg?.type ??
     msg?.content?.type ??
     chatPayload?.wa_lastMessageType ??
-    (body ? "text" : "unknown");
+    "";
+
+  // Normalize message type to simple categories
+  const normalizedType = rawType.toLowerCase();
+  let type = "text";
+  if (normalizedType.includes("image")) type = "image";
+  else if (normalizedType.includes("video") || normalizedType === "ptv") type = "video";
+  else if (normalizedType.includes("audio") || normalizedType === "ptt") type = "audio";
+  else if (normalizedType.includes("document")) type = "document";
+  else if (normalizedType.includes("sticker")) type = "sticker";
+  else if (body) type = "text";
+  else if (mediaUrl) type = "media";
+  else type = rawType || "unknown";
 
   return {
     instance_name: instance,
