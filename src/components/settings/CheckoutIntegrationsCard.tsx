@@ -360,7 +360,7 @@ function ConfigureProviderDialog({
             </Button>
 
             {form.status === "connected" && (
-              <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3 text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
+              <div className="rounded-lg bg-primary/10 border border-primary/30 p-3 text-sm text-primary flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" /> Conexão validada com sucesso!
               </div>
             )}
