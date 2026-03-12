@@ -45,6 +45,10 @@ import AssinaturaPage from "./pages/AssinaturaPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 import ManualPage from "./pages/ManualPage";
+import ComunidadePage from "./pages/sistema/ComunidadePage";
+import TutoriaisPage from "./pages/sistema/TutoriaisPage";
+import ManualSistemaPage from "./pages/sistema/ManualSistemaPage";
+import OnboardingPage from "./pages/sistema/OnboardingPage";
 
 // SuperAdmin
 import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
