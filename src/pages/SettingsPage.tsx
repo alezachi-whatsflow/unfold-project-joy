@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Settings, Webhook, RefreshCw, Shield, Loader2, CheckCircle, XCircle, PanelLeft, Paintbrush, LayoutGrid, Columns2, Search, Palette } from "lucide-react";
 import { TenantManagementCard } from "@/components/settings/TenantManagementCard";
 import { CustomLayoutPanel } from "@/components/settings/CustomLayoutPanel";
+import { SalesFunnelConfigCard } from "@/components/settings/SalesFunnelConfigCard";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import type { SidebarLayout, SidebarDensity, SidebarWidth } from "@/types/sidebar";
 
