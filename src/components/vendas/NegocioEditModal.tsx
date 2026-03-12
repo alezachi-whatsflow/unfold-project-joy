@@ -10,8 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, User, Briefcase, Tag, Package, CreditCard, CalendarDays, FileText, Receipt, X } from "lucide-react";
+import { Plus, Trash2, Save, User, Briefcase, Tag, Package, CreditCard, CalendarDays, FileText, Receipt, X, CalendarIcon } from "lucide-react";
+import { format, parse } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, type Negocio, type NegocioProduto, type NegocioOrigem } from "@/types/vendas";
 
 const ORIGENS: NegocioOrigem[] = ['indicacao', 'outbound', 'inbound', 'representante', 'renovacao', 'upsell', 'digital_intelligence'];
