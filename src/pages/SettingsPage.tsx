@@ -191,6 +191,7 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">Configurações do Asaas, empresas e integrações</p>
       </div>
 
+      <CheckoutIntegrationsCard />
       <SidebarAppearanceCard />
       <SalesFunnelConfigCard />
       <TenantManagementCard />
