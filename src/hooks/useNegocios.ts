@@ -20,7 +20,7 @@ export function useNegocios(pipelineId?: string | null) {
         .order('created_at', { ascending: false });
 
       if (pipelineId) {
-        query = query.eq('pipeline_id', pipelineId);
+        query = query.or(`pipeline_id.eq.${pipelineId},pipeline_id.is.null`);
       }
 
       const { data, error } = await query;
