@@ -19,10 +19,12 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     label: 'Clientes & Produtos',
     icon: 'Users',
     items: [
-      { id: 'clientes',   label: 'Clientes',      icon: 'Users',          route: '/customers',   module: 'clientes'      },
-      { id: 'produtos',   label: 'Produtos',      icon: 'Package',        route: '/products',    module: 'produtos'      },
-      { id: 'vendas',     label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',      module: 'vendas'        },
-      { id: 'mensageria', label: 'Mensageria',    icon: 'MessageCircle',   route: '/mensageria',  module: 'mensageria'    },
+      { id: 'crm',         label: 'CRM Contatos',  icon: 'Contact',         route: '/crm',          module: 'clientes'      },
+      { id: 'clientes',    label: 'Clientes',      icon: 'Users',           route: '/customers',    module: 'clientes'      },
+      { id: 'produtos',    label: 'Produtos',      icon: 'Package',         route: '/products',     module: 'produtos'      },
+      { id: 'vendas',      label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',       module: 'vendas'        },
+      { id: 'conversas',   label: 'Conversas',     icon: 'MessageSquare',   route: '/conversas',    module: 'mensageria'    },
+      { id: 'mensageria',  label: 'Mensageria',    icon: 'MessageCircle',   route: '/mensageria',   module: 'mensageria'    },
     ],
   },
   {
