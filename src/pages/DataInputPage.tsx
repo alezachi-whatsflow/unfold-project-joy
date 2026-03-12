@@ -1,6 +1,7 @@
 import { MonthlyInputForm } from "@/components/input/MonthlyInputForm";
 import { CSVImport } from "@/components/input/CSVImport";
 import { CustomerCSVImport } from "@/components/input/CustomerCSVImport";
+import { CrmCSVImport } from "@/components/input/CrmCSVImport";
 import { CostDetailTable } from "@/components/input/CostDetailTable";
 import { useFinancial } from "@/contexts/FinancialContext";
 import { formatCurrency, getMonthLabel } from "@/lib/calculations";
@@ -15,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Edit2, Database, FileSpreadsheet, Users, Package, DollarSign } from "lucide-react";
+import { Trash2, Edit2, Database, FileSpreadsheet, Users, Package, DollarSign, Contact } from "lucide-react";
 
 export default function DataInputPage() {
   const { entries, deleteEntry, setSelectedMonth } = useFinancial();
