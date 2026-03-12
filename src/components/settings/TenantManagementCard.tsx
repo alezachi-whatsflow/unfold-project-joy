@@ -329,9 +329,11 @@ export function TenantManagementCard() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Nome</TableHead>
+                <TableHead className="text-xs">Slug</TableHead>
+                <TableHead className="text-xs">Plano</TableHead>
+                <TableHead className="text-xs">Status</TableHead>
                 <TableHead className="text-xs">CPF/CNPJ</TableHead>
-                <TableHead className="text-xs">E-mail</TableHead>
-                <TableHead className="text-xs">Criado em</TableHead>
+                <TableHead className="text-xs">Validade</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
@@ -344,10 +346,26 @@ export function TenantManagementCard() {
                       <Badge variant="secondary" className="ml-2 text-[10px]">Padrão</Badge>
                     )}
                   </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">{t.slug || "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px]">
+                      {t.plan === 'profissional' ? 'Profissional' : 'Solo Pro'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={t.status === 'active' ? 'default' : 'destructive'} 
+                      className="text-[10px]"
+                    >
+                      {t.status === 'active' ? 'Ativo' : t.status === 'suspended' ? 'Suspenso' : t.status || 'Ativo'}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">
                     {t.cpf_cnpj ? formatCpfCnpj(t.cpf_cnpj) : t.document || "—"}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{t.email || "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {t.valid_until ? new Date(t.valid_until).toLocaleDateString("pt-BR") : "Sem prazo"}
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {t.created_at ? new Date(t.created_at).toLocaleDateString("pt-BR") : "—"}
                   </TableCell>
