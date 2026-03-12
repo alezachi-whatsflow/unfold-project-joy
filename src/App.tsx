@@ -36,6 +36,7 @@ import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
 import VendasPage from "./pages/VendasPage";
 import MensageriaPage from "./pages/MensageriaPage";
+import IntegracoesPage from "./pages/IntegracoesPage";
 import WhatsAppPage from "./pages/WhatsAppPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
