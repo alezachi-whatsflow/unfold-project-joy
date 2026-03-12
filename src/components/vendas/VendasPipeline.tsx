@@ -106,7 +106,7 @@ export default function VendasPipeline() {
 
   const kpis = useMemo(() => {
     const activeKeys = pipelineStatuses.filter(s => s !== 'fechado_ganho' && s !== 'fechado_perdido');
-    const active = negocios.filter(n => activeKeys.includes(n.status));
+    const active = negocios.filter(n => (activeKeys as string[]).includes(n.status));
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
