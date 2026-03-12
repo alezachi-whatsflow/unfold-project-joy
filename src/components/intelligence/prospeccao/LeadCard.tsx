@@ -86,6 +86,29 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
     try {
       const valor = parseFloat(estimatedValue.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
       const origemDetalhe = `Digital Intelligence — ${niche} — ${city}`;
+
+      // Fetch default pipeline so the deal appears in the Kanban view
+      let pipelineId: string | null = null;
+      const { data: defaultPipeline } = await supabase
+        .from("sales_pipelines")
+        .select("id")
+        .eq("is_active", true)
+        .eq("is_default", true)
+        .limit(1)
+        .maybeSingle();
+      if (defaultPipeline) {
+        pipelineId = defaultPipeline.id;
+      } else {
+        // fallback: pick first active pipeline
+        const { data: firstPipeline } = await supabase
+          .from("sales_pipelines")
+          .select("id")
+          .eq("is_active", true)
+          .order("ordem", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        pipelineId = firstPipeline?.id || null;
+      }
       
       const { data, error } = await supabase.from("negocios").insert({
         titulo: lead.name,
@@ -98,6 +121,7 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
         valor_liquido: valor,
         probabilidade: lead.score >= 8 ? 70 : lead.score >= 5 ? 50 : 30,
         tags: ["Digital Intelligence"],
+        pipeline_id: pipelineId,
         notas: [
           `Origem: ${origemDetalhe}`,
           `Score Digital: ${lead.score}/10`,
