@@ -118,7 +118,8 @@ const AppRoutes = () => (
     <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
     
     <Route path="/conversas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/wa-connections" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><WaConnectionsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    {/* wa-connections now lives inside /integracoes */}
+    <Route path="/wa-connections" element={<Navigate to="/integracoes" replace />} />
     <Route path="/assinatura" element={<AuthGuard><DashboardLayout><AssinaturaPage /></DashboardLayout></AuthGuard>} />
     <Route path="/analytics" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/manual" element={<AuthGuard><ManualPage /></AuthGuard>} />
