@@ -44,6 +44,7 @@ import WaConnectionsPage from "./pages/WaConnectionsPage";
 import AssinaturaPage from "./pages/AssinaturaPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
+import ManualPage from "./pages/ManualPage";
 
 // SuperAdmin
 import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
