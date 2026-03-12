@@ -1027,6 +1027,57 @@ export type Database = {
         }
         Relationships: []
       }
+      meta_connections: {
+        Row: {
+          access_token: string | null
+          app_id: string
+          app_secret: string | null
+          config_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          phone_display: string | null
+          phone_number_id: string | null
+          tenant_id: string
+          updated_at: string
+          waba_id: string | null
+          webhook_configured: boolean
+          webhook_verify_token: string
+        }
+        Insert: {
+          access_token?: string | null
+          app_id: string
+          app_secret?: string | null
+          config_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          phone_display?: string | null
+          phone_number_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          waba_id?: string | null
+          webhook_configured?: boolean
+          webhook_verify_token?: string
+        }
+        Update: {
+          access_token?: string | null
+          app_id?: string
+          app_secret?: string | null
+          config_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          phone_display?: string | null
+          phone_number_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          waba_id?: string | null
+          webhook_configured?: boolean
+          webhook_verify_token?: string
+        }
+        Relationships: []
+      }
       negocios: {
         Row: {
           cliente_id: string | null
