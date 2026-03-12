@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useNegocios } from "@/hooks/useNegocios";
+import { usePipelines } from "@/hooks/usePipelines";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,15 +13,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Search, DollarSign, Target, CheckCircle, BarChart3, GripVertical, Radar } from "lucide-react";
+import { Plus, Search, DollarSign, Target, CheckCircle, BarChart3, GripVertical, Radar, GitBranch, Settings2, Loader2 } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, ALL_STATUSES, ACTIVE_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import NegocioCreateModal from "@/components/vendas/NegocioCreateModal";
 import NegocioDrawer from "@/components/vendas/NegocioDrawer";
 import MotivoPerdaModal from "@/components/vendas/MotivoPerdaModal";
 import FechamentoGanhoModal from "@/components/vendas/FechamentoGanhoModal";
+import PipelineManager from "@/components/vendas/PipelineManager";
 
 export default function VendasPipeline() {
-  const { negocios, isLoading, changeStatus } = useNegocios();
+  const { pipelines, selectedPipeline, selectedPipelineId, selectPipeline, isLoading: pipelinesLoading, createPipeline } = usePipelines();
+  const { negocios, isLoading, changeStatus } = useNegocios(selectedPipelineId);
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [showClosed, setShowClosed] = useState(false);
@@ -29,6 +32,7 @@ export default function VendasPipeline() {
   const [selectedNegocio, setSelectedNegocio] = useState<Negocio | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [managerOpen, setManagerOpen] = useState(false);
 
   const [perdaModal, setPerdaModal] = useState<Negocio | null>(null);
   const [ganhoModal, setGanhoModal] = useState<Negocio | null>(null);
@@ -41,25 +45,43 @@ export default function VendasPipeline() {
     const hId = searchParams.get("highlight");
     if (hId) {
       setHighlightId(hId);
-      // Open drawer for highlighted negocio
       const neg = negocios.find(n => n.id === hId);
       if (neg) {
         setSelectedNegocio(neg);
         setDrawerOpen(true);
-        // Scroll to card
         setTimeout(() => {
           cardRefs.current[hId]?.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 300);
-        // Clear highlight after 2s
         setTimeout(() => setHighlightId(null), 2000);
       }
-      // Clean URL
       searchParams.delete("highlight");
       setSearchParams(searchParams, { replace: true });
     }
   }, [negocios, searchParams, setSearchParams]);
 
-  const visibleStatuses = showClosed ? ALL_STATUSES : ACTIVE_STATUSES;
+  // Use pipeline stages if available, otherwise default
+  const pipelineStatuses = useMemo(() => {
+    if (selectedPipeline?.stages?.length) {
+      return selectedPipeline.stages
+        .filter(s => s.enabled)
+        .sort((a, b) => a.ordem - b.ordem)
+        .map(s => s.key as NegocioStatus);
+    }
+    return ACTIVE_STATUSES;
+  }, [selectedPipeline]);
+
+  const visibleStatuses = showClosed ? pipelineStatuses : pipelineStatuses.filter(s => s !== 'fechado_ganho' && s !== 'fechado_perdido');
+
+  const statusConfig = useMemo(() => {
+    if (selectedPipeline?.stages?.length) {
+      const map: Record<string, { label: string; color: string; ordem: number }> = {};
+      selectedPipeline.stages.forEach(s => {
+        map[s.key] = { label: s.label, color: s.color, ordem: s.ordem };
+      });
+      return { ...NEGOCIO_STATUS_CONFIG, ...map };
+    }
+    return NEGOCIO_STATUS_CONFIG;
+  }, [selectedPipeline]);
 
   const filtered = useMemo(() => {
     let list = negocios;
@@ -77,13 +99,14 @@ export default function VendasPipeline() {
   const columns = useMemo(() => {
     return visibleStatuses.map(status => ({
       status,
-      config: NEGOCIO_STATUS_CONFIG[status],
+      config: statusConfig[status] || NEGOCIO_STATUS_CONFIG[status] || { label: status, color: '#888', ordem: 0 },
       items: filtered.filter(n => n.status === status),
     }));
-  }, [filtered, visibleStatuses]);
+  }, [filtered, visibleStatuses, statusConfig]);
 
   const kpis = useMemo(() => {
-    const active = negocios.filter(n => ACTIVE_STATUSES.includes(n.status));
+    const activeKeys = pipelineStatuses.filter(s => s !== 'fechado_ganho' && s !== 'fechado_perdido');
+    const active = negocios.filter(n => activeKeys.includes(n.status));
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -106,7 +129,7 @@ export default function VendasPipeline() {
     const taxaConversao = fechados.length > 0 ? (ganhos.length / fechados.length) * 100 : 0;
 
     return { pipelineTotal, previsaoMes, ganhosMes, taxaConversao };
-  }, [negocios]);
+  }, [negocios, pipelineStatuses]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -124,7 +147,7 @@ export default function VendasPipeline() {
     }
 
     await changeStatus(neg, status);
-    toast.success(`Negócio movido para ${NEGOCIO_STATUS_CONFIG[status].label}`);
+    toast.success(`Negócio movido para ${(statusConfig[status] || NEGOCIO_STATUS_CONFIG[status])?.label || status}`);
   };
 
   const openDrawer = (n: Negocio) => {
@@ -132,7 +155,6 @@ export default function VendasPipeline() {
     setDrawerOpen(true);
   };
 
-  // Extract score from notas for DI leads
   function getDigitalScore(neg: Negocio): number | null {
     if (neg.origem !== "digital_intelligence") return null;
     const match = (neg.notas || "").match(/Score Digital:\s*(\d+)\/10/);
@@ -145,8 +167,57 @@ export default function VendasPipeline() {
     return "#f87171";
   }
 
+  if (pipelinesLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {/* Pipeline Selector */}
+      {pipelines.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <GitBranch className="h-4 w-4 text-muted-foreground" />
+          <div className="flex gap-1.5 overflow-x-auto">
+            {pipelines.map(p => (
+              <button
+                key={p.id}
+                onClick={() => selectPipeline(p.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
+                  selectedPipelineId === p.id
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-xs text-muted-foreground"
+            onClick={() => {
+              createPipeline({ name: `Pipeline ${pipelines.length + 1}` });
+              toast.success("Novo pipeline criado!");
+            }}
+          >
+            <Plus className="h-3 w-3" /> Novo Pipeline
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground"
+            onClick={() => setManagerOpen(true)}
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard icon={DollarSign} label="Pipeline Total" value={fmt(kpis.pipelineTotal)} />
@@ -191,7 +262,6 @@ export default function VendasPipeline() {
             onDragOver={e => e.preventDefault()}
             onDrop={() => handleDrop(col.status)}
           >
-            {/* Column Header */}
             <div className="p-3 border-b border-border/30">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ background: col.config.color }} />
@@ -201,7 +271,6 @@ export default function VendasPipeline() {
               <div className="text-xs text-muted-foreground">{fmt(col.items.reduce((s, n) => s + n.valor_liquido, 0))}</div>
             </div>
 
-            {/* Cards */}
             <div className="p-2 space-y-2 max-h-[60vh] overflow-y-auto">
               {col.items.map(neg => {
                 const diScore = getDigitalScore(neg);
@@ -284,6 +353,13 @@ export default function VendasPipeline() {
       {ganhoModal && (
         <FechamentoGanhoModal negocio={ganhoModal} onClose={() => setGanhoModal(null)} />
       )}
+
+      {/* Pipeline Manager Dialog */}
+      <Dialog open={managerOpen} onOpenChange={setManagerOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <PipelineManager onClose={() => setManagerOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
