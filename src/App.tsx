@@ -139,12 +139,14 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SidebarPrefsProvider>
+          <TourProvider>
           <FinancialProvider>
             <CustomerProvider>
               <ProductProvider>
                 <CostLinesProvider>
                 <IntelligenceProvider>
                 <AsaasProvider>
+                  <TourOverlay />
                   <AppRoutes />
                 </AsaasProvider>
                 </IntelligenceProvider>
@@ -152,6 +154,7 @@ const App = () => (
               </ProductProvider>
             </CustomerProvider>
           </FinancialProvider>
+          </TourProvider>
           </SidebarPrefsProvider>
         </AuthProvider>
       </BrowserRouter>
