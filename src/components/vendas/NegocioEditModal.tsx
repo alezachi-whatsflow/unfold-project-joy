@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useProducts } from "@/contexts/ProductContext";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,10 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Save } from "lucide-react";
-import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioProduto, type NegocioOrigem, type NegocioStatus } from "@/types/vendas";
+import { Plus, Trash2, Save, User, Briefcase, Tag, Package, CreditCard, CalendarDays, FileText, Receipt, X } from "lucide-react";
+import { NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, type Negocio, type NegocioProduto, type NegocioOrigem } from "@/types/vendas";
 
 const ORIGENS: NegocioOrigem[] = ['indicacao', 'outbound', 'inbound', 'representante', 'renovacao', 'upsell', 'digital_intelligence'];
 const CONDICOES = ['À vista', '30 dias', '30/60 dias', '30/60/90 dias', '30/60/90/120 dias'];
@@ -21,6 +20,17 @@ const CONDICOES = ['À vista', '30 dias', '30/60 dias', '30/60/90 dias', '30/60/
 interface Props {
   negocio: Negocio;
   onClose: () => void;
+}
+
+function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+  return (
+    <div className="flex items-center gap-2 pb-2 pt-1">
+      <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary/10">
+        <Icon className="h-3.5 w-3.5 text-primary" />
+      </div>
+      <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
+    </div>
+  );
 }
 
 export default function NegocioEditModal({ negocio, onClose }: Props) {
@@ -122,121 +132,159 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>Editar Negócio</DialogTitle>
+      <DialogHeader className="pb-1">
+        <DialogTitle className="text-lg font-bold tracking-tight">Editar Negócio</DialogTitle>
+        <DialogDescription className="text-xs text-muted-foreground">
+          Atualize as informações do negócio no pipeline
+        </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-        {/* Basic Info */}
-        <div className="space-y-2">
-          <Label>Título *</Label>
-          <Input value={titulo} onChange={e => setTitulo(e.target.value)} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Cliente</Label>
-            <Input value={clienteNome} onChange={e => setClienteNome(e.target.value)} />
+      <div className="space-y-5 max-h-[68vh] overflow-y-auto pr-1 -mr-1 scrollbar-thin">
+
+        {/* ── Section: Informações Gerais ── */}
+        <section className="space-y-3">
+          <SectionHeader icon={Briefcase} title="Informações Gerais" />
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Título *</Label>
+            <Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Nome do negócio" />
           </div>
-          <div className="space-y-2">
-            <Label>Consultor</Label>
-            <Input value={consultorNome} onChange={e => setConsultorNome(e.target.value)} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Origem</Label>
-            <Select value={origem} onValueChange={v => setOrigem(v as NegocioOrigem)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {ORIGENS.map(o => <SelectItem key={o} value={o}>{NEGOCIO_ORIGEM_LABELS[o]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Probabilidade</Label>
-            <div className="flex items-center gap-2">
-              <Slider value={[probabilidade]} onValueChange={v => setProbabilidade(v[0])} max={100} step={5} className="flex-1" />
-              <span className="text-sm font-bold w-10 text-right" style={{ color: probColor }}>{probabilidade}%</span>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Cliente</Label>
+              <div className="relative">
+                <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input value={clienteNome} onChange={e => setClienteNome(e.target.value)} className="pl-8" placeholder="Nome do cliente" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Consultor</Label>
+              <div className="relative">
+                <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input value={consultorNome} onChange={e => setConsultorNome(e.target.value)} className="pl-8" placeholder="Responsável" />
+              </div>
             </div>
           </div>
-        </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Origem</Label>
+              <Select value={origem} onValueChange={v => setOrigem(v as NegocioOrigem)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ORIGENS.map(o => <SelectItem key={o} value={o}>{NEGOCIO_ORIGEM_LABELS[o]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Probabilidade</Label>
+              <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-input bg-background">
+                <Slider value={[probabilidade]} onValueChange={v => setProbabilidade(v[0])} max={100} step={5} className="flex-1" />
+                <span className="text-sm font-bold tabular-nums min-w-[40px] text-right" style={{ color: probColor }}>{probabilidade}%</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        {/* Tags */}
-        <div className="space-y-2">
-          <Label>Tags</Label>
+        {/* ── Section: Tags ── */}
+        <section className="space-y-3">
+          <SectionHeader icon={Tag} title="Tags" />
           <div className="flex gap-2">
-            <Input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="Enter para adicionar" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} className="h-8 text-xs" />
-            <Button variant="outline" size="sm" onClick={addTag}>+</Button>
+            <Input
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              placeholder="Digite e pressione Enter"
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+              className="text-sm"
+            />
+            <Button variant="outline" size="icon" className="shrink-0" onClick={addTag}>
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
           {tags.length > 0 && (
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap">
               {tags.map(t => (
-                <Badge key={t} variant="secondary" className="text-[10px] cursor-pointer" onClick={() => setTags(tags.filter(x => x !== t))}>{t} ✕</Badge>
+                <Badge
+                  key={t}
+                  variant="secondary"
+                  className="text-xs gap-1 cursor-pointer hover:bg-destructive/20 transition-colors"
+                  onClick={() => setTags(tags.filter(x => x !== t))}
+                >
+                  {t}
+                  <X className="h-3 w-3" />
+                </Badge>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        <Separator />
-
-        {/* Products */}
-        <div className="space-y-3">
+        {/* ── Section: Produtos ── */}
+        <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-semibold">Produtos</Label>
+            <SectionHeader icon={Package} title="Produtos" />
             <div className="flex gap-2">
               <Select onValueChange={addProdutoFromCatalog}>
-                <SelectTrigger className="h-8 w-[180px] text-xs">
-                  <SelectValue placeholder="Adicionar do catálogo" />
+                <SelectTrigger className="h-8 w-auto text-xs gap-1 px-2.5">
+                  <Package className="h-3 w-3" />
+                  <SelectValue placeholder="Catálogo" />
                 </SelectTrigger>
                 <SelectContent>
                   {activeProducts.map(p => (
                     <SelectItem key={p.id} value={p.id}>
-                      <span className="flex items-center justify-between gap-2 w-full">
+                      <span className="flex items-center justify-between gap-3 w-full">
                         <span>{p.name}</span>
-                        <span className="text-muted-foreground">{fmt(p.price)}</span>
+                        <span className="text-muted-foreground text-xs">{fmt(p.price)}</span>
                       </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={addProdutoManual}><Plus className="mr-1 h-3 w-3" /> Manual</Button>
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={addProdutoManual}>
+                <Plus className="h-3 w-3" /> Manual
+              </Button>
             </div>
           </div>
 
-          {produtos.map((p, i) => (
-            <div key={i} className="grid grid-cols-[1fr_50px_80px_50px_80px_28px] gap-1.5 items-end">
-              <div className="space-y-1">
-                {i === 0 && <Label className="text-[10px]">Produto</Label>}
-                <Input value={p.nome} onChange={e => updateProduto(i, 'nome', e.target.value)} className="h-8 text-xs" />
+          {produtos.length > 0 && (
+            <div className="rounded-lg border border-border overflow-hidden">
+              {/* Table header */}
+              <div className="grid grid-cols-[1fr_60px_90px_55px_85px_32px] gap-px bg-muted/50 px-3 py-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                <span>Produto</span>
+                <span className="text-center">Qtd</span>
+                <span className="text-center">Unitário</span>
+                <span className="text-center">Desc%</span>
+                <span className="text-right">Total</span>
+                <span></span>
               </div>
-              <div className="space-y-1">
-                {i === 0 && <Label className="text-[10px]">Qtd</Label>}
-                <Input type="number" value={p.quantidade} onChange={e => updateProduto(i, 'quantidade', Number(e.target.value))} className="h-8 text-xs" />
-              </div>
-              <div className="space-y-1">
-                {i === 0 && <Label className="text-[10px]">Valor un.</Label>}
-                <Input type="number" step="any" value={p.valorUnitario} onChange={e => updateProduto(i, 'valorUnitario', Number(e.target.value))} className="h-8 text-xs" />
-              </div>
-              <div className="space-y-1">
-                {i === 0 && <Label className="text-[10px]">Desc%</Label>}
-                <Input type="number" value={p.desconto} onChange={e => updateProduto(i, 'desconto', Number(e.target.value))} className="h-8 text-xs" />
-              </div>
-              <div className="space-y-1">
-                {i === 0 && <Label className="text-[10px]">Total</Label>}
-                <div className="h-8 flex items-center text-xs font-mono text-foreground">{fmt(p.valorTotal)}</div>
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeProduto(i)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+              {/* Table rows */}
+              {produtos.map((p, i) => (
+                <div key={i} className="grid grid-cols-[1fr_60px_90px_55px_85px_32px] gap-px items-center px-3 py-1.5 border-t border-border hover:bg-muted/30 transition-colors">
+                  <Input value={p.nome} onChange={e => updateProduto(i, 'nome', e.target.value)} className="h-8 text-xs border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                  <Input type="number" value={p.quantidade} onChange={e => updateProduto(i, 'quantidade', Number(e.target.value))} className="h-8 text-xs text-center border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                  <Input type="number" step="any" value={p.valorUnitario} onChange={e => updateProduto(i, 'valorUnitario', Number(e.target.value))} className="h-8 text-xs text-center border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                  <Input type="number" value={p.desconto} onChange={e => updateProduto(i, 'desconto', Number(e.target.value))} className="h-8 text-xs text-center border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                  <span className="text-xs font-mono text-right text-foreground">{fmt(p.valorTotal)}</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeProduto(i)}>
+                    <Trash2 className="h-3.5 w-3.5 text-destructive/70 hover:text-destructive" />
+                  </Button>
+                </div>
+              ))}
             </div>
-          ))}
-          {produtos.length === 0 && <p className="text-xs text-muted-foreground text-center py-3">Nenhum produto adicionado</p>}
+          )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Desconto geral</Label>
+          {produtos.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-6 border border-dashed border-border rounded-lg">
+              <Package className="h-8 w-8 text-muted-foreground/40 mb-2" />
+              <p className="text-xs text-muted-foreground">Nenhum produto adicionado</p>
+            </div>
+          )}
+
+          {/* Totals */}
+          <div className="grid grid-cols-2 gap-4 items-end">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Desconto geral</Label>
               <div className="flex gap-2">
-                <Input type="number" value={descontoGeral} onChange={e => setDescontoGeral(Number(e.target.value))} className="h-8 text-xs" />
+                <Input type="number" value={descontoGeral} onChange={e => setDescontoGeral(Number(e.target.value))} className="text-sm" />
                 <Select value={descontoTipo} onValueChange={v => setDescontoTipo(v as any)}>
-                  <SelectTrigger className="w-16 h-8"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="percent">%</SelectItem>
                     <SelectItem value="fixed">R$</SelectItem>
@@ -244,59 +292,84 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
                 </Select>
               </div>
             </div>
-            <div className="space-y-1 text-right">
-              <p className="text-xs text-muted-foreground">Subtotal: {fmt(subtotal)}</p>
-              <p className="text-xs text-muted-foreground">Desconto: -{fmt(descontoValor)}</p>
-              <p className="text-sm font-bold text-foreground">Líquido: {fmt(valorLiquido)}</p>
+            <div className="rounded-lg bg-muted/40 p-3 space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Subtotal</span>
+                <span>{fmt(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-destructive/80">
+                <span>Desconto</span>
+                <span>-{fmt(descontoValor)}</span>
+              </div>
+              <div className="border-t border-border pt-1 flex justify-between text-sm font-bold text-foreground">
+                <span>Líquido</span>
+                <span>{fmt(valorLiquido)}</span>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <Separator />
+        {/* ── Section: Pagamento ── */}
+        <section className="space-y-3">
+          <SectionHeader icon={CreditCard} title="Pagamento" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Forma de pagamento</Label>
+              <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {FORMAS_PAGAMENTO.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Condição</Label>
+              <Select value={condicao} onValueChange={setCondicao}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CONDICOES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </section>
 
-        {/* Payment & Closing */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Forma de pagamento</Label>
-            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {FORMAS_PAGAMENTO.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+        {/* ── Section: Fechamento ── */}
+        <section className="space-y-3">
+          <SectionHeader icon={CalendarDays} title="Fechamento" />
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Data prevista</Label>
+            <Input type="date" value={dataFechamento} onChange={e => setDataFechamento(e.target.value)} />
           </div>
-          <div className="space-y-2">
-            <Label>Condição</Label>
-            <Select value={condicao} onValueChange={setCondicao}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {CONDICOES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Notas internas</Label>
+            <Textarea value={notas} onChange={e => setNotas(e.target.value)} rows={2} placeholder="Anotações sobre o negócio..." className="resize-none" />
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Data prevista de fechamento</Label>
-          <Input type="date" value={dataFechamento} onChange={e => setDataFechamento(e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label>Notas</Label>
-          <Textarea value={notas} onChange={e => setNotas(e.target.value)} rows={2} />
-        </div>
-        <div className="flex items-center justify-between py-1">
-          <Label className="text-xs">Gerar cobrança ao fechar</Label>
-          <Switch checked={gerarCobranca} onCheckedChange={setGerarCobranca} />
-        </div>
-        <div className="flex items-center justify-between py-1">
-          <Label className="text-xs">Emitir NF ao fechar</Label>
-          <Switch checked={gerarNF} onCheckedChange={setGerarNF} />
-        </div>
+
+          <div className="rounded-lg border border-border divide-y divide-border">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm cursor-pointer">Gerar cobrança ao fechar</Label>
+              </div>
+              <Switch checked={gerarCobranca} onCheckedChange={setGerarCobranca} />
+            </div>
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm cursor-pointer">Emitir NF ao fechar</Label>
+              </div>
+              <Switch checked={gerarNF} onCheckedChange={setGerarNF} />
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
+      {/* Footer */}
+      <div className="flex justify-end gap-2 pt-4 border-t border-border mt-2">
         <Button variant="outline" onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="mr-1 h-4 w-4" />
+        <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+          <Save className="h-4 w-4" />
           {saving ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </div>
