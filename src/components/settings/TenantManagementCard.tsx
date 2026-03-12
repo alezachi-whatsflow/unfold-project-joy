@@ -191,8 +191,13 @@ export function TenantManagementCard() {
 
     const cpfDigits = form.cpf_cnpj ? form.cpf_cnpj.replace(/\D/g, "") : null;
 
-    const payload = {
+    const slug = form.name.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    const payload: any = {
       name: form.name.trim(),
+      slug: slug + (editing ? '' : '-' + Date.now().toString(36).slice(-4)),
       cpf_cnpj: cpfDigits || null,
       email: form.email.trim().toLowerCase() || null,
       document: form.document.trim() || null,
@@ -203,6 +208,10 @@ export function TenantManagementCard() {
       const { error } = await supabase.from("tenants").update(payload).eq("id", editing.id);
       if (error) toast.error("Erro ao atualizar"); else toast.success("Empresa atualizada");
     } else {
+      // Generate license key
+      payload.license_key = 'WF-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      payload.plan = 'solo_pro';
+      payload.status = 'active';
       const { error } = await supabase.from("tenants").insert(payload);
       if (error) toast.error("Erro ao criar: " + error.message); else toast.success("Empresa criada");
     }
