@@ -465,7 +465,10 @@ export default function WhatsAppLayout() {
     };
   }, [selectedJid, fetchConversations, mapDbMessageToUi, resolveMessageMediaUrl]);
 
-  /* ── send message via uazapi ────────────────────── */
+  /* ── detect if conversation uses Meta API ─────── */
+  const isMetaConversation = (instanceName: string) => instanceName?.startsWith("meta:");
+
+  /* ── send message (auto-routes uazapi or meta) ── */
   const handleSend = async (text: string) => {
     if (!selectedJid || !text.trim()) return;
 
@@ -475,31 +478,48 @@ export default function WhatsAppLayout() {
       return;
     }
 
-    // For groups, send using the full JID; for contacts, use phone number
     const isGroup = isGroupJid(selectedJid);
-    const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
-      body: {
-        instanceName: conv.instanceName,
-        path: "/send/text",
-        method: "POST",
+
+    if (isMetaConversation(conv.instanceName)) {
+      // Send via Meta Cloud API
+      const phoneNumberId = conv.instanceName.replace("meta:", "");
+      const { data: result, error } = await supabase.functions.invoke("meta-proxy", {
         body: {
-          number: isGroup ? selectedJid : jidToPhone(selectedJid),
-          text,
+          action: "send-text",
+          phone: jidToPhone(selectedJid),
+          message: text,
+          phone_number_id: phoneNumberId,
         },
-      },
-    });
+      });
 
-    if (error) {
-      console.error("Send error:", error);
-      return;
-    }
+      if (error || !(result as any)?.ok) {
+        console.error("Meta send error:", error || result);
+        return;
+      }
+    } else {
+      // Send via uazapi
+      const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
+        body: {
+          instanceName: conv.instanceName,
+          path: "/send/text",
+          method: "POST",
+          body: {
+            number: isGroup ? selectedJid : jidToPhone(selectedJid),
+            text,
+          },
+        },
+      });
 
-    const upstream = (result as any)?.data ?? result;
-    const upstreamOk = Boolean((result as any)?.ok ?? true);
+      if (error) {
+        console.error("Send error:", error);
+        return;
+      }
 
-    if (!upstreamOk) {
-      console.error("uazapi returned non-ok response:", result);
-      return;
+      const upstreamOk = Boolean((result as any)?.ok ?? true);
+      if (!upstreamOk) {
+        console.error("uazapi returned non-ok response:", result);
+        return;
+      }
     }
 
     // Recarregar
