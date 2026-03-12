@@ -1,12 +1,14 @@
 export type UserRole =
-  | 'admin'           // Administrador Geral
+  | 'superadmin'       // SuperAdmin Whatsflow
+  | 'admin'           // Administrador do Tenant
   | 'gestor'          // Gestor
   | 'financeiro'      // Financeiro
   | 'consultor'       // Consultor Interno
   | 'representante';  // Representante Externo
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  admin:          'Administrador Geral',
+  superadmin:     'SuperAdmin Whatsflow',
+  admin:          'Administrador',
   gestor:         'Gestor',
   financeiro:     'Financeiro',
   consultor:      'Consultor Interno',
@@ -14,6 +16,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
+  superadmin:    '#ef4444',  // vermelho
   admin:         '#4ade80',  // verde
   gestor:        '#60a5fa',  // azul
   financeiro:    '#f59e0b',  // âmbar
@@ -21,4 +24,4 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   representante: '#fb923c',  // laranja
 };
 
-export const ALL_ROLES: UserRole[] = ['admin', 'gestor', 'financeiro', 'consultor', 'representante'];
+export const ALL_ROLES: UserRole[] = ['superadmin', 'admin', 'gestor', 'financeiro', 'consultor', 'representante'];
