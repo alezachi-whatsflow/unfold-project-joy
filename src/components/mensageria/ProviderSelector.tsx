@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
-import { Server, Zap, Puzzle } from "lucide-react";
+import { Server, Zap, Puzzle, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export type Provider = "uazapi" | "zapi" | "custom";
+export type Provider = "uazapi" | "zapi" | "meta_oficial" | "custom";
 
 interface ProviderOption {
   id: Provider;
@@ -28,6 +28,13 @@ const providers: ProviderOption[] = [
     status: "active",
   },
   {
+    id: "meta_oficial",
+    label: "API Oficial Meta",
+    description: "WhatsApp Business Platform (Cloud API)",
+    icon: <ShieldCheck className="h-5 w-5" />,
+    status: "beta",
+  },
+  {
     id: "custom",
     label: "Outro Provedor",
     description: "Evolution API ou provedor customizado",
@@ -43,7 +50,7 @@ interface ProviderSelectorProps {
 
 export default function ProviderSelector({ selected, onChange }: ProviderSelectorProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {providers.map((p) => {
         const isSelected = selected === p.id;
         const isDisabled = p.status === "coming_soon";

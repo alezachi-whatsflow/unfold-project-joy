@@ -2,6 +2,7 @@ import { useState } from "react";
 import ProviderSelector, { type Provider } from "@/components/mensageria/ProviderSelector";
 import UazapiInstancesTab from "@/components/mensageria/UazapiInstancesTab";
 import WhatsAppConnectionsTab from "@/components/mensageria/WhatsAppConnectionsTab";
+import MetaOficialTab from "@/components/mensageria/MetaOficialTab";
 
 const IntegracoesPage = () => {
   const [provider, setProvider] = useState<Provider>("uazapi");
@@ -17,6 +18,7 @@ const IntegracoesPage = () => {
 
       {provider === "uazapi" && <UazapiInstancesTab />}
       {provider === "zapi" && <WhatsAppConnectionsTab />}
+      {provider === "meta_oficial" && <MetaOficialTab />}
       {provider === "custom" && (
         <div className="text-center py-16 text-muted-foreground">
           <p>Provedor customizado em desenvolvimento.</p>
