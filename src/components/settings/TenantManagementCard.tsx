@@ -26,6 +26,11 @@ function setDefaultTenantId(id: string) {
 interface Tenant {
   id: string;
   name: string;
+  slug: string | null;
+  plan: string | null;
+  status: string | null;
+  license_key: string | null;
+  valid_until: string | null;
   document: string | null;
   cpf_cnpj: string | null;
   email: string | null;
