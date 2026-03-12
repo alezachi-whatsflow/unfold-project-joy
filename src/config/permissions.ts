@@ -57,6 +57,24 @@ const noAccess: ModulePermission = { view: false, create: false, edit: false, de
 const crudNoDelete = (exp: boolean): ModulePermission => ({ view: true, create: true, edit: true, delete: false, export: exp });
 
 export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
+  superadmin: {
+    dashboard:     full,
+    vendas:        full,
+    cobrancas:     full,
+    comissoes:     full,
+    receitas:      full,
+    despesas:      full,
+    clientes:      full,
+    produtos:      full,
+    fiscal:        full,
+    intelligence:  full,
+    relatorios:    full,
+    configuracoes: full,
+    usuarios:      full,
+    inserir_dados: full,
+    mensageria:    full,
+  },
+
   admin: {
     dashboard:     full,
     vendas:        full,

@@ -39,6 +39,15 @@ import MensageriaPage from "./pages/MensageriaPage";
 import IntegracoesPage from "./pages/IntegracoesPage";
 import WhatsAppPage from "./pages/WhatsAppPage";
 import NotFound from "./pages/NotFound";
+
+// SuperAdmin
+import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
+import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
+import SuperAdminTenants from "./pages/superadmin/SuperAdminTenants";
+import SuperAdminLicenses from "./pages/superadmin/SuperAdminLicenses";
+import SuperAdminAuditLog from "./pages/superadmin/SuperAdminAuditLog";
+import SuperAdminConfig from "./pages/superadmin/SuperAdminConfig";
+
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -65,6 +74,15 @@ const AppRoutes = () => (
     <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
     <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/acesso-negado" element={<AuthGuard><AcessoNegadoPage /></AuthGuard>} />
+
+    {/* SuperAdmin Portal */}
+    <Route path="/superadmin" element={<AuthGuard><SuperAdminLayout /></AuthGuard>}>
+      <Route index element={<SuperAdminDashboard />} />
+      <Route path="tenants" element={<SuperAdminTenants />} />
+      <Route path="licencas" element={<SuperAdminLicenses />} />
+      <Route path="audit" element={<SuperAdminAuditLog />} />
+      <Route path="config" element={<SuperAdminConfig />} />
+    </Route>
 
     {/* Protected — each route wrapped with module permission */}
     <Route path="/" element={<AuthGuard><HomePage /></AuthGuard>} />
