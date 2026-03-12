@@ -527,7 +527,7 @@ export default function WhatsAppLayout() {
     await fetchMessages(selectedJid);
   };
 
-  /* ── send attachment via uazapi ──────────────────── */
+  /* ── send attachment (auto-routes uazapi or meta) ── */
   const handleSendAttachment = async (payload: AttachmentPayload) => {
     if (!selectedJid) return;
     const conv = conversations.find((c) => c.id === selectedJid);
@@ -536,35 +536,63 @@ export default function WhatsAppLayout() {
     const isGroup = isGroupJid(selectedJid);
     const number = isGroup ? selectedJid : jidToPhone(selectedJid);
 
-    let path = "/send/text";
-    let body: Record<string, any> = { number };
+    if (isMetaConversation(conv.instanceName)) {
+      // Send via Meta Cloud API
+      const phoneNumberId = conv.instanceName.replace("meta:", "");
+      const actionMap: Record<string, string> = {
+        image: "send-image",
+        video: "send-video",
+        audio: "send-audio",
+        document: "send-document",
+      };
 
-    switch (payload.type) {
-      case "media":
-        path = "/send/media";
-        body = { number, type: payload.mediaType, file: payload.file, text: payload.text || "" };
-        break;
-      case "location":
-        path = "/send/location";
-        body = { number, latitude: payload.latitude, longitude: payload.longitude, name: payload.name || "" };
-        break;
-      case "contact":
-        path = "/send/contact";
-        body = { number, name: payload.name, phone: payload.phone };
-        break;
-      case "poll":
-        path = "/send/menu";
-        body = { number, type: "poll", text: payload.question, choices: payload.options.map((o) => ({ label: o })), selectableCount: 1 };
-        break;
-    }
+      if (payload.type === "media") {
+        const action = actionMap[payload.mediaType || "document"] || "send-document";
+        const { error } = await supabase.functions.invoke("meta-proxy", {
+          body: {
+            action,
+            phone: jidToPhone(selectedJid),
+            message: payload.text || "",
+            media_url: payload.file,
+            media_type: payload.mediaType,
+            phone_number_id: phoneNumberId,
+          },
+        });
+        if (error) { console.error("Meta attachment error:", error); throw error; }
+      }
+      // Location, contact, poll not yet supported on Meta API in this flow
+    } else {
+      // Send via uazapi
+      let path = "/send/text";
+      let body: Record<string, any> = { number };
 
-    const { error } = await supabase.functions.invoke("uazapi-proxy", {
-      body: { instanceName: conv.instanceName, path, method: "POST", body },
-    });
+      switch (payload.type) {
+        case "media":
+          path = "/send/media";
+          body = { number, type: payload.mediaType, file: payload.file, text: payload.text || "" };
+          break;
+        case "location":
+          path = "/send/location";
+          body = { number, latitude: payload.latitude, longitude: payload.longitude, name: payload.name || "" };
+          break;
+        case "contact":
+          path = "/send/contact";
+          body = { number, name: payload.name, phone: payload.phone };
+          break;
+        case "poll":
+          path = "/send/menu";
+          body = { number, type: "poll", text: payload.question, choices: payload.options.map((o) => ({ label: o })), selectableCount: 1 };
+          break;
+      }
 
-    if (error) {
-      console.error("Attachment send error:", error);
-      throw error;
+      const { error } = await supabase.functions.invoke("uazapi-proxy", {
+        body: { instanceName: conv.instanceName, path, method: "POST", body },
+      });
+
+      if (error) {
+        console.error("Attachment send error:", error);
+        throw error;
+      }
     }
 
     await fetchConversations();
