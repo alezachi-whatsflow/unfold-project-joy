@@ -38,7 +38,7 @@ import VendasPage from "./pages/VendasPage";
 import MensageriaPage from "./pages/MensageriaPage";
 import IntegracoesPage from "./pages/IntegracoesPage";
 import WhatsAppPage from "./pages/WhatsAppPage";
-import CrmPage from "./pages/CrmPage";
+
 import ConversationsPage from "./pages/ConversationsPage";
 import WaConnectionsPage from "./pages/WaConnectionsPage";
 import AssinaturaPage from "./pages/AssinaturaPage";
