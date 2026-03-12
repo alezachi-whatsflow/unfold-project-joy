@@ -191,6 +191,7 @@ export default function SettingsPage() {
       </div>
 
       <SidebarAppearanceCard />
+      <SalesFunnelConfigCard />
       <TenantManagementCard />
 
       <div className="grid gap-6 md:grid-cols-2">
