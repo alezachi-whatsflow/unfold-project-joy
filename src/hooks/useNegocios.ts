@@ -6,18 +6,24 @@ import { useAuth } from '@/hooks/useAuth';
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
-export function useNegocios() {
+export function useNegocios(pipelineId?: string | null) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const { data: negocios = [], isLoading } = useQuery({
-    queryKey: ['negocios'],
+    queryKey: ['negocios', pipelineId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('negocios')
         .select('*')
         .eq('tenant_id', TENANT_ID)
         .order('created_at', { ascending: false });
+
+      if (pipelineId) {
+        query = query.eq('pipeline_id', pipelineId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data || []).map((n: any) => ({
         ...n,
@@ -32,7 +38,7 @@ export function useNegocios() {
     queryClient.invalidateQueries({ queryKey: ['negocios'] });
   }, [queryClient]);
 
-  const createNegocio = useCallback(async (data: Partial<Negocio>) => {
+  const createNegocio = useCallback(async (data: Partial<Negocio> & { pipeline_id?: string }) => {
     const historico: HistoricoItem[] = [{
       id: crypto.randomUUID(),
       data: new Date().toISOString(),
@@ -43,6 +49,7 @@ export function useNegocios() {
     }];
     const { error } = await supabase.from('negocios').insert({
       tenant_id: TENANT_ID,
+      pipeline_id: data.pipeline_id || pipelineId || null,
       titulo: data.titulo,
       status: data.status || 'prospeccao',
       origem: data.origem || 'inbound',
@@ -67,7 +74,7 @@ export function useNegocios() {
     } as any);
     if (error) throw error;
     invalidate();
-  }, [user, invalidate]);
+  }, [user, invalidate, pipelineId]);
 
   const updateNegocio = useCallback(async (id: string, data: Partial<Negocio>) => {
     const { error } = await supabase
@@ -122,7 +129,6 @@ export function useNegocios() {
     invalidate();
   }, [invalidate]);
 
-  // Badge count: proposta + negociacao
   const badgeCount = useMemo(() => {
     return negocios.filter(n => n.status === 'proposta' || n.status === 'negociacao').length;
   }, [negocios]);

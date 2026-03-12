@@ -1102,6 +1102,7 @@ export type Database = {
           nf_emitida_id: string | null
           notas: string | null
           origem: string
+          pipeline_id: string | null
           probabilidade: number
           produtos: Json
           status: string
@@ -1135,6 +1136,7 @@ export type Database = {
           nf_emitida_id?: string | null
           notas?: string | null
           origem?: string
+          pipeline_id?: string | null
           probabilidade?: number
           produtos?: Json
           status?: string
@@ -1168,6 +1170,7 @@ export type Database = {
           nf_emitida_id?: string | null
           notas?: string | null
           origem?: string
+          pipeline_id?: string | null
           probabilidade?: number
           produtos?: Json
           status?: string
@@ -1178,7 +1181,15 @@ export type Database = {
           valor_liquido?: number
           valor_total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "negocios_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "sales_pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_dunnings: {
         Row: {
@@ -1432,6 +1443,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sales_pipelines: {
+        Row: {
+          created_at: string
+          currency_prefix: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          ordem: number
+          show_forecast: boolean
+          show_probability: boolean
+          stages: Json
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_prefix?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          ordem?: number
+          show_forecast?: boolean
+          show_probability?: boolean
+          stages?: Json
+          tenant_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_prefix?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          ordem?: number
+          show_forecast?: boolean
+          show_probability?: boolean
+          stages?: Json
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
