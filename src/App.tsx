@@ -49,6 +49,8 @@ import ComunidadePage from "./pages/sistema/ComunidadePage";
 import TutoriaisPage from "./pages/sistema/TutoriaisPage";
 import ManualSistemaPage from "./pages/sistema/ManualSistemaPage";
 import OnboardingPage from "./pages/sistema/OnboardingPage";
+import { TourProvider } from "@/contexts/TourContext";
+import { TourOverlay } from "@/components/tour/TourOverlay";
 
 // SuperAdmin
 import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
