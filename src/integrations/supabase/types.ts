@@ -531,6 +531,66 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          content: string | null
+          content_type: string | null
+          conversation_id: string
+          direction: string
+          id: string
+          is_internal_note: boolean | null
+          media_url: string | null
+          sender_id: string | null
+          status: string | null
+          tenant_id: string
+          timestamp: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          content_type?: string | null
+          conversation_id: string
+          direction?: string
+          id?: string
+          is_internal_note?: boolean | null
+          media_url?: string | null
+          sender_id?: string | null
+          status?: string | null
+          tenant_id: string
+          timestamp?: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          content_type?: string | null
+          conversation_id?: string
+          direction?: string
+          id?: string
+          is_internal_note?: boolean | null
+          media_url?: string | null
+          sender_id?: string | null
+          status?: string | null
+          tenant_id?: string
+          timestamp?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_sources: {
         Row: {
           billing_type: Database["public"]["Enums"]["billing_type"]
@@ -624,6 +684,131 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "commission_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          channel: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          last_message_at: string | null
+          owner_id: string | null
+          priority: string | null
+          sla_deadline: string | null
+          status: string
+          tags: string[] | null
+          tenant_id: string
+          unread_count: number | null
+          updated_at: string
+          wa_connection_id: string | null
+        }
+        Insert: {
+          channel?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          owner_id?: string | null
+          priority?: string | null
+          sla_deadline?: string | null
+          status?: string
+          tags?: string[] | null
+          tenant_id: string
+          unread_count?: number | null
+          updated_at?: string
+          wa_connection_id?: string | null
+        }
+        Update: {
+          channel?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          owner_id?: string | null
+          priority?: string | null
+          sla_deadline?: string | null
+          status?: string
+          tags?: string[] | null
+          tenant_id?: string
+          unread_count?: number | null
+          updated_at?: string
+          wa_connection_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contacts: {
+        Row: {
+          avatar_url: string | null
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          owner_id: string | null
+          phone: string | null
+          source: string | null
+          stage: string
+          tags: string[] | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          owner_id?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: string
+          tags?: string[] | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_id?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: string
+          tags?: string[] | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1977,6 +2162,62 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_connections: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          meta_business_id: string | null
+          phone_number: string | null
+          phone_number_id: string | null
+          quality_rating: string | null
+          status: string
+          tenant_id: string
+          type: string
+          updated_at: string
+          waba_id: string | null
+          webhook_verify_token: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          meta_business_id?: string | null
+          phone_number?: string | null
+          phone_number_id?: string | null
+          quality_rating?: string | null
+          status?: string
+          tenant_id: string
+          type?: string
+          updated_at?: string
+          waba_id?: string | null
+          webhook_verify_token?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          meta_business_id?: string | null
+          phone_number?: string | null
+          phone_number_id?: string | null
+          quality_rating?: string | null
+          status?: string
+          tenant_id?: string
+          type?: string
+          updated_at?: string
+          waba_id?: string | null
+          webhook_verify_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_connections_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_contacts: {
         Row: {
           created_at: string | null
@@ -2270,7 +2511,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      daily_conversation_stats: {
+        Row: {
+          date: string | null
+          open_count: number | null
+          resolved: number | null
+          tenant_id: string | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_summary: {
+        Row: {
+          leads_count: number | null
+          stage: string | null
+          tenant_id: string | null
+          total_value: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_mrr: { Args: { p_license_id: string }; Returns: number }
