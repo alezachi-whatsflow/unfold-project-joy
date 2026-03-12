@@ -11,6 +11,7 @@ import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { Customer } from "@/types/customers";
+import { CnpjInput } from "@/components/ui/cnpj-input";
 
 interface Props {
   open: boolean;
@@ -93,7 +94,7 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">CPF / CNPJ</Label>
-              <Input value={form.cpfCnpj} onChange={(e) => set("cpfCnpj", e.target.value)} placeholder="000.000.000-00" />
+              <CnpjInput value={form.cpfCnpj} onChange={(v) => set("cpfCnpj", v)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Whitelabel</Label>
