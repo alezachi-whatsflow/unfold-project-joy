@@ -73,26 +73,7 @@ export const defaultFiscalConfig: FiscalConfig = {
   ccEmailFiscal: true,
 };
 
-export function validarCNPJ(cnpj: string): boolean {
-  const digits = cnpj.replace(/\D/g, "");
-  if (digits.length !== 14) return false;
-  if (/^(\d)\1{13}$/.test(digits)) return false;
-
-  const calc = (size: number) => {
-    let sum = 0;
-    let pos = size - 7;
-    for (let i = size; i >= 1; i--) {
-      sum += parseInt(digits.charAt(size - i)) * pos--;
-      if (pos < 2) pos = 9;
-    }
-    const result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-    return result;
-  };
-
-  if (calc(12) !== parseInt(digits.charAt(12))) return false;
-  if (calc(13) !== parseInt(digits.charAt(13))) return false;
-  return true;
-}
+export { validateCNPJ as validarCNPJ } from "@/lib/cnpjValidation";
 
 export function maskCNPJ(value: string): string {
   const d = value.replace(/\D/g, "").slice(0, 14);
