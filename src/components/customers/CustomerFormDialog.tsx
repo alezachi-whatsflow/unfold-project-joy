@@ -11,6 +11,7 @@ import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { Customer } from "@/types/customers";
+import { CnpjInput } from "@/components/ui/cnpj-input";
 
 interface Props {
   open: boolean;
