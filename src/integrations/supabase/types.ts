@@ -436,6 +436,53 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resource: string | null
+          resource_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource?: string | null
+          resource_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource?: string | null
+          resource_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_leads: {
         Row: {
           address: string | null
@@ -935,14 +982,68 @@ export type Database = {
         }
         Relationships: []
       }
+      license_history: {
+        Row: {
+          changed_by: string | null
+          changes: Json | null
+          created_at: string | null
+          id: string
+          new_plan: string | null
+          previous_plan: string | null
+          reason: string | null
+          tenant_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changes?: Json | null
+          created_at?: string | null
+          id?: string
+          new_plan?: string | null
+          previous_plan?: string | null
+          reason?: string | null
+          tenant_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          changes?: Json | null
+          created_at?: string | null
+          id?: string
+          new_plan?: string | null
+          previous_plan?: string | null
+          reason?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_history_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       licenses: {
         Row: {
+          ai_agents_limit: number | null
+          base_attendants: number | null
+          base_devices_meta: number | null
+          base_devices_web: number | null
+          billing_cycle: string | null
           created_at: string
           expires_at: string | null
+          extra_attendants: number | null
+          extra_devices_meta: number | null
+          extra_devices_web: number | null
+          facilite_monthly_hours: number | null
+          facilite_plan: string | null
           features: Json
+          has_ai_module: boolean | null
+          has_implantacao_starter: boolean | null
           id: string
           max_instances: number
           max_users: number
+          monthly_value: number | null
           plan: string
           starts_at: string
           status: string
@@ -950,12 +1051,25 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_agents_limit?: number | null
+          base_attendants?: number | null
+          base_devices_meta?: number | null
+          base_devices_web?: number | null
+          billing_cycle?: string | null
           created_at?: string
           expires_at?: string | null
+          extra_attendants?: number | null
+          extra_devices_meta?: number | null
+          extra_devices_web?: number | null
+          facilite_monthly_hours?: number | null
+          facilite_plan?: string | null
           features?: Json
+          has_ai_module?: boolean | null
+          has_implantacao_starter?: boolean | null
           id?: string
           max_instances?: number
           max_users?: number
+          monthly_value?: number | null
           plan?: string
           starts_at?: string
           status?: string
@@ -963,12 +1077,25 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_agents_limit?: number | null
+          base_attendants?: number | null
+          base_devices_meta?: number | null
+          base_devices_web?: number | null
+          billing_cycle?: string | null
           created_at?: string
           expires_at?: string | null
+          extra_attendants?: number | null
+          extra_devices_meta?: number | null
+          extra_devices_web?: number | null
+          facilite_monthly_hours?: number | null
+          facilite_plan?: string | null
           features?: Json
+          has_ai_module?: boolean | null
+          has_implantacao_starter?: boolean | null
           id?: string
           max_instances?: number
           max_users?: number
+          monthly_value?: number | null
           plan?: string
           starts_at?: string
           status?: string
@@ -1187,6 +1314,50 @@ export type Database = {
             columns: ["pipeline_id"]
             isOneToOne: false
             referencedRelation: "sales_pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          read_at: string | null
+          tenant_id: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          read_at?: string | null
+          tenant_id: string
+          title: string
+          type?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          read_at?: string | null
+          tenant_id?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1543,8 +1714,14 @@ export type Database = {
           document: string | null
           email: string | null
           id: string
+          license_key: string | null
+          metadata: Json | null
           name: string
+          plan: string | null
+          slug: string
+          status: string | null
           updated_at: string | null
+          valid_until: string | null
         }
         Insert: {
           cpf_cnpj?: string | null
@@ -1552,8 +1729,14 @@ export type Database = {
           document?: string | null
           email?: string | null
           id?: string
+          license_key?: string | null
+          metadata?: Json | null
           name: string
+          plan?: string | null
+          slug: string
+          status?: string | null
           updated_at?: string | null
+          valid_until?: string | null
         }
         Update: {
           cpf_cnpj?: string | null
@@ -1561,8 +1744,14 @@ export type Database = {
           document?: string | null
           email?: string | null
           id?: string
+          license_key?: string | null
+          metadata?: Json | null
           name?: string
+          plan?: string | null
+          slug?: string
+          status?: string | null
           updated_at?: string | null
+          valid_until?: string | null
         }
         Relationships: []
       }
@@ -2084,8 +2273,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_mrr: { Args: { p_license_id: string }; Returns: number }
       get_my_role: { Args: never; Returns: string }
       get_my_tenant_ids: { Args: never; Returns: string[] }
+      is_superadmin: { Args: never; Returns: boolean }
+      log_audit: {
+        Args: {
+          p_action: string
+          p_metadata?: Json
+          p_resource: string
+          p_resource_id?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       asaas_environment: "sandbox" | "production"
