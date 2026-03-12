@@ -26,6 +26,11 @@ function setDefaultTenantId(id: string) {
 interface Tenant {
   id: string;
   name: string;
+  slug: string | null;
+  plan: string | null;
+  status: string | null;
+  license_key: string | null;
+  valid_until: string | null;
   document: string | null;
   cpf_cnpj: string | null;
   email: string | null;
@@ -186,8 +191,13 @@ export function TenantManagementCard() {
 
     const cpfDigits = form.cpf_cnpj ? form.cpf_cnpj.replace(/\D/g, "") : null;
 
-    const payload = {
+    const slug = form.name.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    const payload: any = {
       name: form.name.trim(),
+      slug: slug + (editing ? '' : '-' + Date.now().toString(36).slice(-4)),
       cpf_cnpj: cpfDigits || null,
       email: form.email.trim().toLowerCase() || null,
       document: form.document.trim() || null,
@@ -198,6 +208,10 @@ export function TenantManagementCard() {
       const { error } = await supabase.from("tenants").update(payload).eq("id", editing.id);
       if (error) toast.error("Erro ao atualizar"); else toast.success("Empresa atualizada");
     } else {
+      // Generate license key
+      payload.license_key = 'WF-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      payload.plan = 'solo_pro';
+      payload.status = 'active';
       const { error } = await supabase.from("tenants").insert(payload);
       if (error) toast.error("Erro ao criar: " + error.message); else toast.success("Empresa criada");
     }
@@ -315,9 +329,11 @@ export function TenantManagementCard() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Nome</TableHead>
+                <TableHead className="text-xs">Slug</TableHead>
+                <TableHead className="text-xs">Plano</TableHead>
+                <TableHead className="text-xs">Status</TableHead>
                 <TableHead className="text-xs">CPF/CNPJ</TableHead>
-                <TableHead className="text-xs">E-mail</TableHead>
-                <TableHead className="text-xs">Criado em</TableHead>
+                <TableHead className="text-xs">Validade</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
@@ -330,10 +346,26 @@ export function TenantManagementCard() {
                       <Badge variant="secondary" className="ml-2 text-[10px]">Padrão</Badge>
                     )}
                   </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">{t.slug || "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px]">
+                      {t.plan === 'profissional' ? 'Profissional' : 'Solo Pro'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={t.status === 'active' ? 'default' : 'destructive'} 
+                      className="text-[10px]"
+                    >
+                      {t.status === 'active' ? 'Ativo' : t.status === 'suspended' ? 'Suspenso' : t.status || 'Ativo'}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">
                     {t.cpf_cnpj ? formatCpfCnpj(t.cpf_cnpj) : t.document || "—"}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{t.email || "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {t.valid_until ? new Date(t.valid_until).toLocaleDateString("pt-BR") : "Sem prazo"}
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {t.created_at ? new Date(t.created_at).toLocaleDateString("pt-BR") : "—"}
                   </TableCell>
