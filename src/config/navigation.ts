@@ -19,7 +19,6 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     label: 'Clientes & Produtos',
     icon: 'Users',
     items: [
-      { id: 'crm',         label: 'CRM Contatos',  icon: 'Contact',         route: '/crm',          module: 'clientes'      },
       { id: 'clientes',    label: 'Clientes',      icon: 'Users',           route: '/customers',    module: 'clientes'      },
       { id: 'produtos',    label: 'Produtos',      icon: 'Package',         route: '/products',     module: 'produtos'      },
       { id: 'vendas',      label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',       module: 'vendas'        },

@@ -1,6 +1,7 @@
 import { MonthlyInputForm } from "@/components/input/MonthlyInputForm";
 import { CSVImport } from "@/components/input/CSVImport";
 import { CustomerCSVImport } from "@/components/input/CustomerCSVImport";
+import { CrmCSVImport } from "@/components/input/CrmCSVImport";
 import { CostDetailTable } from "@/components/input/CostDetailTable";
 import { useFinancial } from "@/contexts/FinancialContext";
 import { formatCurrency, getMonthLabel } from "@/lib/calculations";
@@ -15,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Edit2, Database, FileSpreadsheet, Users, Package, DollarSign } from "lucide-react";
+import { Trash2, Edit2, Database, FileSpreadsheet, Users, Package, DollarSign, Contact } from "lucide-react";
 
 export default function DataInputPage() {
   const { entries, deleteEntry, setSelectedMonth } = useFinancial();
@@ -37,7 +38,7 @@ export default function DataInputPage() {
       </div>
 
       <Tabs defaultValue="financial" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="financial" className="gap-2 text-xs sm:text-sm">
             <DollarSign className="h-4 w-4" />
             Financeiro
@@ -45,6 +46,10 @@ export default function DataInputPage() {
           <TabsTrigger value="customers" className="gap-2 text-xs sm:text-sm">
             <Users className="h-4 w-4" />
             Clientes
+          </TabsTrigger>
+          <TabsTrigger value="crm" className="gap-2 text-xs sm:text-sm">
+            <Contact className="h-4 w-4" />
+            CRM Contatos
           </TabsTrigger>
           <TabsTrigger value="products" className="gap-2 text-xs sm:text-sm">
             <Package className="h-4 w-4" />
@@ -122,6 +127,11 @@ export default function DataInputPage() {
         {/* ── Customers Tab ── */}
         <TabsContent value="customers" className="space-y-6 mt-6">
           <CustomerCSVImport />
+        </TabsContent>
+
+        {/* ── CRM Contacts Tab ── */}
+        <TabsContent value="crm" className="space-y-6 mt-6">
+          <CrmCSVImport />
         </TabsContent>
 
         {/* ── Products Tab ── */}
