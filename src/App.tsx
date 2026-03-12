@@ -38,6 +38,11 @@ import VendasPage from "./pages/VendasPage";
 import MensageriaPage from "./pages/MensageriaPage";
 import IntegracoesPage from "./pages/IntegracoesPage";
 import WhatsAppPage from "./pages/WhatsAppPage";
+import CrmPage from "./pages/CrmPage";
+import ConversationsPage from "./pages/ConversationsPage";
+import WaConnectionsPage from "./pages/WaConnectionsPage";
+import AssinaturaPage from "./pages/AssinaturaPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 // SuperAdmin
@@ -104,6 +109,11 @@ const AppRoutes = () => (
     <Route path="/mensageria" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/integracoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><IntegracoesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
+    <Route path="/crm" element={<AuthGuard><DashboardLayout><ProtectedRoute module="clientes"><CrmPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/conversas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/wa-connections" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><WaConnectionsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/assinatura" element={<AuthGuard><DashboardLayout><AssinaturaPage /></DashboardLayout></AuthGuard>} />
+    <Route path="/analytics" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
