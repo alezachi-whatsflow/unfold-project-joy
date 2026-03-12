@@ -43,9 +43,11 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     label: 'Sistema',
     icon: 'Settings',
     items: [
-      { id: 'usuarios',       label: 'Usuários',      icon: 'Users',         route: '/usuarios',     module: 'usuarios'      },
-      { id: 'integracoes',    label: 'Integrações',   icon: 'Puzzle',        route: '/integracoes',  module: 'mensageria'    },
-      { id: 'configuracoes',  label: 'Configurações', icon: 'Settings',      route: '/settings',     module: 'configuracoes' },
+      { id: 'usuarios',       label: 'Usuários',       icon: 'Users',         route: '/usuarios',       module: 'usuarios'      },
+      { id: 'wa_connections',  label: 'Conexões WA',    icon: 'Wifi',          route: '/wa-connections', module: 'mensageria'    },
+      { id: 'integracoes',     label: 'Integrações',    icon: 'Puzzle',        route: '/integracoes',    module: 'mensageria'    },
+      { id: 'assinatura',      label: 'Assinatura',     icon: 'CreditCard',    route: '/assinatura',     module: 'dashboard'     },
+      { id: 'configuracoes',   label: 'Configurações',  icon: 'Settings',      route: '/settings',       module: 'configuracoes' },
     ],
   },
 ];
