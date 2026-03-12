@@ -38,7 +38,7 @@ export default function DataInputPage() {
       </div>
 
       <Tabs defaultValue="financial" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="financial" className="gap-2 text-xs sm:text-sm">
             <DollarSign className="h-4 w-4" />
             Financeiro
@@ -46,6 +46,10 @@ export default function DataInputPage() {
           <TabsTrigger value="customers" className="gap-2 text-xs sm:text-sm">
             <Users className="h-4 w-4" />
             Clientes
+          </TabsTrigger>
+          <TabsTrigger value="crm" className="gap-2 text-xs sm:text-sm">
+            <Contact className="h-4 w-4" />
+            CRM Contatos
           </TabsTrigger>
           <TabsTrigger value="products" className="gap-2 text-xs sm:text-sm">
             <Package className="h-4 w-4" />
