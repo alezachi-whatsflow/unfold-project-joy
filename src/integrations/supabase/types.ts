@@ -691,6 +691,36 @@ export type Database = {
           },
         ]
       }
+      community_posts: {
+        Row: {
+          category: string | null
+          comments_count: number | null
+          content: string
+          created_at: string | null
+          id: string
+          likes_count: number | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          comments_count?: number | null
+          content: string
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          comments_count?: number | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           channel: string | null
@@ -1297,6 +1327,77 @@ export type Database = {
           },
         ]
       }
+      manual_articles: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string | null
+          id: string
+          is_published: boolean | null
+          order_index: number | null
+          slug: string
+          tenant_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          slug: string
+          tenant_id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          slug?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      manual_progress: {
+        Row: {
+          article_id: string
+          id: string
+          rating: number | null
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          id?: string
+          rating?: number | null
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          id?: string
+          rating?: number | null
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_progress_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "manual_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_logs: {
         Row: {
           conteudo: string
@@ -1546,6 +1647,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      onboarding_steps: {
+        Row: {
+          completed_at: string | null
+          id: string
+          step_key: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          step_key: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          step_key?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       payment_dunnings: {
         Row: {
@@ -1937,6 +2059,83 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      tutorial_progress: {
+        Row: {
+          completed_at: string | null
+          id: string
+          progress_percent: number | null
+          tutorial_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          progress_percent?: number | null
+          tutorial_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          progress_percent?: number | null
+          tutorial_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorial_progress_tutorial_id_fkey"
+            columns: ["tutorial_id"]
+            isOneToOne: false
+            referencedRelation: "tutorials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutorials: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          duration_seconds: number | null
+          id: string
+          is_published: boolean | null
+          level: string | null
+          order_index: number | null
+          tenant_id: string
+          thumbnail_url: string | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean | null
+          level?: string | null
+          order_index?: number | null
+          tenant_id?: string
+          thumbnail_url?: string | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean | null
+          level?: string | null
+          order_index?: number | null
+          tenant_id?: string
+          thumbnail_url?: string | null
+          title?: string
+          video_url?: string | null
         }
         Relationships: []
       }

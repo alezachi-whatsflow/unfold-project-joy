@@ -39,8 +39,8 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     ],
   },
   {
-    id: 'sistema',
-    label: 'Sistema',
+    id: 'configuracoes_sistema',
+    label: 'Configurações',
     icon: 'Settings',
     items: [
       { id: 'usuarios',       label: 'Usuários',       icon: 'Users',         route: '/usuarios',       module: 'usuarios'      },
@@ -48,6 +48,17 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'integracoes',     label: 'Integrações',    icon: 'Puzzle',        route: '/integracoes',    module: 'mensageria'    },
       { id: 'assinatura',      label: 'Assinatura',     icon: 'CreditCard',    route: '/assinatura',     module: 'dashboard'     },
       { id: 'configuracoes',   label: 'Configurações',  icon: 'Settings',      route: '/settings',       module: 'configuracoes' },
+    ],
+  },
+  {
+    id: 'sistema',
+    label: 'Sistema',
+    icon: 'Settings2',
+    items: [
+      { id: 'comunidade',   label: 'Comunidade',           icon: 'Users2',     route: '/sistema/comunidade', module: 'dashboard' },
+      { id: 'tutoriais',    label: 'Tutoriais',            icon: 'PlayCircle', route: '/sistema/tutoriais',  module: 'dashboard' },
+      { id: 'manual_uso',   label: 'Manual de Uso',        icon: 'BookOpen',   route: '/sistema/manual',     module: 'dashboard' },
+      { id: 'onboarding',   label: 'Onboarding Interativo', icon: 'Rocket',    route: '/sistema/onboarding', module: 'dashboard' },
     ],
   },
 ];
