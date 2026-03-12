@@ -116,7 +116,7 @@ const AppRoutes = () => (
     <Route path="/mensageria" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/integracoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><IntegracoesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
-    <Route path="/crm" element={<AuthGuard><DashboardLayout><ProtectedRoute module="clientes"><CrmPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    
     <Route path="/conversas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/wa-connections" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><WaConnectionsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/assinatura" element={<AuthGuard><DashboardLayout><AssinaturaPage /></DashboardLayout></AuthGuard>} />
