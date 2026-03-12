@@ -129,6 +129,11 @@ export default function DataInputPage() {
           <CustomerCSVImport />
         </TabsContent>
 
+        {/* ── CRM Contacts Tab ── */}
+        <TabsContent value="crm" className="space-y-6 mt-6">
+          <CrmCSVImport />
+        </TabsContent>
+
         {/* ── Products Tab ── */}
         <TabsContent value="products" className="mt-6">
           <Card className="border-border border-dashed">
