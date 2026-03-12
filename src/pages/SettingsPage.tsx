@@ -13,6 +13,7 @@ import { Settings, Webhook, RefreshCw, Shield, Loader2, CheckCircle, XCircle, Pa
 import { TenantManagementCard } from "@/components/settings/TenantManagementCard";
 import { CustomLayoutPanel } from "@/components/settings/CustomLayoutPanel";
 import { SalesFunnelConfigCard } from "@/components/settings/SalesFunnelConfigCard";
+import { CheckoutIntegrationsCard } from "@/components/settings/CheckoutIntegrationsCard";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import type { SidebarLayout, SidebarDensity, SidebarWidth } from "@/types/sidebar";
 
