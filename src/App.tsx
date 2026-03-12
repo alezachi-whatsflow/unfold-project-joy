@@ -120,6 +120,10 @@ const AppRoutes = () => (
     <Route path="/assinatura" element={<AuthGuard><DashboardLayout><AssinaturaPage /></DashboardLayout></AuthGuard>} />
     <Route path="/analytics" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/manual" element={<AuthGuard><ManualPage /></AuthGuard>} />
+    <Route path="/sistema/comunidade" element={<AuthGuard><ComunidadePage /></AuthGuard>} />
+    <Route path="/sistema/tutoriais" element={<AuthGuard><TutoriaisPage /></AuthGuard>} />
+    <Route path="/sistema/manual" element={<AuthGuard><ManualSistemaPage /></AuthGuard>} />
+    <Route path="/sistema/onboarding" element={<AuthGuard><OnboardingPage /></AuthGuard>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
