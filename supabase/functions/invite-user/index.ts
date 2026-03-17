@@ -110,20 +110,22 @@ Deno.serve(async (req) => {
           );
       }
 
-      // Send password reset so the user can set/reset their password
-      const { error: resetError } = await adminClient.auth.admin.generateLink({
-        type: "recovery",
-        email,
-        options: { redirectTo: redirectUrl },
+      // Send recovery email so the user can create a new password
+      const { error: resetError } = await adminClient.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
       });
 
       if (resetError) {
-        console.error("Reset link error:", resetError);
+        console.error("Reset email error:", resetError);
+        return new Response(
+          JSON.stringify({ error: "O usuário existe, mas houve falha ao enviar o e-mail para criar a nova senha." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       return new Response(
         JSON.stringify({
-          message: `Usuário já existia. Perfil restaurado e link de redefinição de senha enviado para ${email}.`,
+          message: `Usuário já existia. Perfil restaurado e e-mail para criar uma nova senha enviado para ${email}.`,
           user_id: existingUser.id,
           already_exists: true,
         }),
