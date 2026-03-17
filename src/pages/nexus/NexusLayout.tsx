@@ -194,6 +194,8 @@ export default function NexusLayout() {
         <div className="p-6">
           <Outlet />
         </div>
+      </main>
+
       {/* Tenant Picker Dialog */}
       <Dialog open={tenantPickerOpen} onOpenChange={setTenantPickerOpen}>
         <DialogContent className="sm:max-w-md">
