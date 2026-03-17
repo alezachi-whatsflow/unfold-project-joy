@@ -169,6 +169,7 @@ export default function NexusLicenses() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Empresa</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Plano</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Valor</TableHead>
