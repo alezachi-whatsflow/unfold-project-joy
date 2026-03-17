@@ -32,6 +32,10 @@ interface ProfileRow {
   created_at: string | null;
   updated_at: string | null;
   custom_permissions: any;
+  invitation_status: string | null;
+  invited_at: string | null;
+  invite_accepted_at: string | null;
+  invited_by: string | null;
 }
 
 export default function UsersPage() {
