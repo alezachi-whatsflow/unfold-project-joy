@@ -41,6 +41,19 @@ export default function NexusLayout() {
   const { nexusUser, isLoading, isAuthorized } = useNexus();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [tenantPickerOpen, setTenantPickerOpen] = useState(false);
+
+  const { data: tenants } = useQuery({
+    queryKey: ['nexus-tenants-list'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('licenses')
+        .select('id, tenant_id, plan, status, tenants(id, name, slug)')
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: isAuthorized,
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'forest');
