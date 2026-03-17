@@ -66,11 +66,13 @@ import NexusLogin from "./pages/nexus/NexusLogin";
 import NexusLayout from "./pages/nexus/NexusLayout";
 import NexusDashboard from "./pages/nexus/NexusDashboard";
 import NexusLicenses from "./pages/nexus/NexusLicenses";
+import NexusLicenseDetail from "./pages/nexus/NexusLicenseDetail";
 import NexusFinanceiro from "./pages/nexus/NexusFinanceiro";
 import NexusEquipe from "./pages/nexus/NexusEquipe";
 import NexusAuditLog from "./pages/nexus/NexusAuditLog";
 import NexusFeatureFlags from "./pages/nexus/NexusFeatureFlags";
 import NexusTickets from "./pages/nexus/NexusTickets";
+import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
 
 import { Loader2 } from "lucide-react";
 
@@ -104,11 +106,13 @@ const AppRoutes = () => (
     <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
       <Route index element={<NexusDashboard />} />
       <Route path="licencas" element={<NexusLicenses />} />
+      <Route path="licencas/:id" element={<NexusLicenseDetail />} />
       <Route path="financeiro" element={<NexusFinanceiro />} />
       <Route path="equipe" element={<NexusEquipe />} />
       <Route path="auditoria" element={<NexusAuditLog />} />
       <Route path="flags" element={<NexusFeatureFlags />} />
       <Route path="tickets" element={<NexusTickets />} />
+      <Route path="configuracoes" element={<NexusConfiguracoes />} />
     </Route>
 
     {/* SuperAdmin Portal */}
