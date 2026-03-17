@@ -190,6 +190,12 @@ export default function NexusLicenses() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {(() => {
+                          const tc = TYPE_CONFIG[l.license_type] || TYPE_CONFIG.individual;
+                          return <Badge className={`text-[10px] ${tc.className}`}>{tc.label}</Badge>;
+                        })()}
+                      </TableCell>
+                      <TableCell>
                         <Badge variant="outline" className="text-[10px]">
                           {l.plan === 'profissional' ? 'Profissional' : l.plan === 'solo_pro' ? 'Solo Pro' : l.plan}
                         </Badge>
