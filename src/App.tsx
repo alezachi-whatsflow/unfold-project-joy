@@ -106,11 +106,13 @@ const AppRoutes = () => (
     <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
       <Route index element={<NexusDashboard />} />
       <Route path="licencas" element={<NexusLicenses />} />
+      <Route path="licencas/:id" element={<NexusLicenseDetail />} />
       <Route path="financeiro" element={<NexusFinanceiro />} />
       <Route path="equipe" element={<NexusEquipe />} />
       <Route path="auditoria" element={<NexusAuditLog />} />
       <Route path="flags" element={<NexusFeatureFlags />} />
       <Route path="tickets" element={<NexusTickets />} />
+      <Route path="configuracoes" element={<NexusConfiguracoes />} />
     </Route>
 
     {/* SuperAdmin Portal */}
