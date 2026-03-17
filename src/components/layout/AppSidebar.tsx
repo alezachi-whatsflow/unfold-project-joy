@@ -16,6 +16,7 @@ import { DEFAULT_NAV_CATEGORIES } from "@/config/navigation";
 import { WIDTH_MAP } from "@/types/sidebar";
 import type { NavCategory, NavItem } from "@/types/sidebar";
 import { getIcon } from "@/lib/iconMap";
+import { sidebarIconMap } from "@/components/ui/SidebarIcons";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
 // ──────────────────────── shared styles ────────────────────────
