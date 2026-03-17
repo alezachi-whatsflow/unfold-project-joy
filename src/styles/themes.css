@@ -325,3 +325,60 @@
   background: var(--section-accent);
   display: inline-block;
 }
+
+/* ─────────────────────────────────────────────
+   TIMELINE ROW — Animações
+   ───────────────────────────────────────────── */
+@keyframes wf-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(1.4); }
+}
+
+@keyframes wf-shimmer {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────
+   TIMELINE ROW — Responsividade
+   ───────────────────────────────────────────── */
+
+/* Desktop ultrawide (2560px+) */
+@media (min-width: 2560px) {
+  .wf-timeline-row {
+    border-radius: 18px;
+  }
+  .wf-timeline-content {
+    padding: 16px 24px !important;
+    gap: 20px !important;
+  }
+  .wf-stage-pills {
+    gap: 10px !important;
+  }
+}
+
+/* Tablet (768px–1279px) */
+@media (max-width: 1279px) {
+  .wf-timeline-content {
+    gap: 10px !important;
+    padding: 10px 12px !important;
+  }
+  .wf-timeline-content > div:nth-child(2) {
+    min-width: 130px !important;
+  }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 767px) {
+  .wf-timeline-row {
+    border-radius: 14px !important;
+  }
+  .wf-stage-pills {
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start !important;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .wf-stage-pills::-webkit-scrollbar { display: none; }
+}

@@ -1,18 +1,48 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Loader2, Plus, Users, MoreHorizontal, Edit, UserCheck, UserX } from 'lucide-react';
-import { NEXUS_ROLE_LABELS, NEXUS_ROLE_COLORS, type NexusRole, useNexus } from '@/contexts/NexusContext';
+import { Loader2, Plus, Users } from 'lucide-react';
+import { useNexus, NEXUS_ROLE_LABELS } from '@/contexts/NexusContext';
 import TeamMemberModal from '@/components/nexus/TeamMemberModal';
 import { useToast } from '@/hooks/use-toast';
+import { UserTimelineRow } from '@/components/nexus/UserTimelineRow';
+import { buildUserStages, getUserOverallStatus, getRoleColor } from '@/utils/nexus/buildUserStages';
+
+function MetricPill({ label, value, color = 'default' }: { label: string; value: number; color?: 'default' | 'green' | 'amber' | 'gray' }) {
+  const colors = {
+    default: { bg: 'rgba(255,255,255,0.05)', text: 'hsl(var(--foreground))', border: 'rgba(255,255,255,0.1)' },
+    green:   { bg: 'rgba(17,188,118,0.12)',  text: '#39F7B2',               border: 'rgba(17,188,118,0.25)' },
+    amber:   { bg: 'rgba(245,158,11,0.12)',  text: '#F59E0B',               border: 'rgba(245,158,11,0.25)' },
+    gray:    { bg: 'rgba(75,85,99,0.12)',     text: '#6B7280',               border: 'rgba(75,85,99,0.25)' },
+  };
+  const c = colors[color];
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '8px 16px', borderRadius: 12,
+      background: c.bg, border: `1px solid ${c.border}`,
+      fontSize: 13, fontWeight: 600, color: c.text,
+    }}>
+      <span style={{ fontSize: 18, fontWeight: 700 }}>{value}</span>
+      <span style={{ opacity: 0.8 }}>{label}</span>
+    </div>
+  );
+}
+
+function SkeletonList() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{
+          height: 70, borderRadius: 'var(--radius)',
+          background: 'hsl(var(--card))',
+          border: '1px solid hsl(var(--border))',
+          animation: 'wf-shimmer 1.5s infinite',
+        }} />
+      ))}
+    </div>
+  );
+}
 
 export default function NexusEquipe() {
   const { nexusUser } = useNexus();
@@ -43,6 +73,10 @@ export default function NexusEquipe() {
     loadUsers();
   }
 
+  const activeCount = users.filter(u => u.is_active && u.last_login).length;
+  const pendingCount = users.filter(u => !u.last_login && u.invite_sent_at).length;
+  const inactiveCount = users.filter(u => !u.is_active).length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -57,73 +91,43 @@ export default function NexusEquipe() {
         </Button>
       </div>
 
-      <Card className="bg-card/50 border-border/50">
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Último Login</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                          {u.name?.[0]?.toUpperCase()}
-                        </div>
-                        <span className="text-sm font-medium">{u.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${NEXUS_ROLE_COLORS[u.role as NexusRole] || ''}`}>
-                        {NEXUS_ROLE_LABELS[u.role as NexusRole] || u.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`text-[10px] ${u.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                        {u.is_active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {u.last_login ? new Date(u.last_login).toLocaleString('pt-BR') : 'Nunca'}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {new Date(u.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => { setEditMember(u); setShowModal(true); }}>
-                            <Edit className="h-3.5 w-3.5 mr-2" /> Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleActive(u)}>
-                            {u.is_active ? <><UserX className="h-3.5 w-3.5 mr-2" /> Desativar</> : <><UserCheck className="h-3.5 w-3.5 mr-2" /> Ativar</>}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Metric pills */}
+      <div className="flex flex-wrap gap-3">
+        <MetricPill label="Total" value={users.length} />
+        <MetricPill label="Ativos" value={activeCount} color="green" />
+        <MetricPill label="Pendentes" value={pendingCount} color="amber" />
+        <MetricPill label="Inativos" value={inactiveCount} color="gray" />
+      </div>
+
+      {/* User timeline list */}
+      {loading ? (
+        <SkeletonList />
+      ) : (
+        <div className="flex flex-col gap-2">
+          {users.map(user => (
+            <UserTimelineRow
+              key={user.id}
+              id={user.id}
+              name={user.name || 'Sem nome'}
+              initials={(user.name || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+              role={NEXUS_ROLE_LABELS[user.role as keyof typeof NEXUS_ROLE_LABELS] || user.role}
+              roleColor={getRoleColor(user.role)}
+              stages={buildUserStages(user)}
+              overallStatus={getUserOverallStatus(user)}
+              expiresAt={user.last_login ? new Date(user.last_login).toLocaleDateString('pt-BR') : undefined}
+              onEdit={(id) => {
+                const u = users.find(x => x.id === id);
+                setEditMember(u || null);
+                setShowModal(true);
+              }}
+              onDelete={(id) => {
+                const u = users.find(x => x.id === id);
+                if (u) toggleActive(u);
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {showModal && (
         <TeamMemberModal open={showModal} onOpenChange={setShowModal} onSaved={loadUsers} member={editMember} />
