@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Pencil, Trash2 } from 'lucide-react';
+import { Users, Pencil, Trash2, UserPlus, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 type InvitationStatus = 'pending' | 'invited' | 'accepted' | 'active';
 
@@ -22,6 +28,8 @@ const ROLE_LABELS: Record<string, string> = {
   visualizador: 'Visualizador',
   superadmin_whatsflow: 'SuperAdmin Whatsflow',
 };
+
+const INVITE_ROLES = ['admin', 'gestor', 'operador', 'financeiro', 'visualizador'] as const;
 
 function MetricPill({ label, value, color = 'default' }: { label: string; value: number; color?: 'default' | 'green' | 'amber' | 'gray' }) {
   const colors = {
@@ -76,12 +84,91 @@ function getInvitationStatus(profile: any): InvitationStatus {
   return 'pending';
 }
 
+function InviteMemberDialog({ open, onOpenChange, tenantId, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; tenantId: string; onSaved: () => void }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('operador');
+  const [saving, setSaving] = useState(false);
+
+  const handleInvite = async () => {
+    if (!name.trim() || !email.trim()) { toast.error('Preencha nome e e-mail.'); return; }
+    setSaving(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email, full_name: name, role, tenant_id: tenantId }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erro ao convidar usuário.');
+      toast.success(result.message || `Convite enviado para ${email}`);
+      setName(''); setEmail(''); setRole('operador');
+      onSaved();
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao convidar usuário.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Convidar Novo Membro</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Nome completo</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do membro" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">E-mail</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Perfil de acesso</Label>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {INVITE_ROLES.map(r => (
+                  <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={handleInvite} disabled={saving}>
+            {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+            Enviar Convite
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function WhitelabelEquipe() {
   const { config } = useOutletContext<{ config: any }>();
   const whitelabelLicenseId = config?.licenses?.id;
   const whitelabelTenantId = config?.licenses?.tenant_id;
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   useEffect(() => {
     if (whitelabelLicenseId) loadUsers();
@@ -124,7 +211,17 @@ export default function WhitelabelEquipe() {
           </h1>
           <p className="text-sm text-muted-foreground">{users.length} membros em {config?.display_name}</p>
         </div>
+        <Button size="sm" onClick={() => setInviteOpen(true)} className="gap-1.5">
+          <UserPlus className="h-4 w-4" /> Adicionar Membro
+        </Button>
       </div>
+
+      <InviteMemberDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        tenantId={whitelabelTenantId}
+        onSaved={loadUsers}
+      />
 
       <div className="flex flex-wrap gap-3">
         <MetricPill label="Total" value={users.length} />
@@ -143,6 +240,7 @@ export default function WhitelabelEquipe() {
         <div className="text-center py-12 text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p>Nenhum membro encontrado neste whitelabel.</p>
+          <p className="text-xs mt-1">Clique em "Adicionar Membro" para convidar o primeiro.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -154,7 +252,6 @@ export default function WhitelabelEquipe() {
 
             return (
               <div key={user.id} className="flex items-center gap-4 px-4 py-3 rounded-[var(--radius)] bg-card border border-border">
-                {/* Avatar + Name + Role */}
                 <div className="flex items-center gap-3 min-w-[200px]">
                   <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400 shrink-0">
                     {initials}
@@ -167,17 +264,14 @@ export default function WhitelabelEquipe() {
                   </div>
                 </div>
 
-                {/* Status Badges */}
                 <div className="flex-1">
                   <StatusBadges status={status} />
                 </div>
 
-                {/* Date */}
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                   {user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '—'}
                 </span>
 
-                {/* Actions */}
                 <div className="flex items-center gap-2">
                   <button className="w-7 h-7 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors">
                     <Pencil size={13} />
