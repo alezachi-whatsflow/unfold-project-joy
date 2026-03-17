@@ -44,6 +44,7 @@ export default function NexusLicenses() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [editLicense, setEditLicense] = useState<any>(null);
