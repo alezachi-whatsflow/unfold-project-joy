@@ -48,7 +48,7 @@ export default function NexusLayout() {
     queryFn: async () => {
       const { data } = await supabase
         .from('licenses')
-        .select('id, tenant_id, plan, status, tenants(id, name, slug)')
+        .select('id, tenant_id, plan, status, license_type, parent_license_id, whitelabel_slug, tenants(id, name, slug)')
         .order('created_at', { ascending: false });
       return data || [];
     },
