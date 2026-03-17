@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Loader2, Plus, Users } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Users } from 'lucide-react';
 import { UserTimelineRow } from '@/components/nexus/UserTimelineRow';
 
 function MetricPill({ label, value, color = 'default' }: { label: string; value: number; color?: 'default' | 'green' | 'amber' | 'gray' }) {
@@ -80,23 +78,56 @@ const ROLE_COLOR_MAP: Record<string, 'red' | 'blue' | 'green' | 'amber' | 'purpl
 
 export default function WhitelabelEquipe() {
   const { config } = useOutletContext<{ config: any }>();
-  const tenantId = config?.licenses?.tenant_id;
-  const { toast } = useToast();
+  const whitelabelLicenseId = config?.licenses?.id;
+  const whitelabelTenantId = config?.licenses?.tenant_id;
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (tenantId) loadUsers();
-  }, [tenantId]);
+    if (whitelabelLicenseId) loadUsers();
+  }, [whitelabelLicenseId]);
 
   async function loadUsers() {
     setLoading(true);
+
+    // Get all tenant IDs managed by this whitelabel (sub-licenses + own tenant)
+    const { data: subLicenses } = await supabase
+      .from('licenses')
+      .select('tenant_id')
+      .eq('parent_license_id', whitelabelLicenseId);
+
+    const managedTenantIds = [
+      whitelabelTenantId,
+      ...(subLicenses || []).map((l: any) => l.tenant_id),
+    ].filter(Boolean);
+
+    if (managedTenantIds.length === 0) {
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
+
+    // Load all profiles linked to any of these tenants
     const { data } = await supabase
       .from('profiles')
       .select('*, user_tenants!inner(tenant_id, role)')
-      .eq('user_tenants.tenant_id', tenantId)
+      .in('user_tenants.tenant_id', managedTenantIds)
       .order('created_at', { ascending: false });
-    setUsers(data || []);
+
+    // Enrich with tenant name
+    const { data: tenantNames } = await supabase
+      .from('tenants')
+      .select('id, name')
+      .in('id', managedTenantIds);
+
+    const tenantMap = Object.fromEntries((tenantNames || []).map((t: any) => [t.id, t.name]));
+
+    const enriched = (data || []).map((u: any) => ({
+      ...u,
+      tenant_name: tenantMap[u.user_tenants?.[0]?.tenant_id] || '',
+    }));
+
+    setUsers(enriched);
     setLoading(false);
   }
 
@@ -111,7 +142,7 @@ export default function WhitelabelEquipe() {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Users className="h-6 w-6" /> Equipe
           </h1>
-          <p className="text-sm text-muted-foreground">{users.length} membros</p>
+          <p className="text-sm text-muted-foreground">{users.length} membros em {config?.display_name}</p>
         </div>
       </div>
 
@@ -131,7 +162,7 @@ export default function WhitelabelEquipe() {
       ) : users.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>Nenhum membro encontrado neste tenant.</p>
+          <p>Nenhum membro encontrado neste whitelabel.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -141,7 +172,7 @@ export default function WhitelabelEquipe() {
               <UserTimelineRow
                 key={user.id}
                 id={user.id}
-                name={user.display_name || user.email || 'Sem nome'}
+                name={`${user.display_name || user.email || 'Sem nome'}${user.tenant_name ? ` · ${user.tenant_name}` : ''}`}
                 initials={(user.display_name || user.email || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                 role={role}
                 roleColor={ROLE_COLOR_MAP[role] || 'blue'}
