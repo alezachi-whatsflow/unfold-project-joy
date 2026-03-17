@@ -77,6 +77,7 @@ import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
 import WhitelabelLayout from "./pages/lab/WhitelabelLayout";
 import WhitelabelDashboard from "./pages/lab/WhitelabelDashboard";
 import WhitelabelLicenses from "./pages/lab/WhitelabelLicenses";
+import WhitelabelEquipe from "./pages/lab/WhitelabelEquipe";
 
 import { Loader2 } from "lucide-react";
 
