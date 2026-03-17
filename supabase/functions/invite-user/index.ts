@@ -19,7 +19,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify the caller is admin/superadmin
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -36,11 +35,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check caller role
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     const { data: callerProfile } = await adminClient
       .from("profiles")
-      .select("role")
+      .select("role, full_name")
       .eq("id", caller.id)
       .single();
 
@@ -67,7 +65,6 @@ Deno.serve(async (req) => {
     );
 
     if (existingUser) {
-      // User already exists - just make sure profile has correct role and tenant
       await adminClient
         .from("profiles")
         .update({ role: role || "consultor", full_name })
@@ -88,13 +85,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Invite new user via admin API - sends magic link email
-    const redirectUrl = req.headers.get("origin") || "https://unfold-project-joy.lovable.app";
-    
+    // Build the redirect URL for password setup
+    const origin = req.headers.get("origin") || "https://unfold-project-joy.lovable.app";
+    const redirectUrl = `${origin}/reset-password`;
+
+    const roleLabel: Record<string, string> = {
+      admin: "Administrador",
+      gestor: "Gestor",
+      financeiro: "Financeiro",
+      consultor: "Consultor",
+      representante: "Representante",
+    };
+    const assignedRole = role || "consultor";
+
+    // Invite user - Supabase sends the invite email
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
       email,
       {
-        data: { full_name, role: role || "consultor", tenant_id },
+        data: {
+          full_name,
+          role: assignedRole,
+          tenant_id,
+        },
         redirectTo: redirectUrl,
       }
     );
@@ -107,11 +119,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update the profile that was auto-created by the trigger
+    // Update the profile with invitation tracking
     if (inviteData?.user?.id) {
       await adminClient
         .from("profiles")
-        .update({ role: role || "consultor", full_name })
+        .update({
+          role: assignedRole,
+          full_name,
+          invitation_status: "invited",
+          invited_at: new Date().toISOString(),
+          invited_by: caller.id,
+        })
         .eq("id", inviteData.user.id);
 
       if (tenant_id) {
@@ -125,7 +143,10 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ message: `Convite enviado para ${email}`, user_id: inviteData?.user?.id }),
+      JSON.stringify({
+        message: `Convite enviado para ${email}`,
+        user_id: inviteData?.user?.id,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
