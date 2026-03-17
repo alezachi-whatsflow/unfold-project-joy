@@ -1862,6 +1862,8 @@ export type Database = {
           created_by: string | null
           email: string
           id: string
+          invite_accepted_at: string | null
+          invite_sent_at: string | null
           is_active: boolean | null
           last_login: string | null
           name: string
@@ -1874,6 +1876,8 @@ export type Database = {
           created_by?: string | null
           email: string
           id?: string
+          invite_accepted_at?: string | null
+          invite_sent_at?: string | null
           is_active?: boolean | null
           last_login?: string | null
           name: string
@@ -1886,6 +1890,8 @@ export type Database = {
           created_by?: string | null
           email?: string
           id?: string
+          invite_accepted_at?: string | null
+          invite_sent_at?: string | null
           is_active?: boolean | null
           last_login?: string | null
           name?: string
