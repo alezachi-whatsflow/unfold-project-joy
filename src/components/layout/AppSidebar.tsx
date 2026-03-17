@@ -16,6 +16,7 @@ import { DEFAULT_NAV_CATEGORIES } from "@/config/navigation";
 import { WIDTH_MAP } from "@/types/sidebar";
 import type { NavCategory, NavItem } from "@/types/sidebar";
 import { getIcon } from "@/lib/iconMap";
+import { sidebarIconMap } from "@/components/ui/SidebarIcons";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
 // ──────────────────────── shared styles ────────────────────────
@@ -119,9 +120,9 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onClick={() => navigate("/perfil")}><User className="mr-2 h-4 w-4" /> Meu Perfil</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-            {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            {theme === "dark" ? "Tema Claro" : "Tema Escuro"}
+          <DropdownMenuItem onClick={() => setTheme(theme === "sapphire" ? "slate" : theme === "slate" ? "forest" : "sapphire")}>
+            {theme === "sapphire" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            Alternar Tema
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="text-destructive"><LogOut className="mr-2 h-4 w-4" /> Sair</DropdownMenuItem>
@@ -160,7 +161,9 @@ function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { col
 
 // ──────────────────────── nav item renderer ────────────────────────
 function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: NavItem; collapsed: boolean; isMobile: boolean; badgeCount: number; density: string }) {
-  const Icon = getIcon(item.icon);
+  // Use custom sidebar icon if available, fallback to Lucide
+  const CustomIcon = sidebarIconMap[item.icon];
+  const LucideIcon = getIcon(item.icon);
   const isCollapsed = collapsed && !isMobile;
   const location = useLocation();
   const isActive = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
@@ -178,7 +181,7 @@ function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: 
         className={() => cn(menuItemBase, "rounded-lg", isCollapsed ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
       >
         <span className="relative shrink-0 flex items-center justify-center">
-          <Icon className="h-4 w-4 opacity-60" />
+          {CustomIcon ? <CustomIcon size={16} className="opacity-80" /> : <LucideIcon className="h-4 w-4 opacity-60" />}
           {isCollapsed && badgeCount > 0 && (
             <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
           )}
@@ -521,8 +524,8 @@ export function AppSidebar() {
       className="flex flex-col h-screen shrink-0 overflow-hidden"
       style={{
         width: isMobile ? 260 : sidebarW,
-        background: "#111118",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        background: "hsl(var(--sidebar-background))",
+        borderRight: "1px solid var(--border-sidebar, rgba(255,255,255,0.06))",
         transition: isMobile ? "none" : "width 250ms cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
