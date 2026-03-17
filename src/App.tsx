@@ -73,6 +73,10 @@ import NexusAuditLog from "./pages/nexus/NexusAuditLog";
 import NexusFeatureFlags from "./pages/nexus/NexusFeatureFlags";
 import NexusTickets from "./pages/nexus/NexusTickets";
 import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
+// WhiteLabel Lab
+import WhitelabelLayout from "./pages/lab/WhitelabelLayout";
+import WhitelabelDashboard from "./pages/lab/WhitelabelDashboard";
+import WhitelabelLicenses from "./pages/lab/WhitelabelLicenses";
 
 import { Loader2 } from "lucide-react";
 
