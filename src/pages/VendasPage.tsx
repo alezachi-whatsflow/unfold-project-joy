@@ -19,7 +19,7 @@ export default function VendasPage() {
       { value: 'pipeline', label: 'Pipeline', icon: Kanban, hidden: isRepresentante },
       { value: 'lista', label: 'Lista', icon: List, hidden: isRepresentante },
       { value: 'relatorios', label: 'Relatórios', icon: BarChart3, hidden: isRepresentante },
-      { value: 'meus-negocios', label: 'Meus Negócios', icon: User, hidden: false },
+      { value: 'meus-negocios', label: 'Negócios Fechados', icon: User, hidden: false },
     ];
     return all.filter(t => !t.hidden);
   }, [isRepresentante]);
