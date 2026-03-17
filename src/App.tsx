@@ -60,6 +60,18 @@ import SuperAdminLicenses from "./pages/superadmin/SuperAdminLicenses";
 import SuperAdminAuditLog from "./pages/superadmin/SuperAdminAuditLog";
 import SuperAdminConfig from "./pages/superadmin/SuperAdminConfig";
 
+// Nexus
+import { NexusProvider } from "./contexts/NexusContext";
+import NexusLogin from "./pages/nexus/NexusLogin";
+import NexusLayout from "./pages/nexus/NexusLayout";
+import NexusDashboard from "./pages/nexus/NexusDashboard";
+import NexusLicenses from "./pages/nexus/NexusLicenses";
+import NexusFinanceiro from "./pages/nexus/NexusFinanceiro";
+import NexusEquipe from "./pages/nexus/NexusEquipe";
+import NexusAuditLog from "./pages/nexus/NexusAuditLog";
+import NexusFeatureFlags from "./pages/nexus/NexusFeatureFlags";
+import NexusTickets from "./pages/nexus/NexusTickets";
+
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
