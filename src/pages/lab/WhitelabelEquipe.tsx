@@ -1,80 +1,100 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Users } from 'lucide-react';
-import { UserTimelineRow } from '@/components/nexus/UserTimelineRow';
+import { Users, Pencil, Trash2, CheckCircle2, Mail, UserCheck } from 'lucide-react';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 
 function MetricPill({ label, value, color = 'default' }: { label: string; value: number; color?: 'default' | 'green' | 'amber' | 'gray' }) {
   const colors = {
-    default: { bg: 'rgba(255,255,255,0.05)', text: 'hsl(var(--foreground))', border: 'rgba(255,255,255,0.1)' },
-    green:   { bg: 'rgba(17,188,118,0.12)',  text: '#39F7B2',               border: 'rgba(17,188,118,0.25)' },
-    amber:   { bg: 'rgba(245,158,11,0.12)',  text: '#F59E0B',               border: 'rgba(245,158,11,0.25)' },
-    gray:    { bg: 'rgba(75,85,99,0.12)',     text: '#6B7280',               border: 'rgba(75,85,99,0.25)' },
+    default: 'bg-muted text-foreground border-border',
+    green: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
+    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
+    gray: 'bg-muted text-muted-foreground border-border',
   };
-  const c = colors[color];
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '8px 16px', borderRadius: 12,
-      background: c.bg, border: `1px solid ${c.border}`,
-      fontSize: 13, fontWeight: 600, color: c.text,
-    }}>
-      <span style={{ fontSize: 18, fontWeight: 700 }}>{value}</span>
-      <span style={{ opacity: 0.8 }}>{label}</span>
+    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold ${colors[color]}`}>
+      <span className="text-lg font-bold">{value}</span>
+      <span className="opacity-80">{label}</span>
     </div>
   );
 }
 
-type TimelineStage = {
-  id: string;
-  label: string;
-  labelMobile: string;
-  status: 'done' | 'current' | 'pending';
-  timestamp?: string;
-};
+type InvitationStatus = 'pending' | 'invited' | 'accepted' | 'active';
 
-function buildProfileStages(profile: any): TimelineStage[] {
-  const invited = !!profile.invited_at;
-  const accepted = !!profile.invite_accepted_at;
-  const active = profile.invitation_status === 'active';
+const STATUS_ORDER: Record<string, number> = { pending: 0, invited: 1, accepted: 2, active: 3 };
 
-  return [
-    {
-      id: 'invite',
-      label: 'Convite Enviado',
-      labelMobile: '✉',
-      status: invited ? 'done' : 'pending',
-      timestamp: profile.invited_at ? new Date(profile.invited_at).toLocaleString('pt-BR') : undefined,
-    },
-    {
-      id: 'link',
-      label: 'Link Acessado',
-      labelMobile: '🔗',
-      status: accepted ? 'done' : invited ? 'current' : 'pending',
-      timestamp: profile.invite_accepted_at ? new Date(profile.invite_accepted_at).toLocaleString('pt-BR') : undefined,
-    },
-    {
-      id: 'active',
-      label: 'Conta Ativa',
-      labelMobile: '✓',
-      status: active ? 'done' : accepted ? 'current' : 'pending',
-    },
-  ];
+const STEPS = [
+  { key: 'invited', label: 'Convite Enviado', icon: Mail },
+  { key: 'accepted', label: 'Link Acessado', icon: UserCheck },
+  { key: 'active', label: 'Conta Ativa', icon: CheckCircle2 },
+] as const;
+
+function InlineTimeline({ status, invitedAt, acceptedAt }: { status: InvitationStatus; invitedAt?: string | null; acceptedAt?: string | null }) {
+  const currentStep = STATUS_ORDER[status] ?? 0;
+  const dates: Record<string, string | null> = {
+    invited: invitedAt ? new Date(invitedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null,
+    accepted: acceptedAt ? new Date(acceptedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null,
+    active: null,
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      {STEPS.map((step, idx) => {
+        const stepOrder = STATUS_ORDER[step.key];
+        const isComplete = currentStep >= stepOrder;
+        return (
+          <div key={step.key} className="flex items-center">
+            <div className="flex flex-col items-center text-center gap-0.5 min-w-[80px]">
+              <div className={`flex items-center justify-center w-7 h-7 rounded-full border-2 transition-colors ${
+                isComplete
+                  ? 'bg-emerald-500 border-emerald-500 text-emerald-950'
+                  : 'border-muted-foreground/30 text-muted-foreground/40'
+              }`}>
+                {isComplete ? <CheckCircle2 className="w-3.5 h-3.5" /> : <step.icon className="w-3.5 h-3.5" />}
+              </div>
+              <span className={`text-[10px] font-medium leading-tight ${isComplete ? 'text-emerald-400' : 'text-muted-foreground/50'}`}>
+                {step.label}
+              </span>
+              {dates[step.key] && isComplete && (
+                <span className="text-[9px] text-muted-foreground">{dates[step.key]}</span>
+              )}
+            </div>
+            {idx < STEPS.length - 1 && (
+              <div className={`w-6 h-0.5 mx-0.5 rounded ${currentStep > stepOrder ? 'bg-emerald-500' : 'bg-muted-foreground/20'}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-function getOverallStatus(profile: any): 'active' | 'pending' | 'blocked' | 'inactive' {
+const ROLE_COLOR_MAP: Record<string, string> = {
+  admin: 'bg-red-500/15 text-red-400 border-red-500/25',
+  gestor: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  operador: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
+  financeiro: 'bg-green-500/15 text-green-400 border-green-500/25',
+  visualizador: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
+  superadmin_whatsflow: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Administrador',
+  gestor: 'Gestor',
+  operador: 'Operador',
+  financeiro: 'Financeiro',
+  visualizador: 'Visualizador',
+  superadmin_whatsflow: 'SuperAdmin Whatsflow',
+};
+
+function getInvitationStatus(profile: any): InvitationStatus {
   if (profile.invitation_status === 'active') return 'active';
-  if (profile.invitation_status === 'invited' || profile.invitation_status === 'accepted') return 'pending';
-  return 'inactive';
+  if (profile.invitation_status === 'accepted') return 'accepted';
+  if (profile.invitation_status === 'invited') return 'invited';
+  return 'pending';
 }
-
-const ROLE_COLOR_MAP: Record<string, 'red' | 'blue' | 'green' | 'amber' | 'purple'> = {
-  admin: 'red',
-  gestor: 'amber',
-  operador: 'blue',
-  financeiro: 'green',
-  visualizador: 'purple',
-};
 
 export default function WhitelabelEquipe() {
   const { config } = useOutletContext<{ config: any }>();
@@ -89,8 +109,6 @@ export default function WhitelabelEquipe() {
 
   async function loadUsers() {
     setLoading(true);
-
-    // Get all tenant IDs managed by this whitelabel (sub-licenses + own tenant)
     const { data: subLicenses } = await supabase
       .from('licenses')
       .select('tenant_id')
@@ -101,33 +119,15 @@ export default function WhitelabelEquipe() {
       ...(subLicenses || []).map((l: any) => l.tenant_id),
     ].filter(Boolean);
 
-    if (managedTenantIds.length === 0) {
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
+    if (managedTenantIds.length === 0) { setUsers([]); setLoading(false); return; }
 
-    // Load all profiles linked to any of these tenants
     const { data } = await supabase
       .from('profiles')
       .select('*, user_tenants!inner(tenant_id, role)')
       .in('user_tenants.tenant_id', managedTenantIds)
       .order('created_at', { ascending: false });
 
-    // Enrich with tenant name
-    const { data: tenantNames } = await supabase
-      .from('tenants')
-      .select('id, name')
-      .in('id', managedTenantIds);
-
-    const tenantMap = Object.fromEntries((tenantNames || []).map((t: any) => [t.id, t.name]));
-
-    const enriched = (data || []).map((u: any) => ({
-      ...u,
-      tenant_name: tenantMap[u.user_tenants?.[0]?.tenant_id] || '',
-    }));
-
-    setUsers(enriched);
+    setUsers(data || []);
     setLoading(false);
   }
 
@@ -154,9 +154,9 @@ export default function WhitelabelEquipe() {
       </div>
 
       {loading ? (
-        <div className="flex flex-col gap-2">
+        <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-[70px] rounded-[var(--radius)] bg-card border border-border animate-pulse" />
+            <div key={i} className="h-16 rounded-[var(--radius)] bg-card border border-border animate-pulse" />
           ))}
         </div>
       ) : users.length === 0 ? (
@@ -165,23 +165,64 @@ export default function WhitelabelEquipe() {
           <p>Nenhum membro encontrado neste whitelabel.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {users.map(user => {
-            const role = user.user_tenants?.[0]?.role || 'operador';
-            return (
-              <UserTimelineRow
-                key={user.id}
-                id={user.id}
-                name={`${user.display_name || user.email || 'Sem nome'}${user.tenant_name ? ` · ${user.tenant_name}` : ''}`}
-                initials={(user.display_name || user.email || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                role={role}
-                roleColor={ROLE_COLOR_MAP[role] || 'blue'}
-                stages={buildProfileStages(user)}
-                overallStatus={getOverallStatus(user)}
-                expiresAt={user.invite_accepted_at ? new Date(user.invite_accepted_at).toLocaleDateString('pt-BR') : undefined}
-              />
-            );
-          })}
+        <div className="rounded-[var(--radius)] border border-border bg-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground">Nome</TableHead>
+                <TableHead className="text-muted-foreground">Perfil</TableHead>
+                <TableHead className="text-muted-foreground">Status do Convite</TableHead>
+                <TableHead className="text-muted-foreground">Criado em</TableHead>
+                <TableHead className="text-muted-foreground text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map(user => {
+                const role = user.user_tenants?.[0]?.role || 'operador';
+                const initials = (user.display_name || user.email || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+                const status = getInvitationStatus(user);
+                const roleClasses = ROLE_COLOR_MAP[role] || 'bg-blue-500/15 text-blue-400 border-blue-500/25';
+
+                return (
+                  <TableRow key={user.id} className="border-border">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400 shrink-0">
+                          {initials}
+                        </div>
+                        <span className="font-medium text-foreground">{user.display_name || user.email || 'Sem nome'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full border ${roleClasses}`}>
+                        {ROLE_LABELS[role] || role}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <InlineTimeline
+                        status={status}
+                        invitedAt={user.invited_at}
+                        acceptedAt={user.invite_accepted_at}
+                      />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '—'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="w-7 h-7 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors">
+                          <Pencil size={13} />
+                        </button>
+                        <button className="w-7 h-7 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
