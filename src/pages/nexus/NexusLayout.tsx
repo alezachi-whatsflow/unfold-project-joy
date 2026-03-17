@@ -194,7 +194,49 @@ export default function NexusLayout() {
         <div className="p-6">
           <Outlet />
         </div>
-      </main>
+      {/* Tenant Picker Dialog */}
+      <Dialog open={tenantPickerOpen} onOpenChange={setTenantPickerOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-emerald-400" />
+              Acessar Portal Tenant
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-3">
+            Selecione a licença/empresa que deseja acessar:
+          </p>
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {tenants?.map((lic: any) => {
+              const tenant = lic.tenants as any;
+              if (!tenant) return null;
+              return (
+                <button
+                  key={lic.id}
+                  onClick={() => {
+                    localStorage.setItem('whatsflow_default_tenant_id', tenant.id);
+                    window.dispatchEvent(new Event('tenant-changed'));
+                    setTenantPickerOpen(false);
+                    navigate('/');
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors text-left"
+                >
+                  <div className="h-9 w-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-400 shrink-0">
+                    {tenant.name?.[0]?.toUpperCase() || 'T'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{tenant.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{lic.plan} · <span className={lic.status === 'active' ? 'text-emerald-400' : 'text-amber-400'}>{lic.status === 'active' ? 'Ativo' : lic.status}</span></p>
+                  </div>
+                </button>
+              );
+            })}
+            {(!tenants || tenants.length === 0) && (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma licença encontrada.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
