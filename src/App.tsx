@@ -66,11 +66,13 @@ import NexusLogin from "./pages/nexus/NexusLogin";
 import NexusLayout from "./pages/nexus/NexusLayout";
 import NexusDashboard from "./pages/nexus/NexusDashboard";
 import NexusLicenses from "./pages/nexus/NexusLicenses";
+import NexusLicenseDetail from "./pages/nexus/NexusLicenseDetail";
 import NexusFinanceiro from "./pages/nexus/NexusFinanceiro";
 import NexusEquipe from "./pages/nexus/NexusEquipe";
 import NexusAuditLog from "./pages/nexus/NexusAuditLog";
 import NexusFeatureFlags from "./pages/nexus/NexusFeatureFlags";
 import NexusTickets from "./pages/nexus/NexusTickets";
+import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
 
 import { Loader2 } from "lucide-react";
 
