@@ -60,6 +60,18 @@ import SuperAdminLicenses from "./pages/superadmin/SuperAdminLicenses";
 import SuperAdminAuditLog from "./pages/superadmin/SuperAdminAuditLog";
 import SuperAdminConfig from "./pages/superadmin/SuperAdminConfig";
 
+// Nexus
+import { NexusProvider } from "./contexts/NexusContext";
+import NexusLogin from "./pages/nexus/NexusLogin";
+import NexusLayout from "./pages/nexus/NexusLayout";
+import NexusDashboard from "./pages/nexus/NexusDashboard";
+import NexusLicenses from "./pages/nexus/NexusLicenses";
+import NexusFinanceiro from "./pages/nexus/NexusFinanceiro";
+import NexusEquipe from "./pages/nexus/NexusEquipe";
+import NexusAuditLog from "./pages/nexus/NexusAuditLog";
+import NexusFeatureFlags from "./pages/nexus/NexusFeatureFlags";
+import NexusTickets from "./pages/nexus/NexusTickets";
+
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -86,6 +98,18 @@ const AppRoutes = () => (
     <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
     <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/acesso-negado" element={<AuthGuard><AcessoNegadoPage /></AuthGuard>} />
+
+    {/* Nexus Portal */}
+    <Route path="/nexus/login" element={<NexusLogin />} />
+    <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
+      <Route index element={<NexusDashboard />} />
+      <Route path="licencas" element={<NexusLicenses />} />
+      <Route path="financeiro" element={<NexusFinanceiro />} />
+      <Route path="equipe" element={<NexusEquipe />} />
+      <Route path="auditoria" element={<NexusAuditLog />} />
+      <Route path="flags" element={<NexusFeatureFlags />} />
+      <Route path="tickets" element={<NexusTickets />} />
+    </Route>
 
     {/* SuperAdmin Portal */}
     <Route path="/superadmin" element={<AuthGuard><SuperAdminLayout /></AuthGuard>}>

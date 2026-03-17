@@ -1246,6 +1246,7 @@ export type Database = {
           base_devices_web: number | null
           billing_cycle: string | null
           created_at: string
+          customer_success_id: string | null
           expires_at: string | null
           extra_attendants: number | null
           extra_devices_meta: number | null
@@ -1256,12 +1257,16 @@ export type Database = {
           has_ai_module: boolean | null
           has_implantacao_starter: boolean | null
           id: string
+          internal_notes: string | null
+          license_key: string | null
           max_instances: number
           max_users: number
+          monthly_messages_limit: number | null
           monthly_value: number | null
           plan: string
           starts_at: string
           status: string
+          storage_limit_gb: number | null
           tenant_id: string
           updated_at: string
         }
@@ -1272,6 +1277,7 @@ export type Database = {
           base_devices_web?: number | null
           billing_cycle?: string | null
           created_at?: string
+          customer_success_id?: string | null
           expires_at?: string | null
           extra_attendants?: number | null
           extra_devices_meta?: number | null
@@ -1282,12 +1288,16 @@ export type Database = {
           has_ai_module?: boolean | null
           has_implantacao_starter?: boolean | null
           id?: string
+          internal_notes?: string | null
+          license_key?: string | null
           max_instances?: number
           max_users?: number
+          monthly_messages_limit?: number | null
           monthly_value?: number | null
           plan?: string
           starts_at?: string
           status?: string
+          storage_limit_gb?: number | null
           tenant_id: string
           updated_at?: string
         }
@@ -1298,6 +1308,7 @@ export type Database = {
           base_devices_web?: number | null
           billing_cycle?: string | null
           created_at?: string
+          customer_success_id?: string | null
           expires_at?: string | null
           extra_attendants?: number | null
           extra_devices_meta?: number | null
@@ -1308,16 +1319,27 @@ export type Database = {
           has_ai_module?: boolean | null
           has_implantacao_starter?: boolean | null
           id?: string
+          internal_notes?: string | null
+          license_key?: string | null
           max_instances?: number
           max_users?: number
+          monthly_messages_limit?: number | null
           monthly_value?: number | null
           plan?: string
           starts_at?: string
           status?: string
+          storage_limit_gb?: number | null
           tenant_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "licenses_customer_success_id_fkey"
+            columns: ["customer_success_id"]
+            isOneToOne: false
+            referencedRelation: "nexus_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "licenses_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -1600,6 +1622,262 @@ export type Database = {
             columns: ["pipeline_id"]
             isOneToOne: false
             referencedRelation: "sales_pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nexus_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          justification: string | null
+          license_id: string | null
+          new_value: Json | null
+          old_value: Json | null
+          session_id: string | null
+          target_entity: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          justification?: string | null
+          license_id?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          session_id?: string | null
+          target_entity?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          justification?: string | null
+          license_id?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          session_id?: string | null
+          target_entity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nexus_audit_logs_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "nexus_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nexus_feature_flags: {
+        Row: {
+          created_at: string | null
+          default_value: boolean | null
+          description: string | null
+          flag_key: string
+          id: string
+          is_global: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_value?: boolean | null
+          description?: string | null
+          flag_key: string
+          id?: string
+          is_global?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          default_value?: boolean | null
+          description?: string | null
+          flag_key?: string
+          id?: string
+          is_global?: boolean | null
+        }
+        Relationships: []
+      }
+      nexus_license_feature_flags: {
+        Row: {
+          flag_key: string
+          id: string
+          license_id: string
+          updated_at: string | null
+          updated_by: string | null
+          value: boolean
+        }
+        Insert: {
+          flag_key: string
+          id?: string
+          license_id: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: boolean
+        }
+        Update: {
+          flag_key?: string
+          id?: string
+          license_id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nexus_license_feature_flags_flag_key_fkey"
+            columns: ["flag_key"]
+            isOneToOne: false
+            referencedRelation: "nexus_feature_flags"
+            referencedColumns: ["flag_key"]
+          },
+          {
+            foreignKeyName: "nexus_license_feature_flags_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "nexus_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nexus_license_usage: {
+        Row: {
+          active_attendants: number | null
+          active_devices: number | null
+          id: string
+          license_id: string
+          messages_sent: number | null
+          period_month: string
+          recorded_at: string | null
+          storage_used_gb: number | null
+        }
+        Insert: {
+          active_attendants?: number | null
+          active_devices?: number | null
+          id?: string
+          license_id: string
+          messages_sent?: number | null
+          period_month: string
+          recorded_at?: string | null
+          storage_used_gb?: number | null
+        }
+        Update: {
+          active_attendants?: number | null
+          active_devices?: number | null
+          id?: string
+          license_id?: string
+          messages_sent?: number | null
+          period_month?: string
+          recorded_at?: string | null
+          storage_used_gb?: number | null
+        }
+        Relationships: []
+      }
+      nexus_tickets: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          license_id: string | null
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          license_id?: string | null
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          license_id?: string | null
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nexus_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "nexus_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nexus_tickets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "nexus_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nexus_users: {
+        Row: {
+          auth_user_id: string | null
+          avatar_url: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          name: string
+          role: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          name: string
+          role?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          name?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nexus_users_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "nexus_users"
             referencedColumns: ["id"]
           },
         ]
@@ -2742,6 +3020,8 @@ export type Database = {
       calculate_mrr: { Args: { p_license_id: string }; Returns: number }
       get_my_role: { Args: never; Returns: string }
       get_my_tenant_ids: { Args: never; Returns: string[] }
+      get_nexus_role: { Args: never; Returns: string }
+      is_nexus_user: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       log_audit: {
         Args: {
