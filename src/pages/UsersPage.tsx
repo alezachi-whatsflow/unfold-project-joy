@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Users, UserPlus, Shield, ShieldCheck, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { InvitationTimeline } from "@/components/users/InvitationTimeline";
 
 const ROLES: UserRole[] = ["admin", "gestor", "financeiro", "consultor", "representante"];
 const ACTIONS: PermissionAction[] = ["view", "create", "edit", "delete", "export"];
