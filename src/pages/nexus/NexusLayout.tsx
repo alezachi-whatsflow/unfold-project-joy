@@ -22,6 +22,7 @@ const ALL_NAV_ITEMS = [
   { id: 'auditoria', label: 'Auditoria', icon: IconReports, path: '/nexus/auditoria' },
   { id: 'flags', label: 'Feature Flags', icon: IconSettings, path: '/nexus/flags' },
   { id: 'tickets', label: 'Tickets', icon: IconMessages, path: '/nexus/tickets' },
+  { id: 'configuracoes', label: 'Configurações', icon: IconSettings, path: '/nexus/configuracoes' },
 ];
 
 const NAV_BY_ROLE: Record<NexusRole, string[]> = {
