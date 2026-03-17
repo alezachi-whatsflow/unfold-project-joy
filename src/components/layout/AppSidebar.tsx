@@ -161,7 +161,9 @@ function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { col
 
 // ──────────────────────── nav item renderer ────────────────────────
 function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: NavItem; collapsed: boolean; isMobile: boolean; badgeCount: number; density: string }) {
-  const Icon = getIcon(item.icon);
+  // Use custom sidebar icon if available, fallback to Lucide
+  const CustomIcon = sidebarIconMap[item.icon];
+  const LucideIcon = getIcon(item.icon);
   const isCollapsed = collapsed && !isMobile;
   const location = useLocation();
   const isActive = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
