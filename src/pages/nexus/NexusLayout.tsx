@@ -144,7 +144,7 @@ export default function NexusLayout() {
             variant="ghost"
             size="sm"
             className="w-full justify-start gap-2 text-xs text-muted-foreground"
-            onClick={() => navigate('/')}
+            onClick={() => setTenantPickerOpen(true)}
           >
             <LayoutDashboard className="h-3.5 w-3.5" />
             {!collapsed && 'Portal Tenant'}
