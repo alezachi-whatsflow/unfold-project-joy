@@ -198,7 +198,7 @@ export default function NexusLayout() {
 
       {/* Tenant Picker Dialog */}
       <Dialog open={tenantPickerOpen} onOpenChange={setTenantPickerOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-emerald-400" />
@@ -208,34 +208,104 @@ export default function NexusLayout() {
           <p className="text-sm text-muted-foreground mb-3">
             Selecione a licença/empresa que deseja acessar:
           </p>
-          <div className="space-y-2 max-h-72 overflow-y-auto">
-            {tenants?.map((lic: any) => {
-              const tenant = lic.tenants as any;
-              if (!tenant) return null;
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+            {(() => {
+              if (!tenants || tenants.length === 0) {
+                return <p className="text-sm text-muted-foreground text-center py-4">Nenhuma licença encontrada.</p>;
+              }
+              // Group: internal first, then whitelabels with children, then standalone individual
+              const internal = tenants.filter((l: any) => l.license_type === 'internal');
+              const whitelabels = tenants.filter((l: any) => l.license_type === 'whitelabel');
+              const individuals = tenants.filter((l: any) => l.license_type === 'individual' && !l.parent_license_id);
+              const children = tenants.filter((l: any) => l.parent_license_id);
+
+              const typeLabel = (t: string) => {
+                if (t === 'internal') return 'INTERNO';
+                if (t === 'whitelabel') return 'WHITELABEL';
+                return 'INDIVIDUAL';
+              };
+              const typeColor = (t: string) => {
+                if (t === 'internal') return 'text-blue-400 border-blue-500/30';
+                if (t === 'whitelabel') return 'text-purple-400 border-purple-500/30';
+                return 'text-emerald-400 border-emerald-500/30';
+              };
+              const avatarColor = (t: string) => {
+                if (t === 'internal') return 'bg-blue-500/20 text-blue-400';
+                if (t === 'whitelabel') return 'bg-purple-500/20 text-purple-400';
+                return 'bg-emerald-500/20 text-emerald-400';
+              };
+
+              const renderTenantButton = (lic: any, indent = false) => {
+                const tenant = lic.tenants as any;
+                if (!tenant) return null;
+                return (
+                  <button
+                    key={lic.id}
+                    onClick={() => {
+                      localStorage.setItem('whatsflow_default_tenant_id', tenant.id);
+                      window.dispatchEvent(new Event('tenant-changed'));
+                      setTenantPickerOpen(false);
+                      if (lic.license_type === 'whitelabel' && lic.whitelabel_slug) {
+                        navigate(`/lab/${lic.whitelabel_slug}`);
+                      } else {
+                        navigate('/');
+                      }
+                    }}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors text-left ${indent ? 'ml-6' : ''}`}
+                  >
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${avatarColor(lic.license_type)}`}>
+                      {tenant.name?.[0]?.toUpperCase() || 'T'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{tenant.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Badge variant="outline" className={`text-[9px] font-bold tracking-wider ${typeColor(lic.license_type)}`}>
+                          {typeLabel(lic.license_type)}
+                        </Badge>
+                        <span className="text-[11px] text-muted-foreground">{lic.plan}</span>
+                        <span className={`text-[11px] ${lic.status === 'active' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          {lic.status === 'active' ? 'Ativo' : lic.status}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              };
+
               return (
-                <button
-                  key={lic.id}
-                  onClick={() => {
-                    localStorage.setItem('whatsflow_default_tenant_id', tenant.id);
-                    window.dispatchEvent(new Event('tenant-changed'));
-                    setTenantPickerOpen(false);
-                    navigate('/');
-                  }}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors text-left"
-                >
-                  <div className="h-9 w-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-400 shrink-0">
-                    {tenant.name?.[0]?.toUpperCase() || 'T'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{tenant.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{lic.plan} · <span className={lic.status === 'active' ? 'text-emerald-400' : 'text-amber-400'}>{lic.status === 'active' ? 'Ativo' : lic.status}</span></p>
-                  </div>
-                </button>
+                <>
+                  {/* Internal licenses */}
+                  {internal.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-bold tracking-widest text-blue-400/70 uppercase px-1">Interno</p>
+                      {internal.map((lic: any) => renderTenantButton(lic))}
+                    </div>
+                  )}
+                  {/* Whitelabel licenses with children */}
+                  {whitelabels.map((wl: any) => {
+                    const wlChildren = children.filter((c: any) => c.parent_license_id === wl.id);
+                    return (
+                      <div key={wl.id} className="space-y-1.5">
+                        <p className="text-[10px] font-bold tracking-widest text-purple-400/70 uppercase px-1">Whitelabel</p>
+                        {renderTenantButton(wl)}
+                        {wlChildren.length > 0 && (
+                          <div className="space-y-1 border-l-2 border-purple-500/20 ml-4">
+                            {wlChildren.map((c: any) => renderTenantButton(c, true))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {/* Standalone individual licenses */}
+                  {individuals.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-bold tracking-widest text-emerald-400/70 uppercase px-1">Individual</p>
+                      {individuals.map((lic: any) => renderTenantButton(lic))}
+                    </div>
+                  )}
+                </>
               );
-            })}
-            {(!tenants || tenants.length === 0) && (
-              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma licença encontrada.</p>
-            )}
+            })()}
           </div>
         </DialogContent>
       </Dialog>
