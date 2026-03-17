@@ -96,89 +96,118 @@ export default function UsersPage() {
         </PermissionGate>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <SummaryCard icon={Users} label="Total de Usuários" value={counts.total} />
-        <SummaryCard icon={ShieldCheck} label="Administradores" value={counts.admins} />
-        <SummaryCard icon={Shield} label="Gestores" value={counts.gestors} />
+      {/* Metric Pills */}
+      <div className="flex flex-wrap gap-3">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-muted text-foreground text-sm font-semibold">
+          <span className="text-lg font-bold">{counts.total}</span>
+          <span className="opacity-80">Total</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-400 text-sm font-semibold">
+          <span className="text-lg font-bold">{profiles.filter(p => p.invitation_status === 'active').length}</span>
+          <span className="opacity-80">Ativos</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-400 text-sm font-semibold">
+          <span className="text-lg font-bold">{profiles.filter(p => p.invitation_status === 'invited' || p.invitation_status === 'accepted').length}</span>
+          <span className="opacity-80">Pendentes</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-muted text-muted-foreground text-sm font-semibold">
+          <span className="text-lg font-bold">{profiles.filter(p => !p.invitation_status || p.invitation_status === 'inactive').length}</span>
+          <span className="opacity-80">Inativos</span>
+        </div>
       </div>
 
-      {/* Users Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Perfil</TableHead>
-                <TableHead>Status do Convite</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-              ) : profiles.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
-              ) : profiles.map((p) => {
-                const role = (p.role || "consultor") as UserRole;
-                const color = ROLE_COLORS[role] || "#888";
-                const invStatus = (p.invitation_status || "active") as "pending" | "invited" | "accepted" | "active";
-                return (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0"
-                          style={{ width: 32, height: 32, background: `${color}20`, color, border: `1px solid ${color}40` }}
-                        >
-                          {(p.full_name || "?").charAt(0).toUpperCase()}
-                        </span>
-                        <span className="font-medium text-foreground">{p.full_name || "Sem nome"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className="text-[10px] font-bold"
-                        style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}
-                      >
-                        {ROLE_LABELS[role] || role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="min-w-[280px]">
-                      <InvitationTimeline
-                        status={invStatus}
-                        invitedAt={p.invited_at}
-                        acceptedAt={p.invite_accepted_at}
-                        createdAt={p.created_at}
-                      />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <PermissionGate module="usuarios" action="edit">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditUser(p)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </PermissionGate>
-                        <PermissionGate module="usuarios" action="delete">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteUser(p)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </PermissionGate>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Users List */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-16 rounded-[var(--radius)] bg-card border border-border animate-pulse" />
+          ))}
+        </div>
+      ) : profiles.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p>Nenhum usuário encontrado</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {profiles.map((p) => {
+            const role = (p.role || "consultor") as UserRole;
+            const color = ROLE_COLORS[role] || "#888";
+            const invStatus = (p.invitation_status || "active") as "pending" | "invited" | "accepted" | "active";
+            const statusOrder: Record<string, number> = { pending: 0, invited: 1, accepted: 2, active: 3 };
+            const current = statusOrder[invStatus] ?? 0;
+            const steps = [
+              { key: 'invited', label: 'Convite Enviado' },
+              { key: 'accepted', label: 'Link Acessado' },
+              { key: 'active', label: 'Conta Ativa' },
+            ];
 
+            return (
+              <div key={p.id} className="flex items-center gap-4 px-4 py-3 rounded-[var(--radius)] bg-card border border-border">
+                <div className="flex items-center gap-3 min-w-[200px]">
+                  <span
+                    className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0 w-9 h-9"
+                    style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}
+                  >
+                    {(p.full_name || "?").charAt(0).toUpperCase()}
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium text-foreground text-sm leading-tight">{p.full_name || "Sem nome"}</span>
+                    <Badge
+                      className="text-[10px] font-bold w-fit"
+                      style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}
+                    >
+                      {ROLE_LABELS[role] || role}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="flex-1 flex items-center gap-2 flex-wrap">
+                  {steps.map((step) => {
+                    const isComplete = current >= statusOrder[step.key];
+                    return (
+                      <span
+                        key={step.key}
+                        className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full border ${
+                          isComplete
+                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                            : 'bg-muted/50 text-muted-foreground/40 border-border'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${isComplete ? 'bg-emerald-400' : 'bg-muted-foreground/30'}`} />
+                        {step.label}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <PermissionGate module="usuarios" action="edit">
+                    <button
+                      onClick={() => setEditUser(p)}
+                      className="w-7 h-7 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate module="usuarios" action="delete">
+                    <button
+                      onClick={() => handleDeleteUser(p)}
+                      className="w-7 h-7 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </PermissionGate>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {/* Edit User Dialog */}
       {editUser && (
         <Dialog open={!!editUser} onOpenChange={(open) => { if (!open) setEditUser(null); }}>
