@@ -181,7 +181,7 @@ function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: 
         className={() => cn(menuItemBase, "rounded-lg", isCollapsed ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
       >
         <span className="relative shrink-0 flex items-center justify-center">
-          <Icon className="h-4 w-4 opacity-60" />
+          {CustomIcon ? <CustomIcon size={16} className="opacity-80" /> : <LucideIcon className="h-4 w-4 opacity-60" />}
           {isCollapsed && badgeCount > 0 && (
             <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
           )}
