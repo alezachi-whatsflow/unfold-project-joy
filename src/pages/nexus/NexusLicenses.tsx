@@ -64,6 +64,9 @@ export default function NexusLicenses() {
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
     }
+    if (typeFilter !== 'all') {
+      query = query.eq('license_type', typeFilter);
+    }
 
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
