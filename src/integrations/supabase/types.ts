@@ -2014,6 +2014,10 @@ export type Database = {
           custom_permissions: Json | null
           full_name: string | null
           id: string
+          invitation_status: string | null
+          invite_accepted_at: string | null
+          invited_at: string | null
+          invited_by: string | null
           license_id: string | null
           role: string | null
           updated_at: string | null
@@ -2024,6 +2028,10 @@ export type Database = {
           custom_permissions?: Json | null
           full_name?: string | null
           id: string
+          invitation_status?: string | null
+          invite_accepted_at?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
           license_id?: string | null
           role?: string | null
           updated_at?: string | null
@@ -2034,6 +2042,10 @@ export type Database = {
           custom_permissions?: Json | null
           full_name?: string | null
           id?: string
+          invitation_status?: string | null
+          invite_accepted_at?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
           license_id?: string | null
           role?: string | null
           updated_at?: string | null
