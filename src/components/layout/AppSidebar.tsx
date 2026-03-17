@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, User, Moon, Sun, ChevronLeft, ChevronRight, X, Menu } from "lucide-react";
+import { LogOut, User, Moon, Sun, ChevronLeft, ChevronRight, X, Menu, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -96,6 +96,22 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
   const roleColor = ROLE_COLORS[userRole] || '#888';
   const isCollapsed = collapsed && !isMobile;
 
+  // Check if user has Nexus access
+  const { data: isNexusUser } = useQuery({
+    queryKey: ["is-nexus-user", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from('nexus_users')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user?.id,
+  });
+
   const handleLogout = async () => {
     try { await signOut(); toast.success("Logout realizado"); } catch { toast.error("Erro ao sair"); }
   };
@@ -120,6 +136,11 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onClick={() => navigate("/perfil")}><User className="mr-2 h-4 w-4" /> Meu Perfil</DropdownMenuItem>
+          {isNexusUser && (
+            <DropdownMenuItem onClick={() => navigate("/nexus")}>
+              <Shield className="mr-2 h-4 w-4 text-emerald-400" /> Nexus Admin
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setTheme(theme === "sapphire" ? "slate" : theme === "slate" ? "forest" : "sapphire")}>
             {theme === "sapphire" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
             Alternar Tema
