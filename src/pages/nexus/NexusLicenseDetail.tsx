@@ -10,8 +10,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  ArrowLeft, Edit, Lock, Unlock, ExternalLink, Ticket, Loader2, Save,
+  ArrowLeft, Lock, Unlock, ExternalLink, Ticket, Loader2, Save,
   Monitor, Smartphone, Users, MessageSquare, HardDrive,
+  Shield, Building2, FlaskConical, UserCheck,
 } from 'lucide-react';
 import { useNexus } from '@/contexts/NexusContext';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +22,30 @@ const STATUS_BADGES: Record<string, string> = {
   inactive: 'bg-muted text-muted-foreground',
   blocked: 'bg-red-500/20 text-red-400 border-red-500/30',
   suspended: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+};
+
+const TYPE_CONFIG: Record<string, { label: string; badge: string; icon: any; description: string; layer: string }> = {
+  internal: {
+    label: 'Interno',
+    badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    icon: FlaskConical,
+    description: 'Licença interna — ambiente de testes e desenvolvimento. Features novas são testadas aqui antes de ir para produção.',
+    layer: 'CAMADA 1B — INTERNA',
+  },
+  whitelabel: {
+    label: 'WhiteLabel',
+    badge: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+    icon: Building2,
+    description: 'Licença modelo WhiteLabel. Controla sub-licenças de outras empresas sob sua própria marca.',
+    layer: 'CAMADA 1A — WHITELABEL',
+  },
+  individual: {
+    label: 'Individual',
+    badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    icon: UserCheck,
+    description: 'Licença individual vendida diretamente pela Whatsflow ou por parceiros WhiteLabel.',
+    layer: 'CAMADA 2 — CLIENTE FINAL',
+  },
 };
 
 export default function NexusLicenseDetail() {
@@ -33,6 +58,8 @@ export default function NexusLicenseDetail() {
   const [usage, setUsage] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [subLicenses, setSubLicenses] = useState<any[]>([]);
+  const [parentLicense, setParentLicense] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
@@ -54,6 +81,26 @@ export default function NexusLicenseDetail() {
       setLicense(licRes.data);
       setTenant(licRes.data.tenants);
       setNotes(licRes.data.internal_notes || '');
+
+      // Load sub-licenses if whitelabel
+      if (licRes.data.license_type === 'whitelabel') {
+        const { data: subs } = await supabase
+          .from('licenses')
+          .select('*, tenants!inner(name, slug, email)')
+          .eq('parent_license_id', id!)
+          .order('created_at', { ascending: false });
+        setSubLicenses(subs || []);
+      }
+
+      // Load parent if this is a child license
+      if (licRes.data.parent_license_id) {
+        const { data: parent } = await supabase
+          .from('licenses')
+          .select('*, tenants!inner(name, slug)')
+          .eq('id', licRes.data.parent_license_id)
+          .maybeSingle();
+        setParentLicense(parent);
+      }
     }
     setUsage(usageRes.data || []);
     setTickets(ticketsRes.data || []);
@@ -93,6 +140,10 @@ export default function NexusLicenseDetail() {
     return <div className="text-center py-20 text-muted-foreground">Licença não encontrada</div>;
   }
 
+  const licenseType = license.license_type || 'individual';
+  const tc = TYPE_CONFIG[licenseType] || TYPE_CONFIG.individual;
+  const TypeIcon = tc.icon;
+
   const totalDevices = (license.base_devices_web || 0) + (license.extra_devices_web || 0);
   const totalMeta = (license.base_devices_meta || 0) + (license.extra_devices_meta || 0);
   const totalAttendants = (license.base_attendants || 0) + (license.extra_attendants || 0);
@@ -113,10 +164,14 @@ export default function NexusLicenseDetail() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold text-foreground">{tenant?.name || '—'}</h1>
               <Badge className={`text-[10px] ${STATUS_BADGES[license.status] || ''}`}>
                 {license.status === 'active' ? 'Ativo' : license.status === 'blocked' ? 'Bloqueado' : license.status}
+              </Badge>
+              <Badge className={`text-[10px] ${tc.badge}`}>
+                <TypeIcon className="h-3 w-3 mr-1" />
+                {tc.label}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{tenant?.email} · {tenant?.slug}</p>
@@ -128,7 +183,17 @@ export default function NexusLicenseDetail() {
               <Button variant="outline" size="sm" onClick={handleToggleBlock}>
                 {license.status === 'blocked' ? <><Unlock className="h-3.5 w-3.5 mr-1" /> Desbloquear</> : <><Lock className="h-3.5 w-3.5 mr-1" /> Bloquear</>}
               </Button>
-              <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
+              <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                onClick={() => {
+                  localStorage.setItem('whatsflow_default_tenant_id', license.tenant_id);
+                  window.dispatchEvent(new Event('tenant-changed'));
+                  if (licenseType === 'whitelabel' && license.whitelabel_slug) {
+                    navigate(`/lab/${license.whitelabel_slug}`);
+                  } else {
+                    navigate('/');
+                  }
+                }}
+              >
                 <ExternalLink className="h-3.5 w-3.5 mr-1" /> Acessar como Admin
               </Button>
             </>
@@ -139,18 +204,123 @@ export default function NexusLicenseDetail() {
         </div>
       </div>
 
+      {/* Layer Banner */}
+      <Card className={`border-2 ${licenseType === 'whitelabel' ? 'border-purple-500/30 bg-purple-500/5' : licenseType === 'internal' ? 'border-blue-500/30 bg-blue-500/5' : 'border-emerald-500/30 bg-emerald-500/5'}`}>
+        <CardContent className="py-3 px-4">
+          <div className="flex items-center gap-3">
+            <TypeIcon className={`h-5 w-5 ${licenseType === 'whitelabel' ? 'text-purple-400' : licenseType === 'internal' ? 'text-blue-400' : 'text-emerald-400'}`} />
+            <div>
+              <p className={`text-[10px] font-bold tracking-widest ${licenseType === 'whitelabel' ? 'text-purple-400' : licenseType === 'internal' ? 'text-blue-400' : 'text-emerald-400'}`}>
+                {tc.layer}
+              </p>
+              <p className="text-xs text-muted-foreground">{tc.description}</p>
+            </div>
+          </div>
+          {/* Show parent whitelabel if this is a child license */}
+          {parentLicense && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <Shield className="h-3.5 w-3.5 text-purple-400" />
+              Gerenciada por: <button className="text-purple-400 hover:underline font-medium" onClick={() => navigate(`/nexus/licencas/${parentLicense.id}`)}>{parentLicense.tenants?.name}</button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Whitelabel: Sub-licenses section */}
+      {licenseType === 'whitelabel' && (
+        <Card className="bg-card/50 border-purple-500/20">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-purple-400" />
+              Sub-Licenças Gerenciadas
+              <Badge variant="outline" className="text-[10px] border-purple-500/30 text-purple-400 ml-2">{subLicenses.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {subLicenses.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma sub-licença vinculada</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Plano</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subLicenses.map((sub: any) => (
+                    <TableRow key={sub.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => navigate(`/nexus/licencas/${sub.id}`)}>
+                      <TableCell>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{sub.tenants?.name || '—'}</p>
+                          <p className="text-xs text-muted-foreground">{sub.tenants?.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px]">{sub.plan}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`text-[10px] ${STATUS_BADGES[sub.status] || ''}`}>
+                          {sub.status === 'active' ? 'Ativo' : sub.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        R$ {Number(sub.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); navigate(`/nexus/licencas/${sub.id}`); }}>
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Internal: Testing notice */}
+      {licenseType === 'internal' && (
+        <Card className="bg-blue-500/5 border-blue-500/20">
+          <CardContent className="py-4 px-4">
+            <div className="flex items-center gap-3">
+              <FlaskConical className="h-5 w-5 text-blue-400" />
+              <div>
+                <p className="text-sm font-medium text-blue-400">Ambiente de Testes</p>
+                <p className="text-xs text-muted-foreground">
+                  Esta licença é isenta de cobrança. Todas as features são testadas aqui antes de ir para produção.
+                </p>
+              </div>
+              <div className="ml-auto flex gap-2">
+                <Badge className="bg-blue-500/15 text-blue-400 border-blue-500/30 text-[10px]">Internal</Badge>
+                <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">Testing</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Summary + Resources */}
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="bg-card/50 border-border/50">
           <CardHeader><CardTitle className="text-base">Resumo</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
+            <Row label="Tipo" value={tc.label} />
             <Row label="Plano" value={license.plan === 'profissional' ? 'Profissional' : license.plan === 'solo_pro' ? 'Solo Pro' : license.plan} />
-            <Row label="Valor" value={`R$ ${Number(license.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês`} />
+            <Row label="Valor" value={licenseType === 'internal' ? 'Isento' : `R$ ${Number(license.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês`} />
             <Row label="Ciclo" value={license.billing_cycle || '—'} />
             <Row label="Ativação" value={license.starts_at ? new Date(license.starts_at).toLocaleDateString('pt-BR') : '—'} />
             <Row label="Vencimento" value={license.expires_at ? new Date(license.expires_at).toLocaleDateString('pt-BR') : '—'} />
             <Row label="Facilite" value={license.facilite_plan === 'none' ? 'Nenhum' : license.facilite_plan || 'Nenhum'} />
             <Row label="Módulo I.A." value={license.has_ai_module ? `Sim (${license.ai_agents_limit || 0} agentes)` : 'Não'} />
+            {licenseType === 'whitelabel' && (
+              <Row label="Sub-Licenças" value={`${subLicenses.length} empresa(s)`} />
+            )}
           </CardContent>
         </Card>
 
