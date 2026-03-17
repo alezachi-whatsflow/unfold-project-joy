@@ -127,7 +127,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
             {!isCollapsed && (
               <div className="min-w-0 text-left flex-1">
                 <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{userName}</p>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${roleColor}20`, color: roleColor, border: `1px side ${roleColor}30` }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}30` }}>
                   {roleLabel}
                 </span>
               </div>
