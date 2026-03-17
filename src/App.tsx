@@ -99,6 +99,18 @@ const AppRoutes = () => (
     <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/acesso-negado" element={<AuthGuard><AcessoNegadoPage /></AuthGuard>} />
 
+    {/* Nexus Portal */}
+    <Route path="/nexus/login" element={<NexusLogin />} />
+    <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
+      <Route index element={<NexusDashboard />} />
+      <Route path="licencas" element={<NexusLicenses />} />
+      <Route path="financeiro" element={<NexusFinanceiro />} />
+      <Route path="equipe" element={<NexusEquipe />} />
+      <Route path="auditoria" element={<NexusAuditLog />} />
+      <Route path="flags" element={<NexusFeatureFlags />} />
+      <Route path="tickets" element={<NexusTickets />} />
+    </Route>
+
     {/* SuperAdmin Portal */}
     <Route path="/superadmin" element={<AuthGuard><SuperAdminLayout /></AuthGuard>}>
       <Route index element={<SuperAdminDashboard />} />
