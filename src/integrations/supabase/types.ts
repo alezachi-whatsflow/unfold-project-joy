@@ -2340,6 +2340,104 @@ export type Database = {
           },
         ]
       }
+      tenant_sync_configs: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          source_tenant_id: string
+          sync_scope: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          source_tenant_id: string
+          sync_scope?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          source_tenant_id?: string
+          sync_scope?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sync_configs_source_tenant_id_fkey"
+            columns: ["source_tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_sync_logs: {
+        Row: {
+          completed_at: string | null
+          error_details: Json | null
+          executed_by: string | null
+          id: string
+          items_failed: number | null
+          items_synced: number | null
+          result: Json | null
+          scope: string[]
+          source_tenant_id: string
+          started_at: string
+          status: string
+          sync_config_id: string
+          target_tenant_ids: string[]
+        }
+        Insert: {
+          completed_at?: string | null
+          error_details?: Json | null
+          executed_by?: string | null
+          id?: string
+          items_failed?: number | null
+          items_synced?: number | null
+          result?: Json | null
+          scope?: string[]
+          source_tenant_id: string
+          started_at?: string
+          status?: string
+          sync_config_id: string
+          target_tenant_ids?: string[]
+        }
+        Update: {
+          completed_at?: string | null
+          error_details?: Json | null
+          executed_by?: string | null
+          id?: string
+          items_failed?: number | null
+          items_synced?: number | null
+          result?: Json | null
+          scope?: string[]
+          source_tenant_id?: string
+          started_at?: string
+          status?: string
+          sync_config_id?: string
+          target_tenant_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sync_logs_source_tenant_id_fkey"
+            columns: ["source_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_sync_logs_sync_config_id_fkey"
+            columns: ["sync_config_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_sync_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           cpf_cnpj: string | null
