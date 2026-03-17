@@ -1,0 +1,327 @@
+/* =============================================
+   WHATSFLOW — SISTEMA DE TEMAS PROFISSIONAIS
+   3 temas para uso prolongado sem fadiga visual
+   Referência: Apple CarPlay + Neuromarketing
+   ============================================= */
+
+/* -----------------------------------------------
+   TEMA 1: DEEP SAPPHIRE (padrão)
+   Azul profundo — familiar, sofisticado, zero fadiga
+   ----------------------------------------------- */
+[data-theme="sapphire"] {
+  /* Map to existing Tailwind tokens (HSL) */
+  --background: 213 54% 11%;
+  --foreground: 207 100% 95%;
+  --card: 213 50% 12%;
+  --card-foreground: 207 100% 95%;
+  --popover: 213 50% 14%;
+  --popover-foreground: 207 100% 95%;
+  --primary: 157 83% 40%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 213 36% 18%;
+  --secondary-foreground: 207 40% 80%;
+  --muted: 213 30% 16%;
+  --muted-foreground: 207 30% 55%;
+  --accent: 214 100% 64%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 213 30% 16%;
+  --input: 213 36% 20%;
+  --ring: 157 83% 40%;
+  --radius: 0.75rem;
+  --success: 157 92% 60%;
+  --success-foreground: 213 54% 11%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 38 10% 10%;
+
+  --chart-1: 157 83% 40%;
+  --chart-2: 214 100% 64%;
+  --chart-3: 157 92% 60%;
+  --chart-4: 38 92% 50%;
+  --chart-5: 0 72% 51%;
+
+  --sidebar-background: 213 55% 8%;
+  --sidebar-foreground: 207 40% 80%;
+  --sidebar-primary: 157 83% 40%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 213 36% 15%;
+  --sidebar-accent-foreground: 207 100% 95%;
+  --sidebar-border: 213 30% 14%;
+  --sidebar-ring: 157 83% 40%;
+
+  /* Extended theme tokens */
+  --bg-card-glass: rgba(26, 58, 92, 0.60);
+  --bg-card-hover: rgba(26, 58, 92, 0.85);
+  --bg-chat: rgba(15, 27, 45, 0.85);
+  --bg-bubble-in: rgba(26, 58, 92, 0.90);
+  --bg-bubble-out: rgba(17, 188, 118, 0.22);
+  --accent-primary: #11BC76;
+  --accent-primary-bg: rgba(17, 188, 118, 0.14);
+  --accent-secondary: #4A9EFF;
+  --accent-secondary-bg: rgba(74, 158, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-card: rgba(74, 158, 255, 0.12);
+  --border-sidebar: rgba(74, 158, 255, 0.08);
+  --section-accent: #11BC76;
+  --glass-blur: 12px;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --text-bubble-in: #D0E8FF;
+  --text-bubble-out: #B8F5DC;
+}
+
+/* -----------------------------------------------
+   TEMA 2: MIDNIGHT SLATE
+   Cinza ardósia quente — máximo conforto para longas horas
+   ----------------------------------------------- */
+[data-theme="slate"] {
+  --background: 217 15% 10%;
+  --foreground: 80 10% 95%;
+  --card: 217 12% 12%;
+  --card-foreground: 80 10% 95%;
+  --popover: 217 12% 14%;
+  --popover-foreground: 80 10% 95%;
+  --primary: 160 84% 39%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 12% 18%;
+  --secondary-foreground: 220 10% 70%;
+  --muted: 217 10% 15%;
+  --muted-foreground: 220 10% 48%;
+  --accent: 38 92% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 217 10% 16%;
+  --input: 217 12% 20%;
+  --ring: 160 84% 39%;
+  --radius: 0.75rem;
+  --success: 160 84% 45%;
+  --success-foreground: 217 15% 10%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 38 10% 10%;
+
+  --chart-1: 160 84% 39%;
+  --chart-2: 38 92% 50%;
+  --chart-3: 157 92% 60%;
+  --chart-4: 214 100% 64%;
+  --chart-5: 0 72% 51%;
+
+  --sidebar-background: 217 15% 8%;
+  --sidebar-foreground: 220 10% 70%;
+  --sidebar-primary: 160 84% 39%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 12% 15%;
+  --sidebar-accent-foreground: 80 10% 95%;
+  --sidebar-border: 217 10% 14%;
+  --sidebar-ring: 160 84% 39%;
+
+  --bg-card-glass: rgba(37, 42, 48, 0.80);
+  --bg-card-hover: rgba(37, 42, 48, 0.98);
+  --bg-chat: rgba(22, 25, 29, 0.90);
+  --bg-bubble-in: rgba(37, 42, 48, 0.95);
+  --bg-bubble-out: rgba(245, 158, 11, 0.18);
+  --accent-primary: #10B981;
+  --accent-primary-bg: rgba(16, 185, 129, 0.14);
+  --accent-secondary: #F59E0B;
+  --accent-secondary-bg: rgba(245, 158, 11, 0.13);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(245, 158, 11, 0.10);
+  --border-sidebar: rgba(245, 158, 11, 0.08);
+  --section-accent: #F59E0B;
+  --glass-blur: 10px;
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --text-bubble-in: #E5E7EB;
+  --text-bubble-out: #FDE68A;
+}
+
+/* -----------------------------------------------
+   TEMA 3: OBSIDIAN FOREST
+   Verde esmeralda no preto — identidade Whatsflow refinada
+   ----------------------------------------------- */
+[data-theme="forest"] {
+  --background: 140 24% 4%;
+  --foreground: 153 100% 95%;
+  --card: 147 33% 10%;
+  --card-foreground: 153 100% 95%;
+  --popover: 147 33% 12%;
+  --popover-foreground: 153 100% 95%;
+  --primary: 157 92% 60%;
+  --primary-foreground: 140 24% 6%;
+  --secondary: 147 20% 14%;
+  --secondary-foreground: 153 40% 72%;
+  --muted: 147 18% 12%;
+  --muted-foreground: 147 25% 40%;
+  --accent: 157 83% 40%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 85% 55%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 147 18% 12%;
+  --input: 147 20% 16%;
+  --ring: 157 92% 60%;
+  --radius: 0.75rem;
+  --success: 157 83% 40%;
+  --success-foreground: 0 0% 100%;
+  --warning: 45 100% 55%;
+  --warning-foreground: 45 10% 10%;
+
+  --chart-1: 157 92% 60%;
+  --chart-2: 157 83% 40%;
+  --chart-3: 214 100% 64%;
+  --chart-4: 45 100% 55%;
+  --chart-5: 0 72% 51%;
+
+  --sidebar-background: 140 24% 3%;
+  --sidebar-foreground: 153 40% 72%;
+  --sidebar-primary: 157 92% 60%;
+  --sidebar-primary-foreground: 140 24% 6%;
+  --sidebar-accent: 147 18% 12%;
+  --sidebar-accent-foreground: 153 100% 95%;
+  --sidebar-border: 147 18% 10%;
+  --sidebar-ring: 157 92% 60%;
+
+  --bg-card-glass: rgba(17, 34, 24, 0.70);
+  --bg-card-hover: rgba(17, 34, 24, 0.92);
+  --bg-chat: rgba(10, 15, 13, 0.92);
+  --bg-bubble-in: rgba(17, 34, 24, 0.92);
+  --bg-bubble-out: rgba(17, 188, 118, 0.18);
+  --accent-primary: #39F7B2;
+  --accent-primary-bg: rgba(57, 247, 178, 0.12);
+  --accent-secondary: #11BC76;
+  --accent-secondary-bg: rgba(17, 188, 118, 0.14);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-card: rgba(57, 247, 178, 0.10);
+  --border-sidebar: rgba(57, 247, 178, 0.07);
+  --section-accent: #39F7B2;
+  --glass-blur: 14px;
+  --glass-border: rgba(57, 247, 178, 0.08);
+  --text-bubble-in: #C8F0DE;
+  --text-bubble-out: #A7F5D4;
+}
+
+/* -----------------------------------------------
+   VARIÁVEIS GLOBAIS (compartilhadas por todos os temas)
+   ----------------------------------------------- */
+:root {
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.25);
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.40);
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --color-danger: #EF4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.12);
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+}
+
+/* -----------------------------------------------
+   GLASSMORPHISM utility classes
+   ----------------------------------------------- */
+.glass-metric-card {
+  background: var(--bg-card-glass);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+.glass-metric-card:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+}
+.glass-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+}
+
+/* -----------------------------------------------
+   SIDEBAR ITEM — 3 estados: repouso / hover / ativo
+   ----------------------------------------------- */
+.sidebar-icon-item {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  background: transparent;
+  color: var(--muted-foreground, rgba(255,255,255,0.35));
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.sidebar-icon-item:hover:not(.sidebar-icon-active) {
+  background: var(--accent-secondary-bg);
+  color: var(--accent-secondary);
+  transform: scale(1.08);
+}
+
+.sidebar-icon-active {
+  background: var(--accent-primary-bg);
+  color: var(--accent-primary);
+}
+
+.sidebar-icon-item:active {
+  transform: scale(0.96);
+}
+
+.sidebar-icon-active::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--accent-primary);
+  border-radius: 2px 0 0 2px;
+}
+
+/* -----------------------------------------------
+   Mensageria theme overrides
+   ----------------------------------------------- */
+.wf-chat-area {
+  background: var(--bg-chat);
+}
+
+.wf-bubble-in {
+  background: var(--bg-bubble-in);
+  color: var(--text-bubble-in);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  border-bottom-left-radius: 4px;
+}
+
+.wf-bubble-out {
+  background: var(--bg-bubble-out);
+  color: var(--text-bubble-out);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  border-bottom-right-radius: 4px;
+}
+
+/* -----------------------------------------------
+   Section headers with accent bar
+   ----------------------------------------------- */
+.wf-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.wf-section-header::before {
+  content: '';
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--section-accent);
+  display: inline-block;
+}
