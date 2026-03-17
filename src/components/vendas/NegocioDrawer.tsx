@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil } from "lucide-react";
+import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { generateQuickReportHtml } from "@/components/intelligence/prospeccao/quickReportGenerator";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NegocioEditModal from "./NegocioEditModal";
+import FechamentoGanhoModal from "./FechamentoGanhoModal";
+import MotivoPerdaModal from "./MotivoPerdaModal";
 
 interface Props {
   negocio: Negocio;
@@ -61,6 +63,11 @@ function getScoreColor(score: number): string {
   return "#f87171";
 }
 
+function generatePaymentLink(negocio: Negocio): string {
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/checkout/${negocio.id}`;
+}
+
 export default function NegocioDrawer({ negocio, onClose }: Props) {
   const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios();
   const navigate = useNavigate();
@@ -69,6 +76,8 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const [title, setTitle] = useState(negocio.titulo);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [ganhoModal, setGanhoModal] = useState(false);
+  const [perdaModal, setPerdaModal] = useState(false);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
@@ -77,7 +86,18 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const diScore = isDI ? getDigitalScoreFromNotas(negocio.notas) : null;
   const origemDetalhe = isDI ? getOrigemDetalheFromNotas(negocio.notas) : null;
 
+  const isActive = !['fechado_ganho', 'fechado_perdido'].includes(negocio.status);
+  const isGanho = negocio.status === 'fechado_ganho';
+
   const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === 'fechado_ganho') {
+      setGanhoModal(true);
+      return;
+    }
+    if (newStatus === 'fechado_perdido') {
+      setPerdaModal(true);
+      return;
+    }
     await changeStatus(negocio, newStatus as NegocioStatus);
     toast.success(`Status alterado para ${NEGOCIO_STATUS_CONFIG[newStatus as NegocioStatus].label}`);
   };
@@ -107,6 +127,12 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
     await deleteNegocio(negocio.id);
     toast.success("Negócio excluído");
     onClose();
+  };
+
+  const handleCopyPaymentLink = () => {
+    const link = generatePaymentLink(negocio);
+    navigator.clipboard.writeText(link);
+    toast.success("Link de pagamento copiado!");
   };
 
   return (
@@ -147,12 +173,59 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
             <PermissionGate module="vendas" action="delete">
               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
             </PermissionGate>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}><X className="h-4 w-4" /></Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
+        {/* Quick action: Fechar Negócio */}
+        {isActive && (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="flex-1 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setGanhoModal(true)}
+            >
+              <Trophy className="h-3.5 w-3.5" /> Fechar como Ganho
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+              onClick={() => setPerdaModal(true)}
+            >
+              <X className="h-3.5 w-3.5" /> Fechar como Perdido
+            </Button>
+          </div>
+        )}
+
+        {/* Payment link for ganho */}
+        {isGanho && (
+          <section className="rounded-lg p-3 border border-emerald-500/30 bg-emerald-500/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-semibold text-emerald-500">Link de Pagamento / Contrato</span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Input value={generatePaymentLink(negocio)} readOnly className="text-xs h-8 bg-background" />
+              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={handleCopyPaymentLink}>
+                <Copy className="h-3 w-3" /> Copiar
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1.5">
+              Envie este link para o cliente preencher os dados e confirmar o contrato.
+            </p>
+          </section>
+        )}
+
         {/* Digital Intelligence Origin Banner */}
         {isDI && (
           <section className="rounded-lg p-3 border" style={{ borderColor: "#00C89640", backgroundColor: "#0D3D2E20" }}>
@@ -171,7 +244,6 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
                 </span>
               </div>
             )}
-            {/* DI Action Buttons */}
             <div className="grid grid-cols-2 gap-2 mt-3">
               <Button
                 size="sm"
@@ -354,6 +426,16 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
           <NegocioEditModal negocio={negocio} onClose={() => setEditOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      {/* Fechamento Ganho Modal */}
+      {ganhoModal && (
+        <FechamentoGanhoModal negocio={negocio} onClose={() => setGanhoModal(false)} />
+      )}
+
+      {/* Motivo Perda Modal */}
+      {perdaModal && (
+        <MotivoPerdaModal negocio={negocio} onClose={() => setPerdaModal(false)} />
+      )}
     </div>
   );
 }
