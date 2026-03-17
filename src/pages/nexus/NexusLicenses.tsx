@@ -53,7 +53,7 @@ export default function NexusLicenses() {
 
   useEffect(() => {
     loadLicenses();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, typeFilter]);
 
   async function loadLicenses() {
     setLoading(true);
