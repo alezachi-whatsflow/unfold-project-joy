@@ -31,6 +31,12 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Ativo', inactive: 'Inativo', blocked: 'Bloqueado', suspended: 'Suspenso', trial: 'Trial',
 };
 
+const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
+  internal:   { label: 'Interno',    className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  whitelabel: { label: 'WhiteLabel', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  individual: { label: 'Individual', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+};
+
 export default function NexusLicenses() {
   const { can } = useNexus();
   const navigate = useNavigate();
