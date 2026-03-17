@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, User, Moon, Sun, ChevronLeft, ChevronRight, X, Menu } from "lucide-react";
+import { LogOut, User, Moon, Sun, ChevronLeft, ChevronRight, X, Menu, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
