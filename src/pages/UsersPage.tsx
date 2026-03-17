@@ -44,6 +44,8 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editUser, setEditUser] = useState<ProfileRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProfileRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["all-profiles"],
@@ -66,17 +68,24 @@ export default function UsersPage() {
       toast.error("Você não pode remover a si mesmo.");
       return;
     }
-    if (!confirm(`Remover o usuário "${profile.full_name || 'Sem nome'}"? Esta ação não pode ser desfeita.`)) return;
+    setDeleteTarget(profile);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      const { error } = await supabase.from("profiles").delete().eq("id", profile.id);
+      const { error } = await supabase.from("profiles").delete().eq("id", deleteTarget.id);
       if (error) throw error;
       toast.success("Usuário removido.");
       queryClient.invalidateQueries({ queryKey: ["all-profiles"] });
     } catch (err: any) {
       toast.error(err?.message || "Erro ao remover usuário.");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
