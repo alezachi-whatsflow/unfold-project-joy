@@ -1258,17 +1258,21 @@ export type Database = {
           has_implantacao_starter: boolean | null
           id: string
           internal_notes: string | null
+          is_internal: boolean | null
           license_key: string | null
+          license_type: string
           max_instances: number
           max_users: number
           monthly_messages_limit: number | null
           monthly_value: number | null
+          parent_license_id: string | null
           plan: string
           starts_at: string
           status: string
           storage_limit_gb: number | null
           tenant_id: string
           updated_at: string
+          whitelabel_slug: string | null
         }
         Insert: {
           ai_agents_limit?: number | null
@@ -1289,17 +1293,21 @@ export type Database = {
           has_implantacao_starter?: boolean | null
           id?: string
           internal_notes?: string | null
+          is_internal?: boolean | null
           license_key?: string | null
+          license_type?: string
           max_instances?: number
           max_users?: number
           monthly_messages_limit?: number | null
           monthly_value?: number | null
+          parent_license_id?: string | null
           plan?: string
           starts_at?: string
           status?: string
           storage_limit_gb?: number | null
           tenant_id: string
           updated_at?: string
+          whitelabel_slug?: string | null
         }
         Update: {
           ai_agents_limit?: number | null
@@ -1320,17 +1328,21 @@ export type Database = {
           has_implantacao_starter?: boolean | null
           id?: string
           internal_notes?: string | null
+          is_internal?: boolean | null
           license_key?: string | null
+          license_type?: string
           max_instances?: number
           max_users?: number
           monthly_messages_limit?: number | null
           monthly_value?: number | null
+          parent_license_id?: string | null
           plan?: string
           starts_at?: string
           status?: string
           storage_limit_gb?: number | null
           tenant_id?: string
           updated_at?: string
+          whitelabel_slug?: string | null
         }
         Relationships: [
           {
@@ -1338,6 +1350,13 @@ export type Database = {
             columns: ["customer_success_id"]
             isOneToOne: false
             referencedRelation: "nexus_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "licenses_parent_license_id_fkey"
+            columns: ["parent_license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
             referencedColumns: ["id"]
           },
           {
@@ -1995,6 +2014,7 @@ export type Database = {
           custom_permissions: Json | null
           full_name: string | null
           id: string
+          license_id: string | null
           role: string | null
           updated_at: string | null
         }
@@ -2004,6 +2024,7 @@ export type Database = {
           custom_permissions?: Json | null
           full_name?: string | null
           id: string
+          license_id?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -2013,10 +2034,19 @@ export type Database = {
           custom_permissions?: Json | null
           full_name?: string | null
           id?: string
+          license_id?: string | null
           role?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles_analysis: {
         Row: {
@@ -2985,6 +3015,65 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      whitelabel_config: {
+        Row: {
+          can_create_licenses: boolean | null
+          created_at: string | null
+          custom_domain: string | null
+          display_name: string
+          favicon_url: string | null
+          id: string
+          license_id: string
+          logo_url: string | null
+          max_sub_licenses: number | null
+          primary_color: string | null
+          slug: string
+          support_email: string | null
+          support_whatsapp: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          can_create_licenses?: boolean | null
+          created_at?: string | null
+          custom_domain?: string | null
+          display_name: string
+          favicon_url?: string | null
+          id?: string
+          license_id: string
+          logo_url?: string | null
+          max_sub_licenses?: number | null
+          primary_color?: string | null
+          slug: string
+          support_email?: string | null
+          support_whatsapp?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          can_create_licenses?: boolean | null
+          created_at?: string | null
+          custom_domain?: string | null
+          display_name?: string
+          favicon_url?: string | null
+          id?: string
+          license_id?: string
+          logo_url?: string | null
+          max_sub_licenses?: number | null
+          primary_color?: string | null
+          slug?: string
+          support_email?: string | null
+          support_whatsapp?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_config_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -31,6 +31,12 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Ativo', inactive: 'Inativo', blocked: 'Bloqueado', suspended: 'Suspenso', trial: 'Trial',
 };
 
+const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
+  internal:   { label: 'Interno',    className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  whitelabel: { label: 'WhiteLabel', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  individual: { label: 'Individual', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+};
+
 export default function NexusLicenses() {
   const { can } = useNexus();
   const navigate = useNavigate();
@@ -38,6 +44,7 @@ export default function NexusLicenses() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [editLicense, setEditLicense] = useState<any>(null);
@@ -46,7 +53,7 @@ export default function NexusLicenses() {
 
   useEffect(() => {
     loadLicenses();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, typeFilter]);
 
   async function loadLicenses() {
     setLoading(true);
@@ -56,6 +63,9 @@ export default function NexusLicenses() {
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
+    }
+    if (typeFilter !== 'all') {
+      query = query.eq('license_type', typeFilter);
     }
 
     const from = page * PAGE_SIZE;
@@ -137,6 +147,15 @@ export default function NexusLicenses() {
             <SelectItem value="suspended">Suspenso</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Tipos</SelectItem>
+            <SelectItem value="individual">Individual</SelectItem>
+            <SelectItem value="whitelabel">WhiteLabel</SelectItem>
+            <SelectItem value="internal">Interno</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
@@ -150,6 +169,7 @@ export default function NexusLicenses() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Empresa</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Plano</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Valor</TableHead>
@@ -168,6 +188,12 @@ export default function NexusLicenses() {
                           <p className="text-sm font-medium text-foreground">{l.tenants?.name || '—'}</p>
                           <p className="text-xs text-muted-foreground">{l.tenants?.email || ''}</p>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const tc = TYPE_CONFIG[l.license_type] || TYPE_CONFIG.individual;
+                          return <Badge className={`text-[10px] ${tc.className}`}>{tc.label}</Badge>;
+                        })()}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-[10px]">
@@ -221,7 +247,7 @@ export default function NexusLicenses() {
                     </TableRow>
                   ))}
                   {filtered.length === 0 && (
-                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
