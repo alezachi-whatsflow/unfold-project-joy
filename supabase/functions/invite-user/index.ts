@@ -58,17 +58,48 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if user already exists
+    const origin = req.headers.get("origin") || "https://unfold-project-joy.lovable.app";
+    const redirectUrl = `${origin}/reset-password`;
+    const assignedRole = role || "consultor";
+
+    // Check if user already exists in auth
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(
       (u) => u.email?.toLowerCase() === email.toLowerCase()
     );
 
     if (existingUser) {
-      await adminClient
+      // Upsert profile (may have been deleted)
+      const { data: existingProfile } = await adminClient
         .from("profiles")
-        .update({ role: role || "consultor", full_name })
-        .eq("id", existingUser.id);
+        .select("id")
+        .eq("id", existingUser.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        await adminClient
+          .from("profiles")
+          .update({
+            role: assignedRole,
+            full_name,
+            invitation_status: "invited",
+            invited_at: new Date().toISOString(),
+            invited_by: caller.id,
+          })
+          .eq("id", existingUser.id);
+      } else {
+        // Profile was deleted, recreate it
+        await adminClient
+          .from("profiles")
+          .insert({
+            id: existingUser.id,
+            role: assignedRole,
+            full_name,
+            invitation_status: "invited",
+            invited_at: new Date().toISOString(),
+            invited_by: caller.id,
+          });
+      }
 
       if (tenant_id) {
         await adminClient
@@ -79,26 +110,28 @@ Deno.serve(async (req) => {
           );
       }
 
+      // Send password reset so the user can set/reset their password
+      const { error: resetError } = await adminClient.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo: redirectUrl },
+      });
+
+      if (resetError) {
+        console.error("Reset link error:", resetError);
+      }
+
       return new Response(
-        JSON.stringify({ message: "Usuário já existe. Perfil e acesso atualizados." }),
+        JSON.stringify({
+          message: `Usuário já existia. Perfil restaurado e link de redefinição de senha enviado para ${email}.`,
+          user_id: existingUser.id,
+          already_exists: true,
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Build the redirect URL for password setup
-    const origin = req.headers.get("origin") || "https://unfold-project-joy.lovable.app";
-    const redirectUrl = `${origin}/reset-password`;
-
-    const roleLabel: Record<string, string> = {
-      admin: "Administrador",
-      gestor: "Gestor",
-      financeiro: "Financeiro",
-      consultor: "Consultor",
-      representante: "Representante",
-    };
-    const assignedRole = role || "consultor";
-
-    // Invite user - Supabase sends the invite email
+    // Invite new user - Supabase sends the invite email
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
       email,
       {
