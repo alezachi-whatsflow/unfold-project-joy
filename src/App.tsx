@@ -119,6 +119,12 @@ const AppRoutes = () => (
       <Route path="configuracoes" element={<NexusConfiguracoes />} />
     </Route>
 
+    {/* WhiteLabel Lab Portal */}
+    <Route path="/lab/:whitelabelSlug" element={<AuthGuard><WhitelabelLayout /></AuthGuard>}>
+      <Route index element={<WhitelabelDashboard />} />
+      <Route path="licencas" element={<WhitelabelLicenses />} />
+    </Route>
+
     {/* SuperAdmin Portal */}
     <Route path="/superadmin" element={<AuthGuard><SuperAdminLayout /></AuthGuard>}>
       <Route index element={<SuperAdminDashboard />} />
