@@ -524,8 +524,8 @@ export function AppSidebar() {
       className="flex flex-col h-screen shrink-0 overflow-hidden"
       style={{
         width: isMobile ? 260 : sidebarW,
-        background: "#111118",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        background: "hsl(var(--sidebar-background))",
+        borderRight: "1px solid var(--border-sidebar, rgba(255,255,255,0.06))",
         transition: isMobile ? "none" : "width 250ms cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
