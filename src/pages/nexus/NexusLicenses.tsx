@@ -147,6 +147,15 @@ export default function NexusLicenses() {
             <SelectItem value="suspended">Suspenso</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Tipos</SelectItem>
+            <SelectItem value="individual">Individual</SelectItem>
+            <SelectItem value="whitelabel">WhiteLabel</SelectItem>
+            <SelectItem value="internal">Interno</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
