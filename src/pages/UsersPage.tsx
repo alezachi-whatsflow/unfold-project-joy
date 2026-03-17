@@ -111,18 +111,20 @@ export default function UsersPage() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Perfil</TableHead>
+                <TableHead>Status do Convite</TableHead>
                 <TableHead>Criado em</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : profiles.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
               ) : profiles.map((p) => {
                 const role = (p.role || "consultor") as UserRole;
                 const color = ROLE_COLORS[role] || "#888";
+                const invStatus = (p.invitation_status || "active") as "pending" | "invited" | "accepted" | "active";
                 return (
                   <TableRow key={p.id}>
                     <TableCell>
@@ -143,6 +145,14 @@ export default function UsersPage() {
                       >
                         {ROLE_LABELS[role] || role}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="min-w-[280px]">
+                      <InvitationTimeline
+                        status={invStatus}
+                        invitedAt={p.invited_at}
+                        acceptedAt={p.invite_accepted_at}
+                        createdAt={p.created_at}
+                      />
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}
