@@ -70,7 +70,7 @@ export default function WhitelabelLayout() {
   const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, path: `/lab/${whitelabelSlug}`, end: true },
     { label: 'Licenças', icon: FileText, path: `/lab/${whitelabelSlug}/licencas` },
-    { label: 'Clientes', icon: Users, path: `/lab/${whitelabelSlug}/clientes` },
+    { label: 'Equipe', icon: Users, path: `/lab/${whitelabelSlug}/equipe` },
   ];
 
   const primaryColor = config.primary_color || '#11BC76';

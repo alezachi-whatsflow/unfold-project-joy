@@ -124,6 +124,7 @@ const AppRoutes = () => (
     <Route path="/lab/:whitelabelSlug" element={<AuthGuard><WhitelabelLayout /></AuthGuard>}>
       <Route index element={<WhitelabelDashboard />} />
       <Route path="licencas" element={<WhitelabelLicenses />} />
+      <Route path="equipe" element={<WhitelabelEquipe />} />
     </Route>
 
     {/* SuperAdmin Portal */}
