@@ -191,30 +191,13 @@ export default function WizardStep2({ onNext, onBack }: Props) {
         <div className="space-y-4">
           {criteria.map((c, i) => (
             <div key={c.id} className="rounded-xl border border-border/40 bg-muted/20 overflow-hidden">
-              {/* Top bar: Label + Weight */}
-              <div className="flex items-center gap-3 p-4 pb-3">
+              {/* Top bar: Label */}
+              <div className="flex items-center gap-3 p-4 pb-2">
                 <div className="flex-1 min-w-0">
                   {editing ? (
                     <Input value={c.label} onChange={e => updateCriterion(i, 'label', e.target.value)} className="text-sm h-8" />
                   ) : (
                     <span className="text-sm font-semibold text-foreground">{c.label}</span>
-                  )}
-                </div>
-
-                {/* Weight - clearly separated */}
-                <div className="shrink-0 flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg bg-accent/30 border border-accent/20">
-                  <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-widest">Peso</span>
-                  {editing ? (
-                    <Input
-                      type="number"
-                      value={c.weight}
-                      onChange={e => updateCriterion(i, 'weight', Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
-                      className="text-sm h-7 text-center w-14 font-bold"
-                      min={0}
-                      max={100}
-                    />
-                  ) : (
-                    <span className="text-sm font-bold text-foreground">{c.weight}%</span>
                   )}
                 </div>
               </div>
@@ -234,9 +217,28 @@ export default function WizardStep2({ onNext, onBack }: Props) {
                 </div>
               )}
 
-              {/* Type preview - very visible */}
-              <div className="px-4 pb-4 pt-1">
+              {/* Type preview */}
+              <div className="px-4 pb-3 pt-1">
                 {renderTypePreview(c)}
+              </div>
+
+              {/* Weight slider - always at the bottom */}
+              <div className="px-4 pb-4 pt-1 border-t border-border/20">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest shrink-0">Peso</span>
+                  <Slider
+                    value={[c.weight]}
+                    onValueChange={v => updateCriterion(i, 'weight', v[0])}
+                    min={0}
+                    max={30}
+                    step={1}
+                    disabled={!editing}
+                    className="flex-1"
+                  />
+                  <Badge variant="outline" className="shrink-0 text-xs font-bold min-w-[40px] justify-center">
+                    {c.weight}
+                  </Badge>
+                </div>
               </div>
             </div>
           ))}
