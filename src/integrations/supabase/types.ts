@@ -436,6 +436,68 @@ export type Database = {
           },
         ]
       }
+      audit_evaluations: {
+        Row: {
+          ai_summary: string | null
+          attendant_id: string | null
+          conversation_id: string
+          created_at: string | null
+          criteria_scores: Json | null
+          errors_found: Json | null
+          evaluated_at: string | null
+          id: string
+          license_id: string
+          opportunities_missed: Json | null
+          overall_score: number | null
+          period_date: string
+          recommendations: Json | null
+          score_label: string | null
+          source: string | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          attendant_id?: string | null
+          conversation_id: string
+          created_at?: string | null
+          criteria_scores?: Json | null
+          errors_found?: Json | null
+          evaluated_at?: string | null
+          id?: string
+          license_id: string
+          opportunities_missed?: Json | null
+          overall_score?: number | null
+          period_date: string
+          recommendations?: Json | null
+          score_label?: string | null
+          source?: string | null
+        }
+        Update: {
+          ai_summary?: string | null
+          attendant_id?: string | null
+          conversation_id?: string
+          created_at?: string | null
+          criteria_scores?: Json | null
+          errors_found?: Json | null
+          evaluated_at?: string | null
+          id?: string
+          license_id?: string
+          opportunities_missed?: Json | null
+          overall_score?: number | null
+          period_date?: string
+          recommendations?: Json | null
+          score_label?: string | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_evaluations_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -479,6 +541,65 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_reports: {
+        Row: {
+          attendant_ranking: Json | null
+          avg_overall_score: number | null
+          below_threshold_pct: number | null
+          daily_trend: Json | null
+          generated_at: string | null
+          id: string
+          license_id: string
+          management_recommendations: Json | null
+          period_end: string
+          period_start: string
+          report_type: string
+          text_summary: string | null
+          top_errors: Json | null
+          total_conversations: number | null
+        }
+        Insert: {
+          attendant_ranking?: Json | null
+          avg_overall_score?: number | null
+          below_threshold_pct?: number | null
+          daily_trend?: Json | null
+          generated_at?: string | null
+          id?: string
+          license_id: string
+          management_recommendations?: Json | null
+          period_end: string
+          period_start: string
+          report_type: string
+          text_summary?: string | null
+          top_errors?: Json | null
+          total_conversations?: number | null
+        }
+        Update: {
+          attendant_ranking?: Json | null
+          avg_overall_score?: number | null
+          below_threshold_pct?: number | null
+          daily_trend?: Json | null
+          generated_at?: string | null
+          id?: string
+          license_id?: string
+          management_recommendations?: Json | null
+          period_end?: string
+          period_start?: string
+          report_type?: string
+          text_summary?: string | null
+          top_errors?: Json | null
+          total_conversations?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_reports_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
             referencedColumns: ["id"]
           },
         ]
@@ -1400,6 +1521,53 @@ export type Database = {
           },
         ]
       }
+      knowledge_base: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          license_id: string
+          segment: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_id: string
+          segment?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_id?: string
+          segment?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_base_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       license_history: {
         Row: {
           changed_by: string | null
@@ -1443,7 +1611,9 @@ export type Database = {
       }
       licenses: {
         Row: {
+          ai_active_skills: Json | null
           ai_agents_limit: number | null
+          ai_config: Json | null
           base_attendants: number | null
           base_devices_meta: number | null
           base_devices_web: number | null
@@ -1478,7 +1648,9 @@ export type Database = {
           whitelabel_slug: string | null
         }
         Insert: {
+          ai_active_skills?: Json | null
           ai_agents_limit?: number | null
+          ai_config?: Json | null
           base_attendants?: number | null
           base_devices_meta?: number | null
           base_devices_web?: number | null
@@ -1513,7 +1685,9 @@ export type Database = {
           whitelabel_slug?: string | null
         }
         Update: {
+          ai_active_skills?: Json | null
           ai_agents_limit?: number | null
+          ai_config?: Json | null
           base_attendants?: number | null
           base_devices_meta?: number | null
           base_devices_web?: number | null
