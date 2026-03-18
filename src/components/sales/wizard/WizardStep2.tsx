@@ -135,7 +135,7 @@ export default function WizardStep2({ onNext, onBack }: Props) {
             const meta = TYPE_META[c.type] || TYPE_META.text;
             return (
               <div key={c.id} className="p-4 rounded-xl border border-border/40 bg-muted/20 space-y-2">
-                {/* Row 1: Label + Weight */}
+                 {/* Row 1: Label + Weight */}
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     {editing ? (
@@ -144,18 +144,19 @@ export default function WizardStep2({ onNext, onBack }: Props) {
                       <span className="text-sm font-medium text-foreground">{c.label}</span>
                     )}
                   </div>
-                  <div className="shrink-0 w-20">
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground font-medium">Peso:</span>
                     {editing ? (
                       <Input
                         type="number"
                         value={c.weight}
                         onChange={e => updateCriterion(i, 'weight', Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
-                        className="text-sm h-8 text-center"
+                        className="text-sm h-8 text-center w-16"
                         min={0}
                         max={100}
                       />
                     ) : (
-                      <Badge variant="outline" className="text-xs w-full justify-center">{c.weight}%</Badge>
+                      <Badge variant="outline" className="text-xs justify-center">{c.weight}%</Badge>
                     )}
                   </div>
                 </div>
