@@ -166,7 +166,6 @@ export default function WizardStep2({ onNext, onBack }: Props) {
                   <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${meta.color}`}>
                     {meta.icon} {meta.label}
                     {c.type === 'scale' && ` (${c.scale_min ?? 1}–${c.scale_max ?? 10})`}
-                    {c.type === 'multiple_choice' && ` (${c.options?.length || 0} opções)`}
                   </span>
                   {c.disqualifier && <Badge variant="destructive" className="text-[10px]">Eliminatório</Badge>}
                   {c.hint && (
@@ -188,7 +187,13 @@ export default function WizardStep2({ onNext, onBack }: Props) {
                   </p>
                 )}
 
-                {/* Row 4: Options preview for multiple_choice */}
+                {/* Row 4: Type-specific preview */}
+                {c.type === 'boolean' && (
+                  <div className="flex gap-2 pt-1">
+                    <span className="text-[10px] px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-medium">Sim</span>
+                    <span className="text-[10px] px-3 py-1 rounded-full bg-muted/40 border border-border/30 text-muted-foreground">Não</span>
+                  </div>
+                )}
                 {c.type === 'multiple_choice' && c.options?.length && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {c.options.map((opt, oi) => (
@@ -196,6 +201,15 @@ export default function WizardStep2({ onNext, onBack }: Props) {
                         {opt}
                       </span>
                     ))}
+                  </div>
+                )}
+                {c.type === 'scale' && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[10px] text-muted-foreground">{c.scale_min ?? 1}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-muted/40 relative overflow-hidden">
+                      <div className="absolute inset-y-0 left-0 w-1/2 rounded-full bg-primary/30" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{c.scale_max ?? 10}</span>
                   </div>
                 )}
               </div>
