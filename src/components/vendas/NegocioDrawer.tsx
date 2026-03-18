@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useICPProfile } from "@/hooks/useICPProfile";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy } from "lucide-react";
+import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { generateQuickReportHtml } from "@/components/intelligence/prospeccao/quickReportGenerator";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import NegocioEditModal from "./NegocioEditModal";
 import FechamentoGanhoModal from "./FechamentoGanhoModal";
 import MotivoPerdaModal from "./MotivoPerdaModal";
+import QualifierModal from "@/components/sales/QualifierModal";
 
 interface Props {
   negocio: Negocio;
