@@ -38,6 +38,8 @@ import VendasPage from "./pages/VendasPage";
 import MensageriaPage from "./pages/MensageriaPage";
 import IntegracoesPage from "./pages/IntegracoesPage";
 import WhatsAppPage from "./pages/WhatsAppPage";
+import IASkillsPage from "./pages/IASkillsPage";
+import IAAuditorPage from "./pages/IAAuditorPage";
 
 import ConversationsPage from "./pages/ConversationsPage";
 import WaConnectionsPage from "./pages/WaConnectionsPage";
@@ -157,6 +159,8 @@ const AppRoutes = () => (
     <Route path="/integracoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><IntegracoesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
     
+    <Route path="/ia" element={<AuthGuard><DashboardLayout><IASkillsPage /></DashboardLayout></AuthGuard>} />
+    <Route path="/ia/auditor" element={<AuthGuard><DashboardLayout><IAAuditorPage /></DashboardLayout></AuthGuard>} />
     <Route path="/conversas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     {/* wa-connections now lives inside /integracoes */}
     <Route path="/wa-connections" element={<Navigate to="/integracoes" replace />} />
