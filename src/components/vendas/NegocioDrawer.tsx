@@ -72,6 +72,7 @@ function generatePaymentLink(negocio: Negocio): string {
 
 export default function NegocioDrawer({ negocio, onClose }: Props) {
   const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios();
+  const { questionnaire, icpProfile } = useICPProfile();
   const navigate = useNavigate();
   const [newNote, setNewNote] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -80,6 +81,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [ganhoModal, setGanhoModal] = useState(false);
   const [perdaModal, setPerdaModal] = useState(false);
+  const [qualifierOpen, setQualifierOpen] = useState(false);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
