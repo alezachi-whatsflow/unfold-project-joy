@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useICPProfile } from "@/hooks/useICPProfile";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy } from "lucide-react";
+import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { generateQuickReportHtml } from "@/components/intelligence/prospeccao/quickReportGenerator";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import NegocioEditModal from "./NegocioEditModal";
 import FechamentoGanhoModal from "./FechamentoGanhoModal";
 import MotivoPerdaModal from "./MotivoPerdaModal";
+import QualifierModal from "@/components/sales/QualifierModal";
 
 interface Props {
   negocio: Negocio;
@@ -70,6 +72,7 @@ function generatePaymentLink(negocio: Negocio): string {
 
 export default function NegocioDrawer({ negocio, onClose }: Props) {
   const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios();
+  const { questionnaire, icpProfile } = useICPProfile();
   const navigate = useNavigate();
   const [newNote, setNewNote] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -78,6 +81,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [ganhoModal, setGanhoModal] = useState(false);
   const [perdaModal, setPerdaModal] = useState(false);
+  const [qualifierOpen, setQualifierOpen] = useState(false);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
@@ -329,6 +333,32 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
 
         <Separator />
 
+        {/* ICP Qualification */}
+        {questionnaire?.questions?.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase">Qualificação ICP</h3>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setQualifierOpen(true)}>
+                <ClipboardList className="h-3 w-3" /> {(negocio as any).icp_score ? 'Requalificar' : 'Qualificar Lead'}
+              </Button>
+            </div>
+            {(negocio as any).icp_score !== null && (negocio as any).icp_score !== undefined && (
+              <div className="flex items-center gap-3">
+                <span className={`text-2xl font-black ${
+                  (negocio as any).icp_label === 'quente' ? 'text-emerald-500' :
+                  (negocio as any).icp_label === 'morno' ? 'text-amber-500' : 'text-blue-400'
+                }`}>{(negocio as any).icp_score}/100</span>
+                <Badge variant="secondary" className="capitalize">{(negocio as any).icp_label || 'frio'}</Badge>
+              </div>
+            )}
+            {(negocio as any).recommended_action && (
+              <p className="text-xs text-muted-foreground mt-1.5">{(negocio as any).recommended_action}</p>
+            )}
+          </section>
+        )}
+
+        <Separator />
+
         {/* Info */}
         <section>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Informações</h3>
@@ -435,6 +465,28 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
       {/* Motivo Perda Modal */}
       {perdaModal && (
         <MotivoPerdaModal negocio={negocio} onClose={() => setPerdaModal(false)} />
+      )}
+
+      {/* Qualifier Modal */}
+      {questionnaire?.questions?.length > 0 && (
+        <QualifierModal
+          open={qualifierOpen}
+          onOpenChange={setQualifierOpen}
+          leadName={negocio.cliente_nome || negocio.titulo}
+          questions={questionnaire.questions}
+          hotThreshold={icpProfile?.hot_score_threshold}
+          warmThreshold={icpProfile?.warm_score_threshold}
+          existingAnswers={(negocio as any).questionnaire_answers || {}}
+          onComplete={async (result, answers) => {
+            await updateNegocio(negocio.id, {
+              icp_score: result.score,
+              icp_label: result.label,
+              icp_radar: result.radar,
+              recommended_action: result.recommended_action,
+              questionnaire_answers: answers,
+            } as any);
+          }}
+        />
       )}
     </div>
   );

@@ -721,6 +721,95 @@ export type Database = {
         }
         Relationships: []
       }
+      company_profile: {
+        Row: {
+          avg_sales_cycle_days: number | null
+          avg_ticket_max: number | null
+          avg_ticket_min: number | null
+          best_clients_desc: string | null
+          billing_type: string | null
+          client_pain: string | null
+          company_name: string | null
+          created_at: string | null
+          currency: string | null
+          date_format: string | null
+          decision_maker: string | null
+          disqualifiers: Json | null
+          id: string
+          ideal_client_size: string | null
+          language: string | null
+          main_product: string | null
+          segment: string | null
+          sub_segment: string | null
+          tenant_id: string
+          timezone: string | null
+          updated_at: string | null
+          value_proposition: string | null
+          wizard_completed: boolean | null
+          wizard_step: number | null
+        }
+        Insert: {
+          avg_sales_cycle_days?: number | null
+          avg_ticket_max?: number | null
+          avg_ticket_min?: number | null
+          best_clients_desc?: string | null
+          billing_type?: string | null
+          client_pain?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          date_format?: string | null
+          decision_maker?: string | null
+          disqualifiers?: Json | null
+          id?: string
+          ideal_client_size?: string | null
+          language?: string | null
+          main_product?: string | null
+          segment?: string | null
+          sub_segment?: string | null
+          tenant_id: string
+          timezone?: string | null
+          updated_at?: string | null
+          value_proposition?: string | null
+          wizard_completed?: boolean | null
+          wizard_step?: number | null
+        }
+        Update: {
+          avg_sales_cycle_days?: number | null
+          avg_ticket_max?: number | null
+          avg_ticket_min?: number | null
+          best_clients_desc?: string | null
+          billing_type?: string | null
+          client_pain?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          date_format?: string | null
+          decision_maker?: string | null
+          disqualifiers?: Json | null
+          id?: string
+          ideal_client_size?: string | null
+          language?: string | null
+          main_product?: string | null
+          segment?: string | null
+          sub_segment?: string | null
+          tenant_id?: string
+          timezone?: string | null
+          updated_at?: string | null
+          value_proposition?: string | null
+          wizard_completed?: boolean | null
+          wizard_step?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_profile_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           channel: string | null
@@ -1197,6 +1286,120 @@ export type Database = {
         }
         Relationships: []
       }
+      icp_profiles: {
+        Row: {
+          created_at: string | null
+          criteria: Json | null
+          description: string | null
+          hot_score_threshold: number | null
+          id: string
+          is_active: boolean | null
+          is_auto_generated: boolean | null
+          name: string
+          parent_version_id: string | null
+          tenant_id: string
+          updated_at: string | null
+          version: number | null
+          warm_score_threshold: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          criteria?: Json | null
+          description?: string | null
+          hot_score_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_auto_generated?: boolean | null
+          name?: string
+          parent_version_id?: string | null
+          tenant_id: string
+          updated_at?: string | null
+          version?: number | null
+          warm_score_threshold?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          criteria?: Json | null
+          description?: string | null
+          hot_score_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_auto_generated?: boolean | null
+          name?: string
+          parent_version_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          version?: number | null
+          warm_score_threshold?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icp_profiles_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "icp_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icp_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icp_questionnaires: {
+        Row: {
+          created_at: string | null
+          icp_id: string | null
+          id: string
+          is_active: boolean | null
+          is_auto_generated: boolean | null
+          name: string
+          questions: Json | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          icp_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_auto_generated?: boolean | null
+          name?: string
+          questions?: Json | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          icp_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_auto_generated?: boolean | null
+          name?: string
+          questions?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icp_questionnaires_icp_id_fkey"
+            columns: ["icp_id"]
+            isOneToOne: false
+            referencedRelation: "icp_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icp_questionnaires_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       license_history: {
         Row: {
           changed_by: string | null
@@ -1550,6 +1753,9 @@ export type Database = {
           gerar_cobranca: boolean
           gerar_nf: boolean
           historico: Json
+          icp_label: string | null
+          icp_radar: Json | null
+          icp_score: number | null
           id: string
           motivo_perda: string | null
           motivo_perda_detalhe: string | null
@@ -1559,6 +1765,9 @@ export type Database = {
           pipeline_id: string | null
           probabilidade: number
           produtos: Json
+          questionnaire_answers: Json | null
+          recommended_action: string | null
+          stage_entered_at: string | null
           status: string
           tags: string[]
           tenant_id: string
@@ -1584,6 +1793,9 @@ export type Database = {
           gerar_cobranca?: boolean
           gerar_nf?: boolean
           historico?: Json
+          icp_label?: string | null
+          icp_radar?: Json | null
+          icp_score?: number | null
           id?: string
           motivo_perda?: string | null
           motivo_perda_detalhe?: string | null
@@ -1593,6 +1805,9 @@ export type Database = {
           pipeline_id?: string | null
           probabilidade?: number
           produtos?: Json
+          questionnaire_answers?: Json | null
+          recommended_action?: string | null
+          stage_entered_at?: string | null
           status?: string
           tags?: string[]
           tenant_id?: string
@@ -1618,6 +1833,9 @@ export type Database = {
           gerar_cobranca?: boolean
           gerar_nf?: boolean
           historico?: Json
+          icp_label?: string | null
+          icp_radar?: Json | null
+          icp_score?: number | null
           id?: string
           motivo_perda?: string | null
           motivo_perda_detalhe?: string | null
@@ -1627,6 +1845,9 @@ export type Database = {
           pipeline_id?: string | null
           probabilidade?: number
           produtos?: Json
+          questionnaire_answers?: Json | null
+          recommended_action?: string | null
+          stage_entered_at?: string | null
           status?: string
           tags?: string[]
           tenant_id?: string
