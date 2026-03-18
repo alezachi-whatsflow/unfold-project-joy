@@ -6,20 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, Pencil, HelpCircle, ToggleLeft, SlidersHorizontal, List, Type } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, Pencil, HelpCircle, ToggleLeft, SlidersHorizontal, List, Type, Weight } from 'lucide-react';
 import { getTemplateForSegment, type ICPCriterionTemplate } from '@/utils/sales/icpTemplates';
 
 interface Props { onNext: () => void; onBack: () => void; }
-
-const TYPE_META: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
-  boolean: { icon: <ToggleLeft className="h-3 w-3" />, label: 'Sim / Não', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
-  scale: { icon: <SlidersHorizontal className="h-3 w-3" />, label: 'Escala', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-  multiple_choice: { icon: <List className="h-3 w-3" />, label: 'Seleção', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
-  text: { icon: <Type className="h-3 w-3" />, label: 'Texto', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-};
 
 export default function WizardStep2({ onNext, onBack }: Props) {
   const { profile } = useCompanyProfile();
@@ -73,6 +65,72 @@ export default function WizardStep2({ onNext, onBack }: Props) {
     }
   };
 
+  const renderTypePreview = (c: ICPCriterionTemplate) => {
+    switch (c.type) {
+      case 'boolean':
+        return (
+          <div className="space-y-1.5">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Formato de resposta: Sim ou Não</span>
+            <div className="flex gap-2">
+              <span className="text-xs px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-medium">✓ Sim</span>
+              <span className="text-xs px-4 py-1.5 rounded-full bg-muted/40 border border-border/30 text-muted-foreground">✗ Não</span>
+            </div>
+          </div>
+        );
+      case 'multiple_choice':
+        return (
+          <div className="space-y-1.5">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+              Formato de resposta: Selecionar faixa ({c.options?.length || 0} opções)
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {c.options?.map((opt, oi) => (
+                <span key={oi} className="text-xs px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 font-medium">
+                  {opt}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      case 'scale': {
+        const min = c.scale_min ?? 1;
+        const max = c.scale_max ?? 10;
+        return (
+          <div className="space-y-1.5">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+              Formato de resposta: Escala de {min} a {max}
+            </span>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs shrink-0">{min}</Badge>
+              <div className="flex-1 flex gap-0.5">
+                {Array.from({ length: max - min + 1 }, (_, idx) => (
+                  <div
+                    key={idx}
+                    className="flex-1 h-2 rounded-sm"
+                    style={{
+                      backgroundColor: `hsl(${120 * (idx / (max - min))}, 60%, ${35 + idx * 3}%)`,
+                      opacity: 0.6,
+                    }}
+                  />
+                ))}
+              </div>
+              <Badge variant="outline" className="text-xs shrink-0">{max}</Badge>
+            </div>
+          </div>
+        );
+      }
+      case 'text':
+        return (
+          <div className="space-y-1.5">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Formato de resposta: Texto livre</span>
+            <div className="h-6 rounded border border-dashed border-border/40 bg-muted/20" />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-6">
@@ -94,7 +152,7 @@ export default function WizardStep2({ onNext, onBack }: Props) {
           <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
           <div className="text-sm text-muted-foreground space-y-1">
             <p className="font-medium text-foreground">Como funciona o ICP?</p>
-            <p>Cada critério possui um <strong>peso</strong> que define sua importância na qualificação do lead. A soma dos pesos deve ser <strong>exatamente 100</strong>. Quando um vendedor preencher o questionário, o sistema calcula automaticamente o score e classifica o lead como <span className="text-emerald-500 font-medium">Quente 🔥</span>, <span className="text-amber-500 font-medium">Morno 🌡️</span> ou <span className="text-blue-400 font-medium">Frio ❄️</span>.</p>
+            <p>Cada critério possui um <strong>peso (importância)</strong> que define quanto ele influencia no score final do lead. A soma dos pesos deve ser <strong>exatamente 100</strong>. O <strong>formato de resposta</strong> (Sim/Não, Escala, Faixas) define como o vendedor preencherá ao qualificar um lead.</p>
           </div>
         </div>
 
@@ -130,91 +188,58 @@ export default function WizardStep2({ onNext, onBack }: Props) {
         </div>
 
         {/* Criteria list */}
-        <div className="space-y-3">
-          {criteria.map((c, i) => {
-            const meta = TYPE_META[c.type] || TYPE_META.text;
-            return (
-              <div key={c.id} className="p-4 rounded-xl border border-border/40 bg-muted/20 space-y-2">
-                 {/* Row 1: Label + Weight */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    {editing ? (
-                      <Input value={c.label} onChange={e => updateCriterion(i, 'label', e.target.value)} className="text-sm h-8" />
-                    ) : (
-                      <span className="text-sm font-medium text-foreground">{c.label}</span>
-                    )}
-                  </div>
-                  <div className="shrink-0 flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground font-medium">Peso:</span>
-                    {editing ? (
-                      <Input
-                        type="number"
-                        value={c.weight}
-                        onChange={e => updateCriterion(i, 'weight', Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
-                        className="text-sm h-8 text-center w-16"
-                        min={0}
-                        max={100}
-                      />
-                    ) : (
-                      <Badge variant="outline" className="text-xs justify-center">{c.weight}%</Badge>
-                    )}
-                  </div>
-                </div>
-
-                {/* Row 2: Type badge + hint */}
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${meta.color}`}>
-                    {meta.icon} {meta.label}
-                    {c.type === 'scale' && ` (${c.scale_min ?? 1}–${c.scale_max ?? 10})`}
-                  </span>
-                  {c.disqualifier && <Badge variant="destructive" className="text-[10px]">Eliminatório</Badge>}
-                  {c.hint && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs text-xs">
-                        {c.hint}
-                      </TooltipContent>
-                    </Tooltip>
+        <div className="space-y-4">
+          {criteria.map((c, i) => (
+            <div key={c.id} className="rounded-xl border border-border/40 bg-muted/20 overflow-hidden">
+              {/* Top bar: Label + Weight */}
+              <div className="flex items-center gap-3 p-4 pb-3">
+                <div className="flex-1 min-w-0">
+                  {editing ? (
+                    <Input value={c.label} onChange={e => updateCriterion(i, 'label', e.target.value)} className="text-sm h-8" />
+                  ) : (
+                    <span className="text-sm font-semibold text-foreground">{c.label}</span>
                   )}
                 </div>
 
-                {/* Row 3: Hint text always visible */}
-                {c.hint && (
-                  <p className="text-[11px] text-muted-foreground/70 leading-relaxed pl-0.5">
+                {/* Weight - clearly separated */}
+                <div className="shrink-0 flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg bg-accent/30 border border-accent/20">
+                  <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-widest">Peso</span>
+                  {editing ? (
+                    <Input
+                      type="number"
+                      value={c.weight}
+                      onChange={e => updateCriterion(i, 'weight', Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                      className="text-sm h-7 text-center w-14 font-bold"
+                      min={0}
+                      max={100}
+                    />
+                  ) : (
+                    <span className="text-sm font-bold text-foreground">{c.weight}%</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Hint */}
+              {c.hint && (
+                <div className="px-4 pb-2">
+                  <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
                     💡 {c.hint}
                   </p>
-                )}
+                </div>
+              )}
 
-                {/* Row 4: Type-specific preview */}
-                {c.type === 'boolean' && (
-                  <div className="flex gap-2 pt-1">
-                    <span className="text-[10px] px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-medium">Sim</span>
-                    <span className="text-[10px] px-3 py-1 rounded-full bg-muted/40 border border-border/30 text-muted-foreground">Não</span>
-                  </div>
-                )}
-                {c.type === 'multiple_choice' && c.options?.length && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {c.options.map((opt, oi) => (
-                      <span key={oi} className="text-[10px] px-2 py-0.5 rounded-full bg-muted/40 border border-border/30 text-muted-foreground">
-                        {opt}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {c.type === 'scale' && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-[10px] text-muted-foreground">{c.scale_min ?? 1}</span>
-                    <div className="flex-1 h-1.5 rounded-full bg-muted/40 relative overflow-hidden">
-                      <div className="absolute inset-y-0 left-0 w-1/2 rounded-full bg-primary/30" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{c.scale_max ?? 10}</span>
-                  </div>
-                )}
+              {c.disqualifier && (
+                <div className="px-4 pb-2">
+                  <Badge variant="destructive" className="text-[10px]">⚠ Eliminatório — se não atende, desqualifica o lead</Badge>
+                </div>
+              )}
+
+              {/* Type preview - very visible */}
+              <div className="px-4 pb-4 pt-1">
+                {renderTypePreview(c)}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         <div className="flex justify-between">
