@@ -66,26 +66,28 @@ export default function WizardStep2({ onNext, onBack }: Props) {
   };
 
   const renderTypePreview = (c: ICPCriterionTemplate) => {
+    const iconClass = "h-3.5 w-3.5 shrink-0 text-muted-foreground";
     switch (c.type) {
       case 'boolean':
         return (
-          <div className="space-y-1.5">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Formato de resposta: Sim ou Não</span>
-            <div className="flex gap-2">
-              <span className="text-xs px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-medium">✓ Sim</span>
-              <span className="text-xs px-4 py-1.5 rounded-full bg-muted/40 border border-border/30 text-muted-foreground">✗ Não</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <ToggleLeft className={iconClass} />
+            <span className="text-[11px] text-muted-foreground">Resposta:</span>
+            <span className="text-[11px] font-medium text-primary">Sim</span>
+            <span className="text-[11px] text-muted-foreground">/</span>
+            <span className="text-[11px] font-medium text-muted-foreground">Não</span>
           </div>
         );
       case 'multiple_choice':
         return (
-          <div className="space-y-1.5">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-              Formato de resposta: Selecionar faixa ({c.options?.length || 0} opções)
-            </span>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <List className={iconClass} />
+              <span className="text-[11px] text-muted-foreground">Resposta: escolher entre {c.options?.length || 0} opções</span>
+            </div>
+            <div className="flex flex-wrap gap-1 pl-5">
               {c.options?.map((opt, oi) => (
-                <span key={oi} className="text-xs px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 font-medium">
+                <span key={oi} className="text-[10px] px-2 py-0.5 rounded bg-accent/50 text-accent-foreground border border-border/30">
                   {opt}
                 </span>
               ))}
@@ -96,34 +98,20 @@ export default function WizardStep2({ onNext, onBack }: Props) {
         const min = c.scale_min ?? 1;
         const max = c.scale_max ?? 10;
         return (
-          <div className="space-y-1.5">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-              Formato de resposta: Escala de {min} a {max}
-            </span>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs shrink-0">{min}</Badge>
-              <div className="flex-1 flex gap-0.5">
-                {Array.from({ length: max - min + 1 }, (_, idx) => (
-                  <div
-                    key={idx}
-                    className="flex-1 h-2 rounded-sm"
-                    style={{
-                      backgroundColor: `hsl(${120 * (idx / (max - min))}, 60%, ${35 + idx * 3}%)`,
-                      opacity: 0.6,
-                    }}
-                  />
-                ))}
-              </div>
-              <Badge variant="outline" className="text-xs shrink-0">{max}</Badge>
-            </div>
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className={iconClass} />
+            <span className="text-[11px] text-muted-foreground">Resposta: nota de</span>
+            <span className="text-[11px] font-bold text-foreground">{min}</span>
+            <span className="text-[11px] text-muted-foreground">a</span>
+            <span className="text-[11px] font-bold text-foreground">{max}</span>
           </div>
         );
       }
       case 'text':
         return (
-          <div className="space-y-1.5">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Formato de resposta: Texto livre</span>
-            <div className="h-6 rounded border border-dashed border-border/40 bg-muted/20" />
+          <div className="flex items-center gap-2">
+            <Type className={iconClass} />
+            <span className="text-[11px] text-muted-foreground">Resposta: texto livre</span>
           </div>
         );
       default:
