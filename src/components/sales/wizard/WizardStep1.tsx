@@ -6,16 +6,24 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ArrowRight, Loader2, Building2 } from 'lucide-react';
+import { ArrowRight, Loader2, Building2, Info } from 'lucide-react';
 import { SEGMENTS, CURRENCIES, BILLING_TYPES, CLIENT_SIZES, DECISION_MAKERS } from '@/utils/sales/icpTemplates';
 
 interface Props { onNext: () => void; }
+
+function HelpBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground leading-relaxed">
+      <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+      <span>{children}</span>
+    </div>
+  );
+}
 
 export default function WizardStep1({ onNext }: Props) {
   const { profile, upsertProfile } = useCompanyProfile();
   const [saving, setSaving] = useState(false);
 
-  const [companyName, setCompanyName] = useState('');
   const [segment, setSegment] = useState('');
   const [subSegment, setSubSegment] = useState('');
   const [mainProduct, setMainProduct] = useState('');
@@ -32,7 +40,6 @@ export default function WizardStep1({ onNext }: Props) {
 
   useEffect(() => {
     if (profile) {
-      setCompanyName(profile.company_name || '');
       setSegment(profile.segment || '');
       setSubSegment(profile.sub_segment || '');
       setMainProduct(profile.main_product || '');
@@ -54,7 +61,6 @@ export default function WizardStep1({ onNext }: Props) {
     setSaving(true);
     try {
       await upsertProfile({
-        company_name: companyName,
         segment,
         sub_segment: subSegment || null,
         main_product: mainProduct || null,
@@ -93,11 +99,11 @@ export default function WizardStep1({ onNext }: Props) {
       {/* Bloco A: Identidade */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase">Identidade do Negócio</h3>
+        <HelpBox>
+          Selecione o segmento que melhor representa sua empresa e descreva seu produto/serviço principal.
+          A proposta de valor deve resumir o problema central que você resolve para seus clientes.
+        </HelpBox>
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Nome da empresa</Label>
-            <Input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Ex: Whatsflow" />
-          </div>
           <div className="space-y-2">
             <Label>Segmento *</Label>
             <Select value={segment} onValueChange={setSegment}>
@@ -106,6 +112,10 @@ export default function WizardStep1({ onNext }: Props) {
                 {SEGMENTS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Sub-segmento</Label>
+            <Input value={subSegment} onChange={e => setSubSegment(e.target.value)} placeholder="Ex: SaaS, Varejo online..." />
           </div>
           <div className="space-y-2 col-span-2">
             <Label>Produto / Serviço principal</Label>
@@ -121,6 +131,10 @@ export default function WizardStep1({ onNext }: Props) {
       {/* Bloco B: Números */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase">Números do Negócio</h3>
+        <HelpBox>
+          Informe a faixa de ticket médio (valor mínimo e máximo cobrado por cliente), o ciclo médio de venda
+          em dias (do primeiro contato ao fechamento) e o tipo de cobrança predominante (recorrente, avulsa, etc.).
+        </HelpBox>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Ticket médio mínimo</Label>
@@ -158,6 +172,11 @@ export default function WizardStep1({ onNext }: Props) {
       {/* Bloco C: Perfil do cliente */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase">Perfil do Cliente Ideal</h3>
+        <HelpBox>
+          Defina o porte ideal dos seus clientes e quem é o decisor na negociação. Descreva a maior dor
+          que seus clientes enfrentam e o que seus melhores clientes têm em comum — isso ajudará a IA a
+          gerar critérios de qualificação mais precisos.
+        </HelpBox>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Porte ideal do cliente</Label>
