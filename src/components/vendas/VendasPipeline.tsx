@@ -287,7 +287,18 @@ export default function VendasPipeline() {
                   >
                     <div className="flex items-start justify-between gap-1">
                       <h4 className="text-xs font-semibold text-foreground leading-tight truncate">{neg.titulo}</h4>
-                      <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground shrink-0" />
+                      <div className="flex items-center gap-1 shrink-0">
+                        {(neg as any).icp_label && (
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                            (neg as any).icp_label === 'quente' ? 'bg-emerald-500/20 text-emerald-500' :
+                            (neg as any).icp_label === 'morno' ? 'bg-amber-500/20 text-amber-500' :
+                            'bg-blue-400/20 text-blue-400'
+                          }`}>
+                            {(neg as any).icp_label === 'quente' ? '🔥' : (neg as any).icp_label === 'morno' ? '🌡️' : '❄️'} {(neg as any).icp_score || 0}
+                          </span>
+                        )}
+                        <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground" />
+                      </div>
                     </div>
                     {neg.cliente_nome && (
                       <p className="text-[11px] text-muted-foreground truncate mt-1">{neg.cliente_nome}</p>
