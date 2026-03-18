@@ -466,6 +466,28 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
       {perdaModal && (
         <MotivoPerdaModal negocio={negocio} onClose={() => setPerdaModal(false)} />
       )}
+
+      {/* Qualifier Modal */}
+      {questionnaire?.questions?.length > 0 && (
+        <QualifierModal
+          open={qualifierOpen}
+          onOpenChange={setQualifierOpen}
+          leadName={negocio.cliente_nome || negocio.titulo}
+          questions={questionnaire.questions}
+          hotThreshold={icpProfile?.hot_score_threshold}
+          warmThreshold={icpProfile?.warm_score_threshold}
+          existingAnswers={(negocio as any).questionnaire_answers || {}}
+          onComplete={async (result, answers) => {
+            await updateNegocio(negocio.id, {
+              icp_score: result.score,
+              icp_label: result.label,
+              icp_radar: result.radar,
+              recommended_action: result.recommended_action,
+              questionnaire_answers: answers,
+            } as any);
+          }}
+        />
+      )}
     </div>
   );
 }
