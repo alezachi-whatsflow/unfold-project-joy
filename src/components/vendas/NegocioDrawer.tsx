@@ -333,6 +333,32 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
 
         <Separator />
 
+        {/* ICP Qualification */}
+        {questionnaire?.questions?.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase">Qualificação ICP</h3>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setQualifierOpen(true)}>
+                <ClipboardList className="h-3 w-3" /> {(negocio as any).icp_score ? 'Requalificar' : 'Qualificar Lead'}
+              </Button>
+            </div>
+            {(negocio as any).icp_score !== null && (negocio as any).icp_score !== undefined && (
+              <div className="flex items-center gap-3">
+                <span className={`text-2xl font-black ${
+                  (negocio as any).icp_label === 'quente' ? 'text-emerald-500' :
+                  (negocio as any).icp_label === 'morno' ? 'text-amber-500' : 'text-blue-400'
+                }`}>{(negocio as any).icp_score}/100</span>
+                <Badge variant="secondary" className="capitalize">{(negocio as any).icp_label || 'frio'}</Badge>
+              </div>
+            )}
+            {(negocio as any).recommended_action && (
+              <p className="text-xs text-muted-foreground mt-1.5">{(negocio as any).recommended_action}</p>
+            )}
+          </section>
+        )}
+
+        <Separator />
+
         {/* Info */}
         <section>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Informações</h3>
