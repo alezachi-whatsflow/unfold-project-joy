@@ -230,6 +230,22 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
             </div>
           </div>
 
+          {/* Telefones */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Fone Faturamento</Label>
+              <Input value={form.phoneBilling} onChange={(e) => set("phoneBilling", e.target.value)} placeholder="(00) 00000-0000" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Fone Lead</Label>
+              <Input value={form.phoneLead} onChange={(e) => set("phoneLead", e.target.value)} placeholder="(00) 00000-0000" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Fone Empresa</Label>
+              <Input value={form.phoneCompany} onChange={(e) => set("phoneCompany", e.target.value)} placeholder="(00) 00000-0000" />
+            </div>
+          </div>
+
           {/* Condição */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
