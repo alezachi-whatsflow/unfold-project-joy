@@ -12,14 +12,20 @@ import type { Negocio } from "@/types/vendas";
 
 function negocioToActivity(n: Negocio): Activity {
   const statusMap: Record<string, Activity["status"]> = {
-    prospeccao: "todo", qualificado: "todo",
-    proposta: "in_progress", negociacao: "in_progress",
-    fechado_ganho: "done", fechado_perdido: "done",
+    prospeccao: "todo",
+    qualificado: "todo",
+    proposta: "in_progress",
+    negociacao: "in_progress",
+    fechado_ganho: "done",
+    fechado_perdido: "done",
   };
   const priorityMap: Record<string, Activity["priority"]> = {
-    prospeccao: "low", qualificado: "medium",
-    proposta: "high", negociacao: "urgent",
-    fechado_ganho: "medium", fechado_perdido: "low",
+    prospeccao: "low",
+    qualificado: "medium",
+    proposta: "high",
+    negociacao: "urgent",
+    fechado_ganho: "medium",
+    fechado_perdido: "low",
   };
   return {
     id: `negocio-${n.id}`,
@@ -39,8 +45,8 @@ function negocioToActivity(n: Negocio): Activity {
   };
 }
 
-export default function ActivitiesPage() {
-  const [tab, setTab] = useState("kanban");
+export default function VendasAtividades() {
+  const [view, setView] = useState("kanban");
   const [formOpen, setFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<any>(null);
   const { activities, isLoading: activitiesLoading, createActivity, updateActivity, deleteActivity } = useActivities();
@@ -56,7 +62,7 @@ export default function ActivitiesPage() {
 
   const openNew = () => { setEditingActivity(null); setFormOpen(true); };
   const openEdit = (a: Activity) => {
-    if (a.id.startsWith("negocio-")) return;
+    if (a.id.startsWith("negocio-")) return; // CRM cards are read-only here
     setEditingActivity(a); setFormOpen(true);
   };
   const handleDelete = (id: string) => {
@@ -69,48 +75,42 @@ export default function ActivitiesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Atividades</h1>
-          <p className="text-sm text-muted-foreground">Gerencie tarefas e rotinas do dia a dia</p>
-        </div>
+        <Tabs value={view} onValueChange={setView}>
+          <TabsList>
+            <TabsTrigger value="kanban" className="gap-1.5 text-xs">
+              <Kanban className="h-3.5 w-3.5" /> Kanban
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1.5 text-xs">
+              <CalendarDays className="h-3.5 w-3.5" /> Calendário
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         <Button size="sm" onClick={openNew} className="gap-1.5 text-xs">
           <Plus className="h-3.5 w-3.5" /> Nova Atividade
         </Button>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="kanban" className="gap-1.5 text-xs">
-            <Kanban className="h-3.5 w-3.5" /> Kanban
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-1.5 text-xs">
-            <CalendarDays className="h-3.5 w-3.5" /> Calendário
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="kanban">
-          <ActivityKanban
-            activities={merged}
-            isLoading={isLoading}
-            onEdit={openEdit}
-            onDelete={handleDelete}
-            onStatusChange={handleStatusChange}
-          />
-        </TabsContent>
-        <TabsContent value="calendar">
-          <ActivityCalendar
-            activities={merged}
-            isLoading={isLoading}
-            onEdit={openEdit}
-            onDateChange={(id, date) => {
-              if (id.startsWith("negocio-")) return;
-              updateActivity({ id, due_date: date });
-            }}
-          />
-        </TabsContent>
-      </Tabs>
+      {view === "kanban" ? (
+        <ActivityKanban
+          activities={merged}
+          isLoading={isLoading}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+        />
+      ) : (
+        <ActivityCalendar
+          activities={merged}
+          isLoading={isLoading}
+          onEdit={openEdit}
+          onDateChange={(id, date) => {
+            if (id.startsWith("negocio-")) return;
+            updateActivity({ id, due_date: date });
+          }}
+        />
+      )}
 
       <ActivityFormDialog
         open={formOpen}

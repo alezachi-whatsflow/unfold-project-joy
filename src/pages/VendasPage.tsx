@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Kanban, List, BarChart3, User, Settings2 } from "lucide-react";
+import { Kanban, List, BarChart3, User, Settings2, CheckSquare } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCompanyProfile } from "@/hooks/useCompanyProfile";
 import VendasPipeline from "@/components/vendas/VendasPipeline";
@@ -8,6 +8,7 @@ import VendasLista from "@/components/vendas/VendasLista";
 import VendasRelatorios from "@/components/vendas/VendasRelatorios";
 import VendasMeusNegocios from "@/components/vendas/VendasMeusNegocios";
 import WizardLayout from "@/components/sales/wizard/WizardLayout";
+import VendasAtividades from "@/components/vendas/VendasAtividades";
 
 export default function VendasPage() {
   const { userRole } = usePermissions();
@@ -24,6 +25,7 @@ export default function VendasPage() {
     const all = [
       { value: 'pipeline', label: 'Pipeline', icon: Kanban, hidden: isRepresentante },
       { value: 'lista', label: 'Lista', icon: List, hidden: isRepresentante },
+      { value: 'atividades', label: 'Atividades', icon: CheckSquare, hidden: false },
       { value: 'relatorios', label: 'Relatórios', icon: BarChart3, hidden: isRepresentante },
       { value: 'meus-negocios', label: 'Negócios Fechados', icon: User, hidden: false },
     ];
@@ -85,6 +87,7 @@ export default function VendasPage() {
 
         <TabsContent value="pipeline"><VendasPipeline /></TabsContent>
         <TabsContent value="lista"><VendasLista /></TabsContent>
+        <TabsContent value="atividades"><VendasAtividades /></TabsContent>
         <TabsContent value="relatorios"><VendasRelatorios /></TabsContent>
         <TabsContent value="meus-negocios"><VendasMeusNegocios /></TabsContent>
       </Tabs>
