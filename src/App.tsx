@@ -40,6 +40,7 @@ import IntegracoesPage from "./pages/IntegracoesPage";
 import WhatsAppPage from "./pages/WhatsAppPage";
 import IASkillsPage from "./pages/IASkillsPage";
 import IAAuditorPage from "./pages/IAAuditorPage";
+import ActivitiesPage from "./pages/ActivitiesPage";
 
 import ConversationsPage from "./pages/ConversationsPage";
 import WaConnectionsPage from "./pages/WaConnectionsPage";
@@ -149,6 +150,7 @@ const AppRoutes = () => (
     <Route path="/fiscal" element={<AuthGuard><DashboardLayout><ProtectedRoute module="fiscal"><FiscalPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/comissoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="comissoes"><ComissoesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/customers" element={<AuthGuard><DashboardLayout><ProtectedRoute module="clientes"><CustomersPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    <Route path="/atividades" element={<AuthGuard><DashboardLayout><ProtectedRoute module="clientes"><ActivitiesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/products" element={<AuthGuard><DashboardLayout><ProtectedRoute module="produtos"><ProductsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/intelligence" element={<AuthGuard><DashboardLayout><ProtectedRoute module="intelligence"><IntelligencePage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
     <Route path="/settings" element={<AuthGuard><DashboardLayout><ProtectedRoute module="configuracoes"><SettingsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
