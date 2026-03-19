@@ -19,6 +19,9 @@ export interface Customer {
   tipoPagamento: string;
   condicao: string;
   valorUltimaCobranca: number;
+  phoneBilling: string;
+  phoneLead: string;
+  phoneCompany: string;
 }
 
 export interface CustomerRow {
