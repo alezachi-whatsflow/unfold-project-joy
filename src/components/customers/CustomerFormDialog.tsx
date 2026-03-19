@@ -40,6 +40,9 @@ const emptyForm: Omit<Customer, "id"> = {
   tipoPagamento: "",
   condicao: "",
   valorUltimaCobranca: 0,
+  phoneBilling: "",
+  phoneLead: "",
+  phoneCompany: "",
 };
 
 export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Props) {
