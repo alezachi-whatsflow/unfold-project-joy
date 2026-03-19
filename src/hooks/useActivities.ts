@@ -24,8 +24,8 @@ export interface Activity {
 export function useActivities() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const { tenantIds } = useUserTenants();
-  const tenantId = tenantIds?.[0];
+  const { data: tenants } = useUserTenants();
+  const tenantId = tenants?.[0]?.tenant_id;
 
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ["activities", tenantId],

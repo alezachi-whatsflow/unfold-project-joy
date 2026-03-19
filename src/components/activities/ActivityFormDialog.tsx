@@ -20,14 +20,22 @@ interface Props {
   editing: Activity | null;
 }
 
-const EMPTY = {
+const EMPTY: {
+  title: string;
+  description: string;
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high" | "urgent";
+  due_date: string | null;
+  due_time: string | null;
+  tags: string[];
+} = {
   title: "",
   description: "",
-  status: "todo" as const,
-  priority: "medium" as const,
-  due_date: null as string | null,
-  due_time: null as string | null,
-  tags: [] as string[],
+  status: "todo",
+  priority: "medium",
+  due_date: null,
+  due_time: null,
+  tags: [],
 };
 
 export function ActivityFormDialog({ open, onOpenChange, onSave, editing }: Props) {
