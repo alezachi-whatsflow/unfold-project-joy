@@ -40,6 +40,7 @@ import IntegracoesPage from "./pages/IntegracoesPage";
 import WhatsAppPage from "./pages/WhatsAppPage";
 import IASkillsPage from "./pages/IASkillsPage";
 import IAAuditorPage from "./pages/IAAuditorPage";
+import ActivitiesPage from "./pages/ActivitiesPage";
 
 import ConversationsPage from "./pages/ConversationsPage";
 import WaConnectionsPage from "./pages/WaConnectionsPage";
