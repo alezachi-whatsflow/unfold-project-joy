@@ -23,6 +23,9 @@ function rowToCustomer(row: CustomerRow): Customer {
     tipoPagamento: row.tipo_pagamento,
     condicao: row.condicao,
     valorUltimaCobranca: row.valor_ultima_cobranca,
+    phoneBilling: row.phone_billing || "",
+    phoneLead: row.phone_lead || "",
+    phoneCompany: row.phone_company || "",
   };
 }
 
