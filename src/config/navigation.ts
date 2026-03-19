@@ -21,6 +21,7 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     items: [
       { id: 'clientes',    label: 'Clientes',      icon: 'Users',           route: '/customers',    module: 'clientes'      },
       { id: 'produtos',    label: 'Produtos',      icon: 'Package',         route: '/products',     module: 'produtos'      },
+      { id: 'atividades',  label: 'Atividades',    icon: 'CheckSquare',     route: '/atividades',   module: 'clientes'      },
       { id: 'vendas',      label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',       module: 'vendas'        },
       { id: 'ia',          label: 'IA Composable', icon: 'Brain',           route: '/ia',           module: 'dashboard'     },
       { id: 'conversas',   label: 'Conversas',     icon: 'MessageSquare',   route: '/conversas',    module: 'mensageria'    },
