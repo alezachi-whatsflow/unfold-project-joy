@@ -365,6 +365,9 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
           <div className="grid grid-cols-2 gap-2 text-xs">
             <InfoItem label="Cliente" value={negocio.cliente_nome || '—'} />
             <InfoItem label="Consultor" value={negocio.consultor_nome || '—'} />
+            {(negocio as any).phone_lead && (
+              <InfoItem label="Fone Lead" value={(negocio as any).phone_lead} />
+            )}
             <InfoItem label="Origem" value={NEGOCIO_ORIGEM_LABELS[negocio.origem] || negocio.origem} />
             <InfoItem label="Probabilidade" value={`${negocio.probabilidade}%`} />
             <InfoItem label="Fechamento previsto" value={negocio.data_previsao_fechamento ? new Date(negocio.data_previsao_fechamento).toLocaleDateString('pt-BR') : '—'} />
