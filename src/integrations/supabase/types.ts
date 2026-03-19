@@ -1074,6 +1074,9 @@ export type Database = {
           email: string
           id: string
           nome: string
+          phone_billing: string | null
+          phone_company: string | null
+          phone_lead: string | null
           receita: string
           status: string
           tipo_pagamento: string
@@ -1098,6 +1101,9 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          phone_billing?: string | null
+          phone_company?: string | null
+          phone_lead?: string | null
           receita?: string
           status?: string
           tipo_pagamento?: string
@@ -1122,6 +1128,9 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          phone_billing?: string | null
+          phone_company?: string | null
+          phone_lead?: string | null
           receita?: string
           status?: string
           tipo_pagamento?: string
