@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Search, DollarSign, Target, CheckCircle, BarChart3, GripVertical, Radar, GitBranch, Settings2, Loader2 } from "lucide-react";
+import { Plus, Search, DollarSign, Target, CheckCircle, BarChart3, GripVertical, Radar, GitBranch, Settings2, Loader2, Phone, User } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, ALL_STATUSES, ACTIVE_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import NegocioCreateModal from "@/components/vendas/NegocioCreateModal";
 import NegocioDrawer from "@/components/vendas/NegocioDrawer";
@@ -154,6 +154,12 @@ export default function VendasPipeline() {
     setSelectedNegocio(n);
     setDrawerOpen(true);
   };
+
+  function getPhone(neg: Negocio): string | null {
+    if ((neg as any).phone_lead) return (neg as any).phone_lead;
+    const match = (neg.notas || "").match(/Telefone:\s*(.+)/);
+    return match ? match[1].trim() : null;
+  }
 
   function getDigitalScore(neg: Negocio): number | null {
     if (neg.origem !== "digital_intelligence") return null;
@@ -301,7 +307,16 @@ export default function VendasPipeline() {
                       </div>
                     </div>
                     {neg.cliente_nome && (
-                      <p className="text-[11px] text-muted-foreground truncate mt-1">{neg.cliente_nome}</p>
+                      <p className="text-[11px] text-muted-foreground truncate mt-1 flex items-center gap-1">
+                        <User className="h-3 w-3 shrink-0" />
+                        {neg.cliente_nome}
+                      </p>
+                    )}
+                    {getPhone(neg) && (
+                      <p className="text-[10px] text-primary truncate mt-0.5 flex items-center gap-1">
+                        <Phone className="h-2.5 w-2.5 shrink-0" />
+                        {getPhone(neg)}
+                      </p>
                     )}
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm font-bold text-foreground">{fmt(neg.valor_liquido)}</span>

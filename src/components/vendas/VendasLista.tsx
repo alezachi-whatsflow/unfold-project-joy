@@ -11,7 +11,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Search, Download, Eye, Pencil, Trash2, Copy, Plus, CheckCircle, XCircle, Radar } from "lucide-react";
+import { Search, Download, Eye, Pencil, Trash2, Copy, Plus, CheckCircle, XCircle, Radar, Phone } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, ALL_STATUSES, NEGOCIO_ORIGEM_LABELS, type Negocio, type NegocioStatus } from "@/types/vendas";
 import NegocioDrawer from "@/components/vendas/NegocioDrawer";
 import NegocioCreateModal from "@/components/vendas/NegocioCreateModal";
@@ -43,6 +43,12 @@ export default function VendasLista() {
   }, [negocios, statusFilter, origemFilter, search]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  function getPhone(neg: Negocio): string | null {
+    if ((neg as any).phone_lead) return (neg as any).phone_lead;
+    const match = (neg.notas || "").match(/Telefone:\s*(.+)/);
+    return match ? match[1].trim() : null;
+  }
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -148,7 +154,21 @@ export default function VendasLista() {
                     <TableRow key={n.id}>
                       <TableCell><Checkbox checked={selected.has(n.id)} onCheckedChange={() => toggleSelect(n.id)} /></TableCell>
                       <TableCell className="font-medium text-sm max-w-[200px] truncate">{n.titulo}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground truncate max-w-[140px]">{n.cliente_nome || '—'}</TableCell>
+                      <TableCell className="max-w-[140px]">
+                        <div className="text-sm text-muted-foreground truncate">{n.cliente_nome || '—'}</div>
+                        {getPhone(n) && (
+                          <a 
+                            href={`https://wa.me/${getPhone(n)!.replace(/\D/g, '').startsWith('55') ? getPhone(n)!.replace(/\D/g, '') : '55' + getPhone(n)!.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-emerald-500 hover:underline flex items-center gap-1 mt-0.5 truncate w-max"
+                            title="Abrir no WhatsApp"
+                          >
+                            <Phone className="h-3 w-3 shrink-0" />
+                            {getPhone(n)}
+                          </a>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground truncate max-w-[120px]">{n.consultor_nome || '—'}</TableCell>
                       <TableCell>
                         <Badge className="text-[10px]" style={{ background: `${sc.color}20`, color: sc.color, border: `1px solid ${sc.color}40` }}>

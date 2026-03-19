@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy, ClipboardList } from "lucide-react";
+import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy, ClipboardList, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { generateQuickReportHtml } from "@/components/intelligence/prospeccao/quickReportGenerator";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
@@ -150,6 +150,30 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
             ) : (
               <h2 className="text-sm font-bold text-foreground cursor-pointer hover:text-primary" onClick={() => setEditingTitle(true)}>{negocio.titulo}</h2>
             )}
+            
+            {(negocio.cliente_nome || (negocio as Record<string, any>).phone_lead || getPhoneFromNotas(negocio.notas)) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground font-medium">
+                {negocio.cliente_nome && (
+                  <span className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    {negocio.cliente_nome}
+                  </span>
+                )}
+                {((negocio as Record<string, any>).phone_lead || getPhoneFromNotas(negocio.notas)) && (
+                  <a 
+                    href={`https://wa.me/${((negocio as Record<string, any>).phone_lead || getPhoneFromNotas(negocio.notas)).replace(/\D/g, '').startsWith('55') ? ((negocio as Record<string, any>).phone_lead || getPhoneFromNotas(negocio.notas)).replace(/\D/g, '') : '55' + ((negocio as Record<string, any>).phone_lead || getPhoneFromNotas(negocio.notas)).replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-emerald-500 hover:text-emerald-400 hover:underline transition-colors" 
+                    title="Chamar no WhatsApp"
+                  >
+                    <Phone className="h-3 w-3" />
+                    {((negocio as Record<string, any>).phone_lead || getPhoneFromNotas(negocio.notas))}
+                  </a>
+                )}
+              </div>
+            )}
+
             <div className="mt-2">
               <Select value={negocio.status} onValueChange={handleStatusChange}>
                 <SelectTrigger className="h-7 w-auto">
