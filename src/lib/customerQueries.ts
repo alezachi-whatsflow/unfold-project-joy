@@ -53,6 +53,9 @@ function customerToRow(
     tipo_pagamento: customer.tipoPagamento,
     condicao: customer.condicao,
     valor_ultima_cobranca: customer.valorUltimaCobranca,
+    phone_billing: customer.phoneBilling || "",
+    phone_lead: customer.phoneLead || "",
+    phone_company: customer.phoneCompany || "",
   };
 }
 

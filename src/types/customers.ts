@@ -45,6 +45,9 @@ export interface CustomerRow {
   tipo_pagamento: string;
   condicao: string;
   valor_ultima_cobranca: number;
+  phone_billing: string;
+  phone_lead: string;
+  phone_company: string;
   created_at: string;
   updated_at: string;
 }
