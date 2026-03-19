@@ -116,6 +116,9 @@ function parseCustomerCSV(csv: string): Customer[] {
       tipoPagamento: get("tipo_pagamento"),
       condicao: get("condicao"),
       valorUltimaCobranca: valor,
+      phoneBilling: get("fone_faturamento") || get("phone_billing") || "",
+      phoneLead: get("fone_lead") || get("phone_lead") || "",
+      phoneCompany: get("fone_empresa") || get("phone_company") || "",
     });
   }
 
