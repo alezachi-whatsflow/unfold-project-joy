@@ -87,6 +87,7 @@ export default function VendasPage() {
 
         <TabsContent value="pipeline"><VendasPipeline /></TabsContent>
         <TabsContent value="lista"><VendasLista /></TabsContent>
+        <TabsContent value="atividades"><VendasAtividades /></TabsContent>
         <TabsContent value="relatorios"><VendasRelatorios /></TabsContent>
         <TabsContent value="meus-negocios"><VendasMeusNegocios /></TabsContent>
       </Tabs>
