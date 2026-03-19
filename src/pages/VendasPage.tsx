@@ -25,6 +25,7 @@ export default function VendasPage() {
     const all = [
       { value: 'pipeline', label: 'Pipeline', icon: Kanban, hidden: isRepresentante },
       { value: 'lista', label: 'Lista', icon: List, hidden: isRepresentante },
+      { value: 'atividades', label: 'Atividades', icon: CheckSquare, hidden: false },
       { value: 'relatorios', label: 'Relatórios', icon: BarChart3, hidden: isRepresentante },
       { value: 'meus-negocios', label: 'Negócios Fechados', icon: User, hidden: false },
     ];
