@@ -26,7 +26,7 @@ const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 const CATEGORIES = ["Pessoal", "Software", "Marketing", "Infraestrutura", "Impostos", "Comissões", "Despesas Comerciais", "Despesas Financeiras", "Custos de Prestação do Serviço (CSP)", "Salários / Pessoal", "General & Administrative", "Outros"];
 const INSTALLMENT_OPTIONS = ["À vista", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x", "11x", "12x"];
 const PAYMENT_METHODS = ["PIX", "Boleto", "Cartão de Crédito", "Cartão de Débito", "Transferência", "Dinheiro", "Outro"];
-const ACCEPTED_FILE_TYPES = ".pdf,.png,.jpg,.jpeg,.bmp,.gif,.webp,.tiff";
+const ACCEPTED_FILE_TYPES = ".pdf,.png,.jpg,.jpeg,.bmp,.gif,.webp,.tiff,.csv";
 
 interface Expense {
   id: string;
@@ -85,6 +85,7 @@ function formatDateBR(dateStr: string): string {
 function getFileIcon(name: string) {
   const ext = name?.split(".").pop()?.toLowerCase();
   if (ext === "pdf") return <FileText className="h-4 w-4 text-red-400" />;
+  if (ext === "csv") return <FileText className="h-4 w-4 text-green-500" />;
   return <Image className="h-4 w-4 text-blue-400" />;
 }
 
@@ -258,7 +259,7 @@ function AttachmentSection({
             {uploading ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
             ) : (
-              <><Paperclip className="mr-2 h-4 w-4" /> Anexar NF ou Comprovante (PDF, JPG, PNG, BMP)</>
+              <><Paperclip className="mr-2 h-4 w-4" /> Anexar NF ou Comprovante (PDF, JPG, PNG, BMP, CSV)</>
             )}
           </Button>
         )}

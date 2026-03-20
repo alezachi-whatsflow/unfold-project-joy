@@ -37,6 +37,9 @@ interface ParsedRow {
   payment_method: string;
   payment_condition: string;
   monthly_value: number;
+  has_ia_auditor: boolean;
+  has_ia_copiloto: boolean;
+  has_ia_closer: boolean;
 }
 
 const STATUS_MAP: Record<string, string> = {
@@ -91,6 +94,9 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
           payment_method: get('TIPO PAGAMENTO'),
           payment_condition: get('CONDIÇÃO') || get('CONDICAO'),
           monthly_value: parseFloat(get('VALOR COBRANÇA') || get('VALOR COBRANCA') || '0') || 0,
+          has_ia_auditor: get('AUDITOR').toUpperCase() === 'SIM' || get('AUDITOR') === '1',
+          has_ia_copiloto: get('COPILOTO').toUpperCase() === 'SIM' || get('COPILOTO') === '1',
+          has_ia_closer: get('CLOSER').toUpperCase() === 'SIM' || get('CLOSER') === '1',
         });
       } catch {
         errs.push(`Linha ${i + 1}: erro de parsing`);
@@ -130,6 +136,9 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
           base_devices_web: row.devices_official,
           base_attendants: row.attendants,
           billing_cycle: row.billing_cycle || 'monthly',
+          has_ia_auditor: row.has_ia_auditor,
+          has_ia_copiloto: row.has_ia_copiloto,
+          has_ia_closer: row.has_ia_closer,
           internal_notes: `Importado via CSV. Whitelabel: ${row.whitelabel}`,
         });
         success++;

@@ -45,6 +45,9 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     extra_attendants: license?.extra_attendants || 0,
     has_ai_module: license?.has_ai_module || false,
     ai_agents_limit: license?.ai_agents_limit || 0,
+    has_ia_auditor: license?.has_ia_auditor || false,
+    has_ia_copiloto: license?.has_ia_copiloto || false,
+    has_ia_closer: license?.has_ia_closer || false,
     facilite_plan: license?.facilite_plan || 'none',
     has_implantacao_starter: license?.has_implantacao_starter || false,
     monthly_messages_limit: license?.monthly_messages_limit || 10000,
@@ -96,6 +99,9 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     else if (ea > 20) attPrice = ea * 60;
 
     let aiPrice = form.has_ai_module ? 350 : 0;
+    if (form.has_ia_auditor) aiPrice += 99;
+    if (form.has_ia_copiloto) aiPrice += 149;
+    if (form.has_ia_closer) aiPrice += 199;
     let facPrice = 0;
     if (form.facilite_plan === 'basico') facPrice = 250;
     else if (form.facilite_plan === 'intermediario') facPrice = 700;
@@ -219,18 +225,41 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           {/* Add-ons */}
           <div className="space-y-3">
             <Label className="text-xs font-semibold uppercase text-muted-foreground">Add-ons</Label>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm">Módulo I.A. (+R$ 350/mês)</p>
-                {form.has_ai_module && (
+            <div className="grid grid-cols-1 gap-2">
+              <div className="flex items-center justify-between p-2 rounded border">
+                <div>
+                  <p className="text-sm font-medium">Auditor de Qualidade (+R$ 99/mês)</p>
+                  <p className="text-xs text-muted-foreground">Avalia atendimentos e recomenda melhorias.</p>
+                </div>
+                <Switch checked={form.has_ia_auditor} onCheckedChange={(v) => set('has_ia_auditor', v)} />
+              </div>
+              <div className="flex items-center justify-between p-2 rounded border">
+                <div>
+                  <p className="text-sm font-medium">Copiloto do Consultor (+R$ 149/mês)</p>
+                  <p className="text-xs text-muted-foreground">Sugestões de respostas e contorno de objeções.</p>
+                </div>
+                <Switch checked={form.has_ia_copiloto} onCheckedChange={(v) => set('has_ia_copiloto', v)} />
+              </div>
+              <div className="flex items-center justify-between p-2 rounded border">
+                <div>
+                  <p className="text-sm font-medium">Closer Autônomo (+R$ 199/mês)</p>
+                  <p className="text-xs text-muted-foreground">Automatiza primeiro contato e qualificação.</p>
+                </div>
+                <Switch checked={form.has_ia_closer} onCheckedChange={(v) => set('has_ia_closer', v)} />
+              </div>
+            </div>
+            {form.has_ai_module && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Legal I.A. Module (+R$ 350/mês)</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Label className="text-xs">Agentes:</Label>
                     <Input type="number" className="w-20 h-7 text-xs" value={form.ai_agents_limit} onChange={(e) => set('ai_agents_limit', Number(e.target.value))} />
                   </div>
-                )}
+                </div>
+                <Switch checked={form.has_ai_module} onCheckedChange={(v) => set('has_ai_module', v)} />
               </div>
-              <Switch checked={form.has_ai_module} onCheckedChange={(v) => set('has_ai_module', v)} />
-            </div>
+            )}
             <div className="flex items-center justify-between">
               <p className="text-sm">Implantação Starter (+R$ 2.000 único)</p>
               <Switch checked={form.has_implantacao_starter} onCheckedChange={(v) => set('has_implantacao_starter', v)} />

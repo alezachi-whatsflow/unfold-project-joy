@@ -97,8 +97,11 @@ export default function NexusLicenses() {
       l.tenants?.name, l.tenants?.email, l.plan, l.status,
       Number(l.monthly_value || 0).toFixed(2),
       l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '',
+      l.has_ia_auditor ? 'SIM' : 'NÃO',
+      l.has_ia_copiloto ? 'SIM' : 'NÃO',
+      l.has_ia_closer ? 'SIM' : 'NÃO',
     ].join(';'));
-    const csv = ['Empresa;Email;Plano;Status;Valor;Vencimento', ...rows].join('\n');
+    const csv = ['Empresa;Email;Plano;Status;Valor;Vencimento;Auditor;Copiloto;Closer', ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -220,9 +223,15 @@ export default function NexusLicenses() {
                         {(l.base_attendants || 0) + (l.extra_attendants || 0)}
                       </TableCell>
                       <TableCell>
-                        {l.has_ai_module ? (
-                          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[10px]">IA</Badge>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                        <div className="flex gap-1 flex-wrap">
+                          {l.has_ia_auditor && <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[9px]">Auditor</Badge>}
+                          {l.has_ia_copiloto && <Badge className="bg-blue-500/20 text-blue-400 border-none text-[9px]">Copiloto</Badge>}
+                          {l.has_ia_closer && <Badge className="bg-purple-500/20 text-purple-400 border-none text-[9px]">Closer</Badge>}
+                          {l.has_ai_module && <Badge className="bg-zinc-500/20 text-zinc-400 border-none text-[9px]">Legacy I.A.</Badge>}
+                          {!l.has_ia_auditor && !l.has_ia_copiloto && !l.has_ia_closer && !l.has_ai_module && (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
