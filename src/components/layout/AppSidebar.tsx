@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState, useEffect, useRef } from "react";
-import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink as RouterNavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { LogOut, User, Moon, Sun, ChevronLeft, ChevronRight, X, Menu, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -182,12 +182,16 @@ function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { col
 
 // ──────────────────────── nav item renderer ────────────────────────
 function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: NavItem; collapsed: boolean; isMobile: boolean; badgeCount: number; density: string }) {
+  const { slug } = useParams<{ slug?: string }>();
+  const basePath = slug ? `/app/${slug}` : '';
+  const resolvedRoute = basePath + (item.route === '/' ? '' : item.route);
+
   // Use custom sidebar icon if available, fallback to Lucide
   const CustomIcon = sidebarIconMap[item.icon];
   const LucideIcon = getIcon(item.icon);
   const isCollapsed = collapsed && !isMobile;
   const location = useLocation();
-  const isActive = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
+  const isActive = location.pathname === resolvedRoute || location.pathname.startsWith(resolvedRoute + '/');
 
   const padding = density === 'comfortable' ? "10px 12px" : density === 'compact' ? "5px 10px" : "7px 10px";
   const fontSize = density === 'comfortable' ? 14 : density === 'compact' ? 12 : 13;
@@ -195,7 +199,7 @@ function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: 
   return (
     <li>
       <RouterNavLink
-        to={item.route}
+        to={resolvedRoute}
         end={item.route === '/'}
         title={isCollapsed ? item.label : undefined}
         style={{ padding: isCollapsed ? "8px 0" : padding, fontSize: isCollapsed ? 13 : fontSize }}
@@ -289,11 +293,14 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
   const badges = useBadges();
   const { prefs } = useSidebarPrefs();
   const location = useLocation();
+  const { slug } = useParams<{ slug?: string }>();
+  const basePath = slug ? `/app/${slug}` : '';
 
   const [activeCatId, setActiveCatId] = useState(() => {
     for (const cat of filteredGroups) {
       for (const item of cat.items) {
-        const match = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
+        const resolvedRoute = basePath + (item.route === '/' ? '' : item.route);
+        const match = location.pathname === resolvedRoute || location.pathname.startsWith(resolvedRoute + '/');
         if (match) return cat.id;
       }
     }
@@ -332,9 +339,10 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
         {/* System icons at bottom */}
         {filteredGroups.filter(c => c.id === 'sistema').map(cat => cat.items.map(item => {
           const Icon = getIcon(item.icon);
-          const isActive = item.route === '/' ? location.pathname === '/' : location.pathname.startsWith(item.route);
+          const resolvedRoute = basePath + (item.route === '/' ? '' : item.route);
+          const isActive = location.pathname === resolvedRoute || location.pathname.startsWith(resolvedRoute + '/');
           return (
-            <RouterNavLink key={item.id} to={item.route} title={item.label}
+            <RouterNavLink key={item.id} to={resolvedRoute} title={item.label}
               className={() => cn("flex items-center justify-center rounded-lg mb-1 transition-colors", isActive ? "[background:rgba(74,222,128,0.12)] [color:#4ade80]" : "[color:rgba(255,255,255,0.35)] hover:[background:rgba(255,255,255,0.05)]")}
               style={{ width: 40, height: 40 }}>
               <Icon className="h-4 w-4" />
@@ -369,6 +377,8 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
   const badges = useBadges();
   const { prefs, updateCategoryCollapsed } = useSidebarPrefs();
   const isCollapsed = collapsed && !isMobile;
+  const { slug } = useParams<{ slug?: string }>();
+  const basePath = slug ? `/app/${slug}` : '';
 
   // Get collapsed state from customCategories or default false
   const getCatCollapsed = (catId: string) => {
@@ -459,8 +469,9 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
               const allItems = DEFAULT_NAV_CATEGORIES.flatMap(c => c.items);
               const item = allItems.find(i => i.id === id);
               if (!item) return null;
+              const resolvedRoute = basePath + (item.route === '/' ? '' : item.route);
               return (
-                <RouterNavLink key={id} to={item.route}
+                <RouterNavLink key={id} to={resolvedRoute}
                   className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
                   style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.15)" }}
                 >

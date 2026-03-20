@@ -1,0 +1,16 @@
+{
+  "projectName": "vite_react_shadcn_ts",
+  "type": "React Single Page App (B2B Multi-tenancy CRM/ERP)",
+  "stack": [
+    "React",
+    "Vite",
+    "TypeScript",
+    "Tailwind",
+    "Supabase"
+  ],
+  "keyMechanics": [
+    "Digital Intelligence CRM",
+    "Supabase Real-time RLS",
+    "Multi-workspace"
+  ]
+}

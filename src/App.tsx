@@ -63,6 +63,17 @@ import SuperAdminLicenses from "./pages/superadmin/SuperAdminLicenses";
 import SuperAdminAuditLog from "./pages/superadmin/SuperAdminAuditLog";
 import SuperAdminConfig from "./pages/superadmin/SuperAdminConfig";
 
+// God Admin
+import GodAdminLayout from "./pages/god-admin/GodAdminLayout";
+import GodAdminDashboard from "./pages/god-admin/GodAdminDashboard";
+import GodAdminWhitelabels from "./pages/god-admin/GodAdminWhitelabels";
+import GodAdminDirectClients from "./pages/god-admin/GodAdminDirectClients";
+import GodAdminLicenses from "./pages/god-admin/GodAdminLicenses";
+import GodAdminEnvironments from "./pages/god-admin/GodAdminEnvironments";
+import GodAdminAuditLog from "./pages/god-admin/GodAdminAuditLog";
+import GodAdminFeatureFlags from "./pages/god-admin/GodAdminFeatureFlags";
+import GodAdminConfig from "./pages/god-admin/GodAdminConfig";
+
 // Nexus
 import { NexusProvider } from "./contexts/NexusContext";
 import NexusLogin from "./pages/nexus/NexusLogin";
@@ -76,11 +87,20 @@ import NexusAuditLog from "./pages/nexus/NexusAuditLog";
 import NexusFeatureFlags from "./pages/nexus/NexusFeatureFlags";
 import NexusTickets from "./pages/nexus/NexusTickets";
 import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
-// WhiteLabel Lab
-import WhitelabelLayout from "./pages/lab/WhitelabelLayout";
-import WhitelabelDashboard from "./pages/lab/WhitelabelDashboard";
-import WhitelabelLicenses from "./pages/lab/WhitelabelLicenses";
-import WhitelabelEquipe from "./pages/lab/WhitelabelEquipe";
+import NexusCheckouts from "./pages/nexus/NexusCheckouts";
+// WhiteLabel Phase 3 Portal 
+import WLLayout from "./pages/wl/WLLayout";
+import WLDashboard from "./pages/wl/WLDashboard";
+import WLClients from "./pages/wl/WLClients";
+import WLLicenses from "./pages/wl/WLLicenses";
+import WLBranding from "./pages/wl/WLBranding";
+import WLAudit from "./pages/wl/WLAudit";
+import WLConfig from "./pages/wl/WLConfig";
+
+// Checkout & Activation (public)
+import CheckoutPage from "./pages/CheckoutPage";
+import AguardandoAtivacaoPage from "./pages/AguardandoAtivacaoPage";
+import ActivationPage from "./pages/ActivationPage";
 
 import { Loader2 } from "lucide-react";
 
@@ -109,12 +129,18 @@ const AppRoutes = () => (
     <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/acesso-negado" element={<AuthGuard><AcessoNegadoPage /></AuthGuard>} />
 
+    {/* Checkout, Ativação — totalmente públicos */}
+    <Route path="/checkout" element={<CheckoutPage />} />
+    <Route path="/aguardando-ativacao" element={<AguardandoAtivacaoPage />} />
+    <Route path="/ativar/:token" element={<ActivationPage />} />
+
     {/* Nexus Portal */}
     <Route path="/nexus/login" element={<NexusLogin />} />
     <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
       <Route index element={<NexusDashboard />} />
       <Route path="licencas" element={<NexusLicenses />} />
       <Route path="licencas/:id" element={<NexusLicenseDetail />} />
+      <Route path="checkouts" element={<NexusCheckouts />} />
       <Route path="financeiro" element={<NexusFinanceiro />} />
       <Route path="equipe" element={<NexusEquipe />} />
       <Route path="auditoria" element={<NexusAuditLog />} />
@@ -123,11 +149,14 @@ const AppRoutes = () => (
       <Route path="configuracoes" element={<NexusConfiguracoes />} />
     </Route>
 
-    {/* WhiteLabel Lab Portal */}
-    <Route path="/lab/:whitelabelSlug" element={<AuthGuard><WhitelabelLayout /></AuthGuard>}>
-      <Route index element={<WhitelabelDashboard />} />
-      <Route path="licencas" element={<WhitelabelLicenses />} />
-      <Route path="equipe" element={<WhitelabelEquipe />} />
+    {/* WhiteLabel Portal - Phase 3 */}
+    <Route path="/wl/:slug" element={<AuthGuard><WLLayout /></AuthGuard>}>
+      <Route index element={<WLDashboard />} />
+      <Route path="clientes" element={<WLClients />} />
+      <Route path="licencas" element={<WLLicenses />} />
+      <Route path="branding" element={<WLBranding />} />
+      <Route path="suporte" element={<WLAudit />} />
+      <Route path="config" element={<WLConfig />} />
     </Route>
 
     {/* SuperAdmin Portal */}
@@ -139,35 +168,51 @@ const AppRoutes = () => (
       <Route path="config" element={<SuperAdminConfig />} />
     </Route>
 
+    {/* God Admin Portal */}
+    <Route path="/god-admin" element={<AuthGuard><GodAdminLayout /></AuthGuard>}>
+      <Route index element={<GodAdminDashboard />} />
+      <Route path="whitelabels" element={<GodAdminWhitelabels />} />
+      <Route path="direct-clients" element={<GodAdminDirectClients />} />
+      <Route path="licencas" element={<GodAdminLicenses />} />
+      <Route path="ambientes" element={<GodAdminEnvironments />} />
+      <Route path="audit" element={<GodAdminAuditLog />} />
+      <Route path="flags" element={<GodAdminFeatureFlags />} />
+      <Route path="config" element={<GodAdminConfig />} />
+    </Route>
+
     {/* Protected — each route wrapped with module permission */}
     <Route path="/" element={<AuthGuard><HomePage /></AuthGuard>} />
-    <Route path="/dashboard" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><Index /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/vendas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="vendas"><VendasPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/input" element={<AuthGuard><DashboardLayout><ProtectedRoute module="inserir_dados"><DataInputPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/cobrancas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="cobrancas"><CobrancasPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/expenses" element={<AuthGuard><DashboardLayout><ProtectedRoute module="despesas"><ExpensesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/revenue" element={<AuthGuard><DashboardLayout><ProtectedRoute module="receitas"><RevenuePage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/fiscal" element={<AuthGuard><DashboardLayout><ProtectedRoute module="fiscal"><FiscalPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/comissoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="comissoes"><ComissoesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/customers" element={<AuthGuard><DashboardLayout><ProtectedRoute module="clientes"><CustomersPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/atividades" element={<AuthGuard><DashboardLayout><ProtectedRoute module="clientes"><ActivitiesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/products" element={<AuthGuard><DashboardLayout><ProtectedRoute module="produtos"><ProductsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/intelligence" element={<AuthGuard><DashboardLayout><ProtectedRoute module="intelligence"><IntelligencePage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/settings" element={<AuthGuard><DashboardLayout><ProtectedRoute module="configuracoes"><SettingsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/usuarios" element={<AuthGuard><DashboardLayout><ProtectedRoute module="usuarios"><UsersPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/reports" element={<AuthGuard><DashboardLayout><ProtectedRoute module="relatorios"><ReportsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/perfil" element={<AuthGuard><DashboardLayout><ProfilePage /></DashboardLayout></AuthGuard>} />
-    <Route path="/mensageria" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/integracoes" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><IntegracoesPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
     
-    <Route path="/ia" element={<AuthGuard><DashboardLayout><IASkillsPage /></DashboardLayout></AuthGuard>} />
-    <Route path="/ia/auditor" element={<AuthGuard><DashboardLayout><IAAuditorPage /></DashboardLayout></AuthGuard>} />
-    <Route path="/conversas" element={<AuthGuard><DashboardLayout><ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
-    {/* wa-connections now lives inside /integracoes */}
-    <Route path="/wa-connections" element={<Navigate to="/integracoes" replace />} />
-    <Route path="/assinatura" element={<AuthGuard><DashboardLayout><AssinaturaPage /></DashboardLayout></AuthGuard>} />
-    <Route path="/analytics" element={<AuthGuard><DashboardLayout><ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute></DashboardLayout></AuthGuard>} />
+    {/* Phase 4: Client Portal */}
+    <Route path="/app/:slug" element={<AuthGuard><DashboardLayout /></AuthGuard>}>
+      <Route index element={<ProtectedRoute module="dashboard"><Index /></ProtectedRoute>} />
+      <Route path="dashboard" element={<ProtectedRoute module="dashboard"><Index /></ProtectedRoute>} />
+      <Route path="vendas" element={<ProtectedRoute module="vendas"><VendasPage /></ProtectedRoute>} />
+      <Route path="input" element={<ProtectedRoute module="inserir_dados"><DataInputPage /></ProtectedRoute>} />
+      <Route path="cobrancas" element={<ProtectedRoute module="cobrancas"><CobrancasPage /></ProtectedRoute>} />
+      <Route path="expenses" element={<ProtectedRoute module="despesas"><ExpensesPage /></ProtectedRoute>} />
+      <Route path="revenue" element={<ProtectedRoute module="receitas"><RevenuePage /></ProtectedRoute>} />
+      <Route path="fiscal" element={<ProtectedRoute module="fiscal"><FiscalPage /></ProtectedRoute>} />
+      <Route path="comissoes" element={<ProtectedRoute module="comissoes"><ComissoesPage /></ProtectedRoute>} />
+      <Route path="customers" element={<ProtectedRoute module="clientes"><CustomersPage /></ProtectedRoute>} />
+      <Route path="atividades" element={<ProtectedRoute module="clientes"><ActivitiesPage /></ProtectedRoute>} />
+      <Route path="products" element={<ProtectedRoute module="produtos"><ProductsPage /></ProtectedRoute>} />
+      <Route path="intelligence" element={<ProtectedRoute module="intelligence"><IntelligencePage /></ProtectedRoute>} />
+      <Route path="settings" element={<ProtectedRoute module="configuracoes"><SettingsPage /></ProtectedRoute>} />
+      <Route path="usuarios" element={<ProtectedRoute module="usuarios"><UsersPage /></ProtectedRoute>} />
+      <Route path="reports" element={<ProtectedRoute module="relatorios"><ReportsPage /></ProtectedRoute>} />
+      <Route path="perfil" element={<ProfilePage />} />
+      <Route path="mensageria" element={<ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute>} />
+      <Route path="integracoes" element={<ProtectedRoute module="mensageria"><IntegracoesPage /></ProtectedRoute>} />
+      <Route path="ia" element={<IASkillsPage />} />
+      <Route path="ia/auditor" element={<IAAuditorPage />} />
+      <Route path="conversas" element={<ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute>} />
+      <Route path="assinatura" element={<AssinaturaPage />} />
+      <Route path="analytics" element={<ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute>} />
+      <Route path="wa-connections" element={<Navigate to="integracoes" replace />} />
+    </Route>
+    
+    <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
     <Route path="/manual" element={<AuthGuard><ManualPage /></AuthGuard>} />
     <Route path="/sistema/comunidade" element={<AuthGuard><ComunidadePage /></AuthGuard>} />
     <Route path="/sistema/tutoriais" element={<AuthGuard><TutoriaisPage /></AuthGuard>} />

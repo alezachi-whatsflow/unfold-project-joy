@@ -1,0 +1,10 @@
+{
+  "essentialVars": [
+    "VITE_SUPABASE_URL",
+    "VITE_SUPABASE_ANON_KEY",
+    "VITE_SUPABASE_PROJECT_ID"
+  ],
+  "warningVars": [
+    "SUPABASE_SERVICE_ROLE_KEY (Keep Private)"
+  ]
+}

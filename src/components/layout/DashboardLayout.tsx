@@ -1,20 +1,50 @@
+import { useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { CommandPalette } from "./CommandPalette";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLocation } from "react-router-dom";
-import { ExternalLink, Minimize2 } from "lucide-react";
+import { useLocation, Outlet, useParams } from "react-router-dom";
+import { ExternalLink, Minimize2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
 
-export function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function DashboardLayout() {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { slug } = useParams<{ slug: string }>();
   const isDetached = new URLSearchParams(location.search).get("detached") === "true";
+
+  // Simulate fetching branding by slug
+  const { data: branding, isLoading } = useQuery({
+    queryKey: ['client-branding', slug],
+    queryFn: async () => {
+      if (!slug || slug === 'whatsflow') return null; // fallback to whatsflow default
+      return {
+        app_name: "SendHit Pro",
+        primary_color: "#0EA5E9",
+        secondary_color: "#1E293B",
+        accent_color: "#6366F1",
+        background_color: "#0F172A",
+        logo_url: null,
+      };
+    }
+  });
+
+  useEffect(() => {
+    if (branding) {
+      document.documentElement.style.setProperty('--wl-primary', branding.primary_color);
+      document.documentElement.style.setProperty('--wl-secondary', branding.secondary_color);
+      document.documentElement.style.setProperty('--wl-accent', branding.accent_color);
+      document.documentElement.style.setProperty('--wl-bg', branding.background_color);
+    }
+    return () => {
+      document.documentElement.style.removeProperty('--wl-primary');
+      document.documentElement.style.removeProperty('--wl-secondary');
+      document.documentElement.style.removeProperty('--wl-accent');
+      document.documentElement.style.removeProperty('--wl-bg');
+    }
+  }, [branding]);
 
   const handlePopOut = () => {
     const url = `${window.location.origin}${location.pathname}?detached=true`;
@@ -39,8 +69,8 @@ export function DashboardLayout({
             </Button>
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-background p-3 sm:p-4 md:p-6">
-          {children}
+        <main className="flex-1 overflow-auto bg-background p-3 sm:p-4 md:p-6" style={{ backgroundColor: 'var(--wl-bg, inherit)' }}>
+          <Outlet />
         </main>
       </div>
     );
@@ -64,8 +94,8 @@ export function DashboardLayout({
             <ThemeSwitcher />
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-background p-3 sm:p-4 md:p-6">
-          {children}
+        <main className="flex-1 overflow-auto bg-background p-3 sm:p-4 md:p-6" style={{ backgroundColor: 'var(--wl-bg, inherit)' }}>
+          <Outlet />
         </main>
       </div>
       <CommandPalette />

@@ -1,0 +1,4 @@
+{
+  "auth": "GoTrue",
+  "gating": "PermissionGate.tsx context logic matching roles per tenant"
+}

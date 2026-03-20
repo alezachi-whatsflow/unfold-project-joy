@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,36 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signIn(email, password);
-      navigate("/");
+      
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) throw userError || new Error("User not found");
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select(`
+          role,
+          account_id,
+          account:accounts!inner(account_type, slug)
+        `)
+        .eq('id', userData.user.id)
+        .single();
+        
+      if (profileError) throw profileError;
+      
+      const role = profile?.role;
+      const accountArray = profile?.account as any[];
+      const account = accountArray?.[0];
+      const accountType = account?.account_type;
+      const slug = account?.slug;
+
+      if (role === 'god_admin' || role === 'god_support') {
+        navigate('/god-admin');
+      } else if (role === 'wl_admin' || role === 'wl_support') {
+        navigate(`/wl/${slug}`);
+      } else {
+        navigate(`/app/${slug}`);
+      }
+      
     } catch (err: any) {
       toast.error(err.message || "Erro ao fazer login");
     } finally {
