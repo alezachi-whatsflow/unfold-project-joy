@@ -59,7 +59,7 @@ export default function NexusLicenses() {
     setLoading(true);
     let query = supabase
       .from('licenses')
-      .select('*, tenants!inner(name, slug, email, cpf_cnpj)', { count: 'exact' });
+      .select('*, tenants!inner(name, slug, email, cpf_cnpj), parent:licenses!parent_license_id(tenants(name))', { count: 'exact' });
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
@@ -187,6 +187,11 @@ export default function NexusLicenses() {
                         <div>
                           <p className="text-sm font-medium text-foreground">{l.tenants?.name || '—'}</p>
                           <p className="text-xs text-muted-foreground">{l.tenants?.email || ''}</p>
+                          {l.parent?.tenants && l.license_type === 'individual' && (
+                            <p className="text-[10px] text-purple-400 mt-0.5 flex items-center gap-1 font-semibold">
+                              └ {l.parent.tenants.name}
+                            </p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

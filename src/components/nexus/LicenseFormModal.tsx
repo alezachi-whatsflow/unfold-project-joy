@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -27,8 +27,13 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   const { toast } = useToast();
   const isEdit = !!license;
   const [saving, setSaving] = useState(false);
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [whitelabels, setWhitelabels] = useState<any[]>([]);
 
   const [form, setForm] = useState({
+    tenant_id: license?.tenant_id || '',
+    license_type: license?.license_type || 'individual',
+    parent_license_id: license?.parent_license_id || 'none',
     plan: license?.plan || 'profissional',
     status: license?.status || 'active',
     monthly_value: license?.monthly_value || 0,
@@ -47,6 +52,25 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     billing_cycle: license?.billing_cycle || 'monthly',
     internal_notes: license?.internal_notes || '',
   });
+
+  useEffect(() => {
+    if (open) {
+      loadDependencies();
+    }
+  }, [open]);
+
+  async function loadDependencies() {
+    const { data: wls } = await supabase.from('licenses').select('id, tenants(name)').eq('license_type', 'whitelabel');
+    setWhitelabels(wls || []);
+    if (!isEdit) {
+      const [{ data: allTenants }, { data: allLics }] = await Promise.all([
+        supabase.from('tenants').select('id, name').order('name'),
+        supabase.from('licenses').select('tenant_id')
+      ]);
+      const licensedIds = new Set((allLics || []).map(l => l.tenant_id));
+      setTenants((allTenants || []).filter(t => !licensedIds.has(t.id)));
+    }
+  }
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -81,8 +105,14 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   }, [form]);
 
   async function handleSave() {
+    if (!isEdit && !form.tenant_id) {
+      toast({ title: 'Selecione um tenant para a licença', variant: 'destructive' });
+      return;
+    }
+
     setSaving(true);
-    const payload = { ...form, monthly_value: mrrPreview.total };
+    const payload: any = { ...form, monthly_value: mrrPreview.total };
+    if (payload.parent_license_id === 'none') payload.parent_license_id = null;
 
     if (isEdit) {
       await supabase.from('licenses').update(payload).eq('id', license.id);
@@ -92,7 +122,16 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       });
       toast({ title: 'Licença atualizada' });
     } else {
-      toast({ title: 'Para criar nova licença, crie primeiro o tenant' });
+      const { data, error } = await supabase.from('licenses').insert(payload).select().single();
+      if (error) {
+        toast({ title: 'Erro ao criar', description: error.message, variant: 'destructive' });
+      } else {
+        await supabase.from('nexus_audit_logs').insert({
+          actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
+          action: 'license_create', license_id: data.id,
+        });
+        toast({ title: 'Licença criada com sucesso!' });
+      }
     }
     setSaving(false);
     onSaved();
@@ -107,6 +146,48 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Identificação and Type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg border border-border">
+            {!isEdit && (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Tenant / Empresa</Label>
+                <Select value={form.tenant_id} onValueChange={(v) => set('tenant_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um tenant sem licença" /></SelectTrigger>
+                  <SelectContent>
+                    {tenants.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                    {tenants.length === 0 && <SelectItem value="none" disabled>Nenhum Tenant disponível</SelectItem>}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground">Tipo de Licença</Label>
+              <Select value={form.license_type} onValueChange={(v) => set('license_type', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">Individual (Cliente Final)</SelectItem>
+                  <SelectItem value="whitelabel">WhiteLabel (Parceiro)</SelectItem>
+                  <SelectItem value="internal">Interno (Edtech/Laboratório)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.license_type === 'individual' && (
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Pertence ao WhiteLabel? (Opcional)</Label>
+                <Select value={form.parent_license_id} onValueChange={(v) => set('parent_license_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Direto Whatsflow (Nenhum)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Contrato Direto (Whatsflow)</SelectItem>
+                    {whitelabels.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>{w.tenants?.name || 'WhiteLabel Sem Nome'}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
           {/* Plan */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase text-muted-foreground">Plano Base</Label>
