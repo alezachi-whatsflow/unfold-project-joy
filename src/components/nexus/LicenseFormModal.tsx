@@ -139,9 +139,11 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   }, [open]);
 
   async function loadDependencies() {
-    const [{ data: wls }] = await Promise.all([
-      supabase.from('licenses').select('id, tenants(name)').eq('license_type', 'whitelabel'),
-    ]);
+    const { data: wls } = await supabase
+      .from('licenses')
+      .select('id, whitelabel_slug, tenants(name)')
+      .not('whitelabel_slug', 'is', null)
+      .order('created_at', { ascending: false });
     setWhitelabels(wls || []);
     fetchSalesPeople().then(setSalesPeople).catch(() => {});
 
@@ -319,7 +321,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                     <SelectContent>
                       <SelectItem value="none">Contrato Direto (Whatsflow)</SelectItem>
                       {whitelabels.map((w) => (
-                        <SelectItem key={w.id} value={w.id}>{w.tenants?.name || 'WhiteLabel Sem Nome'}</SelectItem>
+                        <SelectItem key={w.id} value={w.id}>{w.tenants?.name || w.whitelabel_slug || 'WhiteLabel Sem Nome'}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

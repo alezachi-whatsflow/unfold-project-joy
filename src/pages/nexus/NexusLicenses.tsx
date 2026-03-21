@@ -31,7 +31,7 @@ import CSVImportModal from '@/components/nexus/CSVImportModal';
 
 type Layout = 'analytics' | 'cards' | 'operational';
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE_OPTIONS = [10, 50, 100, 500, 1000];
 
 const STATUS_BADGES: Record<string, string> = {
   active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -84,6 +84,7 @@ export default function NexusLicenses() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
   const [total, setTotal] = useState(0);
   const [editLicense, setEditLicense] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
@@ -98,7 +99,7 @@ export default function NexusLicenses() {
     loadLicenses();
     setSelectedIds(new Set());
     setColFilters({});
-  }, [page, statusFilter, typeFilter]);
+  }, [page, pageSize, statusFilter, typeFilter]);
 
   useEffect(() => {
     loadAllLicenses();
@@ -129,8 +130,8 @@ export default function NexusLicenses() {
       query = query.eq('license_type', typeFilter);
     }
 
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
 
     const { data, count, error } = await query
       .order('created_at', { ascending: false })
@@ -288,7 +289,7 @@ export default function NexusLicenses() {
     }
   }
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="space-y-6">
@@ -525,7 +526,7 @@ export default function NexusLicenses() {
                   <div className="col-span-full text-center py-12 text-muted-foreground text-sm">Nenhuma licença encontrada</div>
                 )}
               </div>
-              <PaginationBar page={page} totalPages={Math.ceil(total / PAGE_SIZE)} total={total} onPrev={() => setPage(page - 1)} onNext={() => setPage(page + 1)} />
+              <PaginationBar page={page} totalPages={totalPages} total={total} onPrev={() => setPage(page - 1)} onNext={() => setPage(page + 1)} />
             </>
           )}
         </div>
@@ -557,6 +558,14 @@ export default function NexusLicenses() {
                 <SelectItem value="individual">Individual</SelectItem>
                 <SelectItem value="whitelabel">WhiteLabel</SelectItem>
                 <SelectItem value="internal">Interno</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(0); }}>
+              <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map(n => (
+                  <SelectItem key={n} value={String(n)}>{n} por página</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {activeColFilters > 0 && (
