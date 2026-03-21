@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateQuickReportHtml } from "./quickReportGenerator";
@@ -179,10 +179,12 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
 
   // Navigate to Intelligence page with URL pre-filled for analysis
   const handleAnalyze = () => {
+    const { slug } = useParams<{ slug: string }>();
+
     if (lead.url) {
-      navigate(`/intelligence?analyze=${encodeURIComponent(lead.url)}`);
+      navigate(`/app/${slug || 'whatsflow'}/intelligence?analyze=${encodeURIComponent(lead.url)}`);
     } else {
-      navigate(`/intelligence?analyze=${encodeURIComponent(lead.name)}&type=google_maps`);
+      navigate(`/app/${slug || 'whatsflow'}/intelligence?analyze=${encodeURIComponent(lead.name)}&type=google_maps`);
     }
   };
 

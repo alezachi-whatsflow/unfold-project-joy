@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { X, Trash2, CheckCircle, Send, Phone, Mail, CalendarDays, Radar, FileText, Loader2, Pencil, Trophy, Link2, Copy, ClipboardList, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { generateQuickReportHtml } from "@/components/intelligence/prospeccao/quickReportGenerator";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -74,6 +74,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios();
   const { questionnaire, icpProfile } = useICPProfile();
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const [newNote, setNewNote] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(negocio.titulo);
@@ -281,9 +282,9 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
                 onClick={() => {
                   const site = getSiteFromNotas(negocio.notas);
                   if (site) {
-                    navigate(`/intelligence?analyze=${encodeURIComponent(site)}`);
+                    navigate(`/app/${slug || 'whatsflow'}/intelligence?analyze=${encodeURIComponent(site)}`);
                   } else {
-                    navigate(`/intelligence?analyze=${encodeURIComponent(negocio.cliente_nome || negocio.titulo)}&type=google_maps`);
+                    navigate(`/app/${slug || 'whatsflow'}/intelligence?analyze=${encodeURIComponent(negocio.cliente_nome || negocio.titulo)}&type=google_maps`);
                   }
                 }}
               >

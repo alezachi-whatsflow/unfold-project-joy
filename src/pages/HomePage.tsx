@@ -106,7 +106,8 @@ export default function HomePage() {
     { icon: FileBarChart, label: "Relatórios", route: "/reports" },
   ];
 
-  const go = (r: string) => navigate(r);
+  // Força o prefixo do workspace para evitar 404 na nova estrutura multitenant (Fase 4)
+  const go = (r: string) => navigate(`/app/whatsflow${r}`);
 
   /* ── glass card wrapper ────────────────────── */
   const Glass = ({ children, className = "", delay = 0, onClick }: {
