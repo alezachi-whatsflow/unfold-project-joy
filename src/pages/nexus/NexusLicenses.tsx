@@ -43,6 +43,8 @@ const STATUS_BADGES: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Ativo', inactive: 'Inativo', blocked: 'Bloqueado', suspended: 'Suspenso', trial: 'Trial',
+  ativado: 'Ativo', ativo: 'Ativo', inativo: 'Inativo', bloqueado: 'Bloqueado', suspenso: 'Suspenso',
+  Ativo: 'Ativo', Inativo: 'Inativo', Bloqueado: 'Bloqueado', Suspenso: 'Suspenso', Trial: 'Trial',
 };
 
 const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
@@ -170,11 +172,14 @@ export default function NexusLicenses() {
   const activeColFilters = Object.values(colFilters).filter(s => s.size > 0).length;
 
   function colUniqueValues(col: string): string[] {
-    // Use fixed values for known enums so all options show regardless of current page
-    if (col === 'status') return ['Ativo', 'Inativo', 'Bloqueado', 'Suspenso', 'Trial'];
     // For other columns, derive from current page + allLicenses (analytics dataset)
     const fromAll = allLicenses.map((l: any) => getColValue(l, col));
     const fromPage = licenses.map((l: any) => getColValue(l, col));
+    if (col === 'status') {
+      // Merge hardcoded defaults with actual DB-derived values so nothing is missing
+      const defaults = ['Ativo', 'Inativo', 'Bloqueado', 'Suspenso', 'Trial'];
+      return [...new Set([...defaults, ...fromAll, ...fromPage])].filter(Boolean).sort();
+    }
     return [...new Set([...fromAll, ...fromPage])].filter(Boolean).sort();
   }
 

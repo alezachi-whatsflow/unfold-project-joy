@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ROLE_LABELS, ROLE_COLORS } from "@/types/roles";
+import { ROLE_COLORS } from "@/types/roles";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -92,9 +92,10 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
-  const roleLabel = ROLE_LABELS[userRole] || userRole;
   const roleColor = ROLE_COLORS[userRole] || '#888';
   const isCollapsed = collapsed && !isMobile;
+  const emailDomain = user?.email?.split('@')[1];
+  const companyName = emailDomain ? emailDomain.split('.')[0].charAt(0).toUpperCase() + emailDomain.split('.')[0].slice(1) : '';
 
   // Check if user has Nexus access
   const { data: isNexusUser } = useQuery({
@@ -127,9 +128,9 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
             {!isCollapsed && (
               <div className="min-w-0 text-left flex-1">
                 <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{userName}</p>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}30` }}>
-                  {roleLabel}
-                </span>
+                {companyName && (
+                  <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{companyName}</p>
+                )}
               </div>
             )}
           </button>
