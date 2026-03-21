@@ -139,9 +139,22 @@ export default function NexusLayout() {
         {/* Bottom */}
         <div className="border-t border-border p-3 space-y-2">
           {!collapsed && nexusUser && (
-            <div className="px-1 pb-2">
-              <p className="text-xs font-medium text-foreground truncate">{nexusUser.name}</p>
-              <p className="text-[10px] text-muted-foreground">{NEXUS_ROLE_LABELS[nexusUser.role]}</p>
+            <div className="flex items-center gap-2 px-1 pb-2 min-w-0">
+              {nexusUser.avatar_url ? (
+                <img src={nexusUser.avatar_url} alt={nexusUser.name} className="h-7 w-7 rounded-full shrink-0 object-cover" />
+              ) : (
+                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <span className="text-[11px] font-bold text-primary">
+                    {nexusUser.name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-foreground truncate leading-tight">{nexusUser.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate leading-tight">
+                  {nexusUser.email?.split('@')[1] ? nexusUser.email.split('@')[1].split('.')[0].charAt(0).toUpperCase() + nexusUser.email.split('@')[1].split('.')[0].slice(1) : nexusUser.email}
+                </p>
+              </div>
             </div>
           )}
           <Button
