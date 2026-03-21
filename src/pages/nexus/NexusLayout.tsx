@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useNexus, NEXUS_ROLE_LABELS, type NexusRole } from '@/contexts/NexusContext';
 import {
-  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart, Globe, DatabaseZap,
+  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart, Globe, DatabaseZap, Search,
 } from 'lucide-react';
 import {
   IconDashboard, IconDocuments, IconFinance, IconClients, IconReports,
@@ -45,6 +45,7 @@ export default function NexusLayout() {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [tenantPickerOpen, setTenantPickerOpen] = useState(false);
+  const [tenantSearch, setTenantSearch] = useState('');
 
   const { data: tenants } = useQuery({
     queryKey: ['nexus-tenants-list'],
@@ -200,7 +201,7 @@ export default function NexusLayout() {
       </main>
 
       {/* Tenant Picker Dialog */}
-      <Dialog open={tenantPickerOpen} onOpenChange={setTenantPickerOpen}>
+      <Dialog open={tenantPickerOpen} onOpenChange={(o) => { setTenantPickerOpen(o); if (!o) setTenantSearch(''); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -211,16 +212,30 @@ export default function NexusLayout() {
           <p className="text-sm text-muted-foreground mb-3">
             Selecione a licença/empresa que deseja acessar:
           </p>
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Buscar por nome..."
+              value={tenantSearch}
+              onChange={(e) => setTenantSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {(() => {
               if (!tenants || tenants.length === 0) {
                 return <p className="text-sm text-muted-foreground text-center py-4">Nenhuma licença encontrada.</p>;
               }
+              const q = tenantSearch.trim().toLowerCase();
+              const matchTenant = (l: any) => !q || (l.tenants?.name || '').toLowerCase().includes(q);
+
               // Group: internal first, then whitelabels with children, then standalone individual
-              const internal = tenants.filter((l: any) => l.license_type === 'internal');
+              const internal = tenants.filter((l: any) => l.license_type === 'internal' && matchTenant(l));
               const whitelabels = tenants.filter((l: any) => l.license_type === 'whitelabel');
-              const individuals = tenants.filter((l: any) => l.license_type === 'individual' && !l.parent_license_id);
-              const children = tenants.filter((l: any) => l.parent_license_id);
+              const individuals = tenants.filter((l: any) => l.license_type === 'individual' && !l.parent_license_id && matchTenant(l));
+              const children = tenants.filter((l: any) => l.parent_license_id && matchTenant(l));
 
               const typeLabel = (t: string) => {
                 if (t === 'internal') return 'INTERNO';
@@ -285,7 +300,7 @@ export default function NexusLayout() {
                     </div>
                   )}
                   {/* Whitelabel licenses with children */}
-                  {whitelabels.map((wl: any) => {
+                  {whitelabels.filter((wl: any) => matchTenant(wl) || children.some((c: any) => c.parent_license_id === wl.id)).map((wl: any) => {
                     const wlChildren = children.filter((c: any) => c.parent_license_id === wl.id);
                     return (
                       <div key={wl.id} className="space-y-1.5">
@@ -305,6 +320,11 @@ export default function NexusLayout() {
                       <p className="text-[10px] font-bold tracking-widest text-emerald-400/70 uppercase px-1">Individual</p>
                       {individuals.map((lic: any) => renderTenantButton(lic))}
                     </div>
+                  )}
+                  {/* No results */}
+                  {internal.length === 0 && individuals.length === 0 &&
+                    whitelabels.filter((wl: any) => matchTenant(wl) || children.some((c: any) => c.parent_license_id === wl.id)).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-6">Nenhuma empresa encontrada.</p>
                   )}
                 </>
               );
