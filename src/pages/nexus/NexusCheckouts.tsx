@@ -265,6 +265,8 @@ function CreateCheckoutModal({
     checkout_type: "new_account",
     buyer_email: "",
     company_name: "",
+    buyer_cpf_cnpj: "",
+    buyer_phone: "",
     plan_product_id: defaultPlan,
     custom_price: 0,
     is_custom: false,
@@ -344,6 +346,8 @@ function CreateCheckoutModal({
           checkout_type: form.checkout_type,
           buyer_email: form.buyer_email.trim(),
           company_name: form.company_name.trim() || null,
+          buyer_cpf_cnpj: form.buyer_cpf_cnpj.trim() || null,
+          buyer_phone: form.buyer_phone.trim() || null,
           plan: planName,
           extra_attendants: form.extra_attendants,
           extra_devices_web: form.extra_web,
@@ -382,6 +386,7 @@ function CreateCheckoutModal({
     setCopied(false);
     setForm({
       checkout_type: "new_account", buyer_email: "", company_name: "",
+      buyer_cpf_cnpj: "", buyer_phone: "",
       plan_product_id: basePlans[0]?.id || "", custom_price: 0, is_custom: false,
       selected_addons: [], selected_onetimes: [],
       extra_attendants: 0, extra_web: 0, extra_meta: 0,
@@ -444,6 +449,16 @@ function CreateCheckoutModal({
               <div className="space-y-1.5">
                 <Label className="text-xs">Nome da empresa</Label>
                 <Input placeholder="Empresa Ltda" value={form.company_name} onChange={e => set("company_name", e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">CNPJ / CPF</Label>
+                  <Input placeholder="00.000.000/0000-00" value={form.buyer_cpf_cnpj} onChange={e => set("buyer_cpf_cnpj", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Telefone / WhatsApp</Label>
+                  <Input placeholder="(11) 99999-9999" value={form.buyer_phone} onChange={e => set("buyer_phone", e.target.value)} />
+                </div>
               </div>
             </div>
 

@@ -792,7 +792,18 @@ export default function NexusLicenses() {
                                   </DropdownMenuItem>
                                 )}
                                 {can(['nexus_superadmin', 'nexus_suporte_senior']) && (
-                                  <DropdownMenuItem className="text-purple-400">
+                                  <DropdownMenuItem
+                                    className="text-purple-400 focus:text-purple-400"
+                                    onClick={() => {
+                                      localStorage.setItem('whatsflow_default_tenant_id', l.tenant_id);
+                                      window.dispatchEvent(new Event('tenant-changed'));
+                                      if (l.license_type === 'whitelabel' && l.whitelabel_slug) {
+                                        navigate(`/lab/${l.whitelabel_slug}`);
+                                      } else {
+                                        navigate('/');
+                                      }
+                                    }}
+                                  >
                                     <ExternalLink className="h-3.5 w-3.5 mr-2" /> Acessar como Admin
                                   </DropdownMenuItem>
                                 )}
