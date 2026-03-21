@@ -655,63 +655,96 @@ function CreateWhitelabelModal({
           </Section>
 
           {/* Pricing */}
-          <Section title="Recursos Contratados">
-            <div className="text-xs text-muted-foreground mb-2">
-              Base inclusa: 3 atendentes + 1 dispositivo Web + 1 dispositivo Meta — R$ 170,00/mês
+          <Section title="Tabela de Preços do Contrato">
+            {/* Price reference table */}
+            <div className="rounded-lg border border-border overflow-hidden text-xs">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left px-3 py-2 text-muted-foreground font-medium">Item</th>
+                    <th className="text-center px-3 py-2 text-muted-foreground font-medium">Incluso</th>
+                    <th className="text-right px-3 py-2 text-muted-foreground font-medium">Preço unitário</th>
+                    <th className="text-center px-3 py-2 text-muted-foreground font-medium">Qtd. contratada</th>
+                    <th className="text-right px-3 py-2 text-muted-foreground font-medium">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">Licença base</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">—</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.base)}</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">1</td>
+                    <td className="px-3 py-2 text-right font-medium">R$ {fmt(WL_PRICE.base)}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">Atendentes</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">3</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.extra_attendant)}/adicional</td>
+                    <td className="px-3 py-2 text-center">
+                      <Input
+                        type="number" min={3}
+                        value={3 + form.extra_attendants}
+                        onChange={(e) => set('extra_attendants', Math.max(0, Number(e.target.value) - 3))}
+                        className="h-7 w-16 text-xs text-center mx-auto"
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium">
+                      {form.extra_attendants > 0 ? `R$ ${fmt(form.extra_attendants * WL_PRICE.extra_attendant)}` : '—'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">API Web WhatsApp</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">1</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.extra_web)}/adicional</td>
+                    <td className="px-3 py-2 text-center">
+                      <Input
+                        type="number" min={1}
+                        value={1 + form.extra_web}
+                        onChange={(e) => set('extra_web', Math.max(0, Number(e.target.value) - 1))}
+                        className="h-7 w-16 text-xs text-center mx-auto"
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium">
+                      {form.extra_web > 0 ? `R$ ${fmt(form.extra_web * WL_PRICE.extra_web)}` : '—'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">API Business Meta</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">1</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.extra_meta)}/adicional</td>
+                    <td className="px-3 py-2 text-center">
+                      <Input
+                        type="number" min={1}
+                        value={1 + form.extra_meta}
+                        onChange={(e) => set('extra_meta', Math.max(0, Number(e.target.value) - 1))}
+                        className="h-7 w-16 text-xs text-center mx-auto"
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium">
+                      {form.extra_meta > 0 ? `R$ ${fmt(form.extra_meta * WL_PRICE.extra_meta)}` : '—'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">Módulo I.A.</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">—</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.ai)}/mês</td>
+                    <td className="px-3 py-2 text-center">
+                      <Switch checked={form.has_ai} onCheckedChange={(v) => set('has_ai', v)} />
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium">
+                      {form.has_ai ? `R$ ${fmt(WL_PRICE.ai)}` : '—'}
+                    </td>
+                  </tr>
+                  <tr className="bg-primary/5 font-bold">
+                    <td colSpan={4} className="px-3 py-2.5 text-foreground">Total mensal</td>
+                    <td className="px-3 py-2.5 text-right text-primary text-sm">R$ {fmt(monthly_value)}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <Field label={`Atend. extra (+R$${WL_PRICE.extra_attendant}/un)`}>
-                <Input type="number" min={0} value={form.extra_attendants} onChange={(e) => set('extra_attendants', Math.max(0, Number(e.target.value)))} className="h-8 text-sm" />
-              </Field>
-              <Field label={`Web extra (+R$${WL_PRICE.extra_web}/un)`}>
-                <Input type="number" min={0} value={form.extra_web} onChange={(e) => set('extra_web', Math.max(0, Number(e.target.value)))} className="h-8 text-sm" />
-              </Field>
-              <Field label={`Meta extra (+R$${WL_PRICE.extra_meta}/un)`}>
-                <Input type="number" min={0} value={form.extra_meta} onChange={(e) => set('extra_meta', Math.max(0, Number(e.target.value)))} className="h-8 text-sm" />
-              </Field>
-            </div>
-            <div className="flex items-center justify-between p-2 rounded border border-border">
-              <div>
-                <p className="text-sm font-medium">I.A. (+R$ {WL_PRICE.ai}/mês)</p>
-                <p className="text-xs text-muted-foreground">Módulo de inteligência artificial</p>
-              </div>
-              <Switch checked={form.has_ai} onCheckedChange={(v) => set('has_ai', v)} />
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               * Mensagens Meta acima de 50.000/mês: R$ 0,03 por modelo enviado (cobrado por uso).
-            </div>
-
-            {/* Price preview */}
-            <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Base (3 atend. + 1 Web + 1 Meta)</span><span>R$ {fmt(WL_PRICE.base)}</span>
-                </div>
-                {form.extra_attendants > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>{form.extra_attendants}× atend. extra</span><span>R$ {fmt(form.extra_attendants * WL_PRICE.extra_attendant)}</span>
-                  </div>
-                )}
-                {form.extra_web > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>{form.extra_web}× Web extra</span><span>R$ {fmt(form.extra_web * WL_PRICE.extra_web)}</span>
-                  </div>
-                )}
-                {form.extra_meta > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>{form.extra_meta}× Meta extra</span><span>R$ {fmt(form.extra_meta * WL_PRICE.extra_meta)}</span>
-                  </div>
-                )}
-                {form.has_ai && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>I.A.</span><span>R$ {fmt(WL_PRICE.ai)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold text-foreground border-t border-border pt-1 mt-1">
-                  <span>Total mensal</span><span className="text-primary text-sm">R$ {fmt(monthly_value)}</span>
-                </div>
-              </div>
-            </div>
+            </p>
           </Section>
 
           {/* Config */}
