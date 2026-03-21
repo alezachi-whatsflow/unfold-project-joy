@@ -71,7 +71,8 @@ export default function WLLayout() {
     );
   }
 
-  if (profile?.role !== 'wl_admin' && profile?.role !== 'wl_support' && profile?.role !== 'god_admin') {
+  const ALLOWED_ROLES = ['wl_admin', 'wl_support', 'god_admin', 'nexus_superadmin', 'nexus_dev_senior', 'nexus_suporte_senior'];
+  if (!ALLOWED_ROLES.includes(profile?.role || '')) {
     return <Navigate to="/" replace />;
   }
 
