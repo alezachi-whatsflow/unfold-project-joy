@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "https://unfold-project-joy.lovable.app";
-    const redirectUrl = redirect_to ? `${origin}${redirect_to}` : `${origin}/reset-password`;
+    // Always redirect to /reset-password so the token (type=invite or type=recovery)
+    // is handled correctly. After setting the password the user lands at "/".
+    const redirectUrl = `${origin}/reset-password`;
     const assignedRole = role || "consultor";
 
     // Check if user already exists in auth
