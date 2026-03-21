@@ -597,17 +597,19 @@ export default function NexusLicenses() {
           </div>
 
           {/* Bulk action bar */}
-          {selectedIds.size > 0 && can(['nexus_superadmin']) && (
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-red-950/40 border border-red-800/40 rounded-lg">
-              <span className="text-sm text-red-300 font-medium">{selectedIds.size} selecionado(s)</span>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="h-7 text-xs"
-                onClick={() => setShowBulkDelete(true)}
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir selecionados
-              </Button>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-accent/30 border border-border rounded-lg">
+              <span className="text-sm text-foreground font-medium">{selectedIds.size} selecionado(s)</span>
+              {can(['nexus_superadmin']) && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-7 text-xs"
+                  onClick={() => setShowBulkDelete(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir selecionados
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
@@ -630,22 +632,20 @@ export default function NexusLicenses() {
                   <Table className="min-w-[1400px]">
                     <TableHeader>
                       <TableRow className="text-[11px]">
-                        {can(['nexus_superadmin']) && (
-                          <TableHead className="w-10 sticky left-0 bg-card z-10">
-                            <Checkbox
-                              checked={filtered.length > 0 && filtered.every((l: any) => selectedIds.has(l.id))}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedIds(new Set([...selectedIds, ...filtered.map((l: any) => l.id)]));
-                                } else {
-                                  const newSet = new Set(selectedIds);
-                                  filtered.forEach((l: any) => newSet.delete(l.id));
-                                  setSelectedIds(newSet);
-                                }
-                              }}
-                            />
-                          </TableHead>
-                        )}
+                        <TableHead className="w-10 sticky left-0 bg-card z-10">
+                          <Checkbox
+                            checked={filtered.length > 0 && filtered.every((l: any) => selectedIds.has(l.id))}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedIds(new Set([...selectedIds, ...filtered.map((l: any) => l.id)]));
+                              } else {
+                                const newSet = new Set(selectedIds);
+                                filtered.forEach((l: any) => newSet.delete(l.id));
+                                setSelectedIds(newSet);
+                              }
+                            }}
+                          />
+                        </TableHead>
                         <TableHead className="sticky left-0 bg-card z-10 min-w-[180px]">Empresa / Titular</TableHead>
                         <TableHead className="min-w-[120px]"><div className="flex items-center gap-1">WhiteLabel<ColFilter col="whitelabel" values={colUniqueValues('whitelabel')} selected={colFilters['whitelabel'] || new Set()} onChange={setColFilter} /></div></TableHead>
                         <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Status<ColFilter col="status" values={colUniqueValues('status')} selected={colFilters['status'] || new Set()} onChange={setColFilter} /></div></TableHead>
@@ -673,19 +673,17 @@ export default function NexusLicenses() {
                           onClick={() => navigate(`/nexus/licencas/${l.id}`)}
                         >
                           {/* Checkbox */}
-                          {can(['nexus_superadmin']) && (
-                            <TableCell className="sticky left-0 bg-card z-10 w-10" onClick={(e) => e.stopPropagation()}>
-                              <Checkbox
-                                checked={selectedIds.has(l.id)}
-                                onCheckedChange={(checked) => {
-                                  const newSet = new Set(selectedIds);
-                                  if (checked) newSet.add(l.id);
-                                  else newSet.delete(l.id);
-                                  setSelectedIds(newSet);
-                                }}
-                              />
-                            </TableCell>
-                          )}
+                          <TableCell className="sticky left-0 bg-card z-10 w-10" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(l.id)}
+                              onCheckedChange={(checked) => {
+                                const newSet = new Set(selectedIds);
+                                if (checked) newSet.add(l.id);
+                                else newSet.delete(l.id);
+                                setSelectedIds(newSet);
+                              }}
+                            />
+                          </TableCell>
                           {/* Empresa */}
                           <TableCell className="sticky left-0 bg-card z-10">
                             <div>
