@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,46 +12,73 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 export default function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const wlSlug = searchParams.get('wl');
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [wlConfig, setWlConfig] = useState<any>(null);
+
+  // Load whitelabel branding when ?wl= param is present
+  useEffect(() => {
+    if (!wlSlug) return;
+    supabase
+      .from('whitelabel_config')
+      .select('display_name, logo_url, primary_color')
+      .eq('slug', wlSlug)
+      .maybeSingle()
+      .then(({ data }) => { if (data) setWlConfig(data); });
+  }, [wlSlug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      
+
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData?.user) throw userError || new Error("User not found");
-      
-      const { data: profile, error: profileError } = await supabase
+
+      // Get role without broken accounts join
+      const { data: profile } = await supabase
         .from('profiles')
-        .select(`
-          role,
-          account_id,
-          account:accounts!inner(account_type, slug)
-        `)
+        .select('role')
         .eq('id', userData.user.id)
-        .single();
-        
-      if (profileError) throw profileError;
-      
+        .maybeSingle();
+
       const role = profile?.role;
-      const accountArray = profile?.account as any[];
-      const account = accountArray?.[0];
-      const accountType = account?.account_type;
-      const slug = account?.slug;
 
       if (role === 'god_admin' || role === 'god_support') {
         navigate('/god-admin');
       } else if (role === 'wl_admin' || role === 'wl_support') {
-        navigate(`/wl/${slug}`);
+        // Route to their whitelabel lab
+        const { data: ut } = await supabase
+          .from('user_tenants')
+          .select('tenant_id')
+          .eq('user_id', userData.user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (ut?.tenant_id) {
+          const { data: lic } = await supabase
+            .from('licenses')
+            .select('whitelabel_slug')
+            .eq('tenant_id', ut.tenant_id)
+            .not('whitelabel_slug', 'is', null)
+            .maybeSingle();
+
+          if (lic?.whitelabel_slug) {
+            navigate(`/lab/${lic.whitelabel_slug}`);
+            return;
+          }
+        }
+        navigate('/');
       } else {
-        navigate(`/app/${slug}`);
+        navigate('/');
       }
-      
+
     } catch (err: any) {
       let errorMessage = "Erro ao fazer login";
       if (err.message === "Invalid login credentials") {
@@ -67,14 +94,22 @@ export default function LoginPage() {
     }
   };
 
+  const primaryColor = wlConfig?.primary_color || '#11BC76';
+  const displayName = wlConfig?.display_name || 'Whatsflow';
+  const logoUrl = wlConfig?.logo_url;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md border-border">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <span className="font-display text-xl font-bold text-primary-foreground">W</span>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden"
+            style={{ background: logoUrl ? 'transparent' : primaryColor }}>
+            {logoUrl
+              ? <img src={logoUrl} alt={displayName} className="h-12 w-12 object-cover rounded-xl" />
+              : <span className="font-display text-xl font-bold text-white">{displayName[0]?.toUpperCase()}</span>
+            }
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">Whatsflow Finance</CardTitle>
+          <CardTitle className="text-2xl font-bold text-foreground">{displayName}</CardTitle>
           <CardDescription>Entre com suas credenciais</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -94,7 +129,8 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading}
+              style={wlConfig ? { background: primaryColor, borderColor: primaryColor } : undefined}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Entrar
             </Button>
