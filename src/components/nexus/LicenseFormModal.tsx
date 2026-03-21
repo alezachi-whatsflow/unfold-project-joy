@@ -78,6 +78,18 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
   const mrrPreview = useMemo(() => {
+    if (form.license_type === 'whitelabel') {
+      // Tabela de preços WhiteLabel
+      const base = 170; // 3 atend. + 1 Web + 1 Meta
+      const attPrice = form.extra_attendants * 30;
+      const webPrice = form.extra_devices_web * 80;
+      const metaPrice = form.extra_devices_meta * 50;
+      const aiPrice = form.has_ai_module ? 250 : 0;
+      const addons = attPrice + webPrice + metaPrice + aiPrice;
+      return { base, addons, total: base + addons };
+    }
+
+    // Tabela de preços cliente final
     let base = form.plan === 'profissional' ? 359 : 259;
     const ew = form.extra_devices_web;
     let webPrice = 0;
