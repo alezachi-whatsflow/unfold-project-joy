@@ -16,7 +16,18 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import {
   Plus, Loader2, ExternalLink, MoreHorizontal, Search, Globe, Users,
   Building2, DollarSign, TrendingUp, Cpu, Wifi, MessageSquare, Trash2,
+  ImagePlus, X,
 } from 'lucide-react';
+
+// CNPJ mask: 00.000.000/0001-00
+function maskCNPJ(v: string): string {
+  const d = v.replace(/\D/g, '').slice(0, 14);
+  return d
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+}
 
 // ─── Pricing ────────────────────────────────────────────────────────────────
 const WL_PRICE = {
@@ -544,6 +555,8 @@ function CreateWhitelabelModal({
 }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     company_name: '',
@@ -556,12 +569,27 @@ function CreateWhitelabelModal({
     support_email: '',
     support_whatsapp: '',
     max_sub_licenses: 50,
-    // Pricing fields
     extra_attendants: 0,
     extra_web: 0,
     extra_meta: 0,
     has_ai: false,
   });
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Selecione uma imagem válida', variant: 'destructive' });
+      return;
+    }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+
+  function clearLogo() {
+    setLogoFile(null);
+    setLogoPreview(null);
+  }
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -616,7 +644,21 @@ function CreateWhitelabelModal({
         throw new Error(`Erro ao criar licença: ${lErr.message}`);
       }
 
-      // 3. WhiteLabel config
+      // 3. Upload logo (if provided)
+      let logo_url: string | null = null;
+      if (logoFile) {
+        const ext = logoFile.name.split('.').pop() || 'png';
+        const path = `wl-logos/${license.id}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('whatsapp-media')
+          .upload(path, logoFile, { upsert: true, contentType: logoFile.type });
+        if (!upErr) {
+          const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(path);
+          logo_url = urlData?.publicUrl || null;
+        }
+      }
+
+      // 4. WhiteLabel config (sem billing_email — coluna não existe no schema atual)
       const { error: cErr } = await supabase
         .from('whitelabel_config')
         .insert({
@@ -624,11 +666,11 @@ function CreateWhitelabelModal({
           slug: form.slug,
           display_name: form.display_name,
           primary_color: form.primary_color,
-          support_email: form.support_email || null,
-          billing_email: form.billing_email || null,
+          support_email: form.support_email || form.billing_email || null,
           support_whatsapp: form.support_whatsapp || null,
           max_sub_licenses: form.max_sub_licenses,
           can_create_licenses: true,
+          logo_url,
         });
       if (cErr) throw new Error(`Erro ao criar configuração: ${cErr.message}`);
 
@@ -668,7 +710,12 @@ function CreateWhitelabelModal({
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="CNPJ">
-                <Input placeholder="00.000.000/0001-00" value={form.company_cnpj} onChange={(e) => set('company_cnpj', e.target.value)} />
+                <Input
+                  placeholder="00.000.000/0001-00"
+                  value={form.company_cnpj}
+                  onChange={(e) => set('company_cnpj', maskCNPJ(e.target.value))}
+                  maxLength={18}
+                />
               </Field>
               <Field label="E-mail da empresa">
                 <Input type="email" placeholder="contato@empresa.com" value={form.company_email} onChange={(e) => set('company_email', e.target.value)} />
@@ -687,7 +734,7 @@ function CreateWhitelabelModal({
             </Field>
             <Field label="Slug (URL) *">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">/lab/</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">/wl/</span>
                 <Input placeholder="acme-chat" value={form.slug} onChange={(e) => set('slug', slugify(e.target.value))} />
               </div>
               <p className="text-xs text-muted-foreground">Gerado automaticamente pelo nome.</p>
@@ -701,6 +748,42 @@ function CreateWhitelabelModal({
                 />
                 <Input value={form.primary_color} onChange={(e) => set('primary_color', e.target.value)} className="font-mono text-sm" maxLength={7} />
               </div>
+            </Field>
+            {/* Logo 300×300 */}
+            <Field label="Logo da Marca (300×300 px)">
+              {logoPreview ? (
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      className="h-20 w-20 rounded-lg object-cover border border-border"
+                    />
+                    <button
+                      type="button"
+                      onClick={clearLogo}
+                      className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-0.5 text-white"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground">{logoFile?.name}</p>
+                    <p>{logoFile ? (logoFile.size / 1024).toFixed(0) + ' KB' : ''}</p>
+                    <label className="mt-1 flex items-center gap-1 text-primary cursor-pointer hover:underline">
+                      <ImagePlus className="h-3 w-3" /> Trocar imagem
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg p-6 cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors">
+                  <ImagePlus className="h-7 w-7 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Clique para selecionar a imagem</span>
+                  <span className="text-xs text-muted-foreground">Proporção quadrada · recomendado 300×300 px</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                </label>
+              )}
             </Field>
           </Section>
 
