@@ -396,7 +396,7 @@ export default function NexusWhitelabels() {
                                 if (row.tenants?.slug) {
                                   localStorage.setItem('whatsflow_default_tenant_id', row.tenants.slug);
                                 }
-                                navigate(`/lab/${row.whitelabel_slug}`);
+                                navigate(`/wl/${row.whitelabel_slug}`);
                               }}
                             >
                               <ExternalLink className="h-3.5 w-3.5 mr-2" />
