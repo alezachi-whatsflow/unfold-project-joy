@@ -12,9 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Plus, Loader2, ExternalLink, MoreHorizontal, Search, Globe, Users,
-  Building2, DollarSign, TrendingUp, Cpu, Wifi, MessageSquare,
+  Building2, DollarSign, TrendingUp, Cpu, Wifi, MessageSquare, Trash2,
 } from 'lucide-react';
 
 // ─── Pricing ────────────────────────────────────────────────────────────────
@@ -68,6 +69,7 @@ function fmt(n: number) {
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface WLRow {
   id: string;
+  tenant_id: string | null;
   whitelabel_slug: string | null;
   status: string;
   plan: string;
@@ -109,6 +111,8 @@ export default function NexusWhitelabels() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<WLRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -118,7 +122,7 @@ export default function NexusWhitelabels() {
     const { data: wls, error } = await supabase
       .from('licenses')
       .select(`
-        id, whitelabel_slug, status, plan, monthly_value, created_at,
+        id, tenant_id, whitelabel_slug, status, plan, monthly_value, created_at,
         base_attendants, extra_attendants,
         base_devices_web, extra_devices_web,
         base_devices_meta, extra_devices_meta,
@@ -175,6 +179,32 @@ export default function NexusWhitelabels() {
     }));
 
     setLoading(false);
+  }
+
+  async function handleDeleteWL() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      // 1. Delete sub-licenses of this WL
+      await supabase.from('licenses').delete().eq('parent_license_id', deleteTarget.id);
+      // 2. Delete WL license (cascades whitelabel_config)
+      await supabase.from('licenses').delete().eq('id', deleteTarget.id);
+      // 3. Delete tenant (cascades all tenant data)
+      if (deleteTarget.tenant_id) {
+        await supabase.from('tenants').delete().eq('id', deleteTarget.tenant_id);
+      }
+      await supabase.from('nexus_audit_logs').insert({
+        actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
+        action: 'whitelabel_delete', license_id: deleteTarget.id,
+      });
+      toast({ title: 'WhiteLabel e todos os dados excluídos com sucesso' });
+      setDeleteTarget(null);
+      load();
+    } catch (err: any) {
+      toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const filtered = rows.filter((r) => {
@@ -373,6 +403,15 @@ export default function NexusWhitelabels() {
                               Acessar portal WL
                             </DropdownMenuItem>
                           )}
+                          {nexusUser?.role === 'nexus_superadmin' && (
+                            <DropdownMenuItem
+                              className="text-red-400 focus:text-red-400"
+                              onClick={() => setDeleteTarget(row)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" />
+                              Excluir WhiteLabel
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -447,6 +486,29 @@ export default function NexusWhitelabels() {
         nexusUser={nexusUser}
         onSaved={() => { load(); setShowModal(false); }}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir WhiteLabel permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá excluir o parceiro <strong>{deleteTarget?.whitelabel_config?.display_name || deleteTarget?.tenants?.name}</strong>,
+              todas as sub-licenças vinculadas e todos os dados do tenant. Esta ação é irreversível.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteWL}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Excluir tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

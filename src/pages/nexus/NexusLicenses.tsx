@@ -12,8 +12,10 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Loader2, Plus, Search, ChevronLeft, ChevronRight, Upload, Download, MoreHorizontal, Eye, Edit, Lock, Unlock, ExternalLink, Ticket } from 'lucide-react';
+import { Loader2, Plus, Search, ChevronLeft, ChevronRight, Upload, Download, MoreHorizontal, Eye, Edit, Lock, Unlock, ExternalLink, Ticket, Trash2 } from 'lucide-react';
 import { useNexus } from '@/contexts/NexusContext';
+import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import LicenseFormModal from '@/components/nexus/LicenseFormModal';
 import CSVImportModal from '@/components/nexus/CSVImportModal';
 
@@ -38,7 +40,8 @@ const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 export default function NexusLicenses() {
-  const { can } = useNexus();
+  const { can, nexusUser } = useNexus();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [licenses, setLicenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +53,8 @@ export default function NexusLicenses() {
   const [editLicense, setEditLicense] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
   const [showCSV, setShowCSV] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadLicenses();
@@ -106,6 +111,32 @@ export default function NexusLicenses() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'licencas.csv'; a.click();
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      // 1. Delete sub-licenses first (no cascade on parent_license_id)
+      await supabase.from('licenses').delete().eq('parent_license_id', deleteTarget.id);
+      // 2. Delete license (cascades whitelabel_config)
+      await supabase.from('licenses').delete().eq('id', deleteTarget.id);
+      // 3. Delete tenant (cascades all tenant data)
+      if (deleteTarget.tenant_id) {
+        await supabase.from('tenants').delete().eq('id', deleteTarget.tenant_id);
+      }
+      await supabase.from('nexus_audit_logs').insert({
+        actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
+        action: 'license_delete', license_id: deleteTarget.id,
+      });
+      toast({ title: 'Licença e dados excluídos com sucesso' });
+      setDeleteTarget(null);
+      loadLicenses();
+    } catch (err: any) {
+      toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -255,6 +286,14 @@ export default function NexusLicenses() {
                                 <ExternalLink className="h-3.5 w-3.5 mr-2" /> Acessar como Admin
                               </DropdownMenuItem>
                             )}
+                            {can(['nexus_superadmin']) && (
+                              <DropdownMenuItem
+                                className="text-red-400 focus:text-red-400"
+                                onClick={() => setDeleteTarget(l)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -289,6 +328,30 @@ export default function NexusLicenses() {
       {showCSV && (
         <CSVImportModal open={showCSV} onOpenChange={setShowCSV} onImported={loadLicenses} />
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir licença e todos os dados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso excluirá permanentemente a licença de <strong>{deleteTarget?.tenants?.name}</strong>,
+              todos os dados do tenant (clientes, conversas, histórico) e sub-licenças vinculadas.
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
