@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, Check, ExternalLink, Search, RefreshCcw, Plus, Link2, Loader2 } from "lucide-react";
+import { Copy, Check, ExternalLink, Search, RefreshCcw, Plus, Link2, Loader2, CreditCard, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { useProducts } from "@/contexts/ProductContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending:   { label: "Pendente",    color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
@@ -23,14 +24,6 @@ const TYPE_CONFIG: Record<string, { label: string; color: string }> = {
   renewal:     { label: "Renovação",   color: "bg-teal-500/10 text-teal-400" },
 };
 
-const PLANS = [
-  { value: "starter",      label: "Starter",      price: 197 },
-  { value: "profissional", label: "Profissional",  price: 397 },
-  { value: "enterprise",   label: "Enterprise",    price: 797 },
-  { value: "custom",       label: "Personalizado", price: 0   },
-];
-
-const SETUP_FEE = 2000;
 const formatBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function NexusCheckouts() {
@@ -234,53 +227,129 @@ function CreateCheckoutModal({
   onCreated: (sessionId: string) => void;
 }) {
   const { toast } = useToast();
+  const { products } = useProducts();
   const [saving, setSaving] = useState(false);
   const [createdLink, setCreatedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // ── Products from catalog ──────────────────────────────────────────────────
+  const basePlans = useMemo(
+    () => products.filter(p => p.category === "plan_base" && p.status === "active"),
+    [products]
+  );
+  const oneTimeProducts = useMemo(
+    () => products.filter(p => p.billingCycle === "one_time" && p.status === "active"),
+    [products]
+  );
+  const addonProducts = useMemo(
+    () => products.filter(p => p.category === "addon_technology" && p.status === "active"),
+    [products]
+  );
+
+  // ── Asaas integrations ──────────────────────────────────────────────────────
+  const { data: asaasConnections } = useQuery({
+    queryKey: ["asaas-connections"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("asaas_connections")
+        .select("id, environment, is_active, api_key_hint")
+        .eq("is_active", true);
+      return data || [];
+    },
+  });
+  const hasMultipleConnections = (asaasConnections?.length || 0) > 1;
+
+  // ── Form state ──────────────────────────────────────────────────────────────
+  const defaultPlan = basePlans[0]?.id || "";
   const [form, setForm] = useState({
     checkout_type: "new_account",
     buyer_email: "",
     company_name: "",
-    plan: "profissional",
-    custom_price: 397,
-    has_implantacao: false,
+    plan_product_id: defaultPlan,
+    custom_price: 0,
+    is_custom: false,
+    selected_addons: [] as string[],   // product ids of selected addons
+    selected_onetimes: [] as string[], // product ids of selected one-time products
     extra_attendants: 0,
     extra_web: 0,
     extra_meta: 0,
-    has_ai_module: false,
+    asaas_connection_id: asaasConnections?.[0]?.id || "",
   });
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
 
-  const planPrice = useMemo(() => {
-    const p = PLANS.find(p => p.value === form.plan);
-    return p?.value === "custom" ? form.custom_price : (p?.price || 0);
-  }, [form.plan, form.custom_price]);
+  // Sync default plan once products load
+  useMemo(() => {
+    if (basePlans.length > 0 && !form.plan_product_id) {
+      setForm(f => ({ ...f, plan_product_id: basePlans[0].id }));
+    }
+  }, [basePlans]);
 
-  const monthly_value = useMemo(() => planPrice, [planPrice]);
-  const setup_fee = form.has_implantacao ? SETUP_FEE : 0;
+  const selectedPlan = useMemo(
+    () => basePlans.find(p => p.id === form.plan_product_id),
+    [basePlans, form.plan_product_id]
+  );
+
+  const monthly_value = useMemo(() => {
+    const base = form.is_custom ? form.custom_price : (selectedPlan?.price || 0);
+    const addons = addonProducts
+      .filter(p => form.selected_addons.includes(p.id))
+      .reduce((s, p) => s + p.price, 0);
+    return base + addons;
+  }, [form, selectedPlan, addonProducts]);
+
+  const setup_fee = useMemo(
+    () => oneTimeProducts
+      .filter(p => form.selected_onetimes.includes(p.id))
+      .reduce((s, p) => s + p.price, 0),
+    [form.selected_onetimes, oneTimeProducts]
+  );
+
   const first_charge = monthly_value + setup_fee;
+
+  function toggleAddon(id: string) {
+    setForm(f => ({
+      ...f,
+      selected_addons: f.selected_addons.includes(id)
+        ? f.selected_addons.filter(a => a !== id)
+        : [...f.selected_addons, id],
+    }));
+  }
+
+  function toggleOnetime(id: string) {
+    setForm(f => ({
+      ...f,
+      selected_onetimes: f.selected_onetimes.includes(id)
+        ? f.selected_onetimes.filter(a => a !== id)
+        : [...f.selected_onetimes, id],
+    }));
+  }
 
   async function handleSave() {
     if (!form.buyer_email.trim()) {
       toast({ title: "Informe o e-mail do comprador", variant: "destructive" }); return;
     }
+    if (!selectedPlan && !form.is_custom) {
+      toast({ title: "Selecione um plano", variant: "destructive" }); return;
+    }
 
     setSaving(true);
     try {
+      const planName = form.is_custom ? "personalizado" : (selectedPlan?.name.toLowerCase().replace(/\s+/g, "_") || "personalizado");
+      const hasImplantacao = oneTimeProducts.some(p => p.name.toLowerCase().includes("implantação") && form.selected_onetimes.includes(p.id));
+
       const { data, error } = await supabase
         .from("checkout_sessions")
         .insert({
           checkout_type: form.checkout_type,
           buyer_email: form.buyer_email.trim(),
           company_name: form.company_name.trim() || null,
-          plan: form.plan,
+          plan: planName,
           extra_attendants: form.extra_attendants,
           extra_devices_web: form.extra_web,
           extra_devices_meta: form.extra_meta,
-          has_ai_module: form.has_ai_module,
-          has_implantacao_starter: form.has_implantacao,
+          has_ai_module: form.selected_addons.some(id => addonProducts.find(p => p.id === id && p.category === "addon_technology")),
+          has_implantacao_starter: hasImplantacao,
           monthly_value,
           setup_fee,
           first_charge,
@@ -313,8 +382,10 @@ function CreateCheckoutModal({
     setCopied(false);
     setForm({
       checkout_type: "new_account", buyer_email: "", company_name: "",
-      plan: "profissional", custom_price: 397, has_implantacao: false,
-      extra_attendants: 0, extra_web: 0, extra_meta: 0, has_ai_module: false,
+      plan_product_id: basePlans[0]?.id || "", custom_price: 0, is_custom: false,
+      selected_addons: [], selected_onetimes: [],
+      extra_attendants: 0, extra_web: 0, extra_meta: 0,
+      asaas_connection_id: asaasConnections?.[0]?.id || "",
     });
     onOpenChange(false);
   }
@@ -330,7 +401,6 @@ function CreateCheckoutModal({
         </DialogHeader>
 
         {createdLink ? (
-          /* ── Link gerado ── */
           <div className="space-y-4 py-2">
             <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4 text-center space-y-2">
               <Check className="h-8 w-8 text-emerald-400 mx-auto" />
@@ -344,22 +414,18 @@ function CreateCheckoutModal({
               </Button>
             </div>
             <Button className="w-full" onClick={copyLink} variant={copied ? "outline" : "default"}>
-              {copied ? <><Check className="h-4 w-4 mr-2 text-emerald-500" /> Link copiado!</> : <><Copy className="h-4 w-4 mr-2" /> Copiar link</>}
+              {copied ? <><Check className="h-4 w-4 mr-2 text-emerald-500" />Link copiado!</> : <><Copy className="h-4 w-4 mr-2" />Copiar link</>}
             </Button>
             <Button variant="outline" className="w-full" onClick={handleClose}>Fechar</Button>
           </div>
         ) : (
-          /* ── Formulário ── */
           <div className="space-y-4">
+
             {/* Tipo */}
             <div className="space-y-1.5">
               <Label className="text-xs">Tipo de checkout</Label>
               <div className="grid grid-cols-3 gap-2">
-                {[
-                  { v: "new_account", l: "Nova Conta" },
-                  { v: "upsell",      l: "Upsell" },
-                  { v: "renewal",     l: "Renovação" },
-                ].map(t => (
+                {[{ v: "new_account", l: "Nova Conta" }, { v: "upsell", l: "Upsell" }, { v: "renewal", l: "Renovação" }].map(t => (
                   <button key={t.v} type="button" onClick={() => set("checkout_type", t.v)}
                     className={`px-2 py-2 rounded-lg text-xs font-semibold border transition-all ${form.checkout_type === t.v ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
                     {t.l}
@@ -381,54 +447,117 @@ function CreateCheckoutModal({
               </div>
             </div>
 
-            {/* Plano */}
+            {/* Planos — dinâmicos do catálogo de Produtos */}
             <div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
-              <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Plano</p>
-              <div className="grid grid-cols-2 gap-2">
-                {PLANS.map(p => (
-                  <button key={p.value} type="button" onClick={() => set("plan", p.value)}
-                    className={`px-2 py-2.5 rounded-lg text-xs font-semibold border text-left transition-all ${form.plan === p.value ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
-                    <span className="block font-bold">{p.label}</span>
-                    {p.value !== "custom" && <span className="text-[10px] opacity-70">R$ {p.price}/mês</span>}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Plano</p>
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                  <input type="checkbox" checked={form.is_custom} onChange={e => set("is_custom", e.target.checked)} className="rounded" />
+                  Valor personalizado
+                </label>
               </div>
-              {form.plan === "custom" && (
+              {form.is_custom ? (
                 <div className="space-y-1.5">
                   <Label className="text-xs">Valor mensal (R$)</Label>
                   <Input type="number" min={0} value={form.custom_price} onChange={e => set("custom_price", Number(e.target.value))} />
                 </div>
+              ) : (
+                <div className="space-y-2">
+                  {basePlans.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic">Nenhum plano ativo no catálogo.</p>
+                  )}
+                  {basePlans.map(p => (
+                    <button key={p.id} type="button" onClick={() => set("plan_product_id", p.id)}
+                      className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold border text-left transition-all ${form.plan_product_id === p.id ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold">{p.name}</span>
+                        <span className={`text-xs font-mono ${form.plan_product_id === p.id ? "text-primary" : "text-muted-foreground"}`}>{formatBRL(p.price)}/mês</span>
+                      </div>
+                      {p.description && <span className="text-[10px] opacity-60 line-clamp-1">{p.description}</span>}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Add-ons */}
-            <div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
-              <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Recursos adicionais</p>
+            {/* Add-ons (addon_technology) */}
+            {addonProducts.length > 0 && (
+              <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Add-ons</p>
+                {addonProducts.map(p => (
+                  <div key={p.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium">{p.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatBRL(p.price)}/mês</p>
+                    </div>
+                    <Switch checked={form.selected_addons.includes(p.id)} onCheckedChange={() => toggleAddon(p.id)} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Extras numéricos */}
+            <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+              <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Recursos extras</p>
               <div className="grid grid-cols-3 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Atendentes extras</Label>
-                  <Input type="number" min={0} value={form.extra_attendants} onChange={e => set("extra_attendants", Number(e.target.value))} className="h-8 text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Web extras</Label>
-                  <Input type="number" min={0} value={form.extra_web} onChange={e => set("extra_web", Number(e.target.value))} className="h-8 text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Meta extras</Label>
-                  <Input type="number" min={0} value={form.extra_meta} onChange={e => set("extra_meta", Number(e.target.value))} className="h-8 text-xs" />
-                </div>
+                {[
+                  { label: "Atendentes", key: "extra_attendants" },
+                  { label: "Web extras",  key: "extra_web" },
+                  { label: "Meta extras", key: "extra_meta" },
+                ].map(f => (
+                  <div key={f.key} className="space-y-1">
+                    <Label className="text-[10px]">{f.label}</Label>
+                    <Input type="number" min={0} value={(form as any)[f.key]} onChange={e => set(f.key, Number(e.target.value))} className="h-8 text-xs" />
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Módulo I.A.</Label>
-                <Switch checked={form.has_ai_module} onCheckedChange={v => set("has_ai_module", v)} />
+            </div>
+
+            {/* Produtos avulsos (one_time) */}
+            {oneTimeProducts.length > 0 && (
+              <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Serviços avulsos</p>
+                {oneTimeProducts.map(p => (
+                  <div key={p.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium">{p.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatBRL(p.price)} (taxa única)</p>
+                    </div>
+                    <Switch checked={form.selected_onetimes.includes(p.id)} onCheckedChange={() => toggleOnetime(p.id)} />
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-xs">Implantação Starter</Label>
-                  <p className="text-[10px] text-muted-foreground">+R$ 2.000 (taxa única)</p>
+            )}
+
+            {/* Gateway de pagamento */}
+            <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+              <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5" /> Gateway de Pagamento
+              </p>
+              {(asaasConnections?.length || 0) === 0 ? (
+                <div className="flex items-center gap-2 text-amber-400 text-xs">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  Nenhuma integração de pagamento ativa. Configure o Asaas nas Configurações.
                 </div>
-                <Switch checked={form.has_implantacao} onCheckedChange={v => set("has_implantacao", v)} />
-              </div>
+              ) : hasMultipleConnections ? (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Selecione a integração</Label>
+                  <div className="space-y-1.5">
+                    {asaasConnections!.map(c => (
+                      <button key={c.id} type="button" onClick={() => set("asaas_connection_id", c.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs border transition-all ${form.asaas_connection_id === c.id ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                        <span className="font-semibold">Asaas — {c.environment === "sandbox" ? "Sandbox (Testes)" : "Produção"}</span>
+                        <span className="font-mono opacity-60">****{c.api_key_hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
+                  <Check className="h-3.5 w-3.5" />
+                  Asaas — {asaasConnections![0].environment === "sandbox" ? "Sandbox (Testes)" : "Produção"} ****{asaasConnections![0].api_key_hint}
+                </div>
+              )}
             </div>
 
             {/* Resumo */}
@@ -439,7 +568,7 @@ function CreateCheckoutModal({
               </div>
               {setup_fee > 0 && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Implantação Starter</span>
+                  <span>Serviços avulsos</span>
                   <span className="font-mono font-bold text-blue-400">{formatBRL(setup_fee)}</span>
                 </div>
               )}
@@ -451,7 +580,7 @@ function CreateCheckoutModal({
 
             <DialogFooter>
               <Button variant="outline" onClick={handleClose} disabled={saving}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving} className="gap-2">
+              <Button onClick={handleSave} disabled={saving || (asaasConnections?.length === 0)} className="gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
                 Gerar link
               </Button>
