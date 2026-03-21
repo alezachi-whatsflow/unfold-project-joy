@@ -22,6 +22,11 @@ interface Props {
   onSaved: () => void;
 }
 
+function toDateInput(v: string | null | undefined) {
+  if (!v) return '';
+  return v.slice(0, 10); // yyyy-mm-dd
+}
+
 export default function LicenseFormModal({ open, onOpenChange, license, onSaved }: Props) {
   const { nexusUser } = useNexus();
   const { toast } = useToast();
@@ -37,28 +42,75 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     plan: license?.plan || 'profissional',
     status: license?.status || 'active',
     monthly_value: license?.monthly_value || 0,
+    // Datas
+    starts_at: toDateInput(license?.starts_at) || toDateInput(new Date().toISOString()),
+    expires_at: toDateInput(license?.expires_at) || '',
+    cancelled_at: toDateInput(license?.cancelled_at) || '',
+    blocked_at: toDateInput(license?.blocked_at) || '',
+    unblocked_at: toDateInput(license?.unblocked_at) || '',
+    // Recursos
+    base_attendants: license?.base_attendants || 1,
+    extra_attendants: license?.extra_attendants || 0,
     base_devices_web: license?.base_devices_web || 1,
     extra_devices_web: license?.extra_devices_web || 0,
     base_devices_meta: license?.base_devices_meta || 1,
     extra_devices_meta: license?.extra_devices_meta || 0,
-    base_attendants: license?.base_attendants || 1,
-    extra_attendants: license?.extra_attendants || 0,
+    monthly_messages_limit: license?.monthly_messages_limit || 10000,
+    storage_limit_gb: license?.storage_limit_gb || 1,
+    // Add-ons I.A.
     has_ai_module: license?.has_ai_module || false,
     ai_agents_limit: license?.ai_agents_limit || 0,
     has_ia_auditor: license?.has_ia_auditor || false,
     has_ia_copiloto: license?.has_ia_copiloto || false,
     has_ia_closer: license?.has_ia_closer || false,
+    // Outros
     facilite_plan: license?.facilite_plan || 'none',
     has_implantacao_starter: license?.has_implantacao_starter || false,
-    monthly_messages_limit: license?.monthly_messages_limit || 10000,
-    storage_limit_gb: license?.storage_limit_gb || 1,
+    // Cobrança
     billing_cycle: license?.billing_cycle || 'monthly',
+    payment_type: license?.payment_type || 'boleto',
+    payment_condition: license?.payment_condition || 'mensal',
+    checkout_url: license?.checkout_url || '',
     internal_notes: license?.internal_notes || '',
   });
 
   useEffect(() => {
     if (open) {
       loadDependencies();
+      // Reset form on open with latest license data
+      setForm({
+        tenant_id: license?.tenant_id || '',
+        license_type: license?.license_type || 'individual',
+        parent_license_id: license?.parent_license_id || 'none',
+        plan: license?.plan || 'profissional',
+        status: license?.status || 'active',
+        monthly_value: license?.monthly_value || 0,
+        starts_at: toDateInput(license?.starts_at) || toDateInput(new Date().toISOString()),
+        expires_at: toDateInput(license?.expires_at) || '',
+        cancelled_at: toDateInput(license?.cancelled_at) || '',
+        blocked_at: toDateInput(license?.blocked_at) || '',
+        unblocked_at: toDateInput(license?.unblocked_at) || '',
+        base_attendants: license?.base_attendants || 1,
+        extra_attendants: license?.extra_attendants || 0,
+        base_devices_web: license?.base_devices_web || 1,
+        extra_devices_web: license?.extra_devices_web || 0,
+        base_devices_meta: license?.base_devices_meta || 1,
+        extra_devices_meta: license?.extra_devices_meta || 0,
+        monthly_messages_limit: license?.monthly_messages_limit || 10000,
+        storage_limit_gb: license?.storage_limit_gb || 1,
+        has_ai_module: license?.has_ai_module || false,
+        ai_agents_limit: license?.ai_agents_limit || 0,
+        has_ia_auditor: license?.has_ia_auditor || false,
+        has_ia_copiloto: license?.has_ia_copiloto || false,
+        has_ia_closer: license?.has_ia_closer || false,
+        facilite_plan: license?.facilite_plan || 'none',
+        has_implantacao_starter: license?.has_implantacao_starter || false,
+        billing_cycle: license?.billing_cycle || 'monthly',
+        payment_type: license?.payment_type || 'boleto',
+        payment_condition: license?.payment_condition || 'mensal',
+        checkout_url: license?.checkout_url || '',
+        internal_notes: license?.internal_notes || '',
+      });
     }
   }, [open]);
 
@@ -79,8 +131,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
 
   const mrrPreview = useMemo(() => {
     if (form.license_type === 'whitelabel') {
-      // Tabela de preços WhiteLabel
-      const base = 170; // 3 atend. + 1 Web + 1 Meta
+      const base = 170;
       const attPrice = form.extra_attendants * 30;
       const webPrice = form.extra_devices_web * 80;
       const metaPrice = form.extra_devices_meta * 50;
@@ -89,7 +140,6 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       return { base, addons, total: base + addons };
     }
 
-    // Tabela de preços cliente final
     let base = form.plan === 'profissional' ? 359 : 259;
     const ew = form.extra_devices_web;
     let webPrice = 0;
@@ -114,6 +164,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     if (form.has_ia_auditor) aiPrice += 99;
     if (form.has_ia_copiloto) aiPrice += 149;
     if (form.has_ia_closer) aiPrice += 199;
+
     let facPrice = 0;
     if (form.facilite_plan === 'basico') facPrice = 250;
     else if (form.facilite_plan === 'intermediario') facPrice = 700;
@@ -129,8 +180,17 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     }
 
     setSaving(true);
-    const payload: any = { ...form, monthly_value: mrrPreview.total };
-    if (payload.parent_license_id === 'none') payload.parent_license_id = null;
+    const payload: any = {
+      ...form,
+      monthly_value: mrrPreview.total,
+      parent_license_id: form.parent_license_id === 'none' ? null : form.parent_license_id,
+      // Convert empty date strings to null
+      expires_at: form.expires_at || null,
+      cancelled_at: form.cancelled_at || null,
+      blocked_at: form.blocked_at || null,
+      unblocked_at: form.unblocked_at || null,
+      checkout_url: form.checkout_url || null,
+    };
 
     if (isEdit) {
       await supabase.from('licenses').update(payload).eq('id', license.id);
@@ -164,51 +224,81 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Identificação and Type */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg border border-border">
-            {!isEdit && (
+
+          {/* Identificação */}
+          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+            <SectionTitle>Identificação</SectionTitle>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {!isEdit && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">Tenant / Empresa</Label>
+                  <Select value={form.tenant_id} onValueChange={(v) => set('tenant_id', v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione um tenant sem licença" /></SelectTrigger>
+                    <SelectContent>
+                      {tenants.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                      {tenants.length === 0 && <SelectItem value="none" disabled>Nenhum Tenant disponível</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">Tenant / Empresa</Label>
-                <Select value={form.tenant_id} onValueChange={(v) => set('tenant_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione um tenant sem licença" /></SelectTrigger>
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Tipo de Licença</Label>
+                <Select value={form.license_type} onValueChange={(v) => set('license_type', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {tenants.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                    {tenants.length === 0 && <SelectItem value="none" disabled>Nenhum Tenant disponível</SelectItem>}
+                    <SelectItem value="individual">Individual (Cliente Final)</SelectItem>
+                    <SelectItem value="whitelabel">WhiteLabel (Parceiro)</SelectItem>
+                    <SelectItem value="internal">Interno (Laboratório)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            )}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase text-muted-foreground">Tipo de Licença</Label>
-              <Select value={form.license_type} onValueChange={(v) => set('license_type', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="individual">Individual (Cliente Final)</SelectItem>
-                  <SelectItem value="whitelabel">WhiteLabel (Parceiro)</SelectItem>
-                  <SelectItem value="internal">Interno (Edtech/Laboratório)</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Status</Label>
+                <Select value={form.status} onValueChange={(v) => set('status', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
+                    <SelectItem value="blocked">Bloqueado</SelectItem>
+                    <SelectItem value="suspended">Suspenso</SelectItem>
+                    <SelectItem value="trial">Trial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.license_type === 'individual' && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">Pertence ao WhiteLabel? (Opcional)</Label>
+                  <Select value={form.parent_license_id} onValueChange={(v) => set('parent_license_id', v)}>
+                    <SelectTrigger><SelectValue placeholder="Contrato Direto (Whatsflow)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Contrato Direto (Whatsflow)</SelectItem>
+                      {whitelabels.map((w) => (
+                        <SelectItem key={w.id} value={w.id}>{w.tenants?.name || 'WhiteLabel Sem Nome'}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
-            {form.license_type === 'individual' && (
-              <div className="space-y-2 md:col-span-2">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">Pertence ao WhiteLabel? (Opcional)</Label>
-                <Select value={form.parent_license_id} onValueChange={(v) => set('parent_license_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Direto Whatsflow (Nenhum)" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Contrato Direto (Whatsflow)</SelectItem>
-                    {whitelabels.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>{w.tenants?.name || 'WhiteLabel Sem Nome'}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          {/* Plan */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase text-muted-foreground">Plano Base</Label>
+          </section>
+
+          {/* Datas */}
+          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+            <SectionTitle>Datas do Contrato</SectionTitle>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <DateField label="Ativação" value={form.starts_at} onChange={(v) => set('starts_at', v)} />
+              <DateField label="Vencimento" value={form.expires_at} onChange={(v) => set('expires_at', v)} />
+              <DateField label="Cancelado" value={form.cancelled_at} onChange={(v) => set('cancelled_at', v)} />
+              <DateField label="Bloqueio" value={form.blocked_at} onChange={(v) => set('blocked_at', v)} />
+              <DateField label="Desbloqueio" value={form.unblocked_at} onChange={(v) => set('unblocked_at', v)} />
+            </div>
+          </section>
+
+          {/* Plano Base */}
+          <section className="space-y-2">
+            <SectionTitle>Plano Base</SectionTitle>
             <RadioGroup value={form.plan} onValueChange={(v) => set('plan', v)} className="flex gap-4">
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="solo_pro" id="solo_pro" />
@@ -219,68 +309,63 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                 <Label htmlFor="profissional" className="text-sm">Profissional — R$ 359/mês</Label>
               </div>
             </RadioGroup>
-          </div>
+          </section>
 
-          {/* Resources */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase text-muted-foreground">Recursos Contratados</Label>
+          {/* Recursos Contratados */}
+          <section className="space-y-2">
+            <SectionTitle>Recursos Contratados</SectionTitle>
             <div className="grid grid-cols-3 gap-3">
               <NumField label="Atendentes Base" value={form.base_attendants} onChange={(v) => set('base_attendants', v)} />
               <NumField label="Extra Atendentes" value={form.extra_attendants} onChange={(v) => set('extra_attendants', v)} />
+              <NumField label="Disp. Web (base)" value={form.base_devices_web} onChange={(v) => set('base_devices_web', v)} />
               <NumField label="Disp. Web Extra" value={form.extra_devices_web} onChange={(v) => set('extra_devices_web', v)} />
-              <NumField label="Disp. Meta Extra" value={form.extra_devices_meta} onChange={(v) => set('extra_devices_meta', v)} />
+              <NumField label="Disp. Oficial (base)" value={form.base_devices_meta} onChange={(v) => set('base_devices_meta', v)} />
+              <NumField label="Disp. Oficial Extra" value={form.extra_devices_meta} onChange={(v) => set('extra_devices_meta', v)} />
               <NumField label="Msgs/mês" value={form.monthly_messages_limit} onChange={(v) => set('monthly_messages_limit', v)} />
               <NumField label="Storage (GB)" value={form.storage_limit_gb} onChange={(v) => set('storage_limit_gb', v)} />
             </div>
-          </div>
+          </section>
 
-          {/* Add-ons */}
-          <div className="space-y-3">
-            <Label className="text-xs font-semibold uppercase text-muted-foreground">Add-ons</Label>
+          {/* Add-ons I.A. */}
+          <section className="space-y-3">
+            <SectionTitle>Add-ons I.A.</SectionTitle>
             <div className="grid grid-cols-1 gap-2">
-              <div className="flex items-center justify-between p-2 rounded border">
-                <div>
-                  <p className="text-sm font-medium">Auditor de Qualidade (+R$ 99/mês)</p>
-                  <p className="text-xs text-muted-foreground">Avalia atendimentos e recomenda melhorias.</p>
-                </div>
-                <Switch checked={form.has_ia_auditor} onCheckedChange={(v) => set('has_ia_auditor', v)} />
-              </div>
-              <div className="flex items-center justify-between p-2 rounded border">
-                <div>
-                  <p className="text-sm font-medium">Copiloto do Consultor (+R$ 149/mês)</p>
-                  <p className="text-xs text-muted-foreground">Sugestões de respostas e contorno de objeções.</p>
-                </div>
-                <Switch checked={form.has_ia_copiloto} onCheckedChange={(v) => set('has_ia_copiloto', v)} />
-              </div>
-              <div className="flex items-center justify-between p-2 rounded border">
-                <div>
-                  <p className="text-sm font-medium">Closer Autônomo (+R$ 199/mês)</p>
-                  <p className="text-xs text-muted-foreground">Automatiza primeiro contato e qualificação.</p>
-                </div>
-                <Switch checked={form.has_ia_closer} onCheckedChange={(v) => set('has_ia_closer', v)} />
-              </div>
+              <AddonRow
+                label="Auditor de Qualidade"
+                sublabel="+R$ 99/mês — Avalia atendimentos e recomenda melhorias."
+                checked={form.has_ia_auditor}
+                onChange={(v) => set('has_ia_auditor', v)}
+              />
+              <AddonRow
+                label="Copiloto do Consultor"
+                sublabel="+R$ 149/mês — Sugestões de respostas e contorno de objeções."
+                checked={form.has_ia_copiloto}
+                onChange={(v) => set('has_ia_copiloto', v)}
+              />
+              <AddonRow
+                label="Closer Autônomo"
+                sublabel="+R$ 199/mês — Automatiza primeiro contato e qualificação."
+                checked={form.has_ia_closer}
+                onChange={(v) => set('has_ia_closer', v)}
+              />
+              <AddonRow
+                label="Módulo I.A. Legacy"
+                sublabel="+R$ 350/mês — Módulo legado de I.A. com agentes configuráveis."
+                checked={form.has_ai_module}
+                onChange={(v) => set('has_ai_module', v)}
+              />
             </div>
-            {form.has_ai_module && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm">Legal I.A. Module (+R$ 350/mês)</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Label className="text-xs">Agentes:</Label>
-                    <Input type="number" className="w-20 h-7 text-xs" value={form.ai_agents_limit} onChange={(e) => set('ai_agents_limit', Number(e.target.value))} />
-                  </div>
-                </div>
-                <Switch checked={form.has_ai_module} onCheckedChange={(v) => set('has_ai_module', v)} />
-              </div>
-            )}
-            <div className="flex items-center justify-between">
-              <p className="text-sm">Implantação Starter (+R$ 2.000 único)</p>
-              <Switch checked={form.has_implantacao_starter} onCheckedChange={(v) => set('has_implantacao_starter', v)} />
-            </div>
-          </div>
+            <AddonRow
+              label="Implantação Starter"
+              sublabel="+R$ 2.000 único — Configuração inicial e treinamento."
+              checked={form.has_implantacao_starter}
+              onChange={(v) => set('has_implantacao_starter', v)}
+            />
+          </section>
 
           {/* Facilite */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase text-muted-foreground">Facilite Whatsflow</Label>
+          <section className="space-y-2">
+            <SectionTitle>Facilite Whatsflow</SectionTitle>
             <RadioGroup value={form.facilite_plan} onValueChange={(v) => set('facilite_plan', v)} className="flex flex-wrap gap-3">
               {[
                 { v: 'none', l: 'Nenhum' },
@@ -294,26 +379,64 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                 </div>
               ))}
             </RadioGroup>
-          </div>
+          </section>
 
-          {/* Billing */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase text-muted-foreground">Cobrança</Label>
-            <Select value={form.billing_cycle} onValueChange={(v) => set('billing_cycle', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">Mensal</SelectItem>
-                <SelectItem value="quarterly">Trimestral</SelectItem>
-                <SelectItem value="yearly">Anual</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Cobrança e Pagamento */}
+          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+            <SectionTitle>Cobrança e Pagamento</SectionTitle>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Tipo de Pagamento</Label>
+                <Select value={form.payment_type} onValueChange={(v) => set('payment_type', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="boleto">Boleto</SelectItem>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="cartao">Cartão de Crédito</SelectItem>
+                    <SelectItem value="debito">Débito em Conta</SelectItem>
+                    <SelectItem value="transferencia">Transferência</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Condição</Label>
+                <Select value={form.payment_condition} onValueChange={(v) => set('payment_condition', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mensal">Mensal</SelectItem>
+                    <SelectItem value="trimestral">Trimestral</SelectItem>
+                    <SelectItem value="semestral">Semestral</SelectItem>
+                    <SelectItem value="anual">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Ciclo de Cobrança</Label>
+                <Select value={form.billing_cycle} onValueChange={(v) => set('billing_cycle', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                    <SelectItem value="quarterly">Trimestral</SelectItem>
+                    <SelectItem value="yearly">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground">Link de Checkout</Label>
+              <Input
+                value={form.checkout_url}
+                onChange={(e) => set('checkout_url', e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+          </section>
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase text-muted-foreground">Observação Interna</Label>
+          {/* Observações */}
+          <section className="space-y-2">
+            <SectionTitle>Observação Interna</SectionTitle>
             <Textarea value={form.internal_notes} onChange={(e) => set('internal_notes', e.target.value)} placeholder="Visível apenas no Nexus..." className="min-h-[60px]" />
-          </div>
+          </section>
 
           {/* MRR Preview */}
           <Card className="bg-primary/5 border-primary/20">
@@ -346,11 +469,36 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   );
 }
 
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</p>;
+}
+
 function NumField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div>
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Input type="number" className="h-8 text-sm" value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </div>
+  );
+}
+
+function DateField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Input type="date" className="h-8 text-sm" value={value} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function AddonRow({ label, sublabel, checked, onChange }: { label: string; sublabel: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between p-2 rounded border border-border">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{sublabel}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }

@@ -90,7 +90,18 @@ export default function NexusLicenses() {
     setLoading(true);
     let query = supabase
       .from('licenses')
-      .select('*, tenants!inner(name, slug, email, cpf_cnpj), parent:licenses!parent_license_id(tenants(name))', { count: 'exact' });
+      .select(`
+        id, tenant_id, status, plan, license_type, monthly_value,
+        starts_at, expires_at, cancelled_at, blocked_at, unblocked_at,
+        base_attendants, extra_attendants,
+        base_devices_web, extra_devices_web,
+        base_devices_meta, extra_devices_meta,
+        has_ai_module, has_ia_auditor, has_ia_copiloto, has_ia_closer,
+        billing_cycle, payment_type, payment_condition,
+        checkout_url, internal_notes, whitelabel_slug, parent_license_id,
+        tenants!inner(name, slug, email, cpf_cnpj),
+        parent:licenses!parent_license_id(tenants(name))
+      `, { count: 'exact' });
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
@@ -483,74 +494,125 @@ export default function NexusLicenses() {
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : (
                 <>
-                  <Table>
+                  <div className="overflow-x-auto">
+                  <Table className="min-w-[1400px]">
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Empresa</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Plano</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Dispositivos</TableHead>
-                        <TableHead>Atendentes</TableHead>
-                        <TableHead>I.A.</TableHead>
-                        <TableHead>Vencimento</TableHead>
+                      <TableRow className="text-[11px]">
+                        <TableHead className="sticky left-0 bg-card z-10 min-w-[180px]">Empresa / Titular</TableHead>
+                        <TableHead className="min-w-[120px]">WhiteLabel</TableHead>
+                        <TableHead className="min-w-[90px]">Status</TableHead>
+                        <TableHead className="min-w-[90px]">Ativação</TableHead>
+                        <TableHead className="min-w-[90px]">Cancelado</TableHead>
+                        <TableHead className="min-w-[90px]">Bloqueio</TableHead>
+                        <TableHead className="min-w-[90px]">Desbloqueio</TableHead>
+                        <TableHead className="min-w-[90px]">Vencimento</TableHead>
+                        <TableHead className="min-w-[70px] text-center">Disp. Oficial</TableHead>
+                        <TableHead className="min-w-[80px] text-center">Disp. Não Of.</TableHead>
+                        <TableHead className="min-w-[70px] text-center">Atend.</TableHead>
+                        <TableHead className="min-w-[100px]">Adicional</TableHead>
+                        <TableHead className="min-w-[80px]">Checkout</TableHead>
+                        <TableHead className="min-w-[100px]">Receita</TableHead>
+                        <TableHead className="min-w-[90px]">Tipo Pgto</TableHead>
+                        <TableHead className="min-w-[80px]">Condição</TableHead>
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filtered.map((l: any) => (
-                        <TableRow key={l.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
-                          <TableCell>
+                        <TableRow key={l.id} className="hover:bg-accent/30 cursor-pointer text-xs" onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
+                          {/* Empresa */}
+                          <TableCell className="sticky left-0 bg-card z-10">
                             <div>
-                              <p className="text-sm font-medium text-foreground">{l.tenants?.name || '—'}</p>
-                              <p className="text-xs text-muted-foreground">{l.tenants?.email || ''}</p>
-                              {l.parent?.tenants && l.license_type === 'individual' && (
-                                <p className="text-[10px] text-purple-400 mt-0.5 flex items-center gap-1 font-semibold">
-                                  └ {l.parent.tenants.name}
-                                </p>
-                              )}
+                              <p className="font-medium text-foreground truncate max-w-[160px]">{l.tenants?.name || '—'}</p>
+                              <p className="text-muted-foreground truncate max-w-[160px]">{l.tenants?.email || ''}</p>
                             </div>
                           </TableCell>
+                          {/* WhiteLabel */}
                           <TableCell>
-                            {(() => {
-                              const tc = TYPE_CONFIG[l.license_type] || TYPE_CONFIG.individual;
-                              return <Badge className={`text-[10px] ${tc.className}`}>{tc.label}</Badge>;
-                            })()}
+                            {l.parent?.tenants?.name
+                              ? <span className="text-purple-400 font-medium">{l.parent.tenants.name}</span>
+                              : <span className="text-muted-foreground">—</span>
+                            }
                           </TableCell>
+                          {/* Status */}
                           <TableCell>
-                            <Badge variant="outline" className="text-[10px]">
-                              {l.plan === 'profissional' ? 'Profissional' : l.plan === 'solo_pro' ? 'Solo Pro' : l.plan}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={`text-[10px] ${STATUS_BADGES[l.status] || ''}`}>
+                            <Badge className={`text-[9px] ${STATUS_BADGES[l.status] || ''}`}>
                               {STATUS_LABELS[l.status] || l.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm">
-                            R$ {Number(l.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {/* Ativação */}
+                          <TableCell className="text-muted-foreground whitespace-nowrap">
+                            {l.starts_at ? new Date(l.starts_at).toLocaleDateString('pt-BR') : '—'}
                           </TableCell>
-                          <TableCell className="text-sm text-center">
-                            {(l.base_devices_web || 0) + (l.extra_devices_web || 0) + (l.base_devices_meta || 0) + (l.extra_devices_meta || 0)}
+                          {/* Cancelado */}
+                          <TableCell className="whitespace-nowrap">
+                            {l.cancelled_at
+                              ? <span className="text-red-400">{new Date(l.cancelled_at).toLocaleDateString('pt-BR')}</span>
+                              : <span className="text-muted-foreground">—</span>
+                            }
                           </TableCell>
-                          <TableCell className="text-sm text-center">
+                          {/* Bloqueio */}
+                          <TableCell className="whitespace-nowrap">
+                            {l.blocked_at
+                              ? <span className="text-amber-400">{new Date(l.blocked_at).toLocaleDateString('pt-BR')}</span>
+                              : <span className="text-muted-foreground">—</span>
+                            }
+                          </TableCell>
+                          {/* Desbloqueio */}
+                          <TableCell className="whitespace-nowrap">
+                            {l.unblocked_at
+                              ? <span className="text-emerald-400">{new Date(l.unblocked_at).toLocaleDateString('pt-BR')}</span>
+                              : <span className="text-muted-foreground">—</span>
+                            }
+                          </TableCell>
+                          {/* Vencimento */}
+                          <TableCell className="text-muted-foreground whitespace-nowrap">
+                            {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
+                          </TableCell>
+                          {/* Disp. Oficial (Meta) */}
+                          <TableCell className="text-center">
+                            {(l.base_devices_meta || 0) + (l.extra_devices_meta || 0)}
+                          </TableCell>
+                          {/* Disp. Não Oficial (Web) */}
+                          <TableCell className="text-center">
+                            {(l.base_devices_web || 0) + (l.extra_devices_web || 0)}
+                          </TableCell>
+                          {/* Atendentes */}
+                          <TableCell className="text-center">
                             {(l.base_attendants || 0) + (l.extra_attendants || 0)}
                           </TableCell>
+                          {/* Adicional (I.A.) */}
                           <TableCell>
-                            <div className="flex gap-1 flex-wrap">
-                              {l.has_ia_auditor && <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[9px]">Auditor</Badge>}
-                              {l.has_ia_copiloto && <Badge className="bg-blue-500/20 text-blue-400 border-none text-[9px]">Copiloto</Badge>}
-                              {l.has_ia_closer && <Badge className="bg-purple-500/20 text-purple-400 border-none text-[9px]">Closer</Badge>}
-                              {l.has_ai_module && <Badge className="bg-zinc-500/20 text-zinc-400 border-none text-[9px]">Legacy I.A.</Badge>}
+                            <div className="flex gap-0.5 flex-wrap">
+                              {l.has_ia_auditor && <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[8px] px-1">Aud</Badge>}
+                              {l.has_ia_copiloto && <Badge className="bg-blue-500/20 text-blue-400 border-none text-[8px] px-1">Cop</Badge>}
+                              {l.has_ia_closer && <Badge className="bg-purple-500/20 text-purple-400 border-none text-[8px] px-1">Clo</Badge>}
+                              {l.has_ai_module && <Badge className="bg-zinc-500/20 text-zinc-400 border-none text-[8px] px-1">IA</Badge>}
                               {!l.has_ia_auditor && !l.has_ia_copiloto && !l.has_ia_closer && !l.has_ai_module && (
-                                <span className="text-xs text-muted-foreground">—</span>
+                                <span className="text-muted-foreground">—</span>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
+                          {/* Checkout */}
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            {l.checkout_url
+                              ? <a href={l.checkout_url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline text-[10px]">Link</a>
+                              : <span className="text-muted-foreground">—</span>
+                            }
                           </TableCell>
+                          {/* Receita */}
+                          <TableCell className="font-medium text-emerald-400 whitespace-nowrap">
+                            R$ {Number(l.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          {/* Tipo Pgto */}
+                          <TableCell className="text-muted-foreground capitalize">
+                            {l.payment_type || '—'}
+                          </TableCell>
+                          {/* Condição */}
+                          <TableCell className="text-muted-foreground capitalize">
+                            {l.payment_condition || '—'}
+                          </TableCell>
+                          {/* Ações */}
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -584,10 +646,11 @@ export default function NexusLicenses() {
                         </TableRow>
                       ))}
                       {filtered.length === 0 && (
-                        <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={17} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
+                  </div>
 
                   <div className="flex items-center justify-between px-4 py-3 border-t border-border">
                     <span className="text-xs text-muted-foreground">Página {page + 1} de {totalPages || 1} ({total} registros)</span>
