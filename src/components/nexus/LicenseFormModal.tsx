@@ -60,6 +60,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   const [tenantFields, setTenantFields] = useState({ cpf_cnpj: '', phone: '' });
   const [createNewTenant, setCreateNewTenant] = useState(false);
   const [newTenantName, setNewTenantName] = useState('');
+  const [newTenantEmail, setNewTenantEmail] = useState('');
 
   const [form, setForm] = useState({
     tenant_id: license?.tenant_id || '',
@@ -225,9 +226,11 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     // Create new tenant if needed
     let tenantId = form.tenant_id;
     if (!isEdit && createNewTenant) {
+      const name = newTenantName.trim();
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
       const { data: newTenant, error: tenantError } = await supabase
         .from('tenants')
-        .insert({ name: newTenantName.trim() })
+        .insert({ name, slug, email: newTenantEmail.trim() || null })
         .select('id')
         .single();
       if (tenantError || !newTenant) {
@@ -305,7 +308,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                     <Label className="text-xs font-semibold uppercase text-muted-foreground">Tenant / Empresa</Label>
                     <button
                       type="button"
-                      onClick={() => { setCreateNewTenant(!createNewTenant); set('tenant_id', ''); setNewTenantName(''); }}
+                      onClick={() => { setCreateNewTenant(!createNewTenant); set('tenant_id', ''); setNewTenantName(''); setNewTenantEmail(''); }}
                       className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
                     >
                       <Plus className="h-3 w-3" />
@@ -313,11 +316,19 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                     </button>
                   </div>
                   {createNewTenant ? (
-                    <Input
-                      placeholder="Nome da empresa"
-                      value={newTenantName}
-                      onChange={(e) => setNewTenantName(e.target.value)}
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Nome da empresa"
+                        value={newTenantName}
+                        onChange={(e) => setNewTenantName(e.target.value)}
+                      />
+                      <Input
+                        type="email"
+                        placeholder="E-mail da empresa"
+                        value={newTenantEmail}
+                        onChange={(e) => setNewTenantEmail(e.target.value)}
+                      />
+                    </div>
                   ) : (
                     <Select value={form.tenant_id} onValueChange={(v) => set('tenant_id', v)}>
                       <SelectTrigger><SelectValue placeholder="Selecione um tenant sem licença" /></SelectTrigger>
