@@ -12,6 +12,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Loader2, Plus, Search, ChevronLeft, ChevronRight, Upload, Download,
   MoreHorizontal, Eye, Edit, ExternalLink, Trash2,
@@ -69,9 +70,12 @@ export default function NexusLicenses() {
   const [showCSV, setShowCSV] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
 
   useEffect(() => {
     loadLicenses();
+    setSelectedIds(new Set());
   }, [page, statusFilter, typeFilter]);
 
   useEffect(() => {
@@ -202,6 +206,41 @@ export default function NexusLicenses() {
       });
       toast({ title: 'Licença e dados excluídos com sucesso' });
       setDeleteTarget(null);
+      loadLicenses();
+    } catch (err: any) {
+      toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handleBulkDelete() {
+    setDeleting(true);
+    const ids = Array.from(selectedIds);
+    try {
+      // Get tenant_ids for all selected licenses
+      const { data: licData } = await supabase
+        .from('licenses')
+        .select('id, tenant_id')
+        .in('id', ids);
+
+      // Delete sub-licenses
+      await supabase.from('licenses').delete().in('parent_license_id', ids);
+      // Delete licenses
+      await supabase.from('licenses').delete().in('id', ids);
+      // Delete tenants
+      const tenantIds = (licData || []).map((l: any) => l.tenant_id).filter(Boolean);
+      if (tenantIds.length > 0) {
+        await supabase.from('tenants').delete().in('id', tenantIds);
+      }
+      await supabase.from('nexus_audit_logs').insert({
+        actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
+        action: 'bulk_license_delete',
+        target_entity: `${ids.length} licenças excluídas`,
+      });
+      toast({ title: `${ids.length} licença(s) excluída(s) com sucesso` });
+      setSelectedIds(new Set());
+      setShowBulkDelete(false);
       loadLicenses();
     } catch (err: any) {
       toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
@@ -483,6 +522,29 @@ export default function NexusLicenses() {
             </Select>
           </div>
 
+          {/* Bulk action bar */}
+          {selectedIds.size > 0 && can(['nexus_superadmin']) && (
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-red-950/40 border border-red-800/40 rounded-lg">
+              <span className="text-sm text-red-300 font-medium">{selectedIds.size} selecionado(s)</span>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-7 text-xs"
+                onClick={() => setShowBulkDelete(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir selecionados
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={() => setSelectedIds(new Set())}
+              >
+                Desmarcar todos
+              </Button>
+            </div>
+          )}
+
           {/* Table */}
           <Card className="bg-card/50 border-border/50">
             <CardContent className="p-0">
@@ -494,6 +556,22 @@ export default function NexusLicenses() {
                   <Table className="min-w-[1400px]">
                     <TableHeader>
                       <TableRow className="text-[11px]">
+                        {can(['nexus_superadmin']) && (
+                          <TableHead className="w-10 sticky left-0 bg-card z-10">
+                            <Checkbox
+                              checked={filtered.length > 0 && filtered.every((l: any) => selectedIds.has(l.id))}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedIds(new Set([...selectedIds, ...filtered.map((l: any) => l.id)]));
+                                } else {
+                                  const newSet = new Set(selectedIds);
+                                  filtered.forEach((l: any) => newSet.delete(l.id));
+                                  setSelectedIds(newSet);
+                                }
+                              }}
+                            />
+                          </TableHead>
+                        )}
                         <TableHead className="sticky left-0 bg-card z-10 min-w-[180px]">Empresa / Titular</TableHead>
                         <TableHead className="min-w-[120px]">WhiteLabel</TableHead>
                         <TableHead className="min-w-[90px]">Status</TableHead>
@@ -515,7 +593,25 @@ export default function NexusLicenses() {
                     </TableHeader>
                     <TableBody>
                       {filtered.map((l: any) => (
-                        <TableRow key={l.id} className="hover:bg-accent/30 cursor-pointer text-xs" onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
+                        <TableRow
+                          key={l.id}
+                          className={`hover:bg-accent/30 cursor-pointer text-xs ${selectedIds.has(l.id) ? 'bg-accent/20' : ''}`}
+                          onClick={() => navigate(`/nexus/licencas/${l.id}`)}
+                        >
+                          {/* Checkbox */}
+                          {can(['nexus_superadmin']) && (
+                            <TableCell className="sticky left-0 bg-card z-10 w-10" onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selectedIds.has(l.id)}
+                                onCheckedChange={(checked) => {
+                                  const newSet = new Set(selectedIds);
+                                  if (checked) newSet.add(l.id);
+                                  else newSet.delete(l.id);
+                                  setSelectedIds(newSet);
+                                }}
+                              />
+                            </TableCell>
+                          )}
                           {/* Empresa */}
                           <TableCell className="sticky left-0 bg-card z-10">
                             <div>
@@ -642,7 +738,7 @@ export default function NexusLicenses() {
                         </TableRow>
                       ))}
                       {filtered.length === 0 && (
-                        <TableRow><TableCell colSpan={17} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={18} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
@@ -673,6 +769,30 @@ export default function NexusLicenses() {
       {showCSV && (
         <CSVImportModal open={showCSV} onOpenChange={setShowCSV} onImported={loadLicenses} />
       )}
+
+      <AlertDialog open={showBulkDelete} onOpenChange={(o) => !o && setShowBulkDelete(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.size} licença(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso excluirá permanentemente as <strong>{selectedIds.size}</strong> licenças selecionadas,
+              incluindo todos os dados dos tenants (clientes, conversas, histórico) e sub-licenças.
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
