@@ -262,25 +262,36 @@ export default function NexusLicenses() {
     }
   }
 
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState({ current: 0, total: 0 });
+
   async function handleBulkDelete() {
     setDeleting(true);
     const ids = Array.from(selectedIds);
+    const BATCH = 25;
+    setBulkDeleteProgress({ current: 0, total: ids.length });
+    let done = 0;
     try {
-      // Get tenant_ids for all selected licenses
-      const { data: licData } = await supabase
-        .from('licenses')
-        .select('id, tenant_id')
-        .in('id', ids);
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
 
-      // Delete sub-licenses
-      await supabase.from('licenses').delete().in('parent_license_id', ids);
-      // Delete licenses
-      await supabase.from('licenses').delete().in('id', ids);
-      // Delete tenants
-      const tenantIds = (licData || []).map((l: any) => l.tenant_id).filter(Boolean);
-      if (tenantIds.length > 0) {
-        await supabase.from('tenants').delete().in('id', tenantIds);
+        // Get tenant_ids for this batch
+        const { data: licData } = await supabase
+          .from('licenses').select('id, tenant_id').in('id', batch);
+
+        // Delete sub-licenses of this batch
+        await supabase.from('licenses').delete().in('parent_license_id', batch);
+        // Delete licenses
+        await supabase.from('licenses').delete().in('id', batch);
+        // Delete tenants
+        const tenantIds = (licData || []).map((l: any) => l.tenant_id).filter(Boolean);
+        if (tenantIds.length > 0) {
+          await supabase.from('tenants').delete().in('id', tenantIds);
+        }
+
+        done += batch.length;
+        setBulkDeleteProgress({ current: done, total: ids.length });
       }
+
       await supabase.from('nexus_audit_logs').insert({
         actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
         action: 'bulk_license_delete',
@@ -294,6 +305,7 @@ export default function NexusLicenses() {
       toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
     } finally {
       setDeleting(false);
+      setBulkDeleteProgress({ current: 0, total: 0 });
     }
   }
 
@@ -832,7 +844,7 @@ export default function NexusLicenses() {
         <CSVImportModal open={showCSV} onOpenChange={setShowCSV} onImported={loadLicenses} />
       )}
 
-      <AlertDialog open={showBulkDelete} onOpenChange={(o) => !o && setShowBulkDelete(false)}>
+      <AlertDialog open={showBulkDelete} onOpenChange={(o) => { if (!deleting) setShowBulkDelete(o); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir {selectedIds.size} licença(s)?</AlertDialogTitle>
@@ -842,6 +854,20 @@ export default function NexusLicenses() {
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleting && bulkDeleteProgress.total > 0 && (
+            <div className="space-y-2 py-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Excluindo em lotes...</span>
+                <span>{bulkDeleteProgress.current} / {bulkDeleteProgress.total}</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2">
+                <div
+                  className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round((bulkDeleteProgress.current / bulkDeleteProgress.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
@@ -850,7 +876,7 @@ export default function NexusLicenses() {
               className="bg-red-600 hover:bg-red-700"
             >
               {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Excluir permanentemente
+              {deleting ? 'Excluindo...' : 'Excluir permanentemente'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
