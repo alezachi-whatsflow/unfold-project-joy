@@ -21,7 +21,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password);
       
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData?.user) throw userError || new Error("User not found");
@@ -53,7 +53,15 @@ export default function LoginPage() {
       }
       
     } catch (err: any) {
-      toast.error(err.message || "Erro ao fazer login");
+      let errorMessage = "Erro ao fazer login";
+      if (err.message === "Invalid login credentials") {
+        errorMessage = "Email ou senha incorretos";
+      } else if (err.message === "Email not confirmed") {
+        errorMessage = "Por favor, confirme seu email antes de entrar";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
