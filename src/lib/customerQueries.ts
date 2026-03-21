@@ -95,10 +95,11 @@ export async function importCustomersBatch(
   }
   const unique = Array.from(emailMap.values());
 
-  const rows = unique.map((c) => ({
-    ...customerToRow(c),
-    updated_at: new Date().toISOString(),
-  }));
+  const rows = unique.map((c) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, ...rest } = customerToRow(c);
+    return { ...rest, updated_at: new Date().toISOString() };
+  });
 
   const CHUNK_SIZE = 500;
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {

@@ -13,7 +13,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useNexus } from '@/contexts/NexusContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Users, AlertCircle, Info } from 'lucide-react';
+import { fetchSalesPeople } from '@/lib/asaasQueries';
+import type { SalesPerson } from '@/types/asaas';
 
 interface Props {
   open: boolean;
@@ -27,6 +29,22 @@ function toDateInput(v: string | null | undefined) {
   return v.slice(0, 10); // yyyy-mm-dd
 }
 
+// ── Split helpers ──
+interface SplitRecipient {
+  id: string;
+  salespersonId: string;
+  walletId: string;
+  splitType: 'PERCENTAGE' | 'FIXED';
+  splitValue: string;
+}
+interface SplitConfig { enabled: boolean; recipients: SplitRecipient[] }
+
+let _nextId = 1;
+const newRecipient = (): SplitRecipient => ({
+  id: `r-${_nextId++}`, salespersonId: '', walletId: '', splitType: 'PERCENTAGE', splitValue: '',
+});
+const DEFAULT_SPLIT: SplitConfig = { enabled: false, recipients: [newRecipient()] };
+
 export default function LicenseFormModal({ open, onOpenChange, license, onSaved }: Props) {
   const { nexusUser } = useNexus();
   const { toast } = useToast();
@@ -34,6 +52,12 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   const [saving, setSaving] = useState(false);
   const [tenants, setTenants] = useState<any[]>([]);
   const [whitelabels, setWhitelabels] = useState<any[]>([]);
+  const [salesPeople, setSalesPeople] = useState<SalesPerson[]>([]);
+  const [split, setSplit] = useState<SplitConfig>(() => {
+    const saved = license?.split_config;
+    return saved ? saved : DEFAULT_SPLIT;
+  });
+  const [tenantFields, setTenantFields] = useState({ cpf_cnpj: '', phone: '' });
 
   const [form, setForm] = useState({
     tenant_id: license?.tenant_id || '',
@@ -115,9 +139,18 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   }, [open]);
 
   async function loadDependencies() {
-    const { data: wls } = await supabase.from('licenses').select('id, tenants(name)').eq('license_type', 'whitelabel');
+    const [{ data: wls }] = await Promise.all([
+      supabase.from('licenses').select('id, tenants(name)').eq('license_type', 'whitelabel'),
+    ]);
     setWhitelabels(wls || []);
-    if (!isEdit) {
+    fetchSalesPeople().then(setSalesPeople).catch(() => {});
+
+    if (isEdit && license?.tenant_id) {
+      const { data: t } = await supabase.from('tenants').select('cpf_cnpj, phone').eq('id', license.tenant_id).maybeSingle();
+      if (t) setTenantFields({ cpf_cnpj: t.cpf_cnpj || '', phone: t.phone || '' });
+      // Load saved split config
+      setSplit(license.split_config || DEFAULT_SPLIT);
+    } else {
       const [{ data: allTenants }, { data: allLics }] = await Promise.all([
         supabase.from('tenants').select('id, name').order('name'),
         supabase.from('licenses').select('tenant_id')
@@ -180,17 +213,28 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     }
 
     setSaving(true);
+    const splitPayload = split.enabled && split.recipients.some(r => r.walletId)
+      ? split : null;
+
     const payload: any = {
       ...form,
       monthly_value: mrrPreview.total,
       parent_license_id: form.parent_license_id === 'none' ? null : form.parent_license_id,
-      // Convert empty date strings to null
       expires_at: form.expires_at || null,
       cancelled_at: form.cancelled_at || null,
       blocked_at: form.blocked_at || null,
       unblocked_at: form.unblocked_at || null,
       checkout_url: form.checkout_url || null,
+      split_config: splitPayload,
     };
+
+    const tenantId = isEdit ? license.tenant_id : form.tenant_id;
+    if (tenantId && (tenantFields.cpf_cnpj || tenantFields.phone)) {
+      await supabase.from('tenants').update({
+        cpf_cnpj: tenantFields.cpf_cnpj || null,
+        phone: tenantFields.phone || null,
+      }).eq('id', tenantId);
+    }
 
     if (isEdit) {
       await supabase.from('licenses').update(payload).eq('id', license.id);
@@ -281,6 +325,29 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                   </Select>
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* Dados da Empresa */}
+          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+            <SectionTitle>Dados da Empresa</SectionTitle>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">CNPJ / CPF</Label>
+                <Input
+                  value={tenantFields.cpf_cnpj}
+                  onChange={(e) => setTenantFields(f => ({ ...f, cpf_cnpj: e.target.value }))}
+                  placeholder="00.000.000/0000-00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase text-muted-foreground">Telefone / WhatsApp</Label>
+                <Input
+                  value={tenantFields.phone}
+                  onChange={(e) => setTenantFields(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
             </div>
           </section>
 
@@ -432,6 +499,62 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
             </div>
           </section>
 
+          {/* Split de Pagamento */}
+          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <SectionTitle>Split de Pagamento</SectionTitle>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Divisão de receita entre recebedores</p>
+              </div>
+              <Switch
+                checked={split.enabled}
+                onCheckedChange={(v) => setSplit({ ...split, enabled: v })}
+              />
+            </div>
+            {split.enabled && (
+              <div className="space-y-3">
+                <div className="rounded-md border border-primary/20 bg-primary/5 p-2.5">
+                  <p className="text-[10px] text-primary font-medium flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    O split é aplicado no momento da cobrança via Asaas
+                  </p>
+                </div>
+                {split.recipients.map((r, idx) => (
+                  <SplitRow
+                    key={r.id}
+                    index={idx}
+                    recipient={r}
+                    salesPeople={salesPeople}
+                    canRemove={split.recipients.length > 1}
+                    onUpdate={(patch) => setSplit({
+                      ...split,
+                      recipients: split.recipients.map(x => x.id === r.id ? { ...x, ...patch } : x),
+                    })}
+                    onRemove={() => setSplit({ ...split, recipients: split.recipients.filter(x => x.id !== r.id) })}
+                  />
+                ))}
+                <Button
+                  variant="outline" size="sm"
+                  className="w-full gap-1.5 text-xs"
+                  onClick={() => setSplit({ ...split, recipients: [...split.recipients, newRecipient()] })}
+                >
+                  <Plus className="h-3.5 w-3.5" /> Adicionar Recebedor
+                </Button>
+                {split.recipients.some(r => r.splitValue) && (() => {
+                  const total = split.recipients
+                    .filter(r => r.splitType === 'PERCENTAGE' && r.splitValue)
+                    .reduce((s, r) => s + parseFloat(r.splitValue || '0'), 0);
+                  return total > 100 ? (
+                    <p className="text-[10px] text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      A soma dos percentuais não pode exceder 100% (atual: {total.toFixed(2)}%)
+                    </p>
+                  ) : null;
+                })()}
+              </div>
+            )}
+          </section>
+
           {/* Observações */}
           <section className="space-y-2">
             <SectionTitle>Observação Interna</SectionTitle>
@@ -499,6 +622,103 @@ function AddonRow({ label, sublabel, checked, onChange }: { label: string; subla
         <p className="text-xs text-muted-foreground">{sublabel}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
+  );
+}
+
+function SplitRow({
+  index, recipient, salesPeople, canRemove, onUpdate, onRemove,
+}: {
+  index: number;
+  recipient: SplitRecipient;
+  salesPeople: SalesPerson[];
+  canRemove: boolean;
+  onUpdate: (patch: Partial<SplitRecipient>) => void;
+  onRemove: () => void;
+}) {
+  const selected = salesPeople.find(s => s.id === recipient.salespersonId);
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          <Users className="h-3.5 w-3.5" /> Recebedor #{index + 1}
+        </span>
+        {canRemove && (
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onRemove}>
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs">Vendedor / Recebedor</Label>
+        <Select
+          value={recipient.salespersonId}
+          onValueChange={(v) => {
+            const p = salesPeople.find(s => s.id === v);
+            onUpdate({
+              salespersonId: v,
+              walletId: p?.asaas_wallet_id || '',
+              splitValue: p?.commission_percent ? String(p.commission_percent) : recipient.splitValue,
+            });
+          }}
+        >
+          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Selecione o recebedor" /></SelectTrigger>
+          <SelectContent>
+            {salesPeople.filter(s => s.is_active).map(s => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}{s.commission_percent ? ` (${s.commission_percent}%)` : ''}
+                {!s.asaas_wallet_id && <AlertCircle className="inline h-3 w-3 text-destructive ml-1" />}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {selected?.asaas_wallet_id && (
+        <div className="rounded-md border border-border bg-muted/30 p-2">
+          <p className="text-[10px] text-muted-foreground">
+            Wallet ID: <span className="font-mono text-foreground">{selected.asaas_wallet_id}</span>
+          </p>
+        </div>
+      )}
+      {!recipient.salespersonId && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">Wallet ID manual</Label>
+          <Input
+            value={recipient.walletId}
+            onChange={(e) => onUpdate({ walletId: e.target.value })}
+            placeholder="Wallet ID da conta Asaas"
+            className="h-9 text-xs font-mono"
+          />
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Tipo</Label>
+          <Select
+            value={recipient.splitType}
+            onValueChange={(v) => onUpdate({ splitType: v as 'PERCENTAGE' | 'FIXED' })}
+          >
+            <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PERCENTAGE">Percentual (%)</SelectItem>
+              <SelectItem value="FIXED">Valor Fixo (R$)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">{recipient.splitType === 'PERCENTAGE' ? 'Comissão (%)' : 'Valor (R$)'}</Label>
+          <Input
+            type="number"
+            step={recipient.splitType === 'PERCENTAGE' ? '0.0001' : '0.01'}
+            min="0"
+            max={recipient.splitType === 'PERCENTAGE' ? '100' : undefined}
+            value={recipient.splitValue}
+            onChange={(e) => onUpdate({ splitValue: e.target.value })}
+            placeholder={recipient.splitType === 'PERCENTAGE' ? '10' : '50.00'}
+            className="h-9 text-xs"
+          />
+        </div>
+      </div>
     </div>
   );
 }

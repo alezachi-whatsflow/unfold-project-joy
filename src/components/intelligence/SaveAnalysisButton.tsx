@@ -120,6 +120,8 @@ export function SaveAnalysisButton({
         ],
         recommendation: neuroResult.top5_melhorias_neuromarketing?.[0]?.melhoria || "Aplique princípios de neuromarketing no design.",
       };
+      // Save full neuromarketing data for HTML export
+      details.neuro_full = neuroResult;
     }
 
     return details;

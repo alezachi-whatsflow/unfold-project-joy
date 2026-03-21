@@ -91,16 +91,9 @@ export default function NexusLicenses() {
     let query = supabase
       .from('licenses')
       .select(`
-        id, tenant_id, status, plan, license_type, monthly_value,
-        starts_at, expires_at, cancelled_at, blocked_at, unblocked_at,
-        base_attendants, extra_attendants,
-        base_devices_web, extra_devices_web,
-        base_devices_meta, extra_devices_meta,
-        has_ai_module, has_ia_auditor, has_ia_copiloto, has_ia_closer,
-        billing_cycle, payment_type, payment_condition,
-        checkout_url, internal_notes, whitelabel_slug, parent_license_id,
-        tenants!inner(name, slug, email, cpf_cnpj),
-        parent:licenses!parent_license_id(tenants(name))
+        *,
+        tenants(name, slug, email, cpf_cnpj),
+        parent:licenses!parent_license_id(id, tenants(name))
       `, { count: 'exact' });
 
     if (statusFilter !== 'all') {
@@ -117,7 +110,10 @@ export default function NexusLicenses() {
       .order('created_at', { ascending: false })
       .range(from, to);
 
-    if (!error) {
+    if (error) {
+      console.error('loadLicenses error:', error);
+      toast({ title: 'Erro ao carregar licenças', description: error.message, variant: 'destructive' });
+    } else {
       setLicenses(data || []);
       setTotal(count || 0);
     }
