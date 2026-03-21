@@ -187,7 +187,6 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
           billing_cycle: row.billing_cycle || 'monthly',
           starts_at: toDateOrNull(row.activated_at),
           expires_at: toDateOrNull(row.expires_at),
-          whitelabel_slug: row.whitelabel || null,
           internal_notes: row.whitelabel ? `Importado via CSV. WL: ${row.whitelabel}` : 'Importado via CSV',
         }));
 
