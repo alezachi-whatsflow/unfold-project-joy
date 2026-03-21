@@ -50,6 +50,25 @@ const STATUS_MAP: Record<string, string> = {
   'Trial': 'trial', 'trial': 'trial',
 };
 
+const BATCH_SIZE = 100;
+
+function toDateOrNull(val: string): string | null {
+  if (!val || val.trim() === '' || val === '—') return null;
+  // dd/mm/yyyy → yyyy-mm-dd
+  const match = val.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  // already yyyy-mm-dd or ISO
+  if (/^\d{4}-\d{2}-\d{2}/.test(val.trim())) return val.trim().slice(0, 10);
+  return null;
+}
+
+function uniqueSlug(name: string, index: number): string {
+  const base = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'empresa';
+  const rand = Math.random().toString(36).slice(2, 6);
+  return `${base}-${rand}-${index}`;
+}
+
 export default function CSVImportModal({ open, onOpenChange, onImported }: Props) {
   const { nexusUser } = useNexus();
   const { toast } = useToast();
@@ -59,6 +78,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
   const [importing, setImporting] = useState(false);
   const [done, setDone] = useState(false);
   const [importResults, setImportResults] = useState({ success: 0, failed: 0 });
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   function parseCSV(text: string) {
     const lines = text.split('\n').filter((l) => l.trim());
@@ -75,9 +95,12 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
           const idx = header.indexOf(name);
           return idx >= 0 ? cols[idx] || '' : '';
         };
+        const company = get('EMPRESA / TITULAR') || get('EMPRESA');
+        if (!company) continue; // skip empty rows
+
         parsed.push({
           whitelabel: get('WHITELABEL'),
-          company_name: get('EMPRESA / TITULAR') || get('EMPRESA'),
+          company_name: company,
           email: get('EMAIL'),
           status: STATUS_MAP[get('STATUS')] || 'active',
           activated_at: get('ATIVAÇÃO') || get('ATIVACAO'),
@@ -116,48 +139,95 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
 
   async function handleImport() {
     setImporting(true);
-    let success = 0, failed = 0;
+    let totalSuccess = 0, totalFailed = 0;
 
-    for (const row of rows) {
+    // Split into batches
+    const batches: ParsedRow[][] = [];
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      batches.push(rows.slice(i, i + BATCH_SIZE));
+    }
+
+    setProgress({ current: 0, total: rows.length });
+
+    let globalIndex = 0;
+    for (const batch of batches) {
       try {
-        // Create tenant
-        const slug = row.company_name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 50);
-        const { data: tenant, error: tErr } = await supabase.from('tenants').insert({
-          name: row.company_name, slug: `${slug}-${Date.now()}`, email: row.email,
-        }).select('id').single();
+        // 1. Insert all tenants in this batch at once
+        const tenantData = batch.map((row, bIdx) => ({
+          name: row.company_name,
+          slug: uniqueSlug(row.company_name, globalIndex + bIdx),
+          email: row.email || null,
+        }));
 
-        if (tErr || !tenant) { failed++; continue; }
+        const { data: tenants, error: tErr } = await supabase
+          .from('tenants')
+          .insert(tenantData)
+          .select('id');
 
-        await supabase.from('licenses').insert({
-          tenant_id: tenant.id,
+        if (tErr || !tenants || tenants.length !== batch.length) {
+          totalFailed += batch.length;
+          globalIndex += batch.length;
+          setProgress(p => ({ ...p, current: p.current + batch.length }));
+          continue;
+        }
+
+        // 2. Insert all licenses for this batch at once
+        const licenseData = batch.map((row, bIdx) => ({
+          tenant_id: tenants[bIdx].id,
           plan: 'profissional',
+          license_type: 'direct',
           status: row.status,
           monthly_value: row.monthly_value,
           base_devices_web: row.devices_official,
-          base_attendants: row.attendants,
+          base_devices_meta: row.devices_unofficial,
+          base_attendants: row.attendants || 1,
           billing_cycle: row.billing_cycle || 'monthly',
+          payment_type: row.payment_method || null,
+          payment_condition: row.payment_condition || null,
+          checkout_url: row.checkout_platform || null,
           has_ia_auditor: row.has_ia_auditor,
           has_ia_copiloto: row.has_ia_copiloto,
           has_ia_closer: row.has_ia_closer,
-          internal_notes: `Importado via CSV. Whitelabel: ${row.whitelabel}`,
-        });
-        success++;
+          starts_at: toDateOrNull(row.activated_at),
+          expires_at: toDateOrNull(row.expires_at),
+          cancelled_at: toDateOrNull(row.cancelled_at),
+          blocked_at: toDateOrNull(row.blocked_at),
+          unblocked_at: toDateOrNull(row.unblocked_at),
+          whitelabel_slug: row.whitelabel || null,
+          internal_notes: row.whitelabel ? `Importado via CSV. WL: ${row.whitelabel}` : 'Importado via CSV',
+        }));
+
+        const { error: lErr } = await supabase.from('licenses').insert(licenseData);
+        if (lErr) {
+          // If license batch fails, rollback tenants
+          const tenantIds = tenants.map(t => t.id);
+          await supabase.from('tenants').delete().in('id', tenantIds);
+          totalFailed += batch.length;
+        } else {
+          totalSuccess += batch.length;
+        }
       } catch {
-        failed++;
+        totalFailed += batch.length;
       }
+
+      globalIndex += batch.length;
+      setProgress({ current: globalIndex, total: rows.length });
     }
 
     await supabase.from('nexus_audit_logs').insert({
       actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
-      action: 'csv_import', target_entity: `${success} importados, ${failed} falhas`,
+      action: 'csv_import',
+      target_entity: `${totalSuccess} importados, ${totalFailed} falhas`,
     });
 
-    setImportResults({ success, failed });
+    setImportResults({ success: totalSuccess, failed: totalFailed });
     setDone(true);
     setImporting(false);
-    toast({ title: `Importação concluída: ${success} sucesso, ${failed} falhas` });
+    toast({ title: `Importação concluída: ${totalSuccess} sucesso, ${totalFailed} falhas` });
     onImported();
   }
+
+  const progressPct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -175,6 +245,22 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
             )}
             <Button onClick={() => onOpenChange(false)}>Fechar</Button>
           </div>
+        ) : importing ? (
+          <div className="py-10 space-y-5 text-center">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                Importando... {progress.current} / {progress.total} registros
+              </p>
+              <div className="w-full bg-muted rounded-full h-2.5 mx-auto max-w-xs">
+                <div
+                  className="bg-primary h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">{progressPct}% concluído</p>
+            </div>
+          </div>
         ) : rows.length === 0 ? (
           <div className="text-center py-12 space-y-4">
             <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
@@ -184,14 +270,18 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
             {errors.length > 0 && (
               <div className="text-left space-y-1">
                 {errors.map((e, i) => (
-                  <p key={i} className="text-xs text-red-400 flex items-center gap-1"><AlertCircle className="h-3 w-3" />{e}</p>
+                  <p key={i} className="text-xs text-red-400 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />{e}
+                  </p>
                 ))}
               </div>
             )}
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground">{rows.length} registros encontrados. Preview das primeiras 10 linhas:</p>
+            <p className="text-sm text-muted-foreground">
+              {rows.length} registros encontrados. Preview das primeiras 10 linhas:
+            </p>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -225,8 +315,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => { setRows([]); setErrors([]); }}>Voltar</Button>
-              <Button onClick={handleImport} disabled={importing}>
-                {importing && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              <Button onClick={handleImport}>
                 Importar {rows.length} registros
               </Button>
             </DialogFooter>
