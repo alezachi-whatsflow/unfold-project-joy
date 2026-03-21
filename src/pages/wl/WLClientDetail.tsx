@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Users, Wifi, Cpu, Calendar } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, ArrowLeft, Users, Wifi, Cpu, Calendar, FileText } from "lucide-react";
+import { FaturaView } from "@/components/billing/FaturaView";
 
 function fmt(n: number) {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -20,6 +23,7 @@ function fmtDateTime(d: string | null) {
 export default function WLClientDetail() {
   const { slug, clientId } = useParams<{ slug: string; clientId: string }>();
   const navigate = useNavigate();
+  const [faturaOpen, setFaturaOpen] = useState(false);
 
   const { data: license, isLoading: licLoading } = useQuery({
     queryKey: ['wl-client-license', clientId],
@@ -50,12 +54,25 @@ export default function WLClientDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('id, full_name, role, last_login_at, created_at, is_active')
+        .select('id, full_name, email, role, last_login_at, created_at, is_active')
         .eq('license_id', clientId)
         .order('created_at', { ascending: true });
       return data || [];
     },
     enabled: !!clientId,
+  });
+
+  const { data: wlBranding } = useQuery({
+    queryKey: ['wl-branding-for-fatura', slug],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('whitelabel_config')
+        .select('display_name, logo_url, primary_color, support_email, cnpj')
+        .eq('slug', slug!)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!slug,
   });
 
   if (licLoading || profLoading) {
@@ -126,9 +143,20 @@ export default function WLClientDetail() {
       </Button>
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">{license.tenants?.name || '—'}</h1>
-        <p className="text-sm text-white/40 mt-0.5">{license.tenants?.email || ''}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">{license.tenants?.name || '—'}</h1>
+          <p className="text-sm text-white/40 mt-0.5">{license.tenants?.email || ''}</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 shrink-0"
+          onClick={() => setFaturaOpen(true)}
+        >
+          <FileText className="h-3.5 w-3.5 mr-1.5" />
+          Gerar Fatura
+        </Button>
       </div>
 
       {/* Contract summary */}
@@ -297,6 +325,43 @@ export default function WLClientDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Fatura Dialog */}
+      <Dialog open={faturaOpen} onOpenChange={setFaturaOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Fatura — {license.tenants?.name}</DialogTitle>
+          </DialogHeader>
+          <FaturaView
+            issuer={{
+              name: wlBranding?.display_name || 'WhiteLabel',
+              cnpj: (wlBranding as any)?.cnpj || undefined,
+              email: wlBranding?.support_email || undefined,
+              logoUrl: wlBranding?.logo_url || undefined,
+              primaryColor: wlBranding?.primary_color || 'var(--wl-primary)',
+            }}
+            client={{
+              name: license.tenants?.name || '',
+              email: license.tenants?.email || '',
+              cnpj: (license.tenants as any)?.cpf_cnpj || '',
+            }}
+            license={{
+              base_attendants: license.base_attendants || 0,
+              extra_attendants: license.extra_attendants || 0,
+              base_devices_web: license.base_devices_web || 0,
+              extra_devices_web: license.extra_devices_web || 0,
+              base_devices_meta: license.base_devices_meta || 0,
+              extra_devices_meta: license.extra_devices_meta || 0,
+              has_ai_module: !!license.has_ai_module,
+              monthly_value: Number(license.monthly_value || 0),
+              starts_at: license.starts_at,
+              expires_at: license.expires_at,
+              plan: license.plan,
+            }}
+            attendants={profiles || []}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

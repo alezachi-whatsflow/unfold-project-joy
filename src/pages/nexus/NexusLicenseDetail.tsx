@@ -10,12 +10,16 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
   ArrowLeft, Lock, Unlock, ExternalLink, Ticket, Loader2, Save,
   Monitor, Smartphone, Users, MessageSquare, HardDrive,
-  Shield, Building2, FlaskConical, UserCheck,
+  Shield, Building2, FlaskConical, UserCheck, FileText,
 } from 'lucide-react';
 import { useNexus } from '@/contexts/NexusContext';
 import { useToast } from '@/hooks/use-toast';
+import { FaturaView } from '@/components/billing/FaturaView';
 
 const STATUS_BADGES: Record<string, string> = {
   active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -63,6 +67,8 @@ export default function NexusLicenseDetail() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [faturaOpen, setFaturaOpen] = useState(false);
 
   useEffect(() => {
     if (id) loadAll();
@@ -105,6 +111,17 @@ export default function NexusLicenseDetail() {
     setUsage(usageRes.data || []);
     setTickets(ticketsRes.data || []);
     setAuditLogs(auditRes.data || []);
+
+    // Load attendants (profiles) for invoice
+    if (licRes.data?.tenant_id) {
+      const { data: profData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, last_login_at, created_at')
+        .eq('license_id', id!)
+        .order('created_at', { ascending: true });
+      setProfiles(profData || []);
+    }
+
     setLoading(false);
   }
 
@@ -197,6 +214,11 @@ export default function NexusLicenseDetail() {
                 <ExternalLink className="h-3.5 w-3.5 mr-1" /> Acessar como Admin
               </Button>
             </>
+          )}
+          {licenseType === 'individual' && (
+            <Button variant="outline" size="sm" onClick={() => setFaturaOpen(true)}>
+              <FileText className="h-3.5 w-3.5 mr-1" /> Gerar Fatura
+            </Button>
           )}
           <Button variant="outline" size="sm" onClick={() => navigate(`/nexus/tickets?license=${id}`)}>
             <Ticket className="h-3.5 w-3.5 mr-1" /> Novo Ticket
@@ -379,6 +401,44 @@ export default function NexusLicenseDetail() {
           />
         </CardContent>
       </Card>
+
+      {/* Fatura Dialog */}
+      <Dialog open={faturaOpen} onOpenChange={setFaturaOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Fatura — {tenant?.name}</DialogTitle>
+          </DialogHeader>
+          <FaturaView
+            issuer={{
+              name: 'Whatsflow',
+              cnpj: '00.000.000/0001-00',
+              email: 'financeiro@whatsflow.com.br',
+              website: 'whatsflow.com.br',
+              primaryColor: '#16a34a',
+            }}
+            client={{
+              name: tenant?.name || '',
+              email: tenant?.email || '',
+              cnpj: tenant?.cpf_cnpj || '',
+            }}
+            license={{
+              base_attendants: license.base_attendants || 0,
+              extra_attendants: license.extra_attendants || 0,
+              base_devices_web: license.base_devices_web || 0,
+              extra_devices_web: license.extra_devices_web || 0,
+              base_devices_meta: license.base_devices_meta || 0,
+              extra_devices_meta: license.extra_devices_meta || 0,
+              has_ai_module: !!license.has_ai_module,
+              monthly_value: Number(license.monthly_value || 0),
+              starts_at: license.starts_at,
+              expires_at: license.expires_at,
+              plan: license.plan,
+            }}
+            attendants={profiles}
+            observations={notes || undefined}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Tickets + Audit side by side */}
       <div className="grid md:grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +12,22 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Loader2, Plus, Search, ChevronLeft, ChevronRight, Upload, Download, MoreHorizontal, Eye, Edit, Lock, Unlock, ExternalLink, Ticket, Trash2 } from 'lucide-react';
+import {
+  Loader2, Plus, Search, ChevronLeft, ChevronRight, Upload, Download,
+  MoreHorizontal, Eye, Edit, ExternalLink, Trash2,
+  LayoutDashboard, LayoutGrid, List, TrendingUp, Users, DollarSign, Cpu,
+} from 'lucide-react';
+import {
+  AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 import { useNexus } from '@/contexts/NexusContext';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import LicenseFormModal from '@/components/nexus/LicenseFormModal';
 import CSVImportModal from '@/components/nexus/CSVImportModal';
+
+type Layout = 'analytics' | 'cards' | 'operational';
 
 const PAGE_SIZE = 50;
 
@@ -39,11 +49,15 @@ const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
   individual: { label: 'Individual', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
 };
 
+const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+
 export default function NexusLicenses() {
   const { can, nexusUser } = useNexus();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [layout, setLayout] = useState<Layout>('operational');
   const [licenses, setLicenses] = useState<any[]>([]);
+  const [allLicenses, setAllLicenses] = useState<any[]>([]); // for analytics (no pagination)
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -59,6 +73,18 @@ export default function NexusLicenses() {
   useEffect(() => {
     loadLicenses();
   }, [page, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    loadAllLicenses();
+  }, []);
+
+  async function loadAllLicenses() {
+    const { data } = await supabase
+      .from('licenses')
+      .select('id, monthly_value, status, plan, license_type, has_ai_module, has_ia_auditor, has_ia_copiloto, has_ia_closer, created_at')
+      .order('created_at', { ascending: true });
+    setAllLicenses(data || []);
+  }
 
   async function loadLicenses() {
     setLoading(true);
@@ -96,6 +122,44 @@ export default function NexusLicenses() {
       return tenantName.includes(q) || tenantEmail.includes(q);
     });
   }, [licenses, search]);
+
+  // Analytics data computed from allLicenses (no filters)
+  const analytics = useMemo(() => {
+    const active = allLicenses.filter((l) => l.status === 'active');
+    const mrr = active.reduce((s, l) => s + Number(l.monthly_value || 0), 0);
+    const withAI = allLicenses.filter((l) => l.has_ai_module || l.has_ia_auditor || l.has_ia_copiloto || l.has_ia_closer).length;
+
+    // Status breakdown
+    const byStatus = ['active', 'inactive', 'blocked', 'suspended', 'trial'].map((s) => ({
+      name: { active: 'Ativo', inactive: 'Inativo', blocked: 'Bloqueado', suspended: 'Suspenso', trial: 'Trial' }[s] || s,
+      value: allLicenses.filter((l) => l.status === s).length,
+    })).filter((d) => d.value > 0);
+
+    // Plan distribution
+    const planCounts: Record<string, number> = {};
+    allLicenses.forEach((l) => { planCounts[l.plan || 'N/A'] = (planCounts[l.plan || 'N/A'] || 0) + 1; });
+    const byPlan = Object.entries(planCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+
+    // MRR trend: group by month of creation
+    const mrrByMonth: Record<string, number> = {};
+    allLicenses
+      .filter((l) => l.status === 'active')
+      .forEach((l) => {
+        const mo = new Date(l.created_at).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+        mrrByMonth[mo] = (mrrByMonth[mo] || 0) + Number(l.monthly_value || 0);
+      });
+    const mrrTrend = Object.entries(mrrByMonth).map(([month, mrr]) => ({ month, mrr })).slice(-12);
+
+    // AI adoption by type
+    const aiAdoption = [
+      { name: 'Auditor', value: allLicenses.filter((l) => l.has_ia_auditor).length },
+      { name: 'Copiloto', value: allLicenses.filter((l) => l.has_ia_copiloto).length },
+      { name: 'Closer', value: allLicenses.filter((l) => l.has_ia_closer).length },
+      { name: 'Módulo I.A.', value: allLicenses.filter((l) => l.has_ai_module).length },
+    ].filter((d) => d.value > 0);
+
+    return { mrr, active: active.length, total: allLicenses.length, withAI, byStatus, byPlan, mrrTrend, aiAdoption };
+  }, [allLicenses]);
 
   function exportCSV() {
     const rows = filtered.map((l: any) => [
@@ -148,7 +212,29 @@ export default function NexusLicenses() {
           <h1 className="text-2xl font-bold text-foreground">Licenças</h1>
           <p className="text-sm text-muted-foreground">{total} licenças no total</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {/* Layout toggle */}
+          <div className="flex border border-border rounded-md overflow-hidden">
+            {([
+              { id: 'analytics', icon: LayoutDashboard, label: 'Analytics' },
+              { id: 'cards', icon: LayoutGrid, label: 'Cards' },
+              { id: 'operational', icon: List, label: 'Operacional' },
+            ] as const).map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                onClick={() => setLayout(id)}
+                title={label}
+                className={`px-3 py-1.5 flex items-center gap-1.5 text-xs transition-colors ${
+                  layout === id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
+          </div>
           {can(['nexus_superadmin', 'nexus_suporte_senior']) && (
             <>
               <Button size="sm" variant="outline" onClick={() => setShowCSV(true)}>
@@ -165,163 +251,363 @@ export default function NexusLicenses() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[250px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por empresa ou email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Ativo</SelectItem>
-            <SelectItem value="inactive">Inativo</SelectItem>
-            <SelectItem value="blocked">Bloqueado</SelectItem>
-            <SelectItem value="suspended">Suspenso</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Tipos</SelectItem>
-            <SelectItem value="individual">Individual</SelectItem>
-            <SelectItem value="whitelabel">WhiteLabel</SelectItem>
-            <SelectItem value="internal">Interno</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* ── LAYOUT 1: ANALYTICS ── */}
+      {layout === 'analytics' && (
+        <div className="space-y-6">
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard icon={DollarSign} label="MRR" value={`R$ ${analytics.mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} color="emerald" />
+            <KpiCard icon={Users} label="Licenças Ativas" value={String(analytics.active)} color="blue" />
+            <KpiCard icon={TrendingUp} label="Total de Licenças" value={String(analytics.total)} color="purple" />
+            <KpiCard icon={Cpu} label="Com I.A." value={`${analytics.withAI} (${analytics.total ? Math.round(analytics.withAI / analytics.total * 100) : 0}%)`} color="amber" />
+          </div>
 
-      {/* Table */}
-      <Card className="bg-card/50 border-border/50">
-        <CardContent className="p-0">
+          {/* Charts row 1 */}
+          <div className="grid lg:grid-cols-2 gap-4">
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">MRR por Mês de Ativação</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={analytics.mrrTrend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: any) => [`R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'MRR']} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <Area type="monotone" dataKey="mrr" stroke="#10b981" fill="#10b98120" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Distribuição por Plano</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie data={analytics.byPlan} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                      {analytics.byPlan.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Charts row 2 */}
+          <div className="grid lg:grid-cols-2 gap-4">
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Status das Licenças</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={analytics.byStatus} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <Bar dataKey="value" name="Licenças" radius={[4, 4, 0, 0]}>
+                      {analytics.byStatus.map((entry, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Adoção de I.A.</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analytics.aiAdoption.length === 0 ? (
+                  <div className="flex items-center justify-center h-[180px] text-sm text-muted-foreground">Nenhum módulo de I.A. ativado</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={180}>
+                    <BarChart data={analytics.aiAdoption} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
+                      <YAxis type="category" dataKey="name" width={70} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                      <Bar dataKey="value" name="Licenças" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* ── LAYOUT 2: CARDS ── */}
+      {layout === 'cards' && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[250px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por empresa ou email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+                <SelectItem value="blocked">Bloqueado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Tipos</SelectItem>
+                <SelectItem value="individual">Individual</SelectItem>
+                <SelectItem value="whitelabel">WhiteLabel</SelectItem>
+                <SelectItem value="internal">Interno</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Plano</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Dispositivos</TableHead>
-                    <TableHead>Atendentes</TableHead>
-                    <TableHead>I.A.</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((l: any) => (
-                    <TableRow key={l.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{l.tenants?.name || '—'}</p>
-                          <p className="text-xs text-muted-foreground">{l.tenants?.email || ''}</p>
-                          {l.parent?.tenants && l.license_type === 'individual' && (
-                            <p className="text-[10px] text-purple-400 mt-0.5 flex items-center gap-1 font-semibold">
-                              └ {l.parent.tenants.name}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filtered.map((l: any) => {
+                  const tc = TYPE_CONFIG[l.license_type] || TYPE_CONFIG.individual;
+                  const totalDevices = (l.base_devices_web || 0) + (l.extra_devices_web || 0) + (l.base_devices_meta || 0) + (l.extra_devices_meta || 0);
+                  const totalAtt = (l.base_attendants || 0) + (l.extra_attendants || 0);
+                  return (
+                    <Card
+                      key={l.id}
+                      className="bg-card/50 border-border/50 hover:border-primary/40 cursor-pointer transition-colors group"
+                      onClick={() => navigate(`/nexus/licencas/${l.id}`)}
+                    >
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">{l.tenants?.name || '—'}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">{l.tenants?.email || ''}</p>
+                          </div>
+                          <Badge className={`text-[9px] shrink-0 ${STATUS_BADGES[l.status] || ''}`}>
+                            {STATUS_LABELS[l.status] || l.status}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-1.5 flex-wrap">
+                          <Badge className={`text-[9px] ${tc.className}`}>{tc.label}</Badge>
+                          <Badge variant="outline" className="text-[9px]">{l.plan === 'profissional' ? 'Prof.' : l.plan === 'solo_pro' ? 'Solo Pro' : l.plan}</Badge>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <p className="text-xs font-bold text-foreground">{totalAtt}</p>
+                            <p className="text-[10px] text-muted-foreground">Atend.</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-foreground">{totalDevices}</p>
+                            <p className="text-[10px] text-muted-foreground">Disp.</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-emerald-400">
+                              R${Number(l.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
-                          )}
+                            <p className="text-[10px] text-muted-foreground">/mês</p>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const tc = TYPE_CONFIG[l.license_type] || TYPE_CONFIG.individual;
-                          return <Badge className={`text-[10px] ${tc.className}`}>{tc.label}</Badge>;
-                        })()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px]">
-                          {l.plan === 'profissional' ? 'Profissional' : l.plan === 'solo_pro' ? 'Solo Pro' : l.plan}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`text-[10px] ${STATUS_BADGES[l.status] || ''}`}>
-                          {STATUS_LABELS[l.status] || l.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        R$ {Number(l.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-sm text-center">
-                        {(l.base_devices_web || 0) + (l.extra_devices_web || 0) + (l.base_devices_meta || 0) + (l.extra_devices_meta || 0)}
-                      </TableCell>
-                      <TableCell className="text-sm text-center">
-                        {(l.base_attendants || 0) + (l.extra_attendants || 0)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {l.has_ia_auditor && <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[9px]">Auditor</Badge>}
-                          {l.has_ia_copiloto && <Badge className="bg-blue-500/20 text-blue-400 border-none text-[9px]">Copiloto</Badge>}
-                          {l.has_ia_closer && <Badge className="bg-purple-500/20 text-purple-400 border-none text-[9px]">Closer</Badge>}
-                          {l.has_ai_module && <Badge className="bg-zinc-500/20 text-zinc-400 border-none text-[9px]">Legacy I.A.</Badge>}
-                          {!l.has_ia_auditor && !l.has_ia_copiloto && !l.has_ia_closer && !l.has_ai_module && (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
-                              <Eye className="h-3.5 w-3.5 mr-2" /> Ver detalhes
-                            </DropdownMenuItem>
-                            {can(['nexus_superadmin', 'nexus_suporte_senior']) && (
-                              <DropdownMenuItem onClick={() => { setEditLicense(l); setShowForm(true); }}>
-                                <Edit className="h-3.5 w-3.5 mr-2" /> Editar
-                              </DropdownMenuItem>
-                            )}
-                            {can(['nexus_superadmin', 'nexus_suporte_senior']) && (
-                              <DropdownMenuItem className="text-purple-400">
-                                <ExternalLink className="h-3.5 w-3.5 mr-2" /> Acessar como Admin
-                              </DropdownMenuItem>
-                            )}
-                            {can(['nexus_superadmin']) && (
-                              <DropdownMenuItem
-                                className="text-red-400 focus:text-red-400"
-                                onClick={() => setDeleteTarget(l)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filtered.length === 0 && (
-                    <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-                <span className="text-xs text-muted-foreground">Página {page + 1} de {totalPages || 1} ({total} registros)</span>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(page - 1)}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                        {(l.has_ia_auditor || l.has_ia_copiloto || l.has_ia_closer || l.has_ai_module) && (
+                          <div className="flex gap-1 flex-wrap">
+                            {l.has_ia_auditor && <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[9px]">Auditor</Badge>}
+                            {l.has_ia_copiloto && <Badge className="bg-blue-500/20 text-blue-400 border-none text-[9px]">Copiloto</Badge>}
+                            {l.has_ia_closer && <Badge className="bg-purple-500/20 text-purple-400 border-none text-[9px]">Closer</Badge>}
+                            {l.has_ai_module && <Badge className="bg-zinc-500/20 text-zinc-400 border-none text-[9px]">I.A.</Badge>}
+                          </div>
+                        )}
+                        {l.expires_at && (
+                          <p className="text-[10px] text-muted-foreground">
+                            Venc: {new Date(l.expires_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                {filtered.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-muted-foreground text-sm">Nenhuma licença encontrada</div>
+                )}
               </div>
+              <PaginationBar page={page} totalPages={Math.ceil(total / PAGE_SIZE)} total={total} onPrev={() => setPage(page - 1)} onNext={() => setPage(page + 1)} />
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Modals */}
+      {/* ── LAYOUT 3: OPERATIONAL TABLE ── */}
+      {layout === 'operational' && (
+        <div className="space-y-4">
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[250px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por empresa ou email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+                <SelectItem value="blocked">Bloqueado</SelectItem>
+                <SelectItem value="suspended">Suspenso</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Tipos</SelectItem>
+                <SelectItem value="individual">Individual</SelectItem>
+                <SelectItem value="whitelabel">WhiteLabel</SelectItem>
+                <SelectItem value="internal">Interno</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Table */}
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Empresa</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Plano</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Dispositivos</TableHead>
+                        <TableHead>Atendentes</TableHead>
+                        <TableHead>I.A.</TableHead>
+                        <TableHead>Vencimento</TableHead>
+                        <TableHead className="w-10"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((l: any) => (
+                        <TableRow key={l.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{l.tenants?.name || '—'}</p>
+                              <p className="text-xs text-muted-foreground">{l.tenants?.email || ''}</p>
+                              {l.parent?.tenants && l.license_type === 'individual' && (
+                                <p className="text-[10px] text-purple-400 mt-0.5 flex items-center gap-1 font-semibold">
+                                  └ {l.parent.tenants.name}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const tc = TYPE_CONFIG[l.license_type] || TYPE_CONFIG.individual;
+                              return <Badge className={`text-[10px] ${tc.className}`}>{tc.label}</Badge>;
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-[10px]">
+                              {l.plan === 'profissional' ? 'Profissional' : l.plan === 'solo_pro' ? 'Solo Pro' : l.plan}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`text-[10px] ${STATUS_BADGES[l.status] || ''}`}>
+                              {STATUS_LABELS[l.status] || l.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            R$ {Number(l.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-sm text-center">
+                            {(l.base_devices_web || 0) + (l.extra_devices_web || 0) + (l.base_devices_meta || 0) + (l.extra_devices_meta || 0)}
+                          </TableCell>
+                          <TableCell className="text-sm text-center">
+                            {(l.base_attendants || 0) + (l.extra_attendants || 0)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 flex-wrap">
+                              {l.has_ia_auditor && <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[9px]">Auditor</Badge>}
+                              {l.has_ia_copiloto && <Badge className="bg-blue-500/20 text-blue-400 border-none text-[9px]">Copiloto</Badge>}
+                              {l.has_ia_closer && <Badge className="bg-purple-500/20 text-purple-400 border-none text-[9px]">Closer</Badge>}
+                              {l.has_ai_module && <Badge className="bg-zinc-500/20 text-zinc-400 border-none text-[9px]">Legacy I.A.</Badge>}
+                              {!l.has_ia_auditor && !l.has_ia_copiloto && !l.has_ia_closer && !l.has_ai_module && (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
+                                  <Eye className="h-3.5 w-3.5 mr-2" /> Ver detalhes
+                                </DropdownMenuItem>
+                                {can(['nexus_superadmin', 'nexus_suporte_senior']) && (
+                                  <DropdownMenuItem onClick={() => { setEditLicense(l); setShowForm(true); }}>
+                                    <Edit className="h-3.5 w-3.5 mr-2" /> Editar
+                                  </DropdownMenuItem>
+                                )}
+                                {can(['nexus_superadmin', 'nexus_suporte_senior']) && (
+                                  <DropdownMenuItem className="text-purple-400">
+                                    <ExternalLink className="h-3.5 w-3.5 mr-2" /> Acessar como Admin
+                                  </DropdownMenuItem>
+                                )}
+                                {can(['nexus_superadmin']) && (
+                                  <DropdownMenuItem
+                                    className="text-red-400 focus:text-red-400"
+                                    onClick={() => setDeleteTarget(l)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {filtered.length === 0 && (
+                        <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhuma licença encontrada</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                    <span className="text-xs text-muted-foreground">Página {page + 1} de {totalPages || 1} ({total} registros)</span>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Shared Modals */}
       {showForm && (
         <LicenseFormModal open={showForm} onOpenChange={setShowForm} license={editLicense} onSaved={loadLicenses} />
       )}
@@ -352,6 +638,44 @@ export default function NexusLicenses() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function KpiCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
+  const colorMap: Record<string, string> = {
+    emerald: 'text-emerald-400 bg-emerald-500/10',
+    blue: 'text-blue-400 bg-blue-500/10',
+    purple: 'text-purple-400 bg-purple-500/10',
+    amber: 'text-amber-400 bg-amber-500/10',
+  };
+  return (
+    <Card className="bg-card/50 border-border/50">
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className={`p-2.5 rounded-lg ${colorMap[color] || ''}`}>
+          <Icon className={`h-5 w-5 ${colorMap[color]?.split(' ')[0] || ''}`} />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-lg font-bold text-foreground">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PaginationBar({ page, totalPages, total, onPrev, onNext }: { page: number; totalPages: number; total: number; onPrev: () => void; onNext: () => void }) {
+  return (
+    <div className="flex items-center justify-between px-1 py-2">
+      <span className="text-xs text-muted-foreground">Página {page + 1} de {totalPages || 1} ({total} registros)</span>
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={onPrev}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={onNext}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
