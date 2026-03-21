@@ -20,5 +20,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
-          supabase db push --yes
+          echo "Supabase CLI version:"
+          supabase --version
+
+          echo "Linking project..."
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --debug
+
+          echo "Pushing migrations..."
+          supabase db push --yes --debug
