@@ -86,7 +86,6 @@ interface WLRow {
     logo_url: string | null;
     primary_color: string;
     support_email: string | null;
-    billing_email: string | null;
     max_sub_licenses: number;
     can_create_licenses: boolean;
   } | null;
@@ -125,7 +124,7 @@ export default function NexusWhitelabels() {
         base_devices_meta, extra_devices_meta,
         has_ai_module,
         tenants(name, slug, email, cpf_cnpj),
-        whitelabel_config(display_name, logo_url, primary_color, support_email, billing_email, max_sub_licenses, can_create_licenses)
+        whitelabel_config(display_name, logo_url, primary_color, support_email, max_sub_licenses, can_create_licenses)
       `)
       .eq('license_type', 'whitelabel')
       .order('created_at', { ascending: false });
