@@ -89,10 +89,11 @@ import NexusTickets from "./pages/nexus/NexusTickets";
 import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
 import NexusCheckouts from "./pages/nexus/NexusCheckouts";
 import NexusWhitelabels from "./pages/nexus/NexusWhitelabels";
-// WhiteLabel Phase 3 Portal 
+// WhiteLabel Phase 3 Portal
 import WLLayout from "./pages/wl/WLLayout";
 import WLDashboard from "./pages/wl/WLDashboard";
 import WLClients from "./pages/wl/WLClients";
+import WLClientDetail from "./pages/wl/WLClientDetail";
 import WLLicenses from "./pages/wl/WLLicenses";
 import WLBranding from "./pages/wl/WLBranding";
 import WLAudit from "./pages/wl/WLAudit";
@@ -155,6 +156,7 @@ const AppRoutes = () => (
     <Route path="/wl/:slug" element={<AuthGuard><WLLayout /></AuthGuard>}>
       <Route index element={<WLDashboard />} />
       <Route path="clientes" element={<WLClients />} />
+      <Route path="clientes/:clientId" element={<WLClientDetail />} />
       <Route path="licencas" element={<WLLicenses />} />
       <Route path="branding" element={<WLBranding />} />
       <Route path="suporte" element={<WLAudit />} />

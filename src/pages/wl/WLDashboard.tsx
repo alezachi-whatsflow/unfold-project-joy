@@ -1,172 +1,149 @@
-import { useParams } from "react-router-dom";
-import { Download, Users, MessageCircle, DollarSign, Activity, Percent, ArrowUp, ArrowDown } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
+import { useOutletContext } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Users, DollarSign, Wifi, Cpu, TrendingUp } from "lucide-react";
+
+function fmt(n: number) {
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 export default function WLDashboard() {
-  const { slug } = useParams();
+  const { wlLicenseId } = useOutletContext<{ branding: any; wlLicenseId: string | null }>();
 
-  // Fake WL KPI Data
-  const wlKpis = {
-    mrr: 12500,
-    mrrGrowth: "+8.2%",
-    totalClients: 45,
-    totalMessages: 84520,
-    messagesGrowth: "+15%",
-  };
+  const { data: clients, isLoading } = useQuery({
+    queryKey: ['wl-dashboard-clients', wlLicenseId],
+    queryFn: async () => {
+      if (!wlLicenseId) return [];
+      const { data } = await supabase
+        .from('licenses')
+        .select(`
+          id, status, monthly_value, has_ai_module,
+          base_attendants, extra_attendants,
+          base_devices_web, extra_devices_web,
+          base_devices_meta, extra_devices_meta,
+          tenants(name)
+        `)
+        .eq('parent_license_id', wlLicenseId)
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!wlLicenseId,
+  });
 
-  const topClients = [
-    { id: 1, name: "RadAdvogados", msgs: 12450, engajamento: "Alto", mrr: 3074.00, trm: "45s" },
-    { id: 2, name: "Consultoria Global", msgs: 9800, engajamento: "Alto", mrr: 1540.00, trm: "1m 12s" },
-    { id: 3, name: "AutoEscola Pista", msgs: 4200, engajamento: "Médio", mrr: 890.00, trm: "4m 00s" },
-    { id: 4, name: "Imobiliária XYZ", msgs: 3100, engajamento: "Baixo", mrr: 259.00, trm: "8m 45s" },
-    { id: 5, name: "Doceria Sweet", msgs: 1500, engajamento: "Crítico", mrr: 259.00, trm: "14m 20s" },
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+      </div>
+    );
+  }
 
-  const handleExportCSV = () => {
-    toast.success("Gerando CSV com performance e MRR dos clientes...");
-  };
+  const active = (clients || []).filter((c: any) => c.status === 'active');
+  const mrr = (clients || []).reduce((a: number, c: any) => a + (c.monthly_value || 0), 0);
+  const totalDevices = (clients || []).reduce(
+    (a: number, c: any) =>
+      a + (c.base_devices_web || 0) + (c.extra_devices_web || 0) +
+        (c.base_devices_meta || 0) + (c.extra_devices_meta || 0),
+    0
+  );
+  const totalAttendants = (clients || []).reduce(
+    (a: number, c: any) => a + (c.base_attendants || 0) + (c.extra_attendants || 0),
+    0
+  );
+  const withAI = (clients || []).filter((c: any) => c.has_ai_module).length;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Analytics Consolidado</h1>
-          <p className="text-muted-foreground mt-1">
-            Visão gerencial da sua franquia / white-label.
-          </p>
-        </div>
-        <Button onClick={handleExportCSV} style={{ backgroundColor: 'var(--wl-primary)' }}>
-          <Download className="h-4 w-4 mr-2" /> Exportar Relatório CSV
-        </Button>
+    <div className="space-y-6 pb-8">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <p className="text-sm text-white/50 mt-1">Visão geral da sua operação</p>
       </div>
 
-      {/* ROW 1: KPIS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="hover:border-[var(--wl-primary)]/50 transition-colors" style={{ borderLeft: '4px solid var(--wl-primary)' }}>
-           <CardHeader className="flex flex-row items-center justify-between pb-2">
-             <CardTitle className="text-sm font-medium text-muted-foreground">MRR Total da Franqueada</CardTitle>
-             <DollarSign className="h-4 w-4 text-[var(--wl-primary)]" />
-           </CardHeader>
-           <CardContent>
-             <div className="text-3xl font-bold">R$ {(wlKpis.mrr).toLocaleString('pt-BR')}</div>
-             <p className="text-xs text-muted-foreground mt-1 font-bold flex items-center gap-1 text-[var(--wl-primary)]">
-                <ArrowUp className="h-3 w-3" /> {wlKpis.mrrGrowth}
-             </p>
-           </CardContent>
-        </Card>
-
-        <Card className="hover:border-[var(--wl-accent)]/50 transition-colors">
-           <CardHeader className="flex flex-row items-center justify-between pb-2">
-             <CardTitle className="text-sm font-medium text-muted-foreground">Clientes Ativos</CardTitle>
-             <Users className="h-4 w-4 text-[var(--wl-accent)]" />
-           </CardHeader>
-           <CardContent>
-             <div className="text-3xl font-bold">{wlKpis.totalClients}</div>
-             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                Taxa de Churn: 1.2%
-             </p>
-           </CardContent>
-        </Card>
-
-        <Card className="hover:border-amber-500/50 transition-colors">
-           <CardHeader className="flex flex-row items-center justify-between pb-2">
-             <CardTitle className="text-sm font-medium text-muted-foreground">Volume de Interações (Mês)</CardTitle>
-             <MessageCircle className="h-4 w-4 text-amber-500" />
-           </CardHeader>
-           <CardContent>
-             <div className="text-3xl font-bold">{(wlKpis.totalMessages).toLocaleString('pt-BR')}</div>
-             <p className="text-xs text-amber-500 mt-1 font-bold flex items-center gap-1 text-amber-500">
-                <ArrowUp className="h-3 w-3" /> {wlKpis.messagesGrowth}
-             </p>
-           </CardContent>
-        </Card>
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard icon={DollarSign} label="MRR Total" value={`R$ ${fmt(mrr)}`} color="#11BC76" />
+        <KpiCard icon={Users} label="Clientes Ativos" value={String(active.length)} sub={`${(clients || []).length} total`} color="var(--wl-primary)" />
+        <KpiCard icon={Wifi} label="Dispositivos" value={String(totalDevices)} sub="contratados" color="#6366F1" />
+        <KpiCard icon={Cpu} label="Atendentes / I.A." value={String(totalAttendants)} sub={`${withAI} com I.A.`} color="#F59E0B" />
       </div>
 
-      {/* ROW 2: CHARTS */}
-      <div className="grid lg:grid-cols-3 gap-6">
-         <Card className="lg:col-span-2 flex flex-col min-h-[300px]">
-             <CardHeader className="pb-2">
-                <CardTitle className="text-base text-muted-foreground uppercase tracking-widest font-medium">Crescimento MRR (Últimos 12 Meses)</CardTitle>
-             </CardHeader>
-             <CardContent className="flex-1 flex items-end justify-between px-4 pt-8 pb-4 relative gap-2 mt-4">
-                 {[...Array(12)].map((_, i) => {
-                    // simulate growing
-                    const h = 30 + (i * 5) + Math.random() * 15;
+      {/* Client table */}
+      <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm text-white/60 uppercase tracking-widest font-medium flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Clientes Recentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {(clients || []).length === 0 ? (
+            <div className="py-12 text-center text-white/30 text-sm">
+              Nenhum cliente cadastrado ainda.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-white/40 text-xs uppercase">
+                    <th className="text-left px-6 py-3 font-medium">Cliente</th>
+                    <th className="text-left px-6 py-3 font-medium">Status</th>
+                    <th className="text-right px-6 py-3 font-medium">Atend.</th>
+                    <th className="text-right px-6 py-3 font-medium">Disp.</th>
+                    <th className="text-right px-6 py-3 font-medium">MRR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(clients || []).map((c: any) => {
+                    const t = Array.isArray(c.tenants) ? c.tenants[0] : c.tenants;
+                    const devices = (c.base_devices_web || 0) + (c.extra_devices_web || 0) +
+                      (c.base_devices_meta || 0) + (c.extra_devices_meta || 0);
+                    const attendants = (c.base_attendants || 0) + (c.extra_attendants || 0);
                     return (
-                      <div key={i} className="flex-1 rounded-t-sm flex flex-col justify-end group cursor-pointer h-full border-b" style={{ borderBottomColor: "var(--wl-primary)" }}>
-                         <div className="w-full opacity-60 group-hover:opacity-100 transition-all rounded-t-lg relative flex flex-col items-center justify-end" style={{ height: `${h}%`, backgroundColor: "var(--wl-primary)" }}>
-                           <span className="opacity-0 group-hover:opacity-100 absolute -top-6 text-[10px] font-bold">R$ {Math.round(h * 200)}</span>
-                         </div>
-                      </div>
-                    )
-                 })}
-             </CardContent>
-         </Card>
-
-         <Card className="flex flex-col">
-            <CardHeader className="border-b pb-4 mb-4">
-               <CardTitle className="text-base text-muted-foreground uppercase tracking-widest font-medium flex items-center gap-2"><Percent className="h-4 w-4" /> Adoção de Módulos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 flex-1">
-               <div className="space-y-1">
-                  <div className="flex justify-between text-sm"><span>Dispositivos Web</span> <span className="font-bold">100%</span></div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden"><div className="h-full w-full" style={{ backgroundColor: 'var(--wl-primary)' }} /></div>
-               </div>
-               <div className="space-y-1">
-                  <div className="flex justify-between text-sm"><span>Meta API</span> <span className="font-bold opacity-80">35%</span></div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden"><div className="h-full w-[35%] opacity-80" style={{ backgroundColor: 'var(--wl-primary)' }} /></div>
-               </div>
-               <div className="space-y-1">
-                  <div className="flex justify-between text-sm"><span>WhatsApp I.A.</span> <span className="font-bold opacity-60">12%</span></div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden"><div className="h-full w-[12%] opacity-60" style={{ backgroundColor: 'var(--wl-primary)' }} /></div>
-               </div>
-               <div className="space-y-1 items-end mt-auto pt-4 flex gap-2">
-                  <Activity className="h-4 w-4 text-muted-foreground" /> <span className="text-xs text-muted-foreground">Upsell Oportunidade: <strong className="text-foreground">Meta API (+65%)</strong></span>
-               </div>
-            </CardContent>
-         </Card>
-      </div>
-
-      {/* ROW 3: TOP CLIENTS TABLE */}
-      <Card>
-         <CardHeader>
-           <CardTitle className="text-base uppercase tracking-widest text-muted-foreground font-medium">Top 5 Clientes (Engajamento)</CardTitle>
-           <CardDescription>Critério principal: Volume de mensagens trafegadas e T.R.M.</CardDescription>
-         </CardHeader>
-         <div className="overflow-x-auto">
-            <Table>
-               <TableHeader className="bg-secondary/30">
-                  <TableRow>
-                     <TableHead className="font-medium">Cliente Final</TableHead>
-                     <TableHead className="font-medium">Saúde Operacional</TableHead>
-                     <TableHead className="font-medium text-right">Volume (Msgs)</TableHead>
-                     <TableHead className="font-medium text-right">Tempo Med. Resposta</TableHead>
-                     <TableHead className="font-medium text-right">Plano MRR</TableHead>
-                  </TableRow>
-               </TableHeader>
-               <TableBody>
-                  {topClients.map(client => (
-                     <TableRow key={client.id} className="hover:bg-white/5 transition-colors border-white/5">
-                        <TableCell className="font-bold text-white">{client.name}</TableCell>
-                        <TableCell>
-                           <span className={`inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold tracking-wider uppercase border ${client.engajamento === 'Alto' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : client.engajamento === 'Médio' ? 'border-amber-500/30 text-amber-400 bg-amber-500/10' : 'border-rose-500/30 text-rose-400 bg-rose-500/10'}`}>
-                             {client.engajamento}
-                           </span>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">{client.msgs.toLocaleString('pt-BR')}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{client.trm}</TableCell>
-                        <TableCell className="text-right font-mono" style={{ color: "var(--wl-primary)" }}>R$ {client.mrr.toFixed(2)}</TableCell>
-                     </TableRow>
-                  ))}
-               </TableBody>
-            </Table>
-         </div>
+                      <tr key={c.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="px-6 py-3 font-medium text-white">{t?.name || '—'}</td>
+                        <td className="px-6 py-3">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            c.status === 'active'
+                              ? 'bg-emerald-500/15 text-emerald-400'
+                              : 'bg-white/10 text-white/40'
+                          }`}>
+                            {c.status === 'active' ? 'Ativo' : c.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-right text-white/70">{attendants}</td>
+                        <td className="px-6 py-3 text-right text-white/70">{devices}</td>
+                        <td className="px-6 py-3 text-right font-semibold" style={{ color: 'var(--wl-primary)' }}>
+                          R$ {fmt(c.monthly_value || 0)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
       </Card>
-
     </div>
+  );
+}
+
+function KpiCard({ icon: Icon, label, value, sub, color }: {
+  icon: any; label: string; value: string; sub?: string; color: string;
+}) {
+  return (
+    <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <CardContent className="pt-4 pb-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-white/40 mb-1">{label}</p>
+            <p className="text-xl font-bold text-white">{value}</p>
+            {sub && <p className="text-xs text-white/30 mt-0.5">{sub}</p>}
+          </div>
+          <Icon className="h-5 w-5 mt-0.5" style={{ color }} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
