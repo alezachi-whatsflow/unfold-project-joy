@@ -241,26 +241,42 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       tenantId = newTenant.id;
     }
 
-    const splitPayload = split.enabled && split.recipients.some(r => r.walletId)
-      ? split : null;
-
+    // Build payload with only known core columns
     const payload: any = {
-      ...form,
       tenant_id: tenantId,
-      monthly_value: mrrPreview.total,
+      license_type: form.license_type,
       parent_license_id: form.parent_license_id === 'none' ? null : form.parent_license_id,
+      plan: form.plan,
+      status: form.status,
+      monthly_value: mrrPreview.total,
+      starts_at: form.starts_at || null,
       expires_at: form.expires_at || null,
-      cancelled_at: form.cancelled_at || null,
-      blocked_at: form.blocked_at || null,
-      unblocked_at: form.unblocked_at || null,
-      checkout_url: form.checkout_url || null,
-      split_config: splitPayload,
+      base_attendants: form.base_attendants,
+      extra_attendants: form.extra_attendants,
+      base_devices_web: form.base_devices_web,
+      extra_devices_web: form.extra_devices_web,
+      base_devices_meta: form.base_devices_meta,
+      extra_devices_meta: form.extra_devices_meta,
+      monthly_messages_limit: form.monthly_messages_limit,
+      storage_limit_gb: form.storage_limit_gb,
+      has_ai_module: form.has_ai_module,
+      ai_agents_limit: form.ai_agents_limit,
+      facilite_plan: form.facilite_plan,
+      has_implantacao_starter: form.has_implantacao_starter,
+      billing_cycle: form.billing_cycle,
+      internal_notes: form.internal_notes || null,
     };
-    // Remove empty/null optional columns that may not exist in DB yet
-    const optionalCols = ['cancelled_at', 'blocked_at', 'unblocked_at', 'checkout_url', 'payment_type', 'payment_condition', 'has_ia_auditor', 'has_ia_copiloto', 'has_ia_closer', 'split_config'];
-    for (const col of optionalCols) {
-      if (payload[col] === null || payload[col] === '' || payload[col] === false) delete payload[col];
-    }
+    // Add optional columns only if they have values (columns may not exist in DB yet)
+    if (form.cancelled_at) payload.cancelled_at = form.cancelled_at;
+    if (form.blocked_at) payload.blocked_at = form.blocked_at;
+    if (form.unblocked_at) payload.unblocked_at = form.unblocked_at;
+    if (form.checkout_url) payload.checkout_url = form.checkout_url;
+    if (form.payment_type) payload.payment_type = form.payment_type;
+    if (form.payment_condition) payload.payment_condition = form.payment_condition;
+    if (form.has_ia_auditor) payload.has_ia_auditor = true;
+    if (form.has_ia_copiloto) payload.has_ia_copiloto = true;
+    if (form.has_ia_closer) payload.has_ia_closer = true;
+    if (split.enabled && split.recipients.some(r => r.walletId)) payload.split_config = split;
 
     const saveTenantId = isEdit ? license.tenant_id : tenantId;
     if (saveTenantId && (tenantFields.cpf_cnpj || tenantFields.phone)) {
