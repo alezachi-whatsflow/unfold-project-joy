@@ -9,5 +9,5 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+RUN apk add --no-cache dos2unix && dos2unix /start.sh && chmod +x /start.sh
 CMD ["/start.sh"]

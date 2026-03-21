@@ -1,0 +1,5 @@
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+nginx.conf text eol=lf
+start.sh text eol=lf
