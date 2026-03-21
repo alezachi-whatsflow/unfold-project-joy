@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useNexus, NEXUS_ROLE_LABELS, type NexusRole } from '@/contexts/NexusContext';
 import {
-  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart, Globe,
+  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart, Globe, DatabaseZap,
 } from 'lucide-react';
 import {
   IconDashboard, IconDocuments, IconFinance, IconClients, IconReports,
@@ -26,12 +26,13 @@ const ALL_NAV_ITEMS = [
   { id: 'auditoria',      label: 'Auditoria',      icon: IconReports,   path: '/nexus/auditoria' },
   { id: 'flags',          label: 'Feature Flags',  icon: IconSettings,  path: '/nexus/flags' },
   { id: 'tickets',        label: 'Tickets',        icon: IconMessages,  path: '/nexus/tickets' },
+  { id: 'lifecycle',      label: 'Lifecycle de Dados', icon: DatabaseZap, path: '/nexus/lifecycle' },
   { id: 'configuracoes',  label: 'Configurações',  icon: IconSettings,  path: '/nexus/configuracoes' },
 ];
 
 const NAV_BY_ROLE: Record<NexusRole, string[]> = {
-  nexus_superadmin:    ['dashboard', 'licencas', 'whitelabels', 'checkouts', 'financeiro', 'equipe', 'auditoria', 'flags', 'tickets', 'configuracoes'],
-  nexus_dev_senior:    ['dashboard', 'licencas', 'whitelabels', 'auditoria', 'flags', 'tickets'],
+  nexus_superadmin:    ['dashboard', 'licencas', 'whitelabels', 'checkouts', 'financeiro', 'equipe', 'auditoria', 'lifecycle', 'flags', 'tickets', 'configuracoes'],
+  nexus_dev_senior:    ['dashboard', 'licencas', 'whitelabels', 'lifecycle', 'auditoria', 'flags', 'tickets'],
   nexus_suporte_senior:['dashboard', 'licencas', 'whitelabels', 'tickets', 'auditoria'],
   nexus_financeiro:    ['dashboard', 'financeiro', 'licencas', 'checkouts'],
   nexus_suporte_junior:['dashboard', 'licencas', 'tickets'],

@@ -89,6 +89,7 @@ import NexusTickets from "./pages/nexus/NexusTickets";
 import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
 import NexusCheckouts from "./pages/nexus/NexusCheckouts";
 import NexusWhitelabels from "./pages/nexus/NexusWhitelabels";
+import NexusLifecycle from "./pages/nexus/NexusLifecycle";
 // WhiteLabel Phase 3 Portal
 import WLLayout from "./pages/wl/WLLayout";
 import WLDashboard from "./pages/wl/WLDashboard";
@@ -143,6 +144,7 @@ const AppRoutes = () => (
       <Route path="licencas" element={<NexusLicenses />} />
       <Route path="licencas/:id" element={<NexusLicenseDetail />} />
       <Route path="whitelabels" element={<NexusWhitelabels />} />
+      <Route path="lifecycle" element={<NexusLifecycle />} />
       <Route path="checkouts" element={<NexusCheckouts />} />
       <Route path="financeiro" element={<NexusFinanceiro />} />
       <Route path="equipe" element={<NexusEquipe />} />
