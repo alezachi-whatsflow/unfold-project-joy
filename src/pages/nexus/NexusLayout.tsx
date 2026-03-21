@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useNexus, NEXUS_ROLE_LABELS, type NexusRole } from '@/contexts/NexusContext';
 import {
-  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart,
+  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart, Globe,
 } from 'lucide-react';
 import {
   IconDashboard, IconDocuments, IconFinance, IconClients, IconReports,
@@ -17,24 +17,25 @@ import { useQuery } from '@tanstack/react-query';
 import whatsflowLogo from '@/assets/whatsflow-logo.png';
 
 const ALL_NAV_ITEMS = [
-  { id: 'dashboard',    label: 'Dashboard',     icon: IconDashboard, path: '/nexus',            end: true },
-  { id: 'licencas',     label: 'Licenças',       icon: IconDocuments, path: '/nexus/licencas' },
-  { id: 'checkouts',   label: 'Checkouts',      icon: ShoppingCart,  path: '/nexus/checkouts' },
-  { id: 'financeiro',  label: 'Financeiro',     icon: IconFinance,   path: '/nexus/financeiro' },
-  { id: 'equipe',      label: 'Equipe',         icon: IconClients,   path: '/nexus/equipe' },
-  { id: 'auditoria',   label: 'Auditoria',      icon: IconReports,   path: '/nexus/auditoria' },
-  { id: 'flags',       label: 'Feature Flags',  icon: IconSettings,  path: '/nexus/flags' },
-  { id: 'tickets',     label: 'Tickets',        icon: IconMessages,  path: '/nexus/tickets' },
-  { id: 'configuracoes', label: 'Configurações', icon: IconSettings,  path: '/nexus/configuracoes' },
+  { id: 'dashboard',      label: 'Dashboard',     icon: IconDashboard, path: '/nexus',                  end: true },
+  { id: 'licencas',       label: 'Licenças',       icon: IconDocuments, path: '/nexus/licencas' },
+  { id: 'whitelabels',    label: 'WhiteLabels',    icon: Globe,         path: '/nexus/whitelabels' },
+  { id: 'checkouts',      label: 'Checkouts',      icon: ShoppingCart,  path: '/nexus/checkouts' },
+  { id: 'financeiro',     label: 'Financeiro',     icon: IconFinance,   path: '/nexus/financeiro' },
+  { id: 'equipe',         label: 'Equipe',         icon: IconClients,   path: '/nexus/equipe' },
+  { id: 'auditoria',      label: 'Auditoria',      icon: IconReports,   path: '/nexus/auditoria' },
+  { id: 'flags',          label: 'Feature Flags',  icon: IconSettings,  path: '/nexus/flags' },
+  { id: 'tickets',        label: 'Tickets',        icon: IconMessages,  path: '/nexus/tickets' },
+  { id: 'configuracoes',  label: 'Configurações',  icon: IconSettings,  path: '/nexus/configuracoes' },
 ];
 
 const NAV_BY_ROLE: Record<NexusRole, string[]> = {
-  nexus_superadmin:    ['dashboard', 'licencas', 'checkouts', 'financeiro', 'equipe', 'auditoria', 'flags', 'tickets', 'configuracoes'],
-  nexus_dev_senior:    ['dashboard', 'licencas', 'auditoria', 'flags', 'tickets'],
-  nexus_suporte_senior:['dashboard', 'licencas', 'tickets', 'auditoria'],
+  nexus_superadmin:    ['dashboard', 'licencas', 'whitelabels', 'checkouts', 'financeiro', 'equipe', 'auditoria', 'flags', 'tickets', 'configuracoes'],
+  nexus_dev_senior:    ['dashboard', 'licencas', 'whitelabels', 'auditoria', 'flags', 'tickets'],
+  nexus_suporte_senior:['dashboard', 'licencas', 'whitelabels', 'tickets', 'auditoria'],
   nexus_financeiro:    ['dashboard', 'financeiro', 'licencas', 'checkouts'],
   nexus_suporte_junior:['dashboard', 'licencas', 'tickets'],
-  nexus_customer_success: ['dashboard', 'licencas', 'tickets'],
+  nexus_customer_success: ['dashboard', 'licencas', 'whitelabels', 'tickets'],
 };
 
 export default function NexusLayout() {
