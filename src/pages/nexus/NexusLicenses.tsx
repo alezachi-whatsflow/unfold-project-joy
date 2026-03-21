@@ -81,6 +81,7 @@ export default function NexusLicenses() {
   const [allLicenses, setAllLicenses] = useState<any[]>([]); // for analytics (no pagination)
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(0);
@@ -95,11 +96,17 @@ export default function NexusLicenses() {
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [colFilters, setColFilters] = useState<Record<string, Set<string>>>({});
 
+  // Debounce search: wait 400ms after user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(0); }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
   useEffect(() => {
     loadLicenses();
     setSelectedIds(new Set());
     setColFilters({});
-  }, [page, pageSize, statusFilter, typeFilter]);
+  }, [page, pageSize, statusFilter, typeFilter, debouncedSearch]);
 
   useEffect(() => {
     loadAllLicenses();
@@ -129,6 +136,10 @@ export default function NexusLicenses() {
     if (typeFilter !== 'all') {
       query = query.eq('license_type', typeFilter);
     }
+    if (debouncedSearch.trim()) {
+      const q = `%${debouncedSearch.trim()}%`;
+      query = query.or(`name.ilike.${q},email.ilike.${q}`, { referencedTable: 'tenants' });
+    }
 
     const from = page * pageSize;
     const to = from + pageSize - 1;
@@ -149,20 +160,12 @@ export default function NexusLicenses() {
 
   const filtered = useMemo(() => {
     let result = licenses;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((l: any) => {
-        const tenantName = l.tenants?.name?.toLowerCase() || '';
-        const tenantEmail = l.tenants?.email?.toLowerCase() || '';
-        return tenantName.includes(q) || tenantEmail.includes(q);
-      });
-    }
     for (const [col, values] of Object.entries(colFilters)) {
       if (!values || values.size === 0) continue;
       result = result.filter((l: any) => values.has(getColValue(l, col)));
     }
     return result;
-  }, [licenses, search, colFilters]);
+  }, [licenses, colFilters]);
 
   const activeColFilters = Object.values(colFilters).filter(s => s.size > 0).length;
 
