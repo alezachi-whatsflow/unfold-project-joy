@@ -170,7 +170,12 @@ export default function NexusLicenses() {
   const activeColFilters = Object.values(colFilters).filter(s => s.size > 0).length;
 
   function colUniqueValues(col: string): string[] {
-    return [...new Set(licenses.map((l: any) => getColValue(l, col)))].sort();
+    // Use fixed values for known enums so all options show regardless of current page
+    if (col === 'status') return ['Ativo', 'Inativo', 'Bloqueado', 'Suspenso', 'Trial'];
+    // For other columns, derive from current page + allLicenses (analytics dataset)
+    const fromAll = allLicenses.map((l: any) => getColValue(l, col));
+    const fromPage = licenses.map((l: any) => getColValue(l, col));
+    return [...new Set([...fromAll, ...fromPage])].filter(Boolean).sort();
   }
 
   function setColFilter(col: string, values: Set<string>) {
