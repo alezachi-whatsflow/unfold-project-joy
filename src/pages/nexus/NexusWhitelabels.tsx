@@ -10,13 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Plus, Loader2, ExternalLink, MoreHorizontal, Search, Globe, Users,
   Building2, DollarSign, TrendingUp, Cpu, Wifi, MessageSquare, Trash2,
-  ImagePlus, X,
+  ImagePlus, X, Pencil, RefreshCw,
 } from 'lucide-react';
 
 // CNPJ mask: 00.000.000/0001-00
@@ -95,10 +95,13 @@ interface WLRow {
   created_at: string;
   tenants: { name: string; slug: string; email: string; cpf_cnpj: string | null } | null;
   whitelabel_config: {
+    id?: string;
     display_name: string;
     logo_url: string | null;
     primary_color: string;
     support_email: string | null;
+    support_whatsapp: string | null;
+    slug: string | null;
     max_sub_licenses: number;
     can_create_licenses: boolean;
   } | null;
@@ -122,6 +125,9 @@ export default function NexusWhitelabels() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [editTarget, setEditTarget] = useState<WLRow | null>(null);
+  const [resetTarget, setResetTarget] = useState<WLRow | null>(null);
+  const [resetSending, setResetSending] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<WLRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -139,7 +145,7 @@ export default function NexusWhitelabels() {
         base_devices_meta, extra_devices_meta,
         has_ai_module,
         tenants(name, slug, email, cpf_cnpj),
-        whitelabel_config(display_name, logo_url, primary_color, support_email, max_sub_licenses, can_create_licenses)
+        whitelabel_config(id, display_name, logo_url, primary_color, support_email, support_whatsapp, slug, max_sub_licenses, can_create_licenses)
       `)
       .eq('license_type', 'whitelabel')
       .order('created_at', { ascending: false });
@@ -190,6 +196,36 @@ export default function NexusWhitelabels() {
     }));
 
     setLoading(false);
+  }
+
+  async function handleResetPassword() {
+    if (!resetTarget) return;
+    const email = resetTarget.tenants?.email;
+    if (!email) {
+      toast({ title: 'E-mail principal não encontrado', variant: 'destructive' });
+      setResetTarget(null);
+      return;
+    }
+    setResetSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email,
+          full_name: resetTarget.tenants?.name || '',
+          role: 'wl_admin',
+          tenant_id: resetTarget.tenant_id,
+          license_id: resetTarget.id,
+          redirect_to: `/wl/${resetTarget.whitelabel_slug}`,
+        },
+      });
+      if (error) throw new Error(error.message);
+      toast({ title: 'E-mail de acesso enviado!', description: `Instruções enviadas para ${email}.` });
+    } catch (err: any) {
+      toast({ title: 'Erro ao enviar e-mail', description: err.message, variant: 'destructive' });
+    } finally {
+      setResetSending(false);
+      setResetTarget(null);
+    }
   }
 
   async function handleDeleteWL() {
@@ -401,6 +437,10 @@ export default function NexusWhitelabels() {
                           <DropdownMenuItem onClick={() => navigate(`/nexus/licencas/${row.id}`)}>
                             Ver detalhes
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditTarget(row)}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
+                            Editar cadastro
+                          </DropdownMenuItem>
                           {row.whitelabel_slug && (
                             <DropdownMenuItem
                               onClick={() => {
@@ -414,14 +454,21 @@ export default function NexusWhitelabels() {
                               Acessar portal WL
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem onClick={() => setResetTarget(row)}>
+                            <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                            Reenviar acesso / Reset senha
+                          </DropdownMenuItem>
                           {nexusUser?.role === 'nexus_superadmin' && (
-                            <DropdownMenuItem
-                              className="text-red-400 focus:text-red-400"
-                              onClick={() => setDeleteTarget(row)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-2" />
-                              Excluir WhiteLabel
-                            </DropdownMenuItem>
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-400 focus:text-red-400"
+                                onClick={() => setDeleteTarget(row)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                Excluir WhiteLabel
+                              </DropdownMenuItem>
+                            </>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -497,6 +544,35 @@ export default function NexusWhitelabels() {
         nexusUser={nexusUser}
         onSaved={() => { load(); setShowModal(false); }}
       />
+
+      {editTarget && (
+        <EditWhitelabelModal
+          row={editTarget}
+          nexusUser={nexusUser}
+          onOpenChange={(open) => { if (!open) setEditTarget(null); }}
+          onSaved={() => { load(); setEditTarget(null); }}
+        />
+      )}
+
+      {/* Reset password confirmation */}
+      <AlertDialog open={!!resetTarget} onOpenChange={(open) => { if (!open) setResetTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reenviar acesso ao painel WL?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Será enviado um e-mail de acesso para <strong>{resetTarget?.tenants?.email}</strong>.<br />
+              Se o usuário já existe, receberá um link para redefinir a senha.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetSending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword} disabled={resetSending}>
+              {resetSending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Enviar e-mail
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
@@ -926,6 +1002,284 @@ function CreateWhitelabelModal({
           <Button onClick={handleSave} disabled={saving} className="gap-2">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             Criar WhiteLabel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
+function EditWhitelabelModal({
+  row, nexusUser, onOpenChange, onSaved,
+}: {
+  row: WLRow;
+  nexusUser: any;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(row.whitelabel_config?.logo_url || null);
+
+  const [form, setForm] = useState({
+    company_name: row.tenants?.name || '',
+    company_email: row.tenants?.email || '',
+    company_cnpj: row.tenants?.cpf_cnpj || '',
+    display_name: row.whitelabel_config?.display_name || '',
+    primary_color: row.whitelabel_config?.primary_color || '#11BC76',
+    support_email: row.whitelabel_config?.support_email || '',
+    support_whatsapp: row.whitelabel_config?.support_whatsapp || '',
+    max_sub_licenses: row.whitelabel_config?.max_sub_licenses ?? 50,
+    extra_attendants: row.extra_attendants,
+    extra_web: row.extra_devices_web,
+    extra_meta: row.extra_devices_meta,
+    has_ai: row.has_ai_module,
+  });
+
+  const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+  const monthly_value = useMemo(() => calcWLPrice(form), [form]);
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Selecione uma imagem válida', variant: 'destructive' });
+      return;
+    }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+
+  async function handleSave() {
+    if (!form.company_name.trim()) { toast({ title: 'Informe o nome da empresa', variant: 'destructive' }); return; }
+    if (!form.display_name.trim()) { toast({ title: 'Informe o nome do WhiteLabel', variant: 'destructive' }); return; }
+
+    setSaving(true);
+    try {
+      // 1. Update tenant
+      if (row.tenant_id) {
+        const { error: tErr } = await supabase.from('tenants').update({
+          name: form.company_name,
+          email: form.company_email || null,
+          cpf_cnpj: form.company_cnpj || null,
+        }).eq('id', row.tenant_id);
+        if (tErr) throw new Error(`Erro ao atualizar empresa: ${tErr.message}`);
+      }
+
+      // 2. Update license
+      const { error: lErr } = await supabase.from('licenses').update({
+        extra_attendants: form.extra_attendants,
+        extra_devices_web: form.extra_web,
+        extra_devices_meta: form.extra_meta,
+        has_ai_module: form.has_ai,
+        monthly_value,
+      }).eq('id', row.id);
+      if (lErr) throw new Error(`Erro ao atualizar licença: ${lErr.message}`);
+
+      // 3. Upload new logo if provided
+      let logo_url = row.whitelabel_config?.logo_url || null;
+      if (logoFile) {
+        const ext = logoFile.name.split('.').pop() || 'png';
+        const path = `wl-logos/${row.id}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('whatsapp-media')
+          .upload(path, logoFile, { upsert: true, contentType: logoFile.type });
+        if (!upErr) {
+          const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(path);
+          logo_url = urlData?.publicUrl || logo_url;
+        }
+      }
+
+      // 4. Update whitelabel_config
+      const { error: cErr } = await supabase.from('whitelabel_config').update({
+        display_name: form.display_name,
+        primary_color: form.primary_color,
+        support_email: form.support_email || null,
+        support_whatsapp: form.support_whatsapp || null,
+        max_sub_licenses: form.max_sub_licenses,
+        logo_url,
+      }).eq('license_id', row.id);
+      if (cErr) throw new Error(`Erro ao atualizar configuração: ${cErr.message}`);
+
+      // 5. Audit
+      await supabase.from('nexus_audit_logs').insert({
+        actor_id: nexusUser?.id,
+        actor_role: nexusUser?.role || '',
+        action: 'whitelabel_update',
+        license_id: row.id,
+      });
+
+      toast({ title: `WhiteLabel "${form.display_name}" atualizado!` });
+      onSaved();
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="h-5 w-5 text-blue-400" />
+            Editar WhiteLabel
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Empresa */}
+          <Section title="Dados da Empresa">
+            <Field label="Nome da empresa *">
+              <Input placeholder="Ex: Acme Soluções Ltda" value={form.company_name} onChange={(e) => set('company_name', e.target.value)} />
+            </Field>
+            <Field label="E-mail Principal">
+              <Input type="email" placeholder="contato@empresa.com" value={form.company_email} onChange={(e) => set('company_email', e.target.value)} />
+              <p className="text-xs text-muted-foreground">Alterar o e-mail aqui não reenvia o convite automaticamente.</p>
+            </Field>
+            <Field label="CNPJ">
+              <Input
+                placeholder="00.000.000/0001-00"
+                value={form.company_cnpj}
+                onChange={(e) => set('company_cnpj', maskCNPJ(e.target.value))}
+                maxLength={18}
+              />
+            </Field>
+          </Section>
+
+          {/* Identidade */}
+          <Section title="Identidade WhiteLabel">
+            <Field label="Nome do WhiteLabel *">
+              <Input placeholder="Ex: AcmeChat" value={form.display_name} onChange={(e) => set('display_name', e.target.value)} />
+            </Field>
+            <Field label="Slug (URL)">
+              <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2 text-sm text-muted-foreground">
+                <span>/wl/</span><span className="font-mono font-medium text-foreground">{row.whitelabel_slug}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">O slug não pode ser alterado após a criação.</p>
+            </Field>
+            <Field label="Cor primária">
+              <div className="flex items-center gap-2">
+                <input
+                  type="color" value={form.primary_color}
+                  onChange={(e) => set('primary_color', e.target.value)}
+                  className="h-9 w-14 rounded border border-border cursor-pointer bg-transparent"
+                />
+                <Input value={form.primary_color} onChange={(e) => set('primary_color', e.target.value)} className="font-mono text-sm" maxLength={7} />
+              </div>
+            </Field>
+            <Field label="Logo da Marca (300×300 px)">
+              {logoPreview ? (
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img src={logoPreview} alt="Logo" className="h-20 w-20 rounded-lg object-cover border border-border" />
+                    <button type="button" onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                      className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-0.5 text-white">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <label className="mt-1 flex items-center gap-1 text-xs text-primary cursor-pointer hover:underline">
+                    <ImagePlus className="h-3 w-3" /> Trocar imagem
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                  </label>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg p-6 cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors">
+                  <ImagePlus className="h-7 w-7 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Clique para selecionar a imagem</span>
+                  <span className="text-xs text-muted-foreground">Proporção quadrada · recomendado 300×300 px</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                </label>
+              )}
+            </Field>
+          </Section>
+
+          {/* Suporte */}
+          <Section title="Suporte">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="E-mail de suporte">
+                <Input type="email" placeholder="suporte@parceiro.com" value={form.support_email} onChange={(e) => set('support_email', e.target.value)} />
+              </Field>
+              <Field label="WhatsApp de suporte">
+                <Input placeholder="5511999999999" value={form.support_whatsapp} onChange={(e) => set('support_whatsapp', e.target.value)} />
+              </Field>
+            </div>
+          </Section>
+
+          {/* Pricing */}
+          <Section title="Recursos Contratados">
+            <div className="rounded-lg border border-border overflow-hidden text-xs">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left px-3 py-2 text-muted-foreground font-medium">Item</th>
+                    <th className="text-center px-3 py-2 text-muted-foreground font-medium">Incluso</th>
+                    <th className="text-center px-3 py-2 text-muted-foreground font-medium">Qtd.</th>
+                    <th className="text-right px-3 py-2 text-muted-foreground font-medium">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">Atendentes</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">3</td>
+                    <td className="px-3 py-2 text-center">
+                      <Input type="number" min={3} value={3 + form.extra_attendants}
+                        onChange={(e) => set('extra_attendants', Math.max(0, Number(e.target.value) - 3))}
+                        className="h-7 w-16 text-xs text-center mx-auto" />
+                    </td>
+                    <td className="px-3 py-2 text-right">{form.extra_attendants > 0 ? `R$ ${fmt(form.extra_attendants * WL_PRICE.extra_attendant)}` : '—'}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">API Web WhatsApp</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">1</td>
+                    <td className="px-3 py-2 text-center">
+                      <Input type="number" min={1} value={1 + form.extra_web}
+                        onChange={(e) => set('extra_web', Math.max(0, Number(e.target.value) - 1))}
+                        className="h-7 w-16 text-xs text-center mx-auto" />
+                    </td>
+                    <td className="px-3 py-2 text-right">{form.extra_web > 0 ? `R$ ${fmt(form.extra_web * WL_PRICE.extra_web)}` : '—'}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">API Business Meta</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">1</td>
+                    <td className="px-3 py-2 text-center">
+                      <Input type="number" min={1} value={1 + form.extra_meta}
+                        onChange={(e) => set('extra_meta', Math.max(0, Number(e.target.value) - 1))}
+                        className="h-7 w-16 text-xs text-center mx-auto" />
+                    </td>
+                    <td className="px-3 py-2 text-right">{form.extra_meta > 0 ? `R$ ${fmt(form.extra_meta * WL_PRICE.extra_meta)}` : '—'}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-foreground">Módulo I.A.</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">—</td>
+                    <td className="px-3 py-2 text-center"><Switch checked={form.has_ai} onCheckedChange={(v) => set('has_ai', v)} /></td>
+                    <td className="px-3 py-2 text-right">{form.has_ai ? `R$ ${fmt(WL_PRICE.ai)}` : '—'}</td>
+                  </tr>
+                  <tr className="bg-primary/5 font-bold">
+                    <td colSpan={3} className="px-3 py-2.5 text-foreground">Total mensal</td>
+                    <td className="px-3 py-2.5 text-right text-primary text-sm">R$ {fmt(monthly_value)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          {/* Limites */}
+          <Section title="Limites">
+            <Field label="Máx. sub-licenças">
+              <Input type="number" min={1} value={form.max_sub_licenses} onChange={(e) => set('max_sub_licenses', Number(e.target.value))} />
+            </Field>
+          </Section>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving} className="gap-2">
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            Salvar alterações
           </Button>
         </DialogFooter>
       </DialogContent>
