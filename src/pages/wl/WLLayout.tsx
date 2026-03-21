@@ -37,6 +37,21 @@ export default function WLLayout() {
     enabled: !!user,
   });
 
+  const { data: nexusUser, isLoading: nexusLoading } = useQuery({
+    queryKey: ['wl-nexus-user', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('nexus_users')
+        .select('role, is_active')
+        .eq('auth_user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const { data: wlConfig, isLoading: configLoading } = useQuery({
     queryKey: ['wl-config', slug],
     queryFn: async () => {
@@ -63,7 +78,7 @@ export default function WLLayout() {
     };
   }, [wlConfig?.primary_color]);
 
-  if (profileLoading || configLoading) {
+  if (profileLoading || configLoading || nexusLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950">
         <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
@@ -71,8 +86,10 @@ export default function WLLayout() {
     );
   }
 
-  const ALLOWED_ROLES = ['wl_admin', 'wl_support', 'god_admin', 'nexus_superadmin', 'nexus_dev_senior', 'nexus_suporte_senior'];
-  if (!ALLOWED_ROLES.includes(profile?.role || '')) {
+  // Nexus users authenticate via nexus_users table (not profiles)
+  const isNexusUser = !!nexusUser?.is_active;
+  const ALLOWED_ROLES = ['wl_admin', 'wl_support', 'god_admin'];
+  if (!isNexusUser && !ALLOWED_ROLES.includes(profile?.role || '')) {
     return <Navigate to="/" replace />;
   }
 
