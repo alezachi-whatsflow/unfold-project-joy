@@ -36,20 +36,24 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: callerProfile } = await adminClient
-      .from("profiles")
-      .select("role, full_name")
-      .eq("id", caller.id)
-      .single();
 
-    if (!callerProfile || !["admin", "superadmin", "gestor"].includes(callerProfile.role)) {
+    // Verify caller: either a tenant admin or an active nexus user
+    const [{ data: callerProfile }, { data: callerNexus }] = await Promise.all([
+      adminClient.from("profiles").select("role, full_name").eq("id", caller.id).single(),
+      adminClient.from("nexus_users").select("role, is_active").eq("auth_user_id", caller.id).eq("is_active", true).maybeSingle(),
+    ]);
+
+    const isTenantAdmin = callerProfile && ["admin", "superadmin", "gestor"].includes(callerProfile.role);
+    const isNexusUser = !!callerNexus;
+
+    if (!isTenantAdmin && !isNexusUser) {
       return new Response(JSON.stringify({ error: "Sem permissão para convidar usuários" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { email, full_name, role, tenant_id } = await req.json();
+    const { email, full_name, role, tenant_id, license_id, redirect_to } = await req.json();
 
     if (!email || !full_name) {
       return new Response(JSON.stringify({ error: "E-mail e nome são obrigatórios" }), {
@@ -59,7 +63,7 @@ Deno.serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "https://unfold-project-joy.lovable.app";
-    const redirectUrl = `${origin}/reset-password`;
+    const redirectUrl = redirect_to ? `${origin}${redirect_to}` : `${origin}/reset-password`;
     const assignedRole = role || "consultor";
 
     // Check if user already exists in auth
@@ -164,6 +168,7 @@ Deno.serve(async (req) => {
           invitation_status: "invited",
           invited_at: new Date().toISOString(),
           invited_by: caller.id,
+          ...(license_id ? { license_id } : {}),
         })
         .eq("id", inviteData.user.id);
 

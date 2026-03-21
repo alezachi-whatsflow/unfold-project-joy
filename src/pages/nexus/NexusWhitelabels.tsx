@@ -603,6 +603,7 @@ function CreateWhitelabelModal({
     if (!form.company_name.trim()) { toast({ title: 'Informe o nome da empresa', variant: 'destructive' }); return; }
     if (!form.display_name.trim()) { toast({ title: 'Informe o nome do WhiteLabel', variant: 'destructive' }); return; }
     if (!form.slug.trim()) { toast({ title: 'Informe o slug', variant: 'destructive' }); return; }
+    if (!form.company_email.trim()) { toast({ title: 'Informe o e-mail principal', description: 'O e-mail será usado para enviar o acesso ao painel.', variant: 'destructive' }); return; }
 
     setSaving(true);
     try {
@@ -674,7 +675,7 @@ function CreateWhitelabelModal({
         });
       if (cErr) throw new Error(`Erro ao criar configuração: ${cErr.message}`);
 
-      // 4. Audit
+      // 5. Audit
       await supabase.from('nexus_audit_logs').insert({
         actor_id: nexusUser?.id,
         actor_role: nexusUser?.role || '',
@@ -682,7 +683,31 @@ function CreateWhitelabelModal({
         license_id: license.id,
       });
 
-      toast({ title: `WhiteLabel "${form.display_name}" criado!` });
+      // 6. Invite WL admin — send email to company_email
+      let inviteMsg = '';
+      try {
+        const { error: inviteErr } = await supabase.functions.invoke('invite-user', {
+          body: {
+            email: form.company_email.trim(),
+            full_name: form.company_name,
+            role: 'wl_admin',
+            tenant_id: tenant.id,
+            license_id: license.id,
+            redirect_to: `/wl/${form.slug}`,
+          },
+        });
+        if (inviteErr) {
+          console.warn('Invite warning:', inviteErr);
+          inviteMsg = ' (aviso: falha ao enviar e-mail de acesso)';
+        } else {
+          inviteMsg = ` E-mail de acesso enviado para ${form.company_email}.`;
+        }
+      } catch (invEx) {
+        console.warn('Invite exception:', invEx);
+        inviteMsg = ' (aviso: falha ao enviar e-mail de acesso)';
+      }
+
+      toast({ title: `WhiteLabel "${form.display_name}" criado!`, description: inviteMsg || undefined });
       onSaved();
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
@@ -708,21 +733,17 @@ function CreateWhitelabelModal({
             <Field label="Nome da empresa *">
               <Input placeholder="Ex: Acme Soluções Ltda" value={form.company_name} onChange={(e) => set('company_name', e.target.value)} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="CNPJ">
-                <Input
-                  placeholder="00.000.000/0001-00"
-                  value={form.company_cnpj}
-                  onChange={(e) => set('company_cnpj', maskCNPJ(e.target.value))}
-                  maxLength={18}
-                />
-              </Field>
-              <Field label="E-mail da empresa">
-                <Input type="email" placeholder="contato@empresa.com" value={form.company_email} onChange={(e) => set('company_email', e.target.value)} />
-              </Field>
-            </div>
-            <Field label="E-mail para faturamento">
-              <Input type="email" placeholder="financeiro@empresa.com" value={form.billing_email} onChange={(e) => set('billing_email', e.target.value)} />
+            <Field label="E-mail Principal *">
+              <Input type="email" placeholder="contato@empresa.com" value={form.company_email} onChange={(e) => set('company_email', e.target.value)} />
+              <p className="text-xs text-muted-foreground">Este e-mail receberá o convite para criar senha e acessar o painel WL.</p>
+            </Field>
+            <Field label="CNPJ">
+              <Input
+                placeholder="00.000.000/0001-00"
+                value={form.company_cnpj}
+                onChange={(e) => set('company_cnpj', maskCNPJ(e.target.value))}
+                maxLength={18}
+              />
             </Field>
           </Section>
 
