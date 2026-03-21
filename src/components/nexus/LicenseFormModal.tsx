@@ -58,6 +58,8 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     return saved ? saved : DEFAULT_SPLIT;
   });
   const [tenantFields, setTenantFields] = useState({ cpf_cnpj: '', phone: '' });
+  const [createNewTenant, setCreateNewTenant] = useState(false);
+  const [newTenantName, setNewTenantName] = useState('');
 
   const [form, setForm] = useState({
     tenant_id: license?.tenant_id || '',
@@ -209,17 +211,39 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   }, [form]);
 
   async function handleSave() {
-    if (!isEdit && !form.tenant_id) {
+    if (!isEdit && !createNewTenant && !form.tenant_id) {
       toast({ title: 'Selecione um tenant para a licença', variant: 'destructive' });
+      return;
+    }
+    if (!isEdit && createNewTenant && !newTenantName.trim()) {
+      toast({ title: 'Informe o nome da empresa', variant: 'destructive' });
       return;
     }
 
     setSaving(true);
+
+    // Create new tenant if needed
+    let tenantId = form.tenant_id;
+    if (!isEdit && createNewTenant) {
+      const { data: newTenant, error: tenantError } = await supabase
+        .from('tenants')
+        .insert({ name: newTenantName.trim() })
+        .select('id')
+        .single();
+      if (tenantError || !newTenant) {
+        toast({ title: 'Erro ao criar empresa', description: tenantError?.message, variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+      tenantId = newTenant.id;
+    }
+
     const splitPayload = split.enabled && split.recipients.some(r => r.walletId)
       ? split : null;
 
     const payload: any = {
       ...form,
+      tenant_id: tenantId,
       monthly_value: mrrPreview.total,
       parent_license_id: form.parent_license_id === 'none' ? null : form.parent_license_id,
       expires_at: form.expires_at || null,
@@ -230,12 +254,12 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       split_config: splitPayload,
     };
 
-    const tenantId = isEdit ? license.tenant_id : form.tenant_id;
-    if (tenantId && (tenantFields.cpf_cnpj || tenantFields.phone)) {
+    const saveTenantId = isEdit ? license.tenant_id : tenantId;
+    if (saveTenantId && (tenantFields.cpf_cnpj || tenantFields.phone)) {
       await supabase.from('tenants').update({
         cpf_cnpj: tenantFields.cpf_cnpj || null,
         phone: tenantFields.phone || null,
-      }).eq('id', tenantId);
+      }).eq('id', saveTenantId);
     }
 
     if (isEdit) {
@@ -277,16 +301,34 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {!isEdit && (
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase text-muted-foreground">Tenant / Empresa</Label>
-                  <Select value={form.tenant_id} onValueChange={(v) => set('tenant_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione um tenant sem licença" /></SelectTrigger>
-                    <SelectContent>
-                      {tenants.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                      ))}
-                      {tenants.length === 0 && <SelectItem value="none" disabled>Nenhum Tenant disponível</SelectItem>}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold uppercase text-muted-foreground">Tenant / Empresa</Label>
+                    <button
+                      type="button"
+                      onClick={() => { setCreateNewTenant(!createNewTenant); set('tenant_id', ''); setNewTenantName(''); }}
+                      className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
+                    >
+                      <Plus className="h-3 w-3" />
+                      {createNewTenant ? 'Selecionar existente' : 'Criar nova empresa'}
+                    </button>
+                  </div>
+                  {createNewTenant ? (
+                    <Input
+                      placeholder="Nome da empresa"
+                      value={newTenantName}
+                      onChange={(e) => setNewTenantName(e.target.value)}
+                    />
+                  ) : (
+                    <Select value={form.tenant_id} onValueChange={(v) => set('tenant_id', v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um tenant sem licença" /></SelectTrigger>
+                      <SelectContent>
+                        {tenants.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                        {tenants.length === 0 && <SelectItem value="none" disabled>Nenhum Tenant disponível</SelectItem>}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
