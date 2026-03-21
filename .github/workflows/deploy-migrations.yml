@@ -24,7 +24,7 @@ jobs:
           supabase --version
 
           echo "Linking project..."
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --debug
+          supabase link --project-ref jtlrglzcsmqmapizqgzu --debug
 
           echo "Pushing migrations..."
           supabase db push --yes --debug
