@@ -256,6 +256,11 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       checkout_url: form.checkout_url || null,
       split_config: splitPayload,
     };
+    // Remove empty/null optional columns that may not exist in DB yet
+    const optionalCols = ['cancelled_at', 'blocked_at', 'unblocked_at', 'checkout_url', 'payment_type', 'payment_condition', 'has_ia_auditor', 'has_ia_copiloto', 'has_ia_closer', 'split_config'];
+    for (const col of optionalCols) {
+      if (payload[col] === null || payload[col] === '' || payload[col] === false) delete payload[col];
+    }
 
     const saveTenantId = isEdit ? license.tenant_id : tenantId;
     if (saveTenantId && (tenantFields.cpf_cnpj || tenantFields.phone)) {
