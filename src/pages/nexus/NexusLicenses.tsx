@@ -13,10 +13,11 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Loader2, Plus, Search, ChevronLeft, ChevronRight, Upload, Download,
   MoreHorizontal, Eye, Edit, ExternalLink, Trash2,
-  LayoutDashboard, LayoutGrid, List, TrendingUp, Users, DollarSign, Cpu,
+  LayoutDashboard, LayoutGrid, List, TrendingUp, Users, DollarSign, Cpu, ListFilter,
 } from 'lucide-react';
 import {
   AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
@@ -52,6 +53,25 @@ const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
 
+function fmtDate(val: string | null): string {
+  return val ? new Date(val).toLocaleDateString('pt-BR') : '—';
+}
+
+function getColValue(l: any, col: string): string {
+  switch (col) {
+    case 'status':      return STATUS_LABELS[l.status] || l.status || '—';
+    case 'whitelabel':  return l.parent?.tenants?.name || '—';
+    case 'starts_at':   return fmtDate(l.starts_at);
+    case 'cancelled_at':return fmtDate(l.cancelled_at);
+    case 'blocked_at':  return fmtDate(l.blocked_at);
+    case 'unblocked_at':return fmtDate(l.unblocked_at);
+    case 'expires_at':  return fmtDate(l.expires_at);
+    case 'payment_type':return l.payment_type || '—';
+    case 'payment_condition': return l.payment_condition || '—';
+    default: return '—';
+  }
+}
+
 export default function NexusLicenses() {
   const { can, nexusUser } = useNexus();
   const { toast } = useToast();
@@ -72,10 +92,12 @@ export default function NexusLicenses() {
   const [deleting, setDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [colFilters, setColFilters] = useState<Record<string, Set<string>>>({});
 
   useEffect(() => {
     loadLicenses();
     setSelectedIds(new Set());
+    setColFilters({});
   }, [page, statusFilter, typeFilter]);
 
   useEffect(() => {
@@ -125,14 +147,31 @@ export default function NexusLicenses() {
   }
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return licenses;
-    const q = search.toLowerCase();
-    return licenses.filter((l: any) => {
-      const tenantName = l.tenants?.name?.toLowerCase() || '';
-      const tenantEmail = l.tenants?.email?.toLowerCase() || '';
-      return tenantName.includes(q) || tenantEmail.includes(q);
-    });
-  }, [licenses, search]);
+    let result = licenses;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((l: any) => {
+        const tenantName = l.tenants?.name?.toLowerCase() || '';
+        const tenantEmail = l.tenants?.email?.toLowerCase() || '';
+        return tenantName.includes(q) || tenantEmail.includes(q);
+      });
+    }
+    for (const [col, values] of Object.entries(colFilters)) {
+      if (!values || values.size === 0) continue;
+      result = result.filter((l: any) => values.has(getColValue(l, col)));
+    }
+    return result;
+  }, [licenses, search, colFilters]);
+
+  const activeColFilters = Object.values(colFilters).filter(s => s.size > 0).length;
+
+  function colUniqueValues(col: string): string[] {
+    return [...new Set(licenses.map((l: any) => getColValue(l, col)))].sort();
+  }
+
+  function setColFilter(col: string, values: Set<string>) {
+    setColFilters(prev => ({ ...prev, [col]: values }));
+  }
 
   // Analytics data computed from allLicenses (no filters)
   const analytics = useMemo(() => {
@@ -520,6 +559,12 @@ export default function NexusLicenses() {
                 <SelectItem value="internal">Interno</SelectItem>
               </SelectContent>
             </Select>
+            {activeColFilters > 0 && (
+              <Button size="sm" variant="outline" className="h-9 text-xs gap-1.5 text-amber-400 border-amber-500/40" onClick={() => setColFilters({})}>
+                <ListFilter className="h-3.5 w-3.5" />
+                {activeColFilters} filtro(s) de coluna — Limpar
+              </Button>
+            )}
           </div>
 
           {/* Bulk action bar */}
@@ -573,21 +618,21 @@ export default function NexusLicenses() {
                           </TableHead>
                         )}
                         <TableHead className="sticky left-0 bg-card z-10 min-w-[180px]">Empresa / Titular</TableHead>
-                        <TableHead className="min-w-[120px]">WhiteLabel</TableHead>
-                        <TableHead className="min-w-[90px]">Status</TableHead>
-                        <TableHead className="min-w-[90px]">Ativação</TableHead>
-                        <TableHead className="min-w-[90px]">Cancelado</TableHead>
-                        <TableHead className="min-w-[90px]">Bloqueio</TableHead>
-                        <TableHead className="min-w-[90px]">Desbloqueio</TableHead>
-                        <TableHead className="min-w-[90px]">Vencimento</TableHead>
+                        <TableHead className="min-w-[120px]"><div className="flex items-center gap-1">WhiteLabel<ColFilter col="whitelabel" values={colUniqueValues('whitelabel')} selected={colFilters['whitelabel'] || new Set()} onChange={setColFilter} /></div></TableHead>
+                        <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Status<ColFilter col="status" values={colUniqueValues('status')} selected={colFilters['status'] || new Set()} onChange={setColFilter} /></div></TableHead>
+                        <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Ativação<ColFilter col="starts_at" values={colUniqueValues('starts_at')} selected={colFilters['starts_at'] || new Set()} onChange={setColFilter} /></div></TableHead>
+                        <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Cancelado<ColFilter col="cancelled_at" values={colUniqueValues('cancelled_at')} selected={colFilters['cancelled_at'] || new Set()} onChange={setColFilter} /></div></TableHead>
+                        <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Bloqueio<ColFilter col="blocked_at" values={colUniqueValues('blocked_at')} selected={colFilters['blocked_at'] || new Set()} onChange={setColFilter} /></div></TableHead>
+                        <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Desbloqueio<ColFilter col="unblocked_at" values={colUniqueValues('unblocked_at')} selected={colFilters['unblocked_at'] || new Set()} onChange={setColFilter} /></div></TableHead>
+                        <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Vencimento<ColFilter col="expires_at" values={colUniqueValues('expires_at')} selected={colFilters['expires_at'] || new Set()} onChange={setColFilter} /></div></TableHead>
                         <TableHead className="min-w-[70px] text-center">Disp. Oficial</TableHead>
                         <TableHead className="min-w-[80px] text-center">Disp. Não Of.</TableHead>
                         <TableHead className="min-w-[70px] text-center">Atend.</TableHead>
                         <TableHead className="min-w-[100px]">Adicional</TableHead>
                         <TableHead className="min-w-[80px]">Checkout</TableHead>
                         <TableHead className="min-w-[100px]">Receita</TableHead>
-                        <TableHead className="min-w-[90px]">Tipo Pgto</TableHead>
-                        <TableHead className="min-w-[80px]">Condição</TableHead>
+                        <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Tipo Pgto<ColFilter col="payment_type" values={colUniqueValues('payment_type')} selected={colFilters['payment_type'] || new Set()} onChange={setColFilter} /></div></TableHead>
+                        <TableHead className="min-w-[80px]"><div className="flex items-center gap-1">Condição<ColFilter col="payment_condition" values={colUniqueValues('payment_condition')} selected={colFilters['payment_condition'] || new Set()} onChange={setColFilter} /></div></TableHead>
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -818,6 +863,60 @@ export default function NexusLicenses() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function ColFilter({ col, values, selected, onChange }: {
+  col: string;
+  values: string[];
+  selected: Set<string>;
+  onChange: (col: string, values: Set<string>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const active = selected.size > 0;
+  const shown = values.filter((v) => v.toLowerCase().includes(q.toLowerCase()));
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={`rounded p-0.5 transition-colors hover:bg-accent ${active ? 'text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ListFilter className="h-3 w-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-52 p-2 space-y-2 z-50" onClick={(e) => e.stopPropagation()}>
+        <Input
+          placeholder="Buscar..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="h-7 text-xs"
+        />
+        <div className="max-h-52 overflow-y-auto space-y-0.5">
+          {shown.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Sem resultados</p>}
+          {shown.map((v) => (
+            <label key={v} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-accent/50 px-1 py-1 rounded">
+              <Checkbox
+                checked={selected.has(v)}
+                onCheckedChange={(checked) => {
+                  const newSet = new Set(selected);
+                  if (checked) newSet.add(v); else newSet.delete(v);
+                  onChange(col, newSet);
+                }}
+              />
+              <span className="truncate">{v}</span>
+            </label>
+          ))}
+        </div>
+        {active && (
+          <Button size="sm" variant="ghost" className="h-6 text-xs w-full text-muted-foreground" onClick={() => onChange(col, new Set())}>
+            Limpar filtro ({selected.size})
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
