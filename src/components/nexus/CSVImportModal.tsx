@@ -143,6 +143,19 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
     setFirstError(null);
     let totalSuccess = 0, totalFailed = 0;
 
+    // Pre-load whitelabel parent license IDs (slug → license id map)
+    const wlSlugs = [...new Set(rows.map(r => r.whitelabel).filter(Boolean))];
+    const wlMap: Record<string, string> = {};
+    if (wlSlugs.length > 0) {
+      const { data: wlLicenses } = await supabase
+        .from('licenses')
+        .select('id, whitelabel_slug')
+        .in('whitelabel_slug', wlSlugs);
+      (wlLicenses || []).forEach((l: any) => {
+        if (l.whitelabel_slug) wlMap[l.whitelabel_slug] = l.id;
+      });
+    }
+
     // Split into batches
     const batches: ParsedRow[][] = [];
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
@@ -187,6 +200,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
           billing_cycle: row.billing_cycle || 'monthly',
           starts_at: toDateOrNull(row.activated_at) || new Date().toISOString().slice(0, 10),
           expires_at: toDateOrNull(row.expires_at),
+          parent_license_id: row.whitelabel ? (wlMap[row.whitelabel] || null) : null,
           internal_notes: row.whitelabel ? `Importado via CSV. WL: ${row.whitelabel}` : 'Importado via CSV',
         }));
 
