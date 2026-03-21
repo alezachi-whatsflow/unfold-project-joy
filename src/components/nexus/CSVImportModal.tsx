@@ -79,6 +79,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
   const [done, setDone] = useState(false);
   const [importResults, setImportResults] = useState({ success: 0, failed: 0 });
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [firstError, setFirstError] = useState<string | null>(null);
 
   function parseCSV(text: string) {
     const lines = text.split('\n').filter((l) => l.trim());
@@ -139,6 +140,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
 
   async function handleImport() {
     setImporting(true);
+    setFirstError(null);
     let totalSuccess = 0, totalFailed = 0;
 
     // Split into batches
@@ -165,6 +167,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
           .select('id');
 
         if (tErr || !tenants || tenants.length !== batch.length) {
+          if (tErr && !firstError) setFirstError(`Tenant: ${tErr.message}`);
           totalFailed += batch.length;
           globalIndex += batch.length;
           setProgress(p => ({ ...p, current: p.current + batch.length }));
@@ -175,7 +178,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
         const licenseData = batch.map((row, bIdx) => ({
           tenant_id: tenants[bIdx].id,
           plan: 'profissional',
-          license_type: 'direct',
+          license_type: 'individual',
           status: row.status,
           monthly_value: row.monthly_value,
           base_devices_web: row.devices_official,
@@ -199,6 +202,7 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
 
         const { error: lErr } = await supabase.from('licenses').insert(licenseData);
         if (lErr) {
+          if (!firstError) setFirstError(`License: ${lErr.message}`);
           // If license batch fails, rollback tenants
           const tenantIds = tenants.map(t => t.id);
           await supabase.from('tenants').delete().in('id', tenantIds);
@@ -241,7 +245,14 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
             <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto" />
             <p className="text-lg font-semibold">{importResults.success} licenças importadas</p>
             {importResults.failed > 0 && (
-              <p className="text-sm text-red-400">{importResults.failed} falhas</p>
+              <div className="space-y-1">
+                <p className="text-sm text-red-400">{importResults.failed} falhas</p>
+                {firstError && (
+                  <p className="text-xs text-red-300 bg-red-950/30 border border-red-800/30 rounded px-3 py-2 text-left font-mono break-all">
+                    {firstError}
+                  </p>
+                )}
+              </div>
             )}
             <Button onClick={() => onOpenChange(false)}>Fechar</Button>
           </div>
