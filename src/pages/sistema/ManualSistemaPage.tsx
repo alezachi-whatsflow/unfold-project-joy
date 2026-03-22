@@ -106,7 +106,7 @@ const ManualSistemaPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 md:p-6 space-y-4">
         <p className="text-xs text-muted-foreground">Sistema &gt; Manual de Uso</p>
 
