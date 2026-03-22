@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(supabase db:*)",
+      "Bash(node -e \":*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -r \"Análise Neuromarketing\\\\|Gatilhos de Cialdini\\\\|Above the Fold\\\\|Eye Tracking\\\\|Psicologia das Cores\" 'f:/WFW New/src' --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"Top.*Melhorias\\\\|top5_melhorias\\\\|neuromarketing.*html\\\\|relatorio.*neuro\" 'f:/WFW New/src' --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"generateFilename\\\\|downloadHtml\\\\|Exportar\\\\|export.*html\" 'f:/WFW New/src' --include=*.tsx --include=*.ts)",
+      "Bash(grep -rn \"license.*status\\\\|status.*license\" supabase/migrations/*.sql)",
+      "Bash(grep -n \"status\" supabase/migrations/*.sql)",
+      "Bash(grep -r \"blocked_at\\\\|unblocked_at\\\\|cancelled_at\" supabase/migrations/*.sql)",
+      "WebFetch(domain:demos.creative-tim.com)",
+      "WebFetch(domain:www.creative-tim.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

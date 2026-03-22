@@ -21,8 +21,8 @@ import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
 // ──────────────────────── shared styles ────────────────────────
 const menuItemBase = "flex items-center no-underline transition-all duration-150 ease-in-out";
-const menuItemDefault = "[color:rgba(255,255,255,0.45)] hover:[background:rgba(255,255,255,0.05)] hover:[color:rgba(255,255,255,0.85)]";
-const menuItemActive = "[background:rgba(74,222,128,0.10)] [border:1px_solid_rgba(74,222,128,0.18)] [color:#4ade80] font-medium [&>svg]:opacity-100";
+const menuItemDefault = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground";
+const menuItemActive = "bg-sidebar-accent text-primary font-semibold shadow-sm [&>svg]:opacity-100";
 
 // ──────────────────────── badge queries ────────────────────────
 function useBadges() {
@@ -118,18 +118,18 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
   };
 
   return (
-    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: isCollapsed ? "8px 4px" : "10px 12px" }}>
+    <div className={cn("border-t border-border", isCollapsed ? "p-1" : "p-3")}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className={cn("flex items-center w-full rounded-lg transition-colors hover:[background:rgba(255,255,255,0.05)]", isCollapsed ? "justify-center p-2" : "gap-3 p-2")}>
-            <span className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0" style={{ width: 32, height: 32, background: `${roleColor}20`, color: roleColor, border: `1px solid ${roleColor}40` }}>
+          <button className={cn("flex items-center w-full rounded-lg transition-colors hover:bg-muted", isCollapsed ? "justify-center p-2" : "gap-3 p-2")}>
+            <span className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0 bg-primary/10 text-primary" style={{ width: 32, height: 32 }}>
               {userName.charAt(0).toUpperCase()}
             </span>
             {!isCollapsed && (
               <div className="min-w-0 text-left flex-1">
-                <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{userName}</p>
+                <p className="text-xs font-semibold truncate text-foreground">{userName}</p>
                 {companyName && (
-                  <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{companyName}</p>
+                  <p className="text-[10px] truncate text-muted-foreground">{companyName}</p>
                 )}
               </div>
             )}
@@ -158,23 +158,23 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
 function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { collapsed: boolean; isMobile: boolean; onCollapse: () => void; onCloseMobile: () => void }) {
   const isCollapsed = collapsed && !isMobile;
   return (
-    <div className="flex items-center px-3 py-4 relative" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="flex items-center px-4 py-5 relative border-b border-border">
       <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && "justify-center w-full")}>
         <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
         {!isCollapsed && (
           <div className="min-w-0">
-            <h2 className="font-display text-sm font-bold truncate" style={{ color: "rgba(255,255,255,0.93)" }}>Whatsflow</h2>
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.35)" }}>Finance</p>
+            <h2 className="font-display text-sm font-bold truncate text-foreground">Whatsflow</h2>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Finance</p>
           </div>
         )}
       </div>
       {isMobile ? (
-        <button onClick={onCloseMobile} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:[background:rgba(255,255,255,0.07)]" style={{ width: 28, height: 28 }}>
-          <X className="h-4 w-4" style={{ color: "rgba(255,255,255,0.5)" }} />
+        <button onClick={onCloseMobile} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:bg-muted" style={{ width: 28, height: 28 }}>
+          <X className="h-4 w-4 text-muted-foreground" />
         </button>
       ) : (
-        <button onClick={onCollapse} title={collapsed ? "Expandir" : "Colapsar"} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:[background:rgba(255,255,255,0.07)]" style={{ width: 24, height: 24 }}>
-          {collapsed ? <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.4)" }} /> : <ChevronLeft className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.4)" }} />}
+        <button onClick={onCollapse} title={collapsed ? "Expandir" : "Colapsar"} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:bg-muted" style={{ width: 24, height: 24 }}>
+          {collapsed ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />}
         </button>
       )}
     </div>
@@ -206,17 +206,17 @@ function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: 
         style={{ padding: isCollapsed ? "8px 0" : padding, fontSize: isCollapsed ? 13 : fontSize }}
         className={() => cn(menuItemBase, "rounded-lg", isCollapsed ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
       >
-        <span className="relative shrink-0 flex items-center justify-center">
-          {CustomIcon ? <CustomIcon size={16} className="opacity-80" /> : <LucideIcon className="h-4 w-4 opacity-60" />}
+        <span className="relative shrink-0 flex items-center justify-center" style={{ minWidth: '1.8rem' }}>
+          {CustomIcon ? <CustomIcon size={15} /> : <LucideIcon className="h-[15px] w-[15px]" />}
           {isCollapsed && badgeCount > 0 && (
-            <span className="absolute -top-1 -right-1 rounded-full" style={{ width: 8, height: 8, background: "#ef4444" }} />
+            <span className="absolute -top-1 -right-1 rounded-full w-2 h-2 bg-destructive" />
           )}
         </span>
         {!isCollapsed && (
           <>
             <span className="flex-1 truncate">{item.label}</span>
             {badgeCount > 0 && (
-              <span className="ml-auto flex items-center justify-center shrink-0" style={{ background: "#ef4444", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%" }}>
+              <span className="ml-auto flex items-center justify-center shrink-0 bg-destructive text-white text-[10px] font-bold w-[18px] h-[18px] rounded-full">
                 {badgeCount}
               </span>
             )}
@@ -243,7 +243,7 @@ function SidebarGroupedCards({ collapsed, isMobile }: { collapsed: boolean; isMo
       {pinnedItems.length > 0 && (
         <div className="mb-1">
           {!isCollapsed && (
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(74,222,128,0.5)", paddingTop: 12, paddingBottom: 4, paddingLeft: 8, display: 'block', fontFamily: 'monospace' }}>
+            <span className="block pt-3 pb-1 px-3 text-[9px] font-bold tracking-wider uppercase text-muted-foreground">
               📌 Fixados
             </span>
           )}
@@ -258,9 +258,9 @@ function SidebarGroupedCards({ collapsed, isMobile }: { collapsed: boolean; isMo
       {filteredGroups.map((group) => (
         <div key={group.id}>
           {!isCollapsed ? (
-            <div className="mt-2 mb-1 mx-1 rounded-[10px]" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.055)", padding: 6 }}>
+            <div className="mt-3 mb-1 mx-1">
               {prefs.showLabels && (
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", paddingLeft: 6, paddingBottom: 2, display: 'block', fontFamily: 'monospace' }}>
+                <span className="block px-3 pb-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground/60">
                   {group.label}
                 </span>
               )}
@@ -316,7 +316,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
   return (
     <div className="flex h-full">
       {/* Rail */}
-      <div className="flex flex-col items-center py-3 shrink-0" style={{ width: 58, borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="flex flex-col items-center py-3 shrink-0 border-r border-border" style={{ width: 58 }}>
         <img src={whatsflowLogo} alt="" className="h-7 w-7 rounded-lg mb-4" />
         <div className="flex-1 flex flex-col gap-1">
           {filteredGroups.filter(c => c.id !== 'sistema').map(cat => {
@@ -328,11 +328,11 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
                 key={cat.id}
                 onClick={() => setActiveCatId(cat.id)}
                 title={cat.label}
-                className={cn("flex items-center justify-center rounded-lg transition-colors relative", isActive ? "[background:rgba(74,222,128,0.12)] [color:#4ade80]" : "[color:rgba(255,255,255,0.35)] hover:[background:rgba(255,255,255,0.05)] hover:[color:rgba(255,255,255,0.7)]")}
+                className={cn("flex items-center justify-center rounded-lg transition-colors relative", isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}
                 style={{ width: 40, height: 40 }}
               >
                 <CatIcon className="h-4.5 w-4.5" />
-                {badge > 0 && <span className="absolute top-1 right-1 rounded-full" style={{ width: 7, height: 7, background: "#ef4444" }} />}
+                {badge > 0 && <span className="absolute top-1 right-1 rounded-full w-[7px] h-[7px] bg-destructive" />}
               </button>
             );
           })}
@@ -344,7 +344,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
           const isActive = location.pathname === resolvedRoute || location.pathname.startsWith(resolvedRoute + '/');
           return (
             <RouterNavLink key={item.id} to={resolvedRoute} title={item.label}
-              className={() => cn("flex items-center justify-center rounded-lg mb-1 transition-colors", isActive ? "[background:rgba(74,222,128,0.12)] [color:#4ade80]" : "[color:rgba(255,255,255,0.35)] hover:[background:rgba(255,255,255,0.05)]")}
+              className={() => cn("flex items-center justify-center rounded-lg mb-1 transition-colors", isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}
               style={{ width: 40, height: 40 }}>
               <Icon className="h-4 w-4" />
             </RouterNavLink>
@@ -354,7 +354,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
       {/* Panel */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="px-3 pt-4 pb-2">
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#4ade80", fontFamily: "monospace" }}>
+          <span className="text-[10px] font-bold tracking-wider uppercase text-primary">
             {activeCat?.label}
           </span>
         </div>
@@ -396,16 +396,14 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
       {/* Search bar placeholder */}
       {!isCollapsed && (
         <button
-          className="flex items-center gap-2 w-full rounded-lg px-3 py-2 mt-2 mb-3 text-xs transition-colors"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.35)" }}
+          className="flex items-center gap-2 w-full rounded-lg px-3 py-2 mt-2 mb-3 text-xs transition-colors bg-muted border border-border text-muted-foreground"
           onClick={() => {
-            // Dispatch Cmd+K
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
           }}
         >
           <span>⌕</span>
           <span className="flex-1 text-left">Buscar ou navegar...</span>
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)" }}>⌘K</kbd>
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-background">⌘K</kbd>
         </button>
       )}
 
@@ -416,7 +414,7 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
         ))}
       </ul>
 
-      {!isCollapsed && <hr className="border-0 my-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />}
+      {!isCollapsed && <hr className="border-0 my-2 border-t border-border" />}
 
       {/* Accordion groups */}
       {accordionGroups.map(group => {
@@ -428,21 +426,21 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
               <>
                 <button
                   onClick={() => updateCategoryCollapsed(group.id, !isGroupCollapsed)}
-                  className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg transition-colors hover:[background:rgba(255,255,255,0.03)]"
+                  className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg transition-colors hover:bg-muted"
                 >
                   <span
-                    className="transition-transform duration-200"
-                    style={{ transform: isGroupCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', color: "rgba(255,255,255,0.3)", fontSize: 10 }}
+                    className="transition-transform duration-200 text-[10px] text-muted-foreground"
+                    style={{ transform: isGroupCollapsed ? 'rotate(0deg)' : 'rotate(90deg)' }}
                   >
                     ▶
                   </span>
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", fontFamily: "monospace" }}>
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
                     {group.label}
                   </span>
                 </button>
                 {!isGroupCollapsed && (
-                  <div className="relative ml-4 pl-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
-                    <ul className="flex flex-col gap-0.5" style={{ animation: "fadeIn 200ms ease" }}>
+                  <div className="relative ml-4 pl-3 border-l border-border">
+                    <ul className="flex flex-col gap-0.5 animate-fade-in">
                       {group.items.map(item => (
                         <NavItemRow key={item.id} item={item} collapsed={false} isMobile={isMobile} badgeCount={badges[item.id] || 0} density={prefs.density} />
                       ))}
@@ -464,7 +462,7 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
       {/* Quick Actions */}
       {!isCollapsed && prefs.showQuickActions && prefs.quickActions.length > 0 && (
         <>
-          <hr className="border-0 my-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+          <hr className="border-0 my-2 border-t border-border" />
           <div className="flex flex-wrap gap-1.5 px-1">
             {prefs.quickActions.map(id => {
               const allItems = DEFAULT_NAV_CATEGORIES.flatMap(c => c.items);
@@ -473,8 +471,7 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
               const resolvedRoute = basePath + (item.route === '/' ? '' : item.route);
               return (
                 <RouterNavLink key={id} to={resolvedRoute}
-                  className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
-                  style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.15)" }}
+                  className="text-[11px] px-2.5 py-1 rounded-full transition-colors bg-primary/10 text-primary border border-primary/15"
                 >
                   + {item.label}
                 </RouterNavLink>
@@ -554,12 +551,12 @@ export function AppSidebar() {
       aria-label="Menu principal"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="flex flex-col h-screen shrink-0 overflow-hidden"
+      className="flex flex-col h-screen shrink-0 overflow-hidden bg-card"
       style={{
         width: isMobile ? 260 : sidebarW,
-        background: "hsl(var(--sidebar-background))",
-        borderRight: "1px solid var(--border-sidebar, rgba(255,255,255,0.06))",
+        boxShadow: "var(--shadow-card, 0 0 2rem 0 rgba(136,152,170,.15))",
         transition: isMobile ? "none" : "width 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+        zIndex: 999,
       }}
     >
       {!isDualRail && (
@@ -580,14 +577,14 @@ export function AppSidebar() {
       <>
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg"
-          style={{ width: 40, height: 40, background: "#111118", border: "1px solid rgba(255,255,255,0.1)" }}
+          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg bg-card border border-border shadow-md"
+          style={{ width: 40, height: 40 }}
         >
-          <Menu className="h-5 w-5" style={{ color: "rgba(255,255,255,0.6)" }} />
+          <Menu className="h-5 w-5 text-foreground" />
         </button>
         {mobileOpen && (
           <>
-            <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setMobileOpen(false)} />
+            <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setMobileOpen(false)} />
             <div className="fixed left-0 top-0 bottom-0 z-50">{sidebarContent}</div>
           </>
         )}
