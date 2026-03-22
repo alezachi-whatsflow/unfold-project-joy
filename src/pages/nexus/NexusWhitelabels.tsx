@@ -669,6 +669,20 @@ function CreateWhitelabelModal({
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      setForm({
+        company_name: '', company_email: '', company_cnpj: '', billing_email: '',
+        display_name: '', slug: '', primary_color: '#11BC76',
+        support_email: '', support_whatsapp: '',
+        max_sub_licenses: 50, extra_attendants: 0, extra_web: 0, extra_meta: 0, has_ai: false,
+      });
+      setLogoFile(null);
+      setLogoPreview(null);
+    }
+  }, [open]);
+
   useEffect(() => {
     if (form.display_name) set('slug', slugify(form.display_name));
   }, [form.display_name]);
