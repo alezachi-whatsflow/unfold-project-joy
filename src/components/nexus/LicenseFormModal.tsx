@@ -90,6 +90,8 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     has_ia_auditor: license?.has_ia_auditor || false,
     has_ia_copiloto: license?.has_ia_copiloto || false,
     has_ia_closer: license?.has_ia_closer || false,
+    // WhiteLabel slug (only for whitelabel type)
+    whitelabel_slug: license?.whitelabel_slug || '',
     // Outros
     facilite_plan: license?.facilite_plan || 'none',
     has_implantacao_starter: license?.has_implantacao_starter || false,
@@ -130,6 +132,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
         has_ia_auditor: license?.has_ia_auditor || false,
         has_ia_copiloto: license?.has_ia_copiloto || false,
         has_ia_closer: license?.has_ia_closer || false,
+        whitelabel_slug: license?.whitelabel_slug || '',
         facilite_plan: license?.facilite_plan || 'none',
         has_implantacao_starter: license?.has_implantacao_starter || false,
         billing_cycle: license?.billing_cycle || 'monthly',
@@ -276,6 +279,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     if (form.has_ia_auditor) payload.has_ia_auditor = true;
     if (form.has_ia_copiloto) payload.has_ia_copiloto = true;
     if (form.has_ia_closer) payload.has_ia_closer = true;
+    if (form.whitelabel_slug) payload.whitelabel_slug = form.whitelabel_slug;
     if (split.enabled && split.recipients.some(r => r.walletId)) payload.split_config = split;
 
     const saveTenantId = isEdit ? license.tenant_id : tenantId;
@@ -387,6 +391,17 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                   </SelectContent>
                 </Select>
               </div>
+              {form.license_type === 'whitelabel' && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">Slug do WhiteLabel</Label>
+                  <Input
+                    placeholder="ex: sendhit, minha-marca (usado no CSV import e URLs)"
+                    value={form.whitelabel_slug}
+                    onChange={(e) => set('whitelabel_slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'))}
+                  />
+                  <p className="text-[10px] text-muted-foreground">Identificador unico. Clientes no CSV usam este slug na coluna WHITELABEL.</p>
+                </div>
+              )}
               {form.license_type === 'individual' && (
                 <div className="space-y-2 md:col-span-2">
                   <Label className="text-xs font-semibold uppercase text-muted-foreground">Pertence ao WhiteLabel? (Opcional)</Label>
