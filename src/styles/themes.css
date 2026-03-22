@@ -8,6 +8,9 @@
    Baseado no Argon Dashboard
    ----------------------------------------------- */
 [data-theme="sapphire"] {
+  /* iOS 26 Glass sidebar */
+  --sidebar-glass-rgb: 255,255,255;
+  --sidebar-glass-alpha: 0.60;
   --background: 233 67% 98%;
   --foreground: 216 33% 30%;
   --card: 0 0% 100%;
@@ -73,6 +76,9 @@
    Dark mode do Argon Dashboard
    ----------------------------------------------- */
 [data-theme="slate"] {
+  /* iOS 26 Glass sidebar (dark) */
+  --sidebar-glass-rgb: 15,22,50;
+  --sidebar-glass-alpha: 0.70;
   --background: 226 58% 11%;
   --foreground: 210 40% 90%;
   --card: 224 50% 14%;
@@ -137,6 +143,9 @@
    Verde esmeralda no preto — identidade Whatsflow refinada
    ----------------------------------------------- */
 [data-theme="forest"] {
+  /* iOS 26 Glass sidebar (forest) */
+  --sidebar-glass-rgb: 8,18,12;
+  --sidebar-glass-alpha: 0.65;
   --background: 140 24% 4%;
   --foreground: 153 100% 95%;
   --card: 147 33% 10%;

@@ -21,8 +21,8 @@ import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
 // ──────────────────────── shared styles ────────────────────────
 const menuItemBase = "flex items-center no-underline transition-all duration-150 ease-in-out";
-const menuItemDefault = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground";
-const menuItemActive = "bg-sidebar-accent text-primary font-semibold shadow-sm [&>svg]:opacity-100";
+const menuItemDefault = "text-muted-foreground hover:bg-black/[0.04] hover:text-foreground";
+const menuItemActive = "bg-black/[0.06] text-primary font-semibold [&>svg]:opacity-100";
 
 // ──────────────────────── badge queries ────────────────────────
 function useBadges() {
@@ -118,7 +118,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
   };
 
   return (
-    <div className={cn("border-t border-border", isCollapsed ? "p-1" : "p-3")}>
+    <div className={cn("border-t border-black/[0.06]", isCollapsed ? "p-1" : "p-3")}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn("flex items-center w-full rounded-lg transition-colors hover:bg-muted", isCollapsed ? "justify-center p-2" : "gap-3 p-2")}>
@@ -158,7 +158,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
 function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { collapsed: boolean; isMobile: boolean; onCollapse: () => void; onCloseMobile: () => void }) {
   const isCollapsed = collapsed && !isMobile;
   return (
-    <div className="flex items-center px-4 py-5 relative border-b border-border">
+    <div className="flex items-center px-4 py-5 relative border-b border-black/[0.06]">
       <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && "justify-center w-full")}>
         <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
         {!isCollapsed && (
@@ -551,10 +551,14 @@ export function AppSidebar() {
       aria-label="Menu principal"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="flex flex-col h-screen shrink-0 overflow-hidden bg-card"
+      className="flex flex-col h-screen shrink-0 overflow-hidden"
       style={{
         width: isMobile ? 260 : sidebarW,
-        boxShadow: "var(--shadow-card, 0 0 2rem 0 rgba(136,152,170,.15))",
+        background: "rgba(var(--sidebar-glass-rgb, 255,255,255), var(--sidebar-glass-alpha, 0.65))",
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        boxShadow: "0 0 0 1px rgba(0,0,0,0.04), 0 8px 40px rgba(0,0,0,0.08)",
+        borderRight: "1px solid rgba(var(--sidebar-glass-rgb, 255,255,255), 0.3)",
         transition: isMobile ? "none" : "width 250ms cubic-bezier(0.4, 0, 0.2, 1)",
         zIndex: 999,
       }}
