@@ -53,7 +53,7 @@ const STATUS_MAP: Record<string, string> = {
 const BATCH_SIZE = 100;
 
 function toDateOrNull(val: string): string | null {
-  if (!val || val.trim() === '' || val === '—') return null;
+  if (!val || val.trim() === '' || val === '—' || val.trim() === '-') return null;
   // dd/mm/yyyy → yyyy-mm-dd
   const match = val.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (match) return `${match[3]}-${match[2]}-${match[1]}`;
@@ -144,15 +144,25 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
     let totalSuccess = 0, totalFailed = 0;
 
     // Pre-load whitelabel parent license IDs (slug → license id map)
-    const wlSlugs = [...new Set(rows.map(r => r.whitelabel).filter(Boolean))];
+    // "whatsflow" is the parent company, not a WL — treat as direct contract
+    const DIRECT_CONTRACT_NAMES = ['whatsflow', 'wf', ''];
+    const wlSlugs = [...new Set(rows.map(r => r.whitelabel).filter(v => v && !DIRECT_CONTRACT_NAMES.includes(v.toLowerCase())))];
     const wlMap: Record<string, string> = {};
     if (wlSlugs.length > 0) {
+      // Search by slug (lowercase) and also by display name (case-insensitive)
+      const slugsLower = wlSlugs.map(s => s.toLowerCase());
       const { data: wlLicenses } = await supabase
         .from('licenses')
-        .select('id, whitelabel_slug')
-        .in('whitelabel_slug', wlSlugs);
+        .select('id, whitelabel_slug, tenants(name)');
       (wlLicenses || []).forEach((l: any) => {
-        if (l.whitelabel_slug) wlMap[l.whitelabel_slug] = l.id;
+        if (l.whitelabel_slug) {
+          // Map by exact slug
+          wlMap[l.whitelabel_slug] = l.id;
+          // Also map by slug lowercase
+          wlMap[l.whitelabel_slug.toLowerCase()] = l.id;
+          // Also map by tenant name (case-insensitive) for CSV matching
+          if (l.tenants?.name) wlMap[l.tenants.name.toLowerCase()] = l.id;
+        }
       });
     }
 
@@ -200,8 +210,10 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
           billing_cycle: row.billing_cycle || 'monthly',
           starts_at: toDateOrNull(row.activated_at) || new Date().toISOString().slice(0, 10),
           expires_at: toDateOrNull(row.expires_at),
-          parent_license_id: row.whitelabel ? (wlMap[row.whitelabel] || null) : null,
-          internal_notes: row.whitelabel ? `Importado via CSV. WL: ${row.whitelabel}` : 'Importado via CSV',
+          parent_license_id: row.whitelabel && !DIRECT_CONTRACT_NAMES.includes(row.whitelabel.toLowerCase())
+            ? (wlMap[row.whitelabel.toLowerCase()] || wlMap[row.whitelabel] || null)
+            : null,
+          internal_notes: row.whitelabel ? `Importado via CSV. WL: ${row.whitelabel}` : 'Importado via CSV (contrato direto)',
         }));
 
         const { error: lErr } = await supabase.from('licenses').insert(licenseData);
