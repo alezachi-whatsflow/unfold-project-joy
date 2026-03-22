@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,7 +88,7 @@ const OnboardingPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
         <p className="text-xs text-muted-foreground">Sistema &gt; Onboarding Interativo</p>
 
@@ -191,7 +191,7 @@ const OnboardingPage = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

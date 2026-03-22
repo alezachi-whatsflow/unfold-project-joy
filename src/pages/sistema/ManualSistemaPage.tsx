@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -106,7 +106,7 @@ const ManualSistemaPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 md:p-6 space-y-4">
         <p className="text-xs text-muted-foreground">Sistema &gt; Manual de Uso</p>
 
@@ -221,7 +221,7 @@ const ManualSistemaPage = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 
