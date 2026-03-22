@@ -62,10 +62,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const origin = req.headers.get("origin") || "https://unfold-project-joy.lovable.app";
-    // Always redirect to /reset-password so the token (type=invite or type=recovery)
-    // is handled correctly. After setting the password the user lands at "/".
-    const redirectUrl = `${origin}/reset-password`;
+    // Always use the production Railway URL for redirects
+    const PRODUCTION_URL = "https://unfold-project-joy-production.up.railway.app";
+    const origin = req.headers.get("origin") || PRODUCTION_URL;
+    // Ensure we never redirect to lovable.app
+    const safeOrigin = origin.includes("lovable.app") ? PRODUCTION_URL : origin;
+    const redirectUrl = `${safeOrigin}/reset-password`;
     const assignedRole = role || "consultor";
 
     // Check if user already exists in auth
