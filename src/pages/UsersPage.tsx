@@ -276,34 +276,15 @@ function InviteUserForm({ onClose }: { onClose: () => void }) {
     if (!name || !email) { toast.error("Preencha nome e e-mail."); return; }
     setLoading(true);
     try {
-      // Get current tenant from localStorage or user_tenants
       const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || undefined;
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
+      const { data: result, error } = await supabase.functions.invoke('invite-user', {
+        body: { email, full_name: name, role, tenant_id: tenantId },
+      });
 
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({
-            email,
-            full_name: name,
-            role,
-            tenant_id: tenantId,
-          }),
-        }
-      );
+      if (error) throw new Error(error.message || "Erro ao convidar usuário.");
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Erro ao convidar usuário.");
-
-      toast.success(result.message || `Convite enviado para ${email}`);
+      toast.success(result?.message || `Convite enviado para ${email}`);
       onClose();
     } catch (err: any) {
       toast.error(err?.message || "Erro ao convidar usuário.");
