@@ -3,8 +3,9 @@ import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useNexus, NEXUS_ROLE_LABELS, type NexusRole } from '@/contexts/NexusContext';
 import {
-  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart, Globe, DatabaseZap, Search,
+  ChevronLeft, ChevronRight, LogOut, Shield, Loader2, LayoutDashboard, Building2, ShoppingCart, Globe, DatabaseZap, Search, Menu, X,
 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   IconDashboard, IconDocuments, IconFinance, IconClients, IconReports,
   IconSettings, IconMessages,
@@ -43,7 +44,9 @@ export default function NexusLayout() {
   const { signOut } = useAuth();
   const { nexusUser, isLoading, isAuthorized } = useNexus();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [tenantPickerOpen, setTenantPickerOpen] = useState(false);
   const [tenantSearch, setTenantSearch] = useState('');
 
@@ -93,16 +96,32 @@ export default function NexusLayout() {
 
   return (
     <div className="flex h-screen bg-background">
+      {/* Mobile hamburger */}
+      {isMobile && !mobileOpen && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg bg-card border border-border shadow-md"
+          style={{ width: 40, height: 40 }}
+        >
+          <Menu className="h-5 w-5 text-foreground" />
+        </button>
+      )}
+      {/* Mobile overlay */}
+      {isMobile && mobileOpen && (
+        <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setMobileOpen(false)} />
+      )}
       {/* Sidebar */}
       <aside
         className={`flex flex-col border-r border-border bg-card transition-all duration-200 ${
-          collapsed ? 'w-16' : 'w-64'
+          isMobile
+            ? `fixed inset-y-0 left-0 z-50 w-64 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`
+            : collapsed ? 'w-16' : 'w-64'
         }`}
       >
         {/* Logo + badge */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-border relative">
           <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm font-semibold text-foreground truncate">Whatsflow</span>
               <Badge
@@ -113,6 +132,11 @@ export default function NexusLayout() {
               </Badge>
             </div>
           )}
+          {isMobile && (
+            <button onClick={() => setMobileOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted">
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </div>
 
         {/* Nav items */}
@@ -122,6 +146,7 @@ export default function NexusLayout() {
               key={item.id}
               to={item.path}
               end={item.end}
+              onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 ${
                   isActive
@@ -131,7 +156,7 @@ export default function NexusLayout() {
               }
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              {(!collapsed || isMobile) && <span>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
@@ -189,10 +214,11 @@ export default function NexusLayout() {
       {/* Main */}
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
-        <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur-sm px-6 py-3 flex items-center justify-between">
+        <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {isMobile && <div className="w-8" />}
             <Shield className="h-4 w-4 text-emerald-400" />
-            <span className="text-sm font-medium text-foreground">Nexus Admin</span>
+            <span className="text-sm font-medium text-foreground hidden sm:inline">Nexus Admin</span>
             <Badge
               variant="outline"
               className="border-emerald-500/30 text-emerald-400 text-[10px] font-bold tracking-widest"
@@ -208,7 +234,7 @@ export default function NexusLayout() {
           </div>
         </header>
 
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           <Outlet />
         </div>
       </main>

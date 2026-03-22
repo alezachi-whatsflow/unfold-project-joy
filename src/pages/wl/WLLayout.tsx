@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, KeyRound, Palette, ScrollText, Settings,
-  LogOut, ChevronLeft, ChevronRight, Loader2
+  LogOut, ChevronLeft, ChevronRight, Loader2, Menu, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const NAV = [
   { to: "", icon: LayoutDashboard, label: "Dashboard", end: true },
@@ -21,7 +22,9 @@ const NAV = [
 export default function WLLayout() {
   const { slug } = useParams<{ slug: string }>();
   const { user, signOut } = useAuth();
+  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['wl-profile', user?.id],
@@ -102,13 +105,26 @@ export default function WLLayout() {
 
   return (
     <div className="flex h-screen w-full" style={{ backgroundColor: 'var(--wl-bg, #0F172A)' }}>
+      {/* Mobile hamburger */}
+      {isMobile && !mobileOpen && (
+        <button onClick={() => setMobileOpen(true)}
+          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg bg-card border border-border shadow-md"
+          style={{ width: 40, height: 40 }}>
+          <Menu className="h-5 w-5 text-white" />
+        </button>
+      )}
+      {isMobile && mobileOpen && (
+        <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setMobileOpen(false)} />
+      )}
       {/* Sidebar */}
       <aside
-        className="flex flex-col border-r transition-all duration-300 z-20 shrink-0"
+        className={`flex flex-col border-r transition-all duration-300 z-50 shrink-0 ${
+          isMobile ? `fixed inset-y-0 left-0 w-[240px] ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}` : ''
+        }`}
         style={{
           backgroundColor: 'var(--wl-secondary, #1E293B)',
           borderColor: 'rgba(255,255,255,0.05)',
-          width: collapsed ? '64px' : '240px',
+          width: isMobile ? 240 : collapsed ? 64 : 240,
         }}
       >
         <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
@@ -118,8 +134,13 @@ export default function WLLayout() {
           >
             {branding.app_name.charAt(0).toUpperCase()}
           </div>
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <span className="text-sm font-bold text-white truncate">{branding.app_name}</span>
+          )}
+          {isMobile && (
+            <button onClick={() => setMobileOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/10">
+              <X className="h-4 w-4 text-white/60" />
+            </button>
           )}
         </div>
 
@@ -131,6 +152,7 @@ export default function WLLayout() {
                 key={item.to}
                 to={path}
                 end={item.end}
+                onClick={() => isMobile && setMobileOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm transition-all ${
                     isActive ? 'text-white font-medium' : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -141,7 +163,7 @@ export default function WLLayout() {
                 })}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {(!collapsed || isMobile) && <span>{item.label}</span>}
               </NavLink>
             );
           })}
@@ -171,10 +193,10 @@ export default function WLLayout() {
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header
-          className="sticky top-0 z-10 border-b px-6 py-3 flex items-center justify-between"
+          className="sticky top-0 z-10 border-b px-4 sm:px-6 py-3 flex items-center justify-between"
           style={{ backgroundColor: 'var(--wl-bg)', borderColor: 'rgba(255,255,255,0.05)' }}
         >
-          <span className="text-sm font-semibold text-white/80">Portal Administrativo</span>
+          <span className="text-sm font-semibold text-white/80">{isMobile && <span className="inline-block w-8" />}Portal Administrativo</span>
           <div className="flex items-center gap-3">
             <span className="text-xs text-white/50 hidden sm:block">{user?.email}</span>
             <div
@@ -185,7 +207,7 @@ export default function WLLayout() {
             </div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
           <Outlet context={{ branding, wlLicenseId }} />
         </div>
       </main>
