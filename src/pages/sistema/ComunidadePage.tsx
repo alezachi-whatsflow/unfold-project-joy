@@ -192,7 +192,7 @@ const ComunidadePage = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

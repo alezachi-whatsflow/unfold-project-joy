@@ -191,7 +191,7 @@ const OnboardingPage = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

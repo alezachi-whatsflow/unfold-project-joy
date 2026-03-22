@@ -221,7 +221,7 @@ const ManualSistemaPage = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

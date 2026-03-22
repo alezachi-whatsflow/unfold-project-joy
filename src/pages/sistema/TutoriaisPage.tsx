@@ -195,7 +195,7 @@ const TutoriaisPage = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

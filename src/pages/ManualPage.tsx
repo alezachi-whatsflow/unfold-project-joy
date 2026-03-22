@@ -60,7 +60,7 @@ const ManualPage = () => {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 
