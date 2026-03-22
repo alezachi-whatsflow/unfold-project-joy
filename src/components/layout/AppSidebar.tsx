@@ -135,7 +135,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
             )}
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="start" side="top" className="w-48 mb-1">
           <DropdownMenuItem onClick={() => navigate("/perfil")}><User className="mr-2 h-4 w-4" /> Meu Perfil</DropdownMenuItem>
           {isNexusUser && (
             <DropdownMenuItem onClick={() => navigate("/nexus")}>

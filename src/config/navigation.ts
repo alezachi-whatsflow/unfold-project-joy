@@ -25,7 +25,7 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'vendas',      label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',       module: 'vendas'        },
       { id: 'ia',          label: 'IA Composable', icon: 'Brain',           route: '/ia',           module: 'dashboard'     },
       { id: 'conversas',   label: 'Conversas',     icon: 'MessageSquare',   route: '/conversas',    module: 'mensageria'    },
-      { id: 'mensageria',  label: 'Mensageria',    icon: 'MessageCircle',   route: '/mensageria',   module: 'mensageria'    },
+      { id: 'mensageria',  label: 'Caixa de Entrada', icon: 'MessageCircle', route: '/mensageria',   module: 'mensageria'    },
     ],
   },
   {

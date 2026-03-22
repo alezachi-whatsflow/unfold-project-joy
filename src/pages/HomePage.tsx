@@ -78,7 +78,7 @@ export default function HomePage() {
     { icon: Users, label: "Clientes", route: "/customers", group: 2 },
     { icon: Package, label: "Produtos", route: "/products", group: 2 },
     { icon: ShoppingCart, label: "Vendas", route: "/vendas", group: 2 },
-    { icon: MessageSquare, label: "Mensageria", route: "/whatsapp", group: 2 },
+    { icon: MessageSquare, label: "Caixa de Entrada", route: "/whatsapp", group: 2 },
     { icon: LayoutDashboard, label: "Dashboard", route: "/dashboard", group: 3 },
     { icon: Radar, label: "Int. Digital", route: "/intelligence", group: 3 },
     { icon: FileBarChart, label: "Relatórios", route: "/reports", group: 3 },
@@ -97,7 +97,7 @@ export default function HomePage() {
     { icon: Users, label: "Clientes", route: "/customers" },
     { icon: Package, label: "Produtos", route: "/products" },
     { icon: ShoppingCart, label: "Vendas", route: "/vendas" },
-    { icon: MessageSquare, label: "Mensageria", route: "/whatsapp" },
+    { icon: MessageSquare, label: "Caixa de Entrada", route: "/whatsapp" },
   ];
 
   const analyticsLinks = [
