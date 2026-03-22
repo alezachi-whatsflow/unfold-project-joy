@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
