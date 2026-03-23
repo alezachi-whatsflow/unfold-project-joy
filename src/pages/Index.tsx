@@ -1,14 +1,19 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { MessageSquare, Clock, CheckCircle2, DollarSign, ArrowUp, ArrowDown, Users, Phone, BellRing, Activity } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { MessageSquare, Clock, CheckCircle2, DollarSign, ArrowUp, ArrowDown, Users, Phone, BellRing, Activity, CalendarClock, AlertTriangle, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useUserTenants } from "@/hooks/useUserTenants";
+import { useLicenseLimits } from "@/hooks/useLicenseLimits";
 
 export default function Index() {
   const { slug } = useParams();
   const [period, setPeriod] = useState("7d");
+  const { data: userTenants } = useUserTenants();
+  const tenantId = userTenants?.[0]?.tenant_id;
+  const { data: license } = useLicenseLimits(tenantId);
 
   // Fake KPI Data
   const kpis = {
@@ -50,6 +55,50 @@ export default function Index() {
           </Select>
         </div>
       </div>
+
+      {/* LICENSE / TRIAL BANNER */}
+      {license?.validUntil && (() => {
+        const daysLeft = Math.ceil((new Date(license.validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const isTrial = license.status === "trial";
+        const isExpired = daysLeft <= 0;
+        const showBanner = daysLeft <= 15;
+
+        if (!showBanner) return null;
+
+        const borderColor = isExpired ? "border-rose-500/30" : "border-amber-500/30";
+        const bgColor = isExpired ? "bg-rose-500/10" : "bg-amber-500/10";
+        const textColor = isExpired ? "text-rose-500" : "text-amber-500";
+        const Icon = isExpired ? AlertTriangle : CalendarClock;
+
+        return (
+          <Link to={`/app/${slug}/assinatura`} className="block">
+            <div className={`${bgColor} ${borderColor} border p-4 rounded-xl flex items-center justify-between hover:brightness-110 transition-all cursor-pointer`}>
+              <div className="flex items-center gap-3">
+                <Icon className={`h-5 w-5 ${textColor}`} />
+                <div>
+                  <span className={`text-sm font-bold ${textColor}`}>
+                    {isExpired
+                      ? "Sua licença expirou"
+                      : isTrial
+                        ? `Trial: ${daysLeft} dias restantes`
+                        : `Licença vence em ${daysLeft} dias`}
+                  </span>
+                  <p className={`text-xs ${textColor} opacity-80 mt-0.5`}>
+                    {isExpired
+                      ? "Entre em contato para renovar."
+                      : isTrial
+                        ? "Contrate um plano para continuar usando após o período de avaliação."
+                        : "Renove para evitar suspensão."}
+                  </p>
+                </div>
+              </div>
+              <span className={`text-xs font-semibold ${textColor} hidden sm:block`}>
+                Ver licença →
+              </span>
+            </div>
+          </Link>
+        );
+      })()}
 
       {/* ROW 1: KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
