@@ -81,71 +81,134 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [firstError, setFirstError] = useState<string | null>(null);
 
+  // ── Robust CSV parser: handles any separator, quoted fields, accented headers ──
+  function splitCSVLine(line: string, sep: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (ch === sep && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  function detectSeparator(headerLine: string): string {
+    // Try tab first (TSV), then semicolon, then comma
+    const tabs = (headerLine.match(/\t/g) || []).length;
+    if (tabs >= 3) return '\t';
+    const semicolons = (headerLine.match(/;/g) || []).length;
+    const commas = (headerLine.match(/,/g) || []).length;
+    return semicolons > commas ? ';' : ',';
+  }
+
+  function normalizeHeader(h: string): string {
+    return h.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s/]/g, '').trim().toUpperCase();
+  }
+
+  // Column name aliases: maps alternative names to canonical names
+  const COLUMN_ALIASES: Record<string, string[]> = {
+    'EMPRESA / TITULAR': ['EMPRESA', 'EMPRESA / TITULAR', 'NOME', 'COMPANY', 'RAZAO SOCIAL', 'TITULAR'],
+    'EMAIL': ['EMAIL', 'E-MAIL', 'MAIL'],
+    'WHITELABEL': ['WHITELABEL', 'WHITE LABEL', 'WL', 'PARCEIRO'],
+    'STATUS': ['STATUS', 'SITUACAO'],
+    'ATIVACAO': ['ATIVACAO', 'ATIVAÇÃO', 'DATA ATIVACAO', 'INICIO'],
+    'CANCELADO': ['CANCELADO', 'DATA CANCELAMENTO', 'CANCELAMENTO'],
+    'BLOQUEIO': ['BLOQUEIO', 'DATA BLOQUEIO', 'BLOQUEADO'],
+    'DESBLOQUEIO': ['DESBLOQUEIO', 'DATA DESBLOQUEIO'],
+    'VENCIMENTO': ['VENCIMENTO', 'DATA VENCIMENTO', 'VALIDADE', 'EXPIRA'],
+    'DISP. OFICIAL': ['DISP. OFICIAL', 'DISP OFICIAL', 'DISPOSITIVOS OFICIAL', 'OFICIAL'],
+    'DISP. NAO OFICIAL': ['DISP. NAO OFICIAL', 'DISP NAO OFICIAL', 'DISPOSITIVOS NAO OFICIAL', 'NAO OFICIAL'],
+    'ATENDENTES': ['ATENDENTES', 'ATENDENTE', 'QTD ATENDENTES'],
+    'ADICIONAL': ['ADCIONAL', 'ADICIONAL', 'VALOR ADICIONAL'],
+    'CHECKOUT': ['CHECKOUT', 'PLATAFORMA'],
+    'RECEITA': ['RECEITA', 'TIPO RECEITA', 'CICLO'],
+    'TIPO PAGAMENTO': ['TIPO PAGAMENTO', 'PAGAMENTO', 'FORMA PAGAMENTO'],
+    'CONDICAO': ['CONDICAO', 'CONDIÇÃO', 'COND PAGAMENTO'],
+    'VALOR COBRANCA': ['VALOR COBRANCA', 'VALOR COBRANÇA', 'VALOR', 'MRR', 'MENSALIDADE'],
+    'AUDITOR': ['AUDITOR', 'IA AUDITOR', 'HAS AUDITOR'],
+    'COPILOTO': ['COPILOTO', 'IA COPILOTO', 'HAS COPILOTO'],
+    'CLOSER': ['CLOSER', 'IA CLOSER', 'HAS CLOSER'],
+  };
+
   function parseCSV(text: string) {
-    const lines = text.split('\n').filter((l) => l.trim());
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
     if (lines.length < 2) { setErrors(['Arquivo vazio ou sem dados']); return; }
 
-    // Auto-detect separator: count ; vs , in first line
-    const firstLine = lines[0];
-    const semicolons = (firstLine.match(/;/g) || []).length;
-    const commas = (firstLine.match(/,/g) || []).length;
-    const separator = semicolons >= commas ? ';' : ',';
+    const separator = detectSeparator(lines[0]);
+    const rawHeader = splitCSVLine(lines[0], separator);
+    const header = rawHeader.map(normalizeHeader);
 
-    const header = lines[0].split(separator).map((h) => h.trim().replace(/^["']+|["']+$/g, '').toUpperCase());
-    const parsed: ParsedRow[] = [];
-    const errs: string[] = [];
-    console.log('[CSV Import] Separator:', JSON.stringify(separator), '| Columns:', header.length, '| Header:', JSON.stringify(header.slice(0, 6)));
-    // Also log first data line for debugging
-    if (lines.length > 1) {
-      const sample = lines[1].split(separator);
-      console.log('[CSV Import] First row cols:', sample.length, '| Sample:', JSON.stringify(sample.slice(0, 6)));
+    // Build column index map using aliases
+    const colIndex: Record<string, number> = {};
+    for (const [canonical, aliases] of Object.entries(COLUMN_ALIASES)) {
+      for (const alias of aliases) {
+        const norm = normalizeHeader(alias);
+        const idx = header.findIndex(h => h === norm);
+        if (idx >= 0 && !(canonical in colIndex)) {
+          colIndex[canonical] = idx;
+          break;
+        }
+      }
     }
 
+    console.log('[CSV Import] Separator:', JSON.stringify(separator), '| Columns:', header.length);
+    console.log('[CSV Import] Header:', header.join(' | '));
+    console.log('[CSV Import] Mapped columns:', JSON.stringify(colIndex));
+
+    const parsed: ParsedRow[] = [];
+    const errs: string[] = [];
+
     for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(separator).map((c) => c.trim());
+      const cols = splitCSVLine(lines[i], separator);
       try {
-        const get = (name: string) => {
-          let idx = header.indexOf(name);
-          // Fallback: strip accents and special chars for comparison
-          if (idx < 0) {
-            const clean = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s/]/g, '').trim();
-            const target = clean(name);
-            idx = header.findIndex(h => clean(h) === target);
-          }
-          return idx >= 0 ? cols[idx] || '' : '';
+        const get = (canonical: string) => {
+          const idx = colIndex[canonical];
+          return idx !== undefined && idx < cols.length ? cols[idx].replace(/^["']+|["']+$/g, '').trim() : '';
         };
-        const company = get('EMPRESA / TITULAR') || get('EMPRESA');
-        if (!company) continue; // skip empty rows
+
+        const company = get('EMPRESA / TITULAR');
+        if (!company) continue;
 
         parsed.push({
           whitelabel: get('WHITELABEL'),
           company_name: company,
           email: get('EMAIL'),
           status: STATUS_MAP[get('STATUS')] || 'active',
-          activated_at: get('ATIVAÇÃO') || get('ATIVACAO'),
+          activated_at: get('ATIVACAO'),
           cancelled_at: get('CANCELADO'),
           blocked_at: get('BLOQUEIO'),
           unblocked_at: get('DESBLOQUEIO'),
           expires_at: get('VENCIMENTO'),
           devices_official: parseInt(get('DISP. OFICIAL')) || 0,
-          devices_unofficial: parseInt(get('DISP. NÃO OFICIAL') || get('DISP. NAO OFICIAL')) || 0,
+          devices_unofficial: parseInt(get('DISP. NAO OFICIAL')) || 0,
           attendants: parseInt(get('ATENDENTES')) || 1,
-          additional_value: parseFloat(get('ADCIONAL') || get('ADICIONAL')) || 0,
+          additional_value: parseFloat(get('ADICIONAL')) || 0,
           checkout_platform: get('CHECKOUT'),
           billing_cycle: get('RECEITA'),
           payment_method: get('TIPO PAGAMENTO'),
-          payment_condition: get('CONDIÇÃO') || get('CONDICAO'),
-          monthly_value: parseFloat(get('VALOR COBRANÇA') || get('VALOR COBRANCA') || '0') || 0,
-          has_ia_auditor: get('AUDITOR').toUpperCase() === 'SIM' || get('AUDITOR') === '1',
-          has_ia_copiloto: get('COPILOTO').toUpperCase() === 'SIM' || get('COPILOTO') === '1',
-          has_ia_closer: get('CLOSER').toUpperCase() === 'SIM' || get('CLOSER') === '1',
+          payment_condition: get('CONDICAO'),
+          monthly_value: parseFloat(get('VALOR COBRANCA').replace(',', '.') || '0') || 0,
+          has_ia_auditor: ['SIM', '1', 'TRUE'].includes(get('AUDITOR').toUpperCase()),
+          has_ia_copiloto: ['SIM', '1', 'TRUE'].includes(get('COPILOTO').toUpperCase()),
+          has_ia_closer: ['SIM', '1', 'TRUE'].includes(get('CLOSER').toUpperCase()),
         });
       } catch {
         errs.push(`Linha ${i + 1}: erro de parsing`);
       }
     }
-    if (parsed.length === 0 && errs.length === 0) {
-      errs.push(`Nenhum registro encontrado. Colunas detectadas: ${header.slice(0, 5).join(', ')}...`);
+
+    if (parsed.length === 0) {
+      errs.push(`Nenhum registro encontrado. Separador: "${separator}" | Colunas: ${header.slice(0, 5).join(', ')}`);
     }
     setRows(parsed);
     setErrors(errs);
