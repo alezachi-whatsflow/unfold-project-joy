@@ -86,7 +86,7 @@ export default function MetaChannelsTab() {
               <MessageSquare className="h-5 w-5 text-[#25D366]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">WhatsApp API Oficial</h2>
+              <h2 className="text-lg font-bold">WhatsApp API Cloud Meta</h2>
               <p className="text-xs text-muted-foreground">Integração via Meta Business — envie e receba mensagens pela API oficial</p>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function MetaChannelsTab() {
             className="bg-[#25D366] hover:bg-[#128C7E] text-white"
           >
             {connecting === "WABA" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <MessageSquare className="h-4 w-4 mr-2" />}
-            Conectar WhatsApp
+            Conectar com WhatsApp API Cloud Meta
           </Button>
         </div>
 
