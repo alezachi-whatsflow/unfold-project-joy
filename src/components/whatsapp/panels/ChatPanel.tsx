@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock } from "lucide-react";
+import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { QuickLeadDrawer } from "../QuickLeadDrawer";
 import type { Conversation } from "@/data/mockConversations";
 import type { Message } from "@/data/mockMessages";
 import WaAvatar from "../shared/Avatar";
@@ -25,11 +26,13 @@ const quickActions = [
   { id: "ai", label: "IA: ON", icon: Bot, bg: "rgba(124,58,237,0.2)", text: "#A78BFA", border: "rgba(124,58,237,0.4)" },
   { id: "tag", label: "Tag", icon: Tag, bg: "rgba(14,165,233,0.15)", text: "#38BDF8", border: "rgba(14,165,233,0.4)" },
   { id: "notes", label: "Notas", icon: StickyNote, bg: "rgba(100,116,139,0.15)", text: "#94A3B8", border: "rgba(100,116,139,0.4)" },
+  { id: "lead", label: "Criar Lead", icon: UserPlus, bg: "rgba(37,211,102,0.15)", text: "#25D366", border: "rgba(37,211,102,0.3)" },
   { id: "more", label: "Mais", icon: MoreHorizontal, bg: "rgba(100,116,139,0.1)", text: "#8696A0", border: "rgba(100,116,139,0.3)" },
 ];
 
 export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
+  const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
 
   // Empty state
   if (!conversation) {
@@ -91,11 +94,13 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
           {quickActions.map((a) => (
             <button
               key={a.id}
+              onClick={() => { if (a.id === "lead") setLeadDrawerOpen(true); }}
               className={cn(
                 "msg-pill flex items-center gap-1.5 shrink-0",
                 a.id === "resolve" && "pill-green",
                 a.id === "ai" && "pill-blue",
                 a.id === "transfer" && "pill-orange",
+                a.id === "lead" && "pill-green",
               )}
             >
               <a.icon size={13} />
@@ -110,6 +115,15 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
 
       {/* Input */}
       <ChatInput onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+
+      {/* Quick Lead Drawer */}
+      <QuickLeadDrawer
+        open={leadDrawerOpen}
+        onClose={() => setLeadDrawerOpen(false)}
+        contactName={c.name}
+        contactPhone={c.phone}
+        conversationId={c.id}
+      />
     </div>
   );
 }
