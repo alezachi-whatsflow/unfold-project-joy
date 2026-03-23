@@ -93,10 +93,13 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
       const cols = lines[i].split(';').map((c) => c.trim());
       try {
         const get = (name: string) => {
-          const idx = header.indexOf(name);
+          // Try exact match first, then fuzzy match (handles encoding issues)
+          let idx = header.indexOf(name);
+          if (idx < 0) idx = header.findIndex(h => h.replace(/[^\w\s/]/g, '').trim() === name.replace(/[^\w\s/]/g, '').trim());
+          if (idx < 0) idx = header.findIndex(h => h.includes(name.slice(0, 6)));
           return idx >= 0 ? cols[idx] || '' : '';
         };
-        const company = get('EMPRESA / TITULAR') || get('EMPRESA');
+        const company = get('EMPRESA / TITULAR') || get('EMPRESA') || get('EMPRES');
         if (!company) continue; // skip empty rows
 
         parsed.push({
@@ -126,6 +129,9 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
         errs.push(`Linha ${i + 1}: erro de parsing`);
       }
     }
+    if (parsed.length === 0 && errs.length === 0) {
+      errs.push(`Nenhum registro encontrado. Colunas detectadas: ${header.slice(0, 5).join(', ')}...`);
+    }
     setRows(parsed);
     setErrors(errs);
   }
@@ -134,7 +140,13 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => parseCSV(ev.target?.result as string);
+    reader.onload = (ev) => {
+      let text = ev.target?.result as string;
+      // Remove BOM if present
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      parseCSV(text);
+    };
+    // Try UTF-8 first; if file is from Excel it may be latin1
     reader.readAsText(file, 'utf-8');
   }
 
