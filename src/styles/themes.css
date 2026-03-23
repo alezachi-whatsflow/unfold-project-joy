@@ -1,286 +1,283 @@
 /* =============================================
    WHATSFLOW — SISTEMA DE TEMAS PROFISSIONAIS
-   Referência: Argon Dashboard (Creative Tim)
+   v3.0 — Deep Sapphire / Midnight Slate / Obsidian Forest
    ============================================= */
 
 /* -----------------------------------------------
-   TEMA 1: ARGON (padrão) — Light SaaS Premium
-   Baseado no Argon Dashboard
+   TEMA 1: DEEP SAPPHIRE
+   Azul profundo — estilo cockpit noturno
    ----------------------------------------------- */
 [data-theme="sapphire"] {
-  /* iOS 26 Glass sidebar */
-  --sidebar-glass-rgb: 255,255,255;
-  --sidebar-glass-alpha: 0.60;
-  --background: 233 67% 98%;
-  --foreground: 216 33% 30%;
-  --card: 0 0% 100%;
-  --card-foreground: 216 33% 30%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 216 33% 30%;
-  --primary: 233 73% 63%;
+  --sidebar-glass-rgb: 10,22,40;
+  --sidebar-glass-alpha: 0.70;
+  --background: 220 50% 7%;
+  --foreground: 216 40% 92%;
+  --card: 220 45% 10%;
+  --card-foreground: 216 40% 92%;
+  --popover: 220 45% 12%;
+  --popover-foreground: 216 40% 92%;
+  --primary: 213 60% 57%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 14% 89%;
-  --secondary-foreground: 216 33% 30%;
-  --muted: 210 16% 93%;
-  --muted-foreground: 220 16% 48%;
-  --accent: 233 73% 63%;
+  --secondary: 220 40% 18%;
+  --secondary-foreground: 216 30% 75%;
+  --muted: 220 35% 15%;
+  --muted-foreground: 213 30% 50%;
+  --accent: 213 60% 57%;
   --accent-foreground: 0 0% 100%;
   --destructive: 349 89% 58%;
   --destructive-foreground: 0 0% 100%;
-  --border: 210 18% 87%;
-  --input: 210 14% 83%;
-  --ring: 233 73% 63%;
+  --border: 220 35% 18%;
+  --input: 220 40% 20%;
+  --ring: 213 60% 57%;
   --radius: 0.5rem;
   --success: 152 69% 49%;
   --success-foreground: 0 0% 100%;
   --warning: 12 96% 62%;
   --warning-foreground: 0 0% 100%;
 
-  --chart-1: 233 73% 63%;
+  --chart-1: 213 60% 57%;
   --chart-2: 152 69% 49%;
   --chart-3: 188 93% 50%;
   --chart-4: 12 96% 62%;
   --chart-5: 349 89% 58%;
 
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 216 33% 30%;
-  --sidebar-primary: 233 73% 63%;
+  --sidebar-background: 220 55% 5%;
+  --sidebar-foreground: 213 30% 65%;
+  --sidebar-primary: 213 60% 57%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 233 67% 97%;
-  --sidebar-accent-foreground: 233 73% 63%;
-  --sidebar-border: 210 18% 93%;
-  --sidebar-ring: 233 73% 63%;
+  --sidebar-accent: 220 40% 15%;
+  --sidebar-accent-foreground: 216 40% 92%;
+  --sidebar-border: 220 35% 14%;
+  --sidebar-ring: 213 60% 57%;
 
-  /* Extended theme tokens — Argon Light */
-  --bg-card-glass: rgba(255, 255, 255, 0.80);
-  --bg-card-hover: rgba(255, 255, 255, 0.95);
-  --bg-chat: #f8f9fe;
-  --bg-bubble-in: rgba(255, 255, 255, 0.95);
-  --bg-bubble-out: rgba(94, 114, 228, 0.12);
-  --accent-primary: #5e72e4;
-  --accent-primary-bg: rgba(94, 114, 228, 0.10);
+  /* Extended tokens */
+  --bg-card-glass: rgba(15, 30, 56, 0.80);
+  --bg-card-hover: rgba(15, 30, 56, 0.95);
+  --bg-chat: #0a1628;
+  --bg-bubble-in: #152848;
+  --bg-bubble-out: rgba(74, 144, 217, 0.18);
+  --accent-primary: #4a90d9;
+  --accent-primary-bg: rgba(74, 144, 217, 0.15);
   --accent-secondary: #2dce89;
-  --accent-secondary-bg: rgba(45, 206, 137, 0.10);
-  --border-subtle: rgba(0, 0, 0, 0.05);
-  --border-card: rgba(0, 0, 0, 0.05);
-  --border-sidebar: rgba(0, 0, 0, 0.05);
-  --section-accent: #5e72e4;
+  --accent-secondary-bg: rgba(45, 206, 137, 0.12);
+  --border-subtle: rgba(74, 144, 217, 0.12);
+  --border-card: rgba(74, 144, 217, 0.12);
+  --border-sidebar: rgba(74, 144, 217, 0.08);
+  --section-accent: #4a90d9;
   --glass-blur: 12px;
-  --glass-border: rgba(0, 0, 0, 0.05);
-  --text-bubble-in: #344767;
-  --text-bubble-out: #344767;
+  --glass-border: rgba(74, 144, 217, 0.12);
+  --text-bubble-in: #e8eef8;
+  --text-bubble-out: #b5d4f4;
 
-  /* Glass overlay colors for light mode */
-  --glass-overlay-rgb: 0, 0, 0;
+  /* Glass overlay */
+  --glass-overlay-rgb: 255, 255, 255;
 
-  /* WhatsApp theme overrides — Light Sapphire */
-  --wa-bg-deep: #EEF0F8;
-  --wa-bg-panel: #F4F5FB;
-  --wa-bg-chat: #E8EAF6;
-  --wa-bg-header: #F0F1FA;
-  --wa-bg-input: #FFFFFF;
-  --wa-bg-hover: rgba(94, 114, 228, 0.08);
-  --wa-bg-selected: rgba(94, 114, 228, 0.12);
-  --wa-bg-msg-out: rgba(94, 114, 228, 0.14);
-  --wa-bg-msg-in: #FFFFFF;
-  --wa-bg-system: rgba(94, 114, 228, 0.08);
-  --wa-text-primary: #344767;
-  --wa-text-secondary: #67748E;
-  --wa-text-tertiary: #8392AB;
-  --wa-text-link: #5e72e4;
-  --wa-green: #5e72e4;
-  --wa-green-dark: #4A5BC7;
+  /* WhatsApp theme overrides — Deep Sapphire */
+  --wa-bg-deep: #071020;
+  --wa-bg-panel: #0f1e38;
+  --wa-bg-chat: #0a1628;
+  --wa-bg-header: #0f1e38;
+  --wa-bg-input: #152848;
+  --wa-bg-hover: rgba(74, 144, 217, 0.12);
+  --wa-bg-selected: rgba(74, 144, 217, 0.18);
+  --wa-bg-msg-out: rgba(74, 144, 217, 0.18);
+  --wa-bg-msg-in: #152848;
+  --wa-bg-system: rgba(74, 144, 217, 0.10);
+  --wa-text-primary: #e8eef8;
+  --wa-text-secondary: #7a9cc4;
+  --wa-text-tertiary: #3d5a7a;
+  --wa-text-link: #4a90d9;
+  --wa-green: #4a90d9;
+  --wa-green-dark: #2d6bb5;
   --wa-teal: #11CDEF;
-  --wa-blue-read: #5e72e4;
-  --wa-border: #E0E3F0;
-  --wa-border-input: #D2D6E8;
-  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%235e72e4' fill-opacity='0.06'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  --wa-blue-read: #4a90d9;
+  --wa-border: rgba(74, 144, 217, 0.12);
+  --wa-border-input: rgba(74, 144, 217, 0.22);
+  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a90d9' fill-opacity='0.06'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* -----------------------------------------------
-   TEMA 2: ARGON DARK
-   Dark mode do Argon Dashboard
+   TEMA 2: MIDNIGHT SLATE
+   Ardósia quente — máximo conforto noturno
    ----------------------------------------------- */
 [data-theme="slate"] {
-  /* iOS 26 Glass sidebar (dark) */
-  --sidebar-glass-rgb: 15,22,50;
+  --sidebar-glass-rgb: 14,12,10;
   --sidebar-glass-alpha: 0.70;
-  --background: 226 58% 11%;
-  --foreground: 210 40% 90%;
-  --card: 224 50% 14%;
-  --card-foreground: 210 40% 90%;
-  --popover: 224 50% 16%;
-  --popover-foreground: 210 40% 90%;
-  --primary: 233 73% 63%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 224 40% 20%;
-  --secondary-foreground: 210 30% 75%;
-  --muted: 224 35% 17%;
-  --muted-foreground: 220 20% 55%;
-  --accent: 233 73% 63%;
+  --background: 20 12% 7%;
+  --foreground: 30 20% 92%;
+  --card: 20 12% 10%;
+  --card-foreground: 30 20% 92%;
+  --popover: 20 12% 12%;
+  --popover-foreground: 30 20% 92%;
+  --primary: 25 50% 60%;
+  --primary-foreground: 20 12% 7%;
+  --secondary: 20 15% 16%;
+  --secondary-foreground: 30 15% 65%;
+  --muted: 20 12% 14%;
+  --muted-foreground: 25 15% 45%;
+  --accent: 25 50% 60%;
   --accent-foreground: 0 0% 100%;
   --destructive: 349 89% 58%;
   --destructive-foreground: 0 0% 100%;
-  --border: 224 35% 20%;
-  --input: 224 40% 22%;
-  --ring: 233 73% 63%;
+  --border: 20 12% 16%;
+  --input: 20 15% 18%;
+  --ring: 25 50% 60%;
   --radius: 0.5rem;
   --success: 152 69% 49%;
   --success-foreground: 0 0% 100%;
   --warning: 12 96% 62%;
   --warning-foreground: 0 0% 100%;
 
-  --chart-1: 233 73% 63%;
+  --chart-1: 25 50% 60%;
   --chart-2: 152 69% 49%;
   --chart-3: 188 93% 50%;
   --chart-4: 12 96% 62%;
   --chart-5: 349 89% 58%;
 
-  --sidebar-background: 226 60% 8%;
-  --sidebar-foreground: 210 30% 75%;
-  --sidebar-primary: 233 73% 63%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 224 40% 18%;
-  --sidebar-accent-foreground: 210 40% 90%;
-  --sidebar-border: 224 35% 16%;
-  --sidebar-ring: 233 73% 63%;
+  --sidebar-background: 20 15% 4%;
+  --sidebar-foreground: 30 15% 60%;
+  --sidebar-primary: 25 50% 60%;
+  --sidebar-primary-foreground: 20 12% 7%;
+  --sidebar-accent: 20 12% 14%;
+  --sidebar-accent-foreground: 30 20% 92%;
+  --sidebar-border: 20 12% 12%;
+  --sidebar-ring: 25 50% 60%;
 
-  --bg-card-glass: rgba(23, 33, 62, 0.80);
-  --bg-card-hover: rgba(23, 33, 62, 0.95);
-  --bg-chat: rgba(10, 18, 40, 0.90);
-  --bg-bubble-in: rgba(23, 33, 62, 0.95);
-  --bg-bubble-out: rgba(94, 114, 228, 0.20);
-  --accent-primary: #5e72e4;
-  --accent-primary-bg: rgba(94, 114, 228, 0.15);
+  --bg-card-glass: rgba(26, 23, 20, 0.80);
+  --bg-card-hover: rgba(26, 23, 20, 0.95);
+  --bg-chat: #12100e;
+  --bg-bubble-in: #221e1a;
+  --bg-bubble-out: rgba(200, 149, 106, 0.15);
+  --accent-primary: #c8956a;
+  --accent-primary-bg: rgba(200, 149, 106, 0.12);
   --accent-secondary: #2dce89;
-  --accent-secondary-bg: rgba(45, 206, 137, 0.15);
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-card: rgba(94, 114, 228, 0.12);
-  --border-sidebar: rgba(94, 114, 228, 0.08);
-  --section-accent: #5e72e4;
+  --accent-secondary-bg: rgba(45, 206, 137, 0.12);
+  --border-subtle: rgba(200, 149, 106, 0.10);
+  --border-card: rgba(200, 149, 106, 0.10);
+  --border-sidebar: rgba(200, 149, 106, 0.07);
+  --section-accent: #c8956a;
   --glass-blur: 10px;
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --text-bubble-in: #E5E7EB;
-  --text-bubble-out: #C4D0FF;
+  --glass-border: rgba(200, 149, 106, 0.10);
+  --text-bubble-in: #f0ece6;
+  --text-bubble-out: #e8c4a0;
 
-  /* Glass overlay colors for dark mode */
+  /* Glass overlay */
   --glass-overlay-rgb: 255, 255, 255;
 
-  /* WhatsApp theme overrides — Slate (Argon Dark / Deep Navy) */
-  --wa-bg-deep: #0A0F2E;
-  --wa-bg-panel: #111640;
-  --wa-bg-chat: #080D28;
-  --wa-bg-header: #131845;
-  --wa-bg-input: #1A1F4E;
-  --wa-bg-hover: rgba(94, 114, 228, 0.12);
-  --wa-bg-selected: rgba(94, 114, 228, 0.18);
-  --wa-bg-msg-out: rgba(94, 114, 228, 0.22);
-  --wa-bg-msg-in: rgba(22, 28, 65, 0.95);
-  --wa-bg-system: rgba(94, 114, 228, 0.10);
-  --wa-text-primary: #E2E5F1;
-  --wa-text-secondary: #8B95C9;
-  --wa-text-tertiary: #5C6699;
-  --wa-text-link: #7B8DEF;
-  --wa-green: #5e72e4;
-  --wa-green-dark: #4A5BC7;
-  --wa-teal: #11CDEF;
-  --wa-blue-read: #7B8DEF;
-  --wa-border: rgba(94, 114, 228, 0.15);
-  --wa-border-input: rgba(94, 114, 228, 0.25);
-  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%235e72e4' fill-opacity='0.08'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* WhatsApp theme overrides — Midnight Slate */
+  --wa-bg-deep: #0e0c0a;
+  --wa-bg-panel: #1a1714;
+  --wa-bg-chat: #12100e;
+  --wa-bg-header: #1a1714;
+  --wa-bg-input: #221e1a;
+  --wa-bg-hover: rgba(200, 149, 106, 0.10);
+  --wa-bg-selected: rgba(200, 149, 106, 0.15);
+  --wa-bg-msg-out: rgba(200, 149, 106, 0.15);
+  --wa-bg-msg-in: #221e1a;
+  --wa-bg-system: rgba(200, 149, 106, 0.08);
+  --wa-text-primary: #f0ece6;
+  --wa-text-secondary: #9a8878;
+  --wa-text-tertiary: #5a4c40;
+  --wa-text-link: #c8956a;
+  --wa-green: #c8956a;
+  --wa-green-dark: #a87048;
+  --wa-teal: #c8956a;
+  --wa-blue-read: #c8956a;
+  --wa-border: rgba(200, 149, 106, 0.10);
+  --wa-border-input: rgba(200, 149, 106, 0.20);
+  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8956a' fill-opacity='0.05'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* -----------------------------------------------
    TEMA 3: OBSIDIAN FOREST
-   Verde esmeralda no preto — identidade Whatsflow refinada
+   Verde esmeralda — identidade Whatsflow
    ----------------------------------------------- */
 [data-theme="forest"] {
-  /* iOS 26 Glass sidebar (forest) */
-  --sidebar-glass-rgb: 8,18,12;
-  --sidebar-glass-alpha: 0.65;
-  --background: 140 24% 4%;
-  --foreground: 153 100% 95%;
-  --card: 147 33% 10%;
-  --card-foreground: 153 100% 95%;
-  --popover: 147 33% 12%;
-  --popover-foreground: 153 100% 95%;
-  --primary: 157 92% 60%;
-  --primary-foreground: 140 24% 6%;
-  --secondary: 147 20% 14%;
-  --secondary-foreground: 153 40% 72%;
-  --muted: 147 18% 12%;
-  --muted-foreground: 147 25% 40%;
-  --accent: 157 83% 40%;
+  --sidebar-glass-rgb: 7,16,32;
+  --sidebar-glass-alpha: 0.70;
+  --background: 218 50% 7%;
+  --foreground: 140 20% 92%;
+  --card: 218 40% 10%;
+  --card-foreground: 140 20% 92%;
+  --popover: 218 40% 12%;
+  --popover-foreground: 140 20% 92%;
+  --primary: 145 72% 49%;
+  --primary-foreground: 218 50% 7%;
+  --secondary: 218 30% 16%;
+  --secondary-foreground: 140 20% 65%;
+  --muted: 218 25% 14%;
+  --muted-foreground: 140 15% 40%;
+  --accent: 145 72% 40%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 85% 55%;
   --destructive-foreground: 0 0% 98%;
-  --border: 147 18% 12%;
-  --input: 147 20% 16%;
-  --ring: 157 92% 60%;
+  --border: 218 25% 16%;
+  --input: 218 30% 18%;
+  --ring: 145 72% 49%;
   --radius: 0.75rem;
-  --success: 157 83% 40%;
+  --success: 145 72% 40%;
   --success-foreground: 0 0% 100%;
   --warning: 45 100% 55%;
   --warning-foreground: 45 10% 10%;
 
-  --chart-1: 157 92% 60%;
-  --chart-2: 157 83% 40%;
+  --chart-1: 145 72% 49%;
+  --chart-2: 145 72% 40%;
   --chart-3: 214 100% 64%;
   --chart-4: 45 100% 55%;
   --chart-5: 0 72% 51%;
 
-  --sidebar-background: 140 24% 3%;
-  --sidebar-foreground: 153 40% 72%;
-  --sidebar-primary: 157 92% 60%;
-  --sidebar-primary-foreground: 140 24% 6%;
-  --sidebar-accent: 147 18% 12%;
-  --sidebar-accent-foreground: 153 100% 95%;
-  --sidebar-border: 147 18% 10%;
-  --sidebar-ring: 157 92% 60%;
+  --sidebar-background: 218 55% 4%;
+  --sidebar-foreground: 140 20% 60%;
+  --sidebar-primary: 145 72% 49%;
+  --sidebar-primary-foreground: 218 50% 7%;
+  --sidebar-accent: 218 25% 14%;
+  --sidebar-accent-foreground: 140 20% 92%;
+  --sidebar-border: 218 25% 12%;
+  --sidebar-ring: 145 72% 49%;
 
-  --bg-card-glass: rgba(17, 34, 24, 0.70);
-  --bg-card-hover: rgba(17, 34, 24, 0.92);
-  --bg-chat: rgba(10, 15, 13, 0.92);
-  --bg-bubble-in: rgba(17, 34, 24, 0.92);
-  --bg-bubble-out: rgba(17, 188, 118, 0.18);
-  --accent-primary: #39F7B2;
-  --accent-primary-bg: rgba(57, 247, 178, 0.12);
-  --accent-secondary: #11BC76;
-  --accent-secondary-bg: rgba(17, 188, 118, 0.14);
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-card: rgba(57, 247, 178, 0.10);
-  --border-sidebar: rgba(57, 247, 178, 0.07);
-  --section-accent: #39F7B2;
+  --bg-card-glass: rgba(15, 30, 53, 0.80);
+  --bg-card-hover: rgba(15, 30, 53, 0.95);
+  --bg-chat: #0a1628;
+  --bg-bubble-in: #152540;
+  --bg-bubble-out: rgba(37, 211, 102, 0.15);
+  --accent-primary: #25d366;
+  --accent-primary-bg: rgba(37, 211, 102, 0.12);
+  --accent-secondary: #1aab52;
+  --accent-secondary-bg: rgba(26, 171, 82, 0.12);
+  --border-subtle: rgba(37, 211, 102, 0.08);
+  --border-card: rgba(37, 211, 102, 0.10);
+  --border-sidebar: rgba(37, 211, 102, 0.07);
+  --section-accent: #25d366;
   --glass-blur: 14px;
-  --glass-border: rgba(57, 247, 178, 0.08);
-  --text-bubble-in: #C8F0DE;
-  --text-bubble-out: #A7F5D4;
+  --glass-border: rgba(37, 211, 102, 0.08);
+  --text-bubble-in: #e8f0e8;
+  --text-bubble-out: #c8f0d8;
 
-  /* Glass overlay colors for dark mode */
+  /* Glass overlay */
   --glass-overlay-rgb: 255, 255, 255;
 
-  /* WhatsApp theme overrides — Forest (Obsidian Green) */
-  --wa-bg-deep: #060E0A;
-  --wa-bg-panel: #0C1A12;
-  --wa-bg-chat: #071009;
-  --wa-bg-header: #0E1E14;
-  --wa-bg-input: #132418;
-  --wa-bg-hover: rgba(57, 247, 178, 0.08);
-  --wa-bg-selected: rgba(57, 247, 178, 0.14);
-  --wa-bg-msg-out: rgba(17, 188, 118, 0.20);
-  --wa-bg-msg-in: rgba(17, 34, 24, 0.95);
-  --wa-bg-system: rgba(57, 247, 178, 0.08);
-  --wa-text-primary: #D4F0E3;
-  --wa-text-secondary: #6BAF8D;
-  --wa-text-tertiary: #4A8A6A;
-  --wa-text-link: #39F7B2;
-  --wa-green: #11BC76;
-  --wa-green-dark: #0E9960;
-  --wa-teal: #39F7B2;
-  --wa-blue-read: #39F7B2;
-  --wa-border: rgba(57, 247, 178, 0.10);
-  --wa-border-input: rgba(57, 247, 178, 0.20);
-  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2339F7B2' fill-opacity='0.05'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* WhatsApp theme overrides — Obsidian Forest */
+  --wa-bg-deep: #071020;
+  --wa-bg-panel: #0f1e35;
+  --wa-bg-chat: #0a1628;
+  --wa-bg-header: #0f1e35;
+  --wa-bg-input: #152540;
+  --wa-bg-hover: rgba(37, 211, 102, 0.10);
+  --wa-bg-selected: rgba(37, 211, 102, 0.15);
+  --wa-bg-msg-out: rgba(37, 211, 102, 0.15);
+  --wa-bg-msg-in: #152540;
+  --wa-bg-system: rgba(37, 211, 102, 0.08);
+  --wa-text-primary: #e8f0e8;
+  --wa-text-secondary: #8fa89a;
+  --wa-text-tertiary: #546a5e;
+  --wa-text-link: #25d366;
+  --wa-green: #25d366;
+  --wa-green-dark: #1aab52;
+  --wa-teal: #25d366;
+  --wa-blue-read: #25d366;
+  --wa-border: rgba(37, 211, 102, 0.08);
+  --wa-border-input: rgba(37, 211, 102, 0.16);
+  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2325d366' fill-opacity='0.05'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* -----------------------------------------------
