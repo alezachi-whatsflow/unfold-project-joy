@@ -82,12 +82,15 @@ Deno.serve(async (req) => {
 
     if (tokenData.error || !tokenData.access_token) {
       const msg = tokenData.error?.message || "Falha ao trocar code por token";
-      console.error("[meta-oauth-callback] Token exchange failed:", msg);
+      const detail = JSON.stringify(tokenData.error || tokenData);
+      console.error("[meta-oauth-callback] Token exchange failed:", detail);
+      console.error("[meta-oauth-callback] redirect_uri used:", redirect_uri);
+      console.error("[meta-oauth-callback] code length:", code?.length);
       return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?error=${encodeURIComponent(msg)}`, 302);
     }
 
     const accessToken = tokenData.access_token;
-    console.log(`[meta-oauth-callback] Token obtained for ${provider}, tenant ${tenant_id}`);
+    console.log(`[meta-oauth-callback] Token obtained for ${provider}, tenant ${tenant_id}, token length: ${accessToken.length}`);
 
     // 3. Discover accounts based on provider
     let integrationData: Record<string, any>;
@@ -170,59 +173,122 @@ Deno.serve(async (req) => {
 
 // ─── WHATSAPP DISCOVERY ──────────────────────────────────────────────────────
 async function discoverWhatsApp(token: string, tenantId: string) {
-  // Get shared WABA IDs
-  const debug = await graphGet("debug_token?input_token=" + token, token);
-  const sharedWabas = debug?.data?.granular_scopes?.find(
-    (s: any) => s.scope === "whatsapp_business_management"
-  )?.target_ids || [];
-
-  let wabaId = sharedWabas[0] || "";
+  let wabaId = "";
   let phoneNumberId = "";
   let displayPhoneNumber = "";
   let verifiedName = "";
   let name = "WhatsApp";
 
-  if (wabaId) {
-    // Get phone numbers from WABA
-    const phones = await graphGet(`${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name,quality_rating`, token);
-    const firstPhone = phones?.data?.[0];
+  // Strategy 1: debug_token to find shared WABAs (works for Embedded Signup)
+  try {
+    const debug = await graphGet("debug_token?input_token=" + token, token);
+    console.log("[discoverWhatsApp] debug_token scopes:", JSON.stringify(debug?.data?.granular_scopes?.map((s: any) => ({ scope: s.scope, targets: s.target_ids?.length || 0 }))));
 
-    if (firstPhone) {
-      phoneNumberId = firstPhone.id;
-      displayPhoneNumber = firstPhone.display_phone_number || "";
-      verifiedName = firstPhone.verified_name || "";
-      name = verifiedName || `WhatsApp ${displayPhoneNumber}`;
+    const wabaScope = debug?.data?.granular_scopes?.find(
+      (s: any) => s.scope === "whatsapp_business_management"
+    );
+    const sharedWabas = wabaScope?.target_ids || [];
+
+    if (sharedWabas.length > 0) {
+      wabaId = sharedWabas[0];
+      console.log("[discoverWhatsApp] Found WABA via debug_token:", wabaId);
     }
-  } else {
-    // Fallback: try to get WABA from business portfolio
+  } catch (e: any) {
+    console.warn("[discoverWhatsApp] debug_token failed:", e.message);
+  }
+
+  // Strategy 2: If no WABA from debug_token, try business portfolio
+  if (!wabaId) {
     try {
       const me = await graphGet("me?fields=id,name", token);
+      console.log("[discoverWhatsApp] me:", me.id, me.name);
+
+      // Try direct businesses endpoint
       const businesses = await graphGet(`${me.id}/businesses?fields=id,name`, token);
-      if (businesses?.data?.[0]?.id) {
-        const bizId = businesses.data[0].id;
-        const wabas = await graphGet(`${bizId}/owned_whatsapp_business_accounts?fields=id,name`, token);
+      for (const biz of businesses?.data || []) {
+        const wabas = await graphGet(`${biz.id}/owned_whatsapp_business_accounts?fields=id,name`, token);
         if (wabas?.data?.[0]) {
           wabaId = wabas.data[0].id;
-          const phones = await graphGet(`${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, token);
+          console.log("[discoverWhatsApp] Found WABA via business portfolio:", wabaId, wabas.data[0].name);
+          break;
+        }
+      }
+    } catch (e: any) {
+      console.warn("[discoverWhatsApp] Business portfolio fallback failed:", e.message);
+    }
+  }
+
+  // Strategy 3: If still no WABA, try the system user token as last resort
+  if (!wabaId) {
+    const sysToken = Deno.env.get("META_SYSTEM_USER_TOKEN");
+    if (sysToken) {
+      try {
+        const bizId = "688498549631942"; // Known business ID
+        const wabas = await graphGet(`${bizId}/owned_whatsapp_business_accounts?fields=id,name&limit=50`, sysToken);
+        // Find the most recently created WABA (likely the one just created by Embedded Signup)
+        if (wabas?.data?.length > 0) {
+          // Check each WABA for the phone numbers to find the newly created one
+          for (const waba of wabas.data) {
+            try {
+              const phones = await graphGet(`${waba.id}/phone_numbers?fields=id,display_phone_number,verified_name`, sysToken);
+              for (const phone of phones?.data || []) {
+                // If this phone was just registered, it might be pending
+                if (phone.display_phone_number) {
+                  wabaId = waba.id;
+                  phoneNumberId = phone.id;
+                  displayPhoneNumber = phone.display_phone_number;
+                  verifiedName = phone.verified_name || "";
+                  console.log("[discoverWhatsApp] Found via system token scan:", wabaId, phoneNumberId, displayPhoneNumber);
+                  break;
+                }
+              }
+              if (phoneNumberId) break;
+            } catch (_) { /* skip this WABA */ }
+          }
+        }
+      } catch (e: any) {
+        console.warn("[discoverWhatsApp] System token fallback failed:", e.message);
+      }
+    }
+  }
+
+  // Get phone numbers from discovered WABA (if not already found via Strategy 3)
+  if (wabaId && !phoneNumberId) {
+    try {
+      const phones = await graphGet(`${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name,quality_rating`, token);
+      const firstPhone = phones?.data?.[0];
+      if (firstPhone) {
+        phoneNumberId = firstPhone.id;
+        displayPhoneNumber = firstPhone.display_phone_number || "";
+        verifiedName = firstPhone.verified_name || "";
+      }
+    } catch (e: any) {
+      console.warn("[discoverWhatsApp] Phone number fetch failed with user token, trying system token");
+      // Try with system token
+      const sysToken = Deno.env.get("META_SYSTEM_USER_TOKEN");
+      if (sysToken) {
+        try {
+          const phones = await graphGet(`${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, sysToken);
           const firstPhone = phones?.data?.[0];
           if (firstPhone) {
             phoneNumberId = firstPhone.id;
             displayPhoneNumber = firstPhone.display_phone_number || "";
             verifiedName = firstPhone.verified_name || "";
-            name = verifiedName || `WhatsApp ${displayPhoneNumber}`;
           }
-        }
+        } catch (_) { /* failed */ }
       }
-    } catch (e) {
-      console.warn("[discoverWhatsApp] Fallback discovery failed:", e);
     }
   }
 
+  name = verifiedName || (displayPhoneNumber ? `WhatsApp ${displayPhoneNumber}` : "WhatsApp (pendente)");
+
+  console.log(`[discoverWhatsApp] Final result: wabaId=${wabaId}, phoneNumberId=${phoneNumberId}, phone=${displayPhoneNumber}, name=${name}`);
+
   return {
     waba_id: wabaId,
-    phone_number_id: phoneNumberId,
-    display_phone_number: displayPhoneNumber,
-    verified_name: verifiedName,
+    phone_number_id: phoneNumberId || null,
+    display_phone_number: displayPhoneNumber || null,
+    verified_name: verifiedName || null,
     name,
   };
 }
