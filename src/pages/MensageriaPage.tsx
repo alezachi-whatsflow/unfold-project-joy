@@ -15,8 +15,8 @@ const MensageriaPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Mensageria</h1>
-        <p className="text-muted-foreground text-sm">Caixa de entrada, envios, campanhas, leads e contatos.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Caixa de Entrada</h1>
+        <p className="text-muted-foreground text-sm">Conversas, envios, campanhas, leads e contatos.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
