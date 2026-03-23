@@ -71,10 +71,28 @@ export default function AssinaturaPage() {
     enabled: !!tenantId,
   });
 
-  if (isLoading || !limits) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!limits) {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Assinatura e Licença</h1>
+          <p className="text-muted-foreground">Gerencie os limites e recursos contratados da sua conta.</p>
+        </div>
+        <Card className="p-8 text-center">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Nenhuma licença encontrada</h2>
+          <p className="text-muted-foreground text-sm">
+            Sua conta ainda não possui uma licença ativa. Entre em contato para ativar seu plano.
+          </p>
+        </Card>
       </div>
     );
   }
