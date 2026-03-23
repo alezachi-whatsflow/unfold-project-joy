@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useProducts } from "@/contexts/ProductContext";
 import { supabase } from "@/integrations/supabase/client";
-import { DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Plus, Trash2, CalendarIcon, X, HelpCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, CalendarIcon, HelpCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STATUSES, type NegocioProduto, type NegocioOrigem, type NegocioStatus } from "@/types/vendas";
@@ -204,11 +204,6 @@ export default function NegocioCreateModal({ onClose }: Props) {
             Novo Negócio
             <Badge variant="outline" className="ml-2 text-xs">Passo {step}/4</Badge>
           </DialogTitle>
-          <DialogClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors">
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogClose>
         </div>
       </DialogHeader>
 
