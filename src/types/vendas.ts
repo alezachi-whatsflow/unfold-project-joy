@@ -13,7 +13,12 @@ export type NegocioOrigem =
   | 'representante'
   | 'renovacao'
   | 'upsell'
-  | 'digital_intelligence';
+  | 'digital_intelligence'
+  | 'google_ads'
+  | 'meta_ads'
+  | 'tiktok_ads'
+  | 'linkedin_ads'
+  | 'whatsapp';
 
 export interface NegocioProduto {
   produtoId: string;
@@ -84,7 +89,14 @@ export const NEGOCIO_ORIGEM_LABELS: Record<NegocioOrigem, string> = {
   renovacao: 'Renovação',
   upsell: 'Upsell',
   digital_intelligence: 'Digital Intelligence',
+  google_ads: 'Google Ads',
+  meta_ads: 'Meta Ads',
+  tiktok_ads: 'TikTok Ads',
+  linkedin_ads: 'LinkedIn Ads',
+  whatsapp: 'WhatsApp',
 };
+
+export const PAID_TRAFFIC_ORIGINS: NegocioOrigem[] = ['google_ads', 'meta_ads', 'tiktok_ads', 'linkedin_ads'];
 
 export const FORMAS_PAGAMENTO = [
   { value: 'boleto', label: 'Boleto' },
