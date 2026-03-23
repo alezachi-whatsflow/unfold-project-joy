@@ -103,12 +103,11 @@ export default function NexusLicenses() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from('licenses')
-        .select('id, whitelabel_slug, tenants(name)')
-        .not('whitelabel_slug', 'is', null);
+        .from('whitelabel_config')
+        .select('license_id, display_name, slug');
       const map: Record<string, string> = {};
       (data || []).forEach((wl: any) => {
-        if (wl.id) map[wl.id] = wl.tenants?.name || wl.whitelabel_slug || '—';
+        if (wl.license_id) map[wl.license_id] = wl.display_name || wl.slug || '—';
       });
       setWlNameMap(map);
     })();
