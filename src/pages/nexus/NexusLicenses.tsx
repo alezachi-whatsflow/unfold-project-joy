@@ -652,6 +652,7 @@ export default function NexusLicenses() {
                           />
                         </TableHead>
                         <TableHead className="sticky left-0 bg-card z-10 min-w-[180px]">Empresa / Titular</TableHead>
+                        <TableHead className="min-w-[180px]">Email</TableHead>
                         <TableHead className="min-w-[120px]"><div className="flex items-center gap-1">WhiteLabel<ColFilter col="whitelabel" values={colUniqueValues('whitelabel')} selected={colFilters['whitelabel'] || new Set()} onChange={setColFilter} /></div></TableHead>
                         <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Status<ColFilter col="status" values={colUniqueValues('status')} selected={colFilters['status'] || new Set()} onChange={setColFilter} /></div></TableHead>
                         <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Ativação<ColFilter col="starts_at" values={colUniqueValues('starts_at')} selected={colFilters['starts_at'] || new Set()} onChange={setColFilter} /></div></TableHead>
@@ -691,10 +692,11 @@ export default function NexusLicenses() {
                           </TableCell>
                           {/* Empresa */}
                           <TableCell className="sticky left-0 bg-card z-10">
-                            <div>
-                              <p className="font-medium text-foreground truncate max-w-[160px]">{l.tenants?.name || '—'}</p>
-                              <p className="text-muted-foreground truncate max-w-[160px]">{l.tenants?.email || ''}</p>
-                            </div>
+                            <p className="font-medium text-foreground truncate max-w-[160px]">{l.tenants?.name || '—'}</p>
+                          </TableCell>
+                          {/* Email */}
+                          <TableCell>
+                            <p className="text-muted-foreground truncate max-w-[180px]">{l.tenants?.email || l.tenants?.slug?.includes('@') ? l.tenants?.email : '—'}</p>
                           </TableCell>
                           {/* WhiteLabel */}
                           <TableCell>
