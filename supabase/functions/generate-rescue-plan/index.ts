@@ -10,8 +10,22 @@ Deno.serve(async (req) => {
   try {
     const { websiteData, instagramData, gmnData, websiteScore, instagramScore, gmnScore } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    // AI config loaded from database via _shared/ai.ts helper
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const db = createClient(supabaseUrl, serviceKey);
+
+    // Get AI config (global or tenant)
+    const { data: aiConfig } = await db
+      .from("ai_configurations")
+      .select("api_key, model, project_id, provider")
+      .eq("is_active", true)
+      .order("is_global", { ascending: true })
+      .limit(1)
+      .single();
+
+    if (!aiConfig?.api_key) throw new Error("Nenhuma configuração de I.A. encontrada. Configure em Nexus > I.A. Config.");
 
     const systemPrompt = `Você é um consultor de marketing digital especialista em diagnóstico de presença digital.
 Analise os dados coletados e gere um Plano de Resgate com ações ESPECÍFICAS baseadas nos dados reais.
@@ -78,14 +92,23 @@ Retorne APENAS o JSON usando a tool function fornecida.`;
       },
     ];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const headers: Record<string, string> = {
+      "Authorization": `Bearer ${aiConfig.api_key}`,
+      "Content-Type": "application/json",
+    };
+    if (aiConfig.project_id) headers["OpenAI-Project"] = aiConfig.project_id;
+
+    const apiUrl = aiConfig.provider === "anthropic"
+      ? "https://api.anthropic.com/v1/messages"
+      : "https://api.openai.com/v1/chat/completions";
+
+    const response = await fetch(apiUrl, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: aiConfig.provider === "anthropic"
+        ? { "x-api-key": aiConfig.api_key, "Content-Type": "application/json", "anthropic-version": "2023-06-01" }
+        : headers,
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: aiConfig.model || "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -97,19 +120,14 @@ Retorne APENAS o JSON usando a tool function fornecida.`;
 
     if (!response.ok) {
       const status = response.status;
+      const t = await response.text();
+      console.error("AI API error:", status, t);
       if (status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Tente novamente em alguns segundos." }), {
+        return new Response(JSON.stringify({ error: "Rate limit. Tente novamente em alguns segundos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", status, t);
-      throw new Error(`AI gateway error: ${status}`);
+      throw new Error(`AI API error: ${status}`);
     }
 
     const aiData = await response.json();

@@ -28,11 +28,12 @@ const ALL_NAV_ITEMS = [
   { id: 'flags',          label: 'Feature Flags',  icon: IconSettings,  path: '/nexus/flags' },
   { id: 'tickets',        label: 'Tickets',        icon: IconMessages,  path: '/nexus/tickets' },
   { id: 'lifecycle',      label: 'Lifecycle de Dados', icon: DatabaseZap, path: '/nexus/lifecycle' },
+  { id: 'ia',             label: 'I.A. Config',    icon: IconSettings,  path: '/nexus/ia' },
   { id: 'configuracoes',  label: 'Configurações',  icon: IconSettings,  path: '/nexus/configuracoes' },
 ];
 
 const NAV_BY_ROLE: Record<NexusRole, string[]> = {
-  nexus_superadmin:    ['dashboard', 'licencas', 'whitelabels', 'checkouts', 'financeiro', 'equipe', 'auditoria', 'lifecycle', 'flags', 'tickets', 'configuracoes'],
+  nexus_superadmin:    ['dashboard', 'licencas', 'whitelabels', 'checkouts', 'financeiro', 'equipe', 'auditoria', 'lifecycle', 'flags', 'tickets', 'ia', 'configuracoes'],
   nexus_dev_senior:    ['dashboard', 'licencas', 'whitelabels', 'lifecycle', 'auditoria', 'flags', 'tickets'],
   nexus_suporte_senior:['dashboard', 'licencas', 'whitelabels', 'tickets', 'auditoria'],
   nexus_financeiro:    ['dashboard', 'financeiro', 'licencas', 'checkouts'],

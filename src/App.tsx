@@ -89,6 +89,7 @@ import NexusAuditLog from "./pages/nexus/NexusAuditLog";
 import NexusFeatureFlags from "./pages/nexus/NexusFeatureFlags";
 import NexusTickets from "./pages/nexus/NexusTickets";
 import NexusConfiguracoes from "./pages/nexus/NexusConfiguracoes";
+import NexusAIConfig from "./pages/nexus/NexusAIConfig";
 import NexusCheckouts from "./pages/nexus/NexusCheckouts";
 import NexusWhitelabels from "./pages/nexus/NexusWhitelabels";
 import NexusLifecycle from "./pages/nexus/NexusLifecycle";
@@ -155,6 +156,7 @@ const AppRoutes = () => (
       <Route path="flags" element={<NexusFeatureFlags />} />
       <Route path="tickets" element={<NexusTickets />} />
       <Route path="configuracoes" element={<NexusConfiguracoes />} />
+      <Route path="ia" element={<NexusAIConfig />} />
     </Route>
 
     {/* WhiteLabel Portal - Phase 3 */}
