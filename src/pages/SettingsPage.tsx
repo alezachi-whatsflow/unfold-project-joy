@@ -138,7 +138,7 @@ export default function SettingsPage() {
   const [apiStatus, setApiStatus] = useState<"idle" | "ok" | "error">("idle");
   const [testing, setTesting] = useState(false);
 
-  const webhookUrl = `https://knnwgijcrpbgqhdzmdrp.supabase.co/functions/v1/asaas-webhook`;
+  const webhookUrl = `https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/asaas-webhook`;
 
   const testConnection = async () => {
     setTesting(true);
