@@ -263,8 +263,7 @@ function KPICard({ icon: Icon, label, value }: { icon: React.ElementType; label:
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
           <Icon className="h-4 w-4 text-primary" />
         </div>
-        <div className
-          ="min-w-0">
+        <div className="min-w-0">
           <p className="text-[11px] text-muted-foreground truncate">{label}</p>
           <p className="text-sm font-bold text-foreground truncate">{value}</p>
         </div>
