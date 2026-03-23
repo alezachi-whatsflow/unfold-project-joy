@@ -219,8 +219,12 @@ const AppRoutes = () => (
       <Route path="assinatura" element={<AssinaturaPage />} />
       <Route path="analytics" element={<ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute>} />
       <Route path="wa-connections" element={<Navigate to="integracoes" replace />} />
+      <Route path="sistema/comunidade" element={<ComunidadePage />} />
+      <Route path="sistema/tutoriais" element={<TutoriaisPage />} />
+      <Route path="sistema/manual" element={<ManualSistemaPage />} />
+      <Route path="sistema/onboarding" element={<OnboardingPage />} />
     </Route>
-    
+
     <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />
     <Route path="/manual" element={<AuthGuard><ManualPage /></AuthGuard>} />
     <Route path="/sistema/comunidade" element={<AuthGuard><ComunidadePage /></AuthGuard>} />
