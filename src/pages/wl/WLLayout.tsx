@@ -104,7 +104,7 @@ export default function WLLayout() {
   const wlLicenseId = wlConfig?.license_id || null;
 
   return (
-    <div className="flex h-screen w-full" style={{ backgroundColor: 'var(--wl-bg, #0F172A)' }}>
+    <div className="flex h-screen w-full glass-ambient-bg">
       {/* Mobile hamburger */}
       {isMobile && !mobileOpen && (
         <button onClick={() => setMobileOpen(true)}
@@ -118,7 +118,7 @@ export default function WLLayout() {
       )}
       {/* Sidebar */}
       <aside
-        className={`flex flex-col border-r transition-all duration-300 z-50 shrink-0 ${
+        className={`flex flex-col glass-sidebar transition-all duration-300 z-50 shrink-0 ${
           isMobile ? `fixed inset-y-0 left-0 w-[240px] ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}` : ''
         }`}
         style={{
@@ -193,8 +193,7 @@ export default function WLLayout() {
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header
-          className="sticky top-0 z-10 border-b px-4 sm:px-6 py-3 flex items-center justify-between"
-          style={{ backgroundColor: 'var(--wl-bg)', borderColor: 'rgba(255,255,255,0.05)' }}
+          className="sticky top-0 z-10 glass-header px-4 sm:px-6 py-3 flex items-center justify-between"
         >
           <span className="text-sm font-semibold text-white/80">{isMobile && <span className="inline-block w-8" />}Portal Administrativo</span>
           <div className="flex items-center gap-3">

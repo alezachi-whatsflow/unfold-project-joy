@@ -130,7 +130,7 @@ export default function HomePage() {
       <div className="home-sphere home-sphere-3" />
 
       {/* ── HEADER ───────────────────────────── */}
-      <header className="home-header">
+      <header className="home-header glass-header">
         <div className="flex items-center gap-3">
           <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg" />
           <span className="text-sm font-semibold text-[#F0FDF8] hidden sm:inline">Whatsflow</span>
@@ -321,7 +321,7 @@ export default function HomePage() {
 
       {/* ── DOCK ─────────────────────────────── */}
       {!isMobile && (
-        <nav className="home-dock">
+        <nav className="home-dock glass-tabbar">
           {dock.map((item, i) => {
             const showDivider = i > 0 && dock[i - 1].group !== item.group;
             return (

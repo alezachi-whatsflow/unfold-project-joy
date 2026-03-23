@@ -95,7 +95,7 @@ export default function NexusLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen glass-ambient-bg">
       {/* Mobile hamburger */}
       {isMobile && !mobileOpen && (
         <button
@@ -112,7 +112,7 @@ export default function NexusLayout() {
       )}
       {/* Sidebar */}
       <aside
-        className={`flex flex-col border-r border-border bg-card transition-all duration-200 ${
+        className={`flex flex-col glass-sidebar transition-all duration-200 ${
           isMobile
             ? `fixed inset-y-0 left-0 z-50 w-64 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`
             : collapsed ? 'w-16' : 'w-64'
@@ -214,7 +214,7 @@ export default function NexusLayout() {
       {/* Main */}
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
-        <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 py-3 flex items-center justify-between">
+        <header className="sticky top-0 z-10 glass-header px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {isMobile && <div className="w-8" />}
             <Shield className="h-4 w-4 text-emerald-400" />
