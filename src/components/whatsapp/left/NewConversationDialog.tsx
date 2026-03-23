@@ -8,6 +8,8 @@ interface Instance {
   label: string;
   instance_name: string | null;
   status: string;
+  type: "uazapi" | "meta_cloud";
+  phone_number_id?: string;
 }
 
 const QUICK_MESSAGES = [
@@ -35,18 +37,50 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
 
   useEffect(() => {
     if (!open) return;
-    supabase
-      .from("whatsapp_instances")
-      .select("id, label, instance_name, status")
-      .eq("status", "connected")
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setInstances(data);
-          setSelectedInstance(data[0].instance_name || "");
-        } else {
-          setInstances([]);
-        }
+
+    Promise.all([
+      // Legacy: whatsapp_instances (uazapi/zapi)
+      supabase
+        .from("whatsapp_instances")
+        .select("id, label, instance_name, status")
+        .eq("status", "connected"),
+      // New: channel_integrations (Meta Cloud API)
+      supabase
+        .from("channel_integrations")
+        .select("id, name, phone_number_id, display_phone_number, status, provider")
+        .eq("provider", "WABA")
+        .eq("status", "active"),
+    ]).then(([legacyRes, metaRes]) => {
+      const allInstances: Instance[] = [];
+
+      // Add legacy instances
+      (legacyRes.data || []).forEach((inst) => {
+        allInstances.push({
+          id: inst.id,
+          label: inst.label,
+          instance_name: inst.instance_name,
+          status: inst.status,
+          type: "uazapi",
+        });
       });
+
+      // Add Meta Cloud API instances
+      (metaRes.data || []).forEach((ch) => {
+        allInstances.push({
+          id: ch.id,
+          label: `${ch.name}${ch.display_phone_number ? ` (${ch.display_phone_number})` : ""}`,
+          instance_name: ch.phone_number_id,
+          status: ch.status,
+          type: "meta_cloud",
+          phone_number_id: ch.phone_number_id,
+        });
+      });
+
+      setInstances(allInstances);
+      if (allInstances.length > 0) {
+        setSelectedInstance(allInstances[0].instance_name || "");
+      }
+    });
   }, [open]);
 
   const handleSend = async () => {
@@ -67,18 +101,36 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
       return;
     }
 
+    const instance = instances.find((i) => i.instance_name === selectedInstance);
+    if (!instance) {
+      toast.error("Dispositivo não encontrado");
+      return;
+    }
+
     setSending(true);
     try {
-      const { error } = await supabase.functions.invoke("uazapi-proxy", {
-        body: {
-          instanceName: selectedInstance,
-          path: "/send/text",
-          method: "POST",
-          body: { number: cleanPhone, text },
-        },
-      });
-
-      if (error) throw error;
+      if (instance.type === "meta_cloud") {
+        // Send via Meta Cloud API
+        const { error } = await supabase.functions.invoke("meta-send-message", {
+          body: {
+            phone_number_id: instance.phone_number_id,
+            to: cleanPhone,
+            text,
+          },
+        });
+        if (error) throw error;
+      } else {
+        // Send via legacy uazapi
+        const { error } = await supabase.functions.invoke("uazapi-proxy", {
+          body: {
+            instanceName: selectedInstance,
+            path: "/send/text",
+            method: "POST",
+            body: { number: cleanPhone, text },
+          },
+        });
+        if (error) throw error;
+      }
 
       toast.success("Mensagem enviada!");
       const jid = `${cleanPhone}@s.whatsapp.net`;
