@@ -5,6 +5,15 @@
 /* Liquid Glass Design System */
 @import './styles/liquid-glass.css';
 
+/* Hide scrollbars globally — content still scrollable */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
 @layer base {
   /* ===== ARGON DASHBOARD THEME (default) — Light SaaS Premium ===== */
   :root {
