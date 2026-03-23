@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useICPProfile } from '@/hooks/useICPProfile';
+import { useTenantId } from '@/hooks/useTenantId';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, Loader2 } from 'lucide-react';
@@ -26,7 +27,8 @@ interface Props {
 }
 
 export default function WizardLayout({ onComplete }: Props) {
-  const { profile, isLoading, upsertProfile } = useCompanyProfile();
+  const tenantId = useTenantId();
+  const { profile, isLoading, upsertProfile } = useCompanyProfile(tenantId);
   const [currentStep, setCurrentStep] = useState(1);
 
   useEffect(() => {

@@ -2,8 +2,6 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-const TENANT_ID = '00000000-0000-0000-0000-000000000001';
-
 export interface ICPProfile {
   id: string;
   tenant_id: string;
@@ -27,16 +25,17 @@ export interface ICPQuestionnaire {
   questions: any[];
 }
 
-export function useICPProfile() {
+export function useICPProfile(tenantId?: string) {
   const queryClient = useQueryClient();
 
   const { data: icpProfile, isLoading: icpLoading } = useQuery({
-    queryKey: ['icp_profiles', TENANT_ID],
+    queryKey: ['icp_profiles', tenantId],
+    enabled: !!tenantId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('icp_profiles')
         .select('*')
-        .eq('tenant_id', TENANT_ID)
+        .eq('tenant_id', tenantId!)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -47,12 +46,13 @@ export function useICPProfile() {
   });
 
   const { data: questionnaire, isLoading: questionnaireLoading } = useQuery({
-    queryKey: ['icp_questionnaires', TENANT_ID],
+    queryKey: ['icp_questionnaires', tenantId],
+    enabled: !!tenantId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('icp_questionnaires')
         .select('*')
-        .eq('tenant_id', TENANT_ID)
+        .eq('tenant_id', tenantId!)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -77,11 +77,11 @@ export function useICPProfile() {
     } else {
       const { error } = await supabase
         .from('icp_profiles')
-        .insert({ tenant_id: TENANT_ID, ...data } as any);
+        .insert({ tenant_id: tenantId!, ...data } as any);
       if (error) throw error;
     }
     invalidate();
-  }, [icpProfile, invalidate]);
+  }, [icpProfile, invalidate, tenantId]);
 
   const upsertQuestionnaire = useCallback(async (data: Partial<ICPQuestionnaire>) => {
     if (questionnaire?.id) {
@@ -93,11 +93,11 @@ export function useICPProfile() {
     } else {
       const { error } = await supabase
         .from('icp_questionnaires')
-        .insert({ tenant_id: TENANT_ID, ...data } as any);
+        .insert({ tenant_id: tenantId!, ...data } as any);
       if (error) throw error;
     }
     invalidate();
-  }, [questionnaire, invalidate]);
+  }, [questionnaire, invalidate, tenantId]);
 
   return {
     icpProfile,

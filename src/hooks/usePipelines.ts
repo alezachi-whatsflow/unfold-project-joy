@@ -19,14 +19,14 @@ export interface SalesPipeline {
   updated_at: string;
 }
 
-const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const STORAGE_KEY = 'whatsflow_selected_pipeline';
 
-export function usePipelines() {
+export function usePipelines(tenantId?: string) {
   const queryClient = useQueryClient();
 
   const { data: pipelines = [], isLoading } = useQuery({
-    queryKey: ['sales_pipelines'],
+    queryKey: ['sales_pipelines', tenantId],
+    enabled: !!tenantId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sales_pipelines')
@@ -72,7 +72,7 @@ export function usePipelines() {
 
   const createPipeline = useCallback(async (data: Partial<SalesPipeline>) => {
     const { error } = await supabase.from('sales_pipelines').insert({
-      tenant_id: TENANT_ID,
+      tenant_id: tenantId!,
       name: data.name || 'Novo Pipeline',
       description: data.description || null,
       stages: data.stages || [
@@ -91,7 +91,7 @@ export function usePipelines() {
     } as any);
     if (error) throw error;
     invalidate();
-  }, [pipelines, invalidate]);
+  }, [pipelines, invalidate, tenantId]);
 
   const updatePipeline = useCallback(async (id: string, data: Partial<SalesPipeline>) => {
     const { error } = await supabase

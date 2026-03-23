@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useTenantId } from "@/hooks/useTenantId";
 import { useProducts } from "@/contexts/ProductContext";
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,8 @@ function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: 
 }
 
 export default function NegocioEditModal({ negocio, onClose }: Props) {
-  const { updateNegocio } = useNegocios();
+  const tenantId = useTenantId();
+  const { updateNegocio } = useNegocios(tenantId);
   const { products } = useProducts();
   const [saving, setSaving] = useState(false);
 

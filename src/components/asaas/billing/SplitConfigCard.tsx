@@ -18,8 +18,7 @@ import { fetchSalesPeople } from "@/lib/asaasQueries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { SalesPerson } from "@/types/asaas";
-
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 
 export interface SplitRecipient {
   id: string;
@@ -55,6 +54,7 @@ interface Props {
 }
 
 export function SplitConfigCard({ split, setSplit, billingValue = 0 }: Props) {
+  const tenantId = useTenantId();
   const [salesPeople, setSalesPeople] = useState<SalesPerson[]>([]);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newPerson, setNewPerson] = useState({
@@ -110,7 +110,7 @@ export function SplitConfigCard({ split, setSplit, billingValue = 0 }: Props) {
     setSaving(true);
     try {
       const { data, error } = await supabase.from("sales_people").insert({
-        tenant_id: DEFAULT_TENANT_ID,
+        tenant_id: tenantId || "",
         name: newPerson.name,
         email: newPerson.email || null,
         asaas_wallet_id: newPerson.asaas_wallet_id,

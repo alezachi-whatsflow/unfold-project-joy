@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useTenantId } from "@/hooks/useTenantId";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PermissionGate } from "@/components/auth/PermissionGate";
@@ -17,9 +18,10 @@ import NegocioDrawer from "@/components/vendas/NegocioDrawer";
 import NegocioCreateModal from "@/components/vendas/NegocioCreateModal";
 
 export default function VendasMeusNegocios() {
+  const tenantId = useTenantId();
   const { user } = useAuth();
   const { userRole } = usePermissions();
-  const { negocios, isLoading } = useNegocios();
+  const { negocios, isLoading } = useNegocios(tenantId);
   const [search, setSearch] = useState("");
   const [drawerNeg, setDrawerNeg] = useState<Negocio | null>(null);
   const [createOpen, setCreateOpen] = useState(false);

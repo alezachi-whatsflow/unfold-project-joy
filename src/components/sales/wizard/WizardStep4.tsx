@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { usePipelines } from '@/hooks/usePipelines';
+import { useTenantId } from '@/hooks/useTenantId';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,8 +13,9 @@ import { getTemplateForSegment } from '@/utils/sales/icpTemplates';
 interface Props { onNext: () => void; onBack: () => void; }
 
 export default function WizardStep4({ onNext, onBack }: Props) {
-  const { profile } = useCompanyProfile();
-  const { pipelines, createPipeline } = usePipelines();
+  const tenantId = useTenantId();
+  const { profile } = useCompanyProfile(tenantId);
+  const { pipelines, createPipeline } = usePipelines(tenantId);
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState<'suggested' | 'existing' | null>(null);
 

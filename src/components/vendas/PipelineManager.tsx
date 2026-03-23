@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { usePipelines, type SalesPipeline } from "@/hooks/usePipelines";
+import { useTenantId } from "@/hooks/useTenantId";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,8 @@ interface Props {
 }
 
 export default function PipelineManager({ onClose }: Props) {
-  const { pipelines, updatePipeline, createPipeline, deletePipeline } = usePipelines();
+  const tenantId = useTenantId();
+  const { pipelines, updatePipeline, createPipeline, deletePipeline } = usePipelines(tenantId);
   const [editId, setEditId] = useState<string | null>(pipelines[0]?.id || null);
   const [saving, setSaving] = useState(false);
 

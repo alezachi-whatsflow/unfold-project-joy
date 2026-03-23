@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
+import { useTenantId } from '@/hooks/useTenantId';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +22,8 @@ function HelpBox({ children }: { children: React.ReactNode }) {
 }
 
 export default function WizardStep1({ onNext }: Props) {
-  const { profile, upsertProfile } = useCompanyProfile();
+  const tenantId = useTenantId();
+  const { profile, upsertProfile } = useCompanyProfile(tenantId);
   const [saving, setSaving] = useState(false);
 
   const [segment, setSegment] = useState('');

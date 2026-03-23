@@ -22,7 +22,7 @@ import { ptBR } from "date-fns/locale";
 import { DEFAULT_COST_LINES } from "@/lib/costLineTemplates";
 import { cn } from "@/lib/utils";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 const CATEGORIES = ["Pessoal", "Software", "Marketing", "Infraestrutura", "Impostos", "Comissões", "Despesas Comerciais", "Despesas Financeiras", "Custos de Prestação do Serviço (CSP)", "Salários / Pessoal", "General & Administrative", "Outros"];
 const INSTALLMENT_OPTIONS = ["À vista", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x", "11x", "12x"];
 const PAYMENT_METHODS = ["PIX", "Boleto", "Cartão de Crédito", "Cartão de Débito", "Transferência", "Dinheiro", "Outro"];
@@ -270,6 +270,8 @@ function AttachmentSection({
 
 /* ─── Main Page ─── */
 export default function ExpensesPage() {
+  const tenantId = useTenantId();
+  const TENANT_ID = tenantId || "";
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

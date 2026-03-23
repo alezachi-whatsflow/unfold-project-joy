@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { GitBranch, GripVertical, Save, Plus, Trash2, Star, Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { usePipelines, type SalesPipeline } from "@/hooks/usePipelines";
+import { useTenantId } from "@/hooks/useTenantId";
 import { cn } from "@/lib/utils";
 
 export interface FunnelStage {
@@ -303,7 +304,8 @@ function PipelineCard({
 /* ─────────────── Main Card ─────────────── */
 
 export function SalesFunnelConfigCard() {
-  const { pipelines, isLoading, createPipeline, updatePipeline, deletePipeline } = usePipelines();
+  const tenantId = useTenantId();
+  const { pipelines, isLoading, createPipeline, updatePipeline, deletePipeline } = usePipelines(tenantId);
 
   // Sort pipelines by name (alphabetical)
   const sorted = [...pipelines].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));

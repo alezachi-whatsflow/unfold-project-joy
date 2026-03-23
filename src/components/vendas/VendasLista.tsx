@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useTenantId } from "@/hooks/useTenantId";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ import MotivoPerdaModal from "@/components/vendas/MotivoPerdaModal";
 import FechamentoGanhoModal from "@/components/vendas/FechamentoGanhoModal";
 
 export default function VendasLista() {
-  const { negocios, isLoading, deleteNegocio, createNegocio } = useNegocios();
+  const tenantId = useTenantId();
+  const { negocios, isLoading, deleteNegocio, createNegocio } = useNegocios(tenantId);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());

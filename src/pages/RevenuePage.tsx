@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAsaas } from "@/contexts/AsaasContext";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 const CATEGORIES = ["Mensalidade", "Consultoria", "Serviço Avulso", "Setup / Implantação", "Licença", "Comissão", "Outros"];
 const BILLING_TYPES = ["PIX", "Boleto", "Cartão de Crédito", "Cartão de Débito", "Transferência", "Dinheiro"];
 const INSTALLMENT_OPTIONS = ["À vista", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x", "11x", "12x"];
@@ -136,6 +136,8 @@ function ClientAutocomplete({ value, onChange, revenues, customers }: { value: s
 }
 
 export default function RevenuePage() {
+  const tenantId = useTenantId();
+  const TENANT_ID = tenantId || "";
   const [revenues, setRevenues] = useState<Revenue[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

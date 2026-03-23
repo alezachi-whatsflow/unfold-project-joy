@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useICPProfile } from '@/hooks/useICPProfile';
+import { useTenantId } from '@/hooks/useTenantId';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +28,8 @@ interface Question {
 interface Props { onNext: () => void; onBack: () => void; }
 
 export default function WizardStep3({ onNext, onBack }: Props) {
-  const { icpProfile, questionnaire, upsertQuestionnaire } = useICPProfile();
+  const tenantId = useTenantId();
+  const { icpProfile, questionnaire, upsertQuestionnaire } = useICPProfile(tenantId);
   const [saving, setSaving] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
 

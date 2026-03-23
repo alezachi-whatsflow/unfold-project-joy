@@ -2,8 +2,6 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-const TENANT_ID = '00000000-0000-0000-0000-000000000001';
-
 export interface CompanyProfile {
   id: string;
   tenant_id: string;
@@ -26,16 +24,17 @@ export interface CompanyProfile {
   wizard_step: number;
 }
 
-export function useCompanyProfile() {
+export function useCompanyProfile(tenantId?: string) {
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['company_profile', TENANT_ID],
+    queryKey: ['company_profile', tenantId],
+    enabled: !!tenantId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('company_profile')
         .select('*')
-        .eq('tenant_id', TENANT_ID)
+        .eq('tenant_id', tenantId!)
         .maybeSingle();
       if (error) throw error;
       return data as CompanyProfile | null;
@@ -50,7 +49,7 @@ export function useCompanyProfile() {
     const { error } = await supabase
       .from('company_profile')
       .upsert({
-        tenant_id: TENANT_ID,
+        tenant_id: tenantId!,
         ...data,
         updated_at: new Date().toISOString(),
       } as any, { onConflict: 'tenant_id' });

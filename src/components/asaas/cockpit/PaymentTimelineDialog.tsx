@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PaymentNotificationsCard } from "./PaymentNotificationsCard";
-
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 
 interface WebhookEvent {
   id: string;
@@ -42,6 +41,7 @@ interface Props {
 }
 
 export function PaymentTimelineDialog({ payment, onClose, environment }: Props) {
+  const tenantId = useTenantId();
   const [events, setEvents] = useState<WebhookEvent[]>([]);
   const [tasks, setTasks] = useState<TaskNote[]>([]);
   const [loading, setLoading] = useState(false);
@@ -77,7 +77,7 @@ export function PaymentTimelineDialog({ payment, onClose, environment }: Props) 
     setSaving(true);
     try {
       await supabase.from("tasks").insert({
-        tenant_id: DEFAULT_TENANT_ID,
+        tenant_id: tenantId || "",
         related_payment_id: payment.id,
         type: "NOTE",
         status: "OPEN",

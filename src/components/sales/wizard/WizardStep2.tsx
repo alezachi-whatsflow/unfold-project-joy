@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useICPProfile } from '@/hooks/useICPProfile';
+import { useTenantId } from '@/hooks/useTenantId';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,8 +15,9 @@ import { getTemplateForSegment, type ICPCriterionTemplate } from '@/utils/sales/
 interface Props { onNext: () => void; onBack: () => void; }
 
 export default function WizardStep2({ onNext, onBack }: Props) {
-  const { profile } = useCompanyProfile();
-  const { icpProfile, upsertICP } = useICPProfile();
+  const tenantId = useTenantId();
+  const { profile } = useCompanyProfile(tenantId);
+  const { icpProfile, upsertICP } = useICPProfile(tenantId);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [criteria, setCriteria] = useState<ICPCriterionTemplate[]>([]);

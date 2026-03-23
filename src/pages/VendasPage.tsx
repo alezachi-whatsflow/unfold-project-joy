@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Kanban, List, BarChart3, User, Settings2, CheckSquare } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCompanyProfile } from "@/hooks/useCompanyProfile";
+import { useTenantId } from "@/hooks/useTenantId";
 import VendasPipeline from "@/components/vendas/VendasPipeline";
 import VendasLista from "@/components/vendas/VendasLista";
 import VendasRelatorios from "@/components/vendas/VendasRelatorios";
@@ -11,8 +12,9 @@ import WizardLayout from "@/components/sales/wizard/WizardLayout";
 import VendasAtividades from "@/components/vendas/VendasAtividades";
 
 export default function VendasPage() {
+  const tenantId = useTenantId();
   const { userRole } = usePermissions();
-  const { profile, isLoading: profileLoading, invalidate } = useCompanyProfile();
+  const { profile, isLoading: profileLoading, invalidate } = useCompanyProfile(tenantId);
   const isRepresentante = userRole === 'representante';
   const defaultTab = isRepresentante ? 'meus-negocios' : 'pipeline';
   const [tab, setTab] = useState(defaultTab);

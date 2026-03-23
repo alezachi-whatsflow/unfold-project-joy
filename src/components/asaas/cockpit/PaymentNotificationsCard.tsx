@@ -12,8 +12,7 @@ import {
   MessageSquare, Bell,
 } from "lucide-react";
 import { toast } from "sonner";
-
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 
 interface NotificationEvent {
   id: string;
@@ -32,6 +31,7 @@ interface Props {
 }
 
 export function PaymentNotificationsCard({ paymentAsaasId, paymentId, environment }: Props) {
+  const tenantId = useTenantId();
   const [notifications, setNotifications] = useState<NotificationEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [resending, setResending] = useState(false);

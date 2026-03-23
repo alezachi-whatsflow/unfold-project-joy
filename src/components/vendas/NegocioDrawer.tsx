@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useICPProfile } from "@/hooks/useICPProfile";
+import { useTenantId } from "@/hooks/useTenantId";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,8 +72,9 @@ function generatePaymentLink(negocio: Negocio): string {
 }
 
 export default function NegocioDrawer({ negocio, onClose }: Props) {
-  const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios();
-  const { questionnaire, icpProfile } = useICPProfile();
+  const tenantId = useTenantId();
+  const { changeStatus, addHistoricoItem, deleteNegocio, updateNegocio } = useNegocios(tenantId);
+  const { questionnaire, icpProfile } = useICPProfile(tenantId);
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const [newNote, setNewNote] = useState("");

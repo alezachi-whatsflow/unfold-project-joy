@@ -1,6 +1,7 @@
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useICPProfile } from '@/hooks/useICPProfile';
 import { usePipelines } from '@/hooks/usePipelines';
+import { useTenantId } from '@/hooks/useTenantId';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Check, Rocket } from 'lucide-react';
@@ -9,9 +10,10 @@ import { SEGMENTS } from '@/utils/sales/icpTemplates';
 interface Props { onFinish: () => void; onBack: () => void; }
 
 export default function WizardStep6({ onFinish, onBack }: Props) {
-  const { profile } = useCompanyProfile();
-  const { icpProfile, questionnaire } = useICPProfile();
-  const { pipelines } = usePipelines();
+  const tenantId = useTenantId();
+  const { profile } = useCompanyProfile(tenantId);
+  const { icpProfile, questionnaire } = useICPProfile(tenantId);
+  const { pipelines } = usePipelines(tenantId);
 
   const segmentLabel = SEGMENTS.find(s => s.value === profile?.segment)?.label || profile?.segment || '—';
 

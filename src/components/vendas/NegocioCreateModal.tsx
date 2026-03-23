@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useTenantId } from "@/hooks/useTenantId";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useProducts } from "@/contexts/ProductContext";
@@ -30,7 +31,8 @@ const CONDICOES = ['À vista', '30 dias', '30/60 dias', '30/60/90 dias', '30/60/
 interface Props { onClose: () => void; }
 
 export default function NegocioCreateModal({ onClose }: Props) {
-  const { createNegocio } = useNegocios();
+  const tenantId = useTenantId();
+  const { createNegocio } = useNegocios(tenantId);
   const { user } = useAuth();
   const { userRole } = usePermissions();
   const { products: catalogProducts } = useProducts();
@@ -144,7 +146,7 @@ export default function NegocioCreateModal({ onClose }: Props) {
     try {
       const { data, error } = await supabase.from('crm_contacts').insert({
         name: clienteSearch.trim(),
-        tenant_id: '00000000-0000-0000-0000-000000000001',
+        tenant_id: localStorage.getItem("whatsflow_default_tenant_id") || "",
         source: 'vendas',
       }).select('id, name, company').single();
       if (error) throw error;

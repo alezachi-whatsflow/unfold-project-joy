@@ -9,6 +9,7 @@ import { fetchSalesPeople } from "@/lib/asaasQueries";
 import { formatCurrency } from "@/lib/calculations";
 import type { SalesPerson } from "@/types/asaas";
 import { toast } from "sonner";
+import { useTenantId } from "@/hooks/useTenantId";
 
 interface SplitRow {
   id: string;
@@ -30,9 +31,8 @@ interface CommissionSummary {
   countPaid: number;
 }
 
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
-
 export default function CommissionDashboardTab() {
+  const tenantId = useTenantId();
   const [salesPeople, setSalesPeople] = useState<SalesPerson[]>([]);
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +45,7 @@ export default function CommissionDashboardTab() {
         supabase
           .from("asaas_splits")
           .select("*")
-          .eq("tenant_id", DEFAULT_TENANT_ID)
+          .eq("tenant_id", tenantId || "")
           .order("created_at", { ascending: false }),
       ]);
       setSalesPeople(sp);

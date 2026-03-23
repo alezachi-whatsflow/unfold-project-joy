@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useTenantId } from "@/hooks/useTenantId";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,8 @@ function generatePaymentLink(negocio: Negocio): string {
 }
 
 export default function FechamentoGanhoModal({ negocio, onClose }: Props) {
-  const { changeStatus, updateNegocio, addHistoricoItem } = useNegocios();
+  const tenantId = useTenantId();
+  const { changeStatus, updateNegocio, addHistoricoItem } = useNegocios(tenantId);
   const [step, setStep] = useState<'confirm' | 'cobranca' | 'nf' | 'link'>('confirm');
   const [saving, setSaving] = useState(false);
 

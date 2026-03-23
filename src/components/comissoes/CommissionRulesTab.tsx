@@ -14,8 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/calculations";
 import type { CommissionRule, InstallmentRate } from "@/types/commissions";
 import { toast } from "sonner";
-
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 
 const EMPTY_RULE: Omit<CommissionRule, "id" | "created_at" | "updated_at" | "tenant_id"> = {
   name: "",
@@ -36,6 +35,7 @@ const EMPTY_RULE: Omit<CommissionRule, "id" | "created_at" | "updated_at" | "ten
 };
 
 export default function CommissionRulesTab() {
+  const tenantId = useTenantId();
   const [rules, setRules] = useState<CommissionRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function CommissionRulesTab() {
     const { data } = await supabase
       .from("commission_rules")
       .select("*")
-      .eq("tenant_id", DEFAULT_TENANT_ID)
+      .eq("tenant_id", tenantId || "")
       .order("created_at", { ascending: false });
     setRules((data || []) as CommissionRule[]);
     setLoading(false);
@@ -87,7 +87,7 @@ export default function CommissionRulesTab() {
 
     const payload = {
       ...form,
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: tenantId || "",
       updated_at: new Date().toISOString(),
     };
 

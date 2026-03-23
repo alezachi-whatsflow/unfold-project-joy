@@ -9,7 +9,6 @@ import type {
   DunningExecution,
 } from "@/types/asaas";
 
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 const SUPABASE_URL = "https://jtlrglzcsmqmapizqgzu.supabase.co";
 
 // ── Asaas Proxy Calls ──
@@ -102,6 +101,7 @@ export async function fetchAllFromAsaas(
 // ── Sync Functions ──
 
 export async function syncCustomersFromAsaas(
+  tenantId: string,
   environment: "sandbox" | "production" = "sandbox"
 ) {
   const customers = await fetchAllFromAsaas("/customers", environment);
@@ -109,7 +109,7 @@ export async function syncCustomersFromAsaas(
   for (const cust of customers as Record<string, unknown>[]) {
     await supabase.from("asaas_customers").upsert(
       {
-        tenant_id: DEFAULT_TENANT_ID,
+        tenant_id: tenantId,
         asaas_id: cust.id,
         name: cust.name,
         email: cust.email || null,
@@ -128,6 +128,7 @@ export async function syncCustomersFromAsaas(
 }
 
 export async function syncPaymentsFromAsaas(
+  tenantId: string,
   environment: "sandbox" | "production" = "sandbox"
 ) {
   const payments = await fetchAllFromAsaas("/payments", environment);
@@ -135,7 +136,7 @@ export async function syncPaymentsFromAsaas(
   for (const pay of payments as Record<string, unknown>[]) {
     await supabase.from("asaas_payments").upsert(
       {
-        tenant_id: DEFAULT_TENANT_ID,
+        tenant_id: tenantId,
         asaas_id: pay.id,
         asaas_customer_id: pay.customer || null,
         billing_type: pay.billingType || "UNDEFINED",
@@ -162,7 +163,7 @@ export async function syncPaymentsFromAsaas(
 
 // ── Local DB Queries ──
 
-export async function fetchAsaasPayments(): Promise<AsaasPayment[]> {
+export async function fetchAsaasPayments(tenantId: string): Promise<AsaasPayment[]> {
   const all: AsaasPayment[] = [];
   let offset = 0;
   const batchSize = 1000;
@@ -172,7 +173,7 @@ export async function fetchAsaasPayments(): Promise<AsaasPayment[]> {
     const { data, error } = await supabase
       .from("asaas_payments")
       .select("*")
-      .eq("tenant_id", DEFAULT_TENANT_ID)
+      .eq("tenant_id", tenantId)
       .order("due_date", { ascending: false })
       .range(offset, offset + batchSize - 1);
 
@@ -189,7 +190,7 @@ export async function fetchAsaasPayments(): Promise<AsaasPayment[]> {
   return all;
 }
 
-export async function fetchAsaasCustomers(): Promise<AsaasCustomer[]> {
+export async function fetchAsaasCustomers(tenantId: string): Promise<AsaasCustomer[]> {
   const all: AsaasCustomer[] = [];
   let offset = 0;
   const batchSize = 1000;
@@ -199,7 +200,7 @@ export async function fetchAsaasCustomers(): Promise<AsaasCustomer[]> {
     const { data, error } = await supabase
       .from("asaas_customers")
       .select("*")
-      .eq("tenant_id", DEFAULT_TENANT_ID)
+      .eq("tenant_id", tenantId)
       .order("name", { ascending: true })
       .range(offset, offset + batchSize - 1);
 
@@ -216,40 +217,40 @@ export async function fetchAsaasCustomers(): Promise<AsaasCustomer[]> {
   return all;
 }
 
-export async function fetchDunningRules(): Promise<DunningRule[]> {
+export async function fetchDunningRules(tenantId: string): Promise<DunningRule[]> {
   const { data, error } = await supabase
     .from("dunning_rules")
     .select("*")
-    .eq("tenant_id", DEFAULT_TENANT_ID)
+    .eq("tenant_id", tenantId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
   return (data || []) as DunningRule[];
 }
 
-export async function upsertDunningRule(rule: Partial<DunningRule>) {
+export async function upsertDunningRule(tenantId: string, rule: Partial<DunningRule>) {
   const { error } = await supabase.from("dunning_rules").upsert({
     ...rule,
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: tenantId,
     updated_at: new Date().toISOString(),
   });
   if (error) throw error;
 }
 
-export async function fetchCheckoutSources(): Promise<CheckoutSource[]> {
+export async function fetchCheckoutSources(tenantId: string): Promise<CheckoutSource[]> {
   const { data, error } = await supabase
     .from("checkout_sources")
     .select("*")
-    .eq("tenant_id", DEFAULT_TENANT_ID);
+    .eq("tenant_id", tenantId);
   if (error) throw error;
   return (data || []) as CheckoutSource[];
 }
 
-export async function fetchSalesPeople(): Promise<SalesPerson[]> {
+export async function fetchSalesPeople(tenantId: string): Promise<SalesPerson[]> {
   const { data, error } = await supabase
     .from("sales_people")
     .select("*")
-    .eq("tenant_id", DEFAULT_TENANT_ID);
+    .eq("tenant_id", tenantId);
   if (error) throw error;
   return (data || []) as SalesPerson[];
 }

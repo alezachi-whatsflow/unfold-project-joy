@@ -4,19 +4,18 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Negocio, NegocioStatus, HistoricoItem } from '@/types/vendas';
 import { useAuth } from '@/hooks/useAuth';
 
-const TENANT_ID = '00000000-0000-0000-0000-000000000001';
-
-export function useNegocios(pipelineId?: string | null) {
+export function useNegocios(tenantId?: string, pipelineId?: string | null) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const { data: negocios = [], isLoading } = useQuery({
-    queryKey: ['negocios', pipelineId],
+    queryKey: ['negocios', tenantId, pipelineId],
+    enabled: !!tenantId,
     queryFn: async () => {
       let query = supabase
         .from('negocios')
         .select('*')
-        .eq('tenant_id', TENANT_ID)
+        .eq('tenant_id', tenantId!)
         .order('created_at', { ascending: false });
 
       if (pipelineId) {
@@ -48,7 +47,7 @@ export function useNegocios(pipelineId?: string | null) {
       usuarioNome: user?.user_metadata?.full_name || user?.email || '',
     }];
     const { error } = await supabase.from('negocios').insert({
-      tenant_id: TENANT_ID,
+      tenant_id: tenantId!,
       pipeline_id: data.pipeline_id || pipelineId || null,
       titulo: data.titulo,
       status: data.status || 'prospeccao',
@@ -74,7 +73,7 @@ export function useNegocios(pipelineId?: string | null) {
     } as any);
     if (error) throw error;
     invalidate();
-  }, [user, invalidate, pipelineId]);
+  }, [user, invalidate, pipelineId, tenantId]);
 
   const updateNegocio = useCallback(async (id: string, data: Partial<Negocio>) => {
     const { error } = await supabase

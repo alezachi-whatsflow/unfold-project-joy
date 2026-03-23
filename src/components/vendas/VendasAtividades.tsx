@@ -8,6 +8,7 @@ import { ActivityFormDialog } from "@/components/activities/ActivityFormDialog";
 import { useActivities, type Activity } from "@/hooks/useActivities";
 import { useNegocios } from "@/hooks/useNegocios";
 import { usePipelines } from "@/hooks/usePipelines";
+import { useTenantId } from "@/hooks/useTenantId";
 import type { Negocio } from "@/types/vendas";
 
 function negocioToActivity(n: Negocio): Activity {
@@ -46,11 +47,12 @@ function negocioToActivity(n: Negocio): Activity {
 }
 
 export default function VendasAtividades() {
+  const tenantId = useTenantId();
   const [view, setView] = useState("kanban");
   const [formOpen, setFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<any>(null);
   const { activities, isLoading: activitiesLoading, createActivity, updateActivity, deleteActivity } = useActivities();
-  const { selectedPipelineId } = usePipelines();
+  const { selectedPipelineId } = usePipelines(tenantId);
   const { negocios, isLoading: negociosLoading } = useNegocios(selectedPipelineId);
 
   const merged = useMemo(() => {

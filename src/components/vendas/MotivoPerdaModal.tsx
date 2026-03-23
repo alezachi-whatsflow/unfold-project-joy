@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useTenantId } from "@/hooks/useTenantId";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,7 +15,8 @@ interface Props {
 }
 
 export default function MotivoPerdaModal({ negocio, onClose }: Props) {
-  const { changeStatus, updateNegocio } = useNegocios();
+  const tenantId = useTenantId();
+  const { changeStatus, updateNegocio } = useNegocios(tenantId);
   const [motivo, setMotivo] = useState("");
   const [detalhe, setDetalhe] = useState("");
   const [saving, setSaving] = useState(false);

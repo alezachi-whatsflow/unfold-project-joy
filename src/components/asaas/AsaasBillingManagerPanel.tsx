@@ -29,8 +29,7 @@ import { CustomerSelectionCard } from "./billing/CustomerSelectionCard";
 import { BillingResultsCard } from "./billing/BillingResultsCard";
 import { SplitConfigCard, DEFAULT_SPLIT, type SplitConfig } from "./billing/SplitConfigCard";
 import { PaymentArtifactsDialog } from "./billing/PaymentArtifactsDialog";
-
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 
 export interface BillingConfig {
   billingType: "BOLETO" | "CREDIT_CARD" | "PIX" | "UNDEFINED";
@@ -76,6 +75,7 @@ export interface CreationResult {
 type BillingMode = "manual" | "automatic";
 
 export function AsaasBillingManagerPanel() {
+  const tenantId = useTenantId();
   const { customers, environment } = useAsaas();
   const [config, setConfig] = useState<BillingConfig>(DEFAULT_CONFIG);
   const [split, setSplit] = useState<SplitConfig>(DEFAULT_SPLIT);
@@ -219,7 +219,7 @@ export function AsaasBillingManagerPanel() {
                   : splitVal;
 
                 await supabase.from("asaas_splits").insert({
-                  tenant_id: DEFAULT_TENANT_ID,
+                  tenant_id: tenantId || "",
                   payment_id: localPayment.id,
                   salesperson_id: r.salespersonId || null,
                   wallet_id: r.walletId,

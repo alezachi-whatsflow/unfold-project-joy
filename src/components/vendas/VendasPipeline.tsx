@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useNegocios } from "@/hooks/useNegocios";
 import { usePipelines } from "@/hooks/usePipelines";
+import { useTenantId } from "@/hooks/useTenantId";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,8 @@ import FechamentoGanhoModal from "@/components/vendas/FechamentoGanhoModal";
 import PipelineManager from "@/components/vendas/PipelineManager";
 
 export default function VendasPipeline() {
-  const { pipelines, selectedPipeline, selectedPipelineId, selectPipeline, isLoading: pipelinesLoading, createPipeline } = usePipelines();
+  const tenantId = useTenantId();
+  const { pipelines, selectedPipeline, selectedPipelineId, selectPipeline, isLoading: pipelinesLoading, createPipeline } = usePipelines(tenantId);
   const { negocios, isLoading, changeStatus } = useNegocios(selectedPipelineId);
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");

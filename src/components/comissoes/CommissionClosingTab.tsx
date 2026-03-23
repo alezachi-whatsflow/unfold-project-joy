@@ -12,8 +12,7 @@ import type { SalesPerson } from "@/types/asaas";
 import type { CommissionRule } from "@/types/commissions";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+import { useTenantId } from "@/hooks/useTenantId";
 
 interface SplitRow {
   id: string;
@@ -97,6 +96,7 @@ function guessProduct(description: string | null, rules: CommissionRule[]): stri
 }
 
 export default function CommissionClosingTab() {
+  const tenantId = useTenantId();
   const [salesPeople, setSalesPeople] = useState<SalesPerson[]>([]);
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
@@ -113,10 +113,10 @@ export default function CommissionClosingTab() {
       setLoading(true);
       const [sp, { data: splitsData }, { data: paymentsData }, { data: customersData }, { data: rulesData }] = await Promise.all([
         fetchSalesPeople(),
-        supabase.from("asaas_splits").select("*").eq("tenant_id", DEFAULT_TENANT_ID),
-        supabase.from("asaas_payments").select("id,description,value,due_date,payment_date,created_at,status,customer_id,external_reference").eq("tenant_id", DEFAULT_TENANT_ID),
-        supabase.from("asaas_customers").select("id,name").eq("tenant_id", DEFAULT_TENANT_ID),
-        supabase.from("commission_rules").select("*").eq("tenant_id", DEFAULT_TENANT_ID).eq("is_active", true),
+        supabase.from("asaas_splits").select("*").eq("tenant_id", tenantId || ""),
+        supabase.from("asaas_payments").select("id,description,value,due_date,payment_date,created_at,status,customer_id,external_reference").eq("tenant_id", tenantId || ""),
+        supabase.from("asaas_customers").select("id,name").eq("tenant_id", tenantId || ""),
+        supabase.from("commission_rules").select("*").eq("tenant_id", tenantId || "").eq("is_active", true),
       ]);
       setSalesPeople(sp);
       setSplits((splitsData || []) as SplitRow[]);

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
+import { useTenantId } from "@/hooks/useTenantId";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,8 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const PIE_COLORS = ["#60a5fa", "#a78bfa", "#f59e0b", "#fb923c", "#4ade80", "#f87171", "#38bdf8", "#e879f9"];
 
 export default function VendasRelatorios() {
-  const { negocios } = useNegocios();
+  const tenantId = useTenantId();
+  const { negocios } = useNegocios(tenantId);
 
   // ─── SHARED KPIs ──────────────────────────────────────────────────────
   const kpis = useMemo(() => {
