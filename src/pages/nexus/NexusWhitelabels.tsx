@@ -698,13 +698,14 @@ function CreateWhitelabelModal({
     setSaving(true);
     try {
       // 1. Tenant
+      const cnpjClean = form.company_cnpj?.replace(/[^\d]/g, '').trim();
       const { data: tenant, error: tErr } = await supabase
         .from('tenants')
         .insert({
           name: form.company_name,
           slug: slugify(form.company_name),
           email: form.company_email || null,
-          cpf_cnpj: form.company_cnpj || null,
+          cpf_cnpj: cnpjClean && cnpjClean.length > 0 ? form.company_cnpj.trim() : null,
         })
         .select()
         .single();
@@ -1074,12 +1075,18 @@ function EditWhitelabelModal({
     try {
       // 1. Update tenant
       if (row.tenant_id) {
+        const cnpjClean = form.company_cnpj?.replace(/[^\d]/g, '').trim();
         const { error: tErr } = await supabase.from('tenants').update({
           name: form.company_name,
           email: form.company_email || null,
-          cpf_cnpj: form.company_cnpj || null,
+          cpf_cnpj: cnpjClean && cnpjClean.length > 0 ? form.company_cnpj.trim() : null,
         }).eq('id', row.tenant_id);
-        if (tErr) throw new Error(`Erro ao atualizar empresa: ${tErr.message}`);
+        if (tErr) {
+          if (tErr.message.includes('idx_tenants_cpf_cnpj')) {
+            throw new Error('Este CNPJ já está cadastrado em outra empresa.');
+          }
+          throw new Error(`Erro ao atualizar empresa: ${tErr.message}`);
+        }
       }
 
       // 2. Update license
