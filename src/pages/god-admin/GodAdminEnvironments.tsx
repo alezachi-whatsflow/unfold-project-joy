@@ -53,7 +53,7 @@ export default function GodAdminEnvironments() {
                 <CardDescription className="text-sky-500/70">As alterações nestas instâncias e contas não impactam a base oficial de Produção.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-2">
                    <div className="p-3 bg-background rounded-lg border border-white/5 relative overflow-hidden">
                      <span className="text-muted-foreground mb-1 block">Status do Banco (Pg)</span>
                      <span className="text-emerald-500 font-bold flex items-center gap-2"><CheckCircle2 className="h-4 w-4"/> Operacional</span>

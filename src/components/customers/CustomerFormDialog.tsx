@@ -82,7 +82,7 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
         </DialogHeader>
         <div className="space-y-4">
           {/* Row 1: Nome + Email */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Empresa / Titular *</Label>
               <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Nome do cliente" />
@@ -94,7 +94,7 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
           </div>
 
           {/* Row 2: CPF/CNPJ + Whitelabel + Status */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">CPF / CNPJ</Label>
               <CnpjInput value={form.cpfCnpj} onChange={(v) => set("cpfCnpj", v)} />
@@ -231,7 +231,7 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
           </div>
 
           {/* Telefones */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Fone Faturamento</Label>
               <Input value={form.phoneBilling} onChange={(e) => set("phoneBilling", e.target.value)} placeholder="(00) 00000-0000" />
@@ -247,7 +247,7 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
           </div>
 
           {/* Condição */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Condição</Label>
               <Select value={form.condicao || "_empty"} onValueChange={(v) => set("condicao", v === "_empty" ? "" : v)}>

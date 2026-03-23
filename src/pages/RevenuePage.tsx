@@ -332,7 +332,7 @@ export default function RevenuePage() {
                   </Popover>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Client with autocomplete */}
                   <div className="space-y-1">
                     <Label>Cliente</Label>
@@ -352,7 +352,7 @@ export default function RevenuePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label>Valor Total (R$)</Label>
                     <Input type="number" step="0.01" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} placeholder="3000.00" />
@@ -373,7 +373,7 @@ export default function RevenuePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label>Data Lançamento</Label>
                     <DatePickerField

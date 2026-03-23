@@ -103,7 +103,7 @@ export default function WizardStep1({ onNext }: Props) {
           Selecione o segmento que melhor representa sua empresa e descreva seu produto/serviço principal.
           A proposta de valor deve resumir o problema central que você resolve para seus clientes.
         </HelpBox>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Segmento *</Label>
             <Select value={segment} onValueChange={setSegment}>
@@ -135,7 +135,7 @@ export default function WizardStep1({ onNext }: Props) {
           Informe a faixa de ticket médio (valor mínimo e máximo cobrado por cliente), o ciclo médio de venda
           em dias (do primeiro contato ao fechamento) e o tipo de cobrança predominante (recorrente, avulsa, etc.).
         </HelpBox>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Ticket médio mínimo</Label>
             <Input type="number" value={ticketMin} onChange={e => setTicketMin(e.target.value)} placeholder="0,00" />
@@ -177,7 +177,7 @@ export default function WizardStep1({ onNext }: Props) {
           que seus clientes enfrentam e o que seus melhores clientes têm em comum — isso ajudará a IA a
           gerar critérios de qualificação mais precisos.
         </HelpBox>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Porte ideal do cliente</Label>
             <Select value={clientSize} onValueChange={setClientSize}>

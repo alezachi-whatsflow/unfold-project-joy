@@ -117,7 +117,7 @@ export default function NFEmitirDialog({ open, onOpenChange, onEmit, nextNumero 
           {/* Step 1 */}
           {step === 1 && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Tipo de NF</Label>
                   <Select value={tipo} onValueChange={(v) => setTipo(v as NFTipo)}>
@@ -177,7 +177,7 @@ export default function NFEmitirDialog({ open, onOpenChange, onEmit, nextNumero 
           {step === 3 && (
             <div className="space-y-3">
               <h4 className="font-semibold text-sm">Tributos Calculados</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <span className="text-muted-foreground">ISS ({tributos.issPercent.toFixed(2)}%)</span><span className="text-right">R$ {tributos.issValor.toFixed(2)}</span>
                 <span className="text-muted-foreground">PIS ({tributos.pisPercent}%)</span><span className="text-right">R$ {tributos.pisValor.toFixed(2)}</span>
                 <span className="text-muted-foreground">COFINS ({tributos.cofinsPercent}%)</span><span className="text-right">R$ {tributos.cofinsValor.toFixed(2)}</span>

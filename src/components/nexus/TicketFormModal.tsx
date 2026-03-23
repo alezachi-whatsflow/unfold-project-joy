@@ -95,7 +95,7 @@ export default function TicketFormModal({ open, onOpenChange, onSaved, ticket, d
             <Label>Descrição</Label>
             <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} className="min-h-[80px]" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Prioridade</Label>
               <Select value={form.priority} onValueChange={(v) => set('priority', v)}>

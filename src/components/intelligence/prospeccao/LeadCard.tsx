@@ -311,7 +311,7 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
           )}
 
           {/* Action buttons row */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* Analyze button */}
             <Button
               size="sm"

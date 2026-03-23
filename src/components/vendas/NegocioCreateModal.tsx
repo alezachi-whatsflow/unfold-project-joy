@@ -235,7 +235,7 @@ export default function NegocioCreateModal({ onClose }: Props) {
             </div>
             <Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Implantação Whatsflow — Empresa X" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Client autocomplete with create */}
             <div className="space-y-2">
               <Label>Cliente / Empresa</Label>
@@ -321,7 +321,7 @@ export default function NegocioCreateModal({ onClose }: Props) {
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Origem</Label>
               <Select value={origem} onValueChange={v => setOrigem(v as NegocioOrigem)}>
@@ -413,7 +413,7 @@ export default function NegocioCreateModal({ onClose }: Props) {
           {produtos.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhum produto adicionado</p>}
 
           <Separator />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Desconto geral</Label>
               <div className="flex gap-2">
@@ -433,7 +433,7 @@ export default function NegocioCreateModal({ onClose }: Props) {
               <p className="text-sm font-bold text-foreground">Líquido: {fmt(valorLiquido)}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Forma de pagamento</Label>
               <Select value={formaPagamento} onValueChange={setFormaPagamento}>
@@ -503,7 +503,7 @@ export default function NegocioCreateModal({ onClose }: Props) {
       {step === 4 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground">Revisão do Negócio</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
             <ReviewItem label="Título" value={titulo} />
             <ReviewItem label="Cliente" value={clienteNome || '—'} />
             <ReviewItem label="Consultor" value={consultorNome || '—'} />

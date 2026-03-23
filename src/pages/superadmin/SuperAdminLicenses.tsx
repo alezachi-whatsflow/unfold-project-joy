@@ -266,7 +266,7 @@ export default function SuperAdminLicenses() {
             <Separator />
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Add-ons</p>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Extra Web</Label>
                 <Input type="number" min={0} value={form.extra_devices_web || 0}

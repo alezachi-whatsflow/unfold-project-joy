@@ -142,7 +142,7 @@ export default function PipelineManager({ onClose }: Props) {
         {/* Pipeline editor */}
         {editPipeline && (
           <div className="flex-1 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Nome</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} className="h-9 text-sm" />

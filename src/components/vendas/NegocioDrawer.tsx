@@ -273,7 +273,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
                 </span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-2 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
               <Button
                 size="sm"
                 variant="outline"
@@ -387,7 +387,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
         {/* Info */}
         <section>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Informações</h3>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             <InfoItem label="Cliente" value={negocio.cliente_nome || '—'} />
             <InfoItem label="Consultor" value={negocio.consultor_nome || '—'} />
             {(negocio as any).phone_lead && (

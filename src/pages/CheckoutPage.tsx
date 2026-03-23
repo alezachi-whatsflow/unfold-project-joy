@@ -581,7 +581,7 @@ export default function CheckoutPage() {
                       <label className="text-sm font-medium">Nome no cartão</label>
                       <input placeholder="JOAO DA SILVA" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-[var(--co-primary)]" />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-sm font-medium">Validade</label>
                         <input placeholder="MM/AA" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-[var(--co-primary)] font-mono" />

@@ -38,7 +38,7 @@ function SidebarAppearanceCard() {
         <div className="space-y-3">
           <Label className="text-sm font-medium">Layout do Menu</Label>
           <p className="text-xs text-muted-foreground">A mudança é aplicada imediatamente.</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {LAYOUT_OPTIONS.map(opt => (
               <label
                 key={opt.value}
@@ -64,7 +64,7 @@ function SidebarAppearanceCard() {
         {/* Density */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Densidade</Label>
-          <RadioGroup value={prefs.density} onValueChange={(v) => setPrefs({ density: v as SidebarDensity })} className="grid grid-cols-3 gap-3">
+          <RadioGroup value={prefs.density} onValueChange={(v) => setPrefs({ density: v as SidebarDensity })} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {([
               { value: "comfortable", label: "Confortável", desc: "Mais espaço" },
               { value: "default", label: "Padrão", desc: "Equilíbrio" },
@@ -82,7 +82,7 @@ function SidebarAppearanceCard() {
         {/* Width */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Largura do Menu</Label>
-          <RadioGroup value={prefs.width} onValueChange={(v) => setPrefs({ width: v as SidebarWidth })} className="grid grid-cols-3 gap-3">
+          <RadioGroup value={prefs.width} onValueChange={(v) => setPrefs({ width: v as SidebarWidth })} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {([
               { value: "narrow", label: "Estreito", desc: "220px" },
               { value: "default", label: "Padrão", desc: "248px" },

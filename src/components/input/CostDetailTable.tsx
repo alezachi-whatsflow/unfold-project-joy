@@ -206,7 +206,7 @@ function AddLineDialog() {
               className="h-9 text-sm"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Bloco</Label>
               <Select value={block} onValueChange={(v) => setBlock(v as CostBlock)}>

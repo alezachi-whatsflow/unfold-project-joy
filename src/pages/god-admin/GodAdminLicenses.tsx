@@ -162,7 +162,7 @@ export default function GodAdminLicenses() {
             <DialogTitle className="text-xl">Editar Licença — {editingLicense?.account}</DialogTitle>
           </DialogHeader>
           {editingLicense && (
-            <div className="gap-6 grid grid-cols-2 py-4">
+            <div className="gap-6 grid grid-cols-1 sm:grid-cols-2 py-4">
               <div className="space-y-4">
                 <div>
                   <Label className="text-slate-400">Plano Base</Label>

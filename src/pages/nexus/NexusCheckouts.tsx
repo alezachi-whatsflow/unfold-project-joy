@@ -429,7 +429,7 @@ function CreateCheckoutModal({
             {/* Tipo */}
             <div className="space-y-1.5">
               <Label className="text-xs">Tipo de checkout</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[{ v: "new_account", l: "Nova Conta" }, { v: "upsell", l: "Upsell" }, { v: "renewal", l: "Renovação" }].map(t => (
                   <button key={t.v} type="button" onClick={() => set("checkout_type", t.v)}
                     className={`px-2 py-2 rounded-lg text-xs font-semibold border transition-all ${form.checkout_type === t.v ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
@@ -450,7 +450,7 @@ function CreateCheckoutModal({
                 <Label className="text-xs">Nome da empresa</Label>
                 <Input placeholder="Empresa Ltda" value={form.company_name} onChange={e => set("company_name", e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">CNPJ / CPF</Label>
                   <Input placeholder="00.000.000/0000-00" value={form.buyer_cpf_cnpj} onChange={e => set("buyer_cpf_cnpj", e.target.value)} />
@@ -514,7 +514,7 @@ function CreateCheckoutModal({
             {/* Extras numéricos */}
             <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
               <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Recursos extras</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[
                   { label: "Atendentes", key: "extra_attendants" },
                   { label: "Web extras",  key: "extra_web" },

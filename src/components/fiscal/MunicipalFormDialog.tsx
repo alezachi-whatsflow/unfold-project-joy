@@ -52,7 +52,7 @@ export default function MunicipalFormDialog({ open, onOpenChange, onSave, editEn
           <DialogTitle>{editEntry ? "Editar Município" : "Adicionar Município"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Município</Label>
               <Input value={municipio} onChange={e => setMunicipio(e.target.value)} placeholder="São Paulo" />
@@ -62,7 +62,7 @@ export default function MunicipalFormDialog({ open, onOpenChange, onSave, editEn
               <Input value={codigoIBGE} onChange={e => setCodigoIBGE(e.target.value)} placeholder="3550308" maxLength={7} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Alíquota ISS (%)</Label>
               <Input type="number" step="any" min={0} max={10} value={aliquotaISS} onChange={e => setAliquotaISS(Number(e.target.value))} />

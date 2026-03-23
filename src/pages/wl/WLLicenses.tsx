@@ -127,7 +127,7 @@ export default function WLLicenses() {
             <DialogTitle className="text-xl">Atualizar Licença — {editingLicense?.account}</DialogTitle>
           </DialogHeader>
           {editingLicense && (
-            <div className="gap-6 grid grid-cols-2 py-4">
+            <div className="gap-6 grid grid-cols-1 sm:grid-cols-2 py-4">
               <div className="space-y-4">
                 <div>
                   <Label>Plano Base</Label>

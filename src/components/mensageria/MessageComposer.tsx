@@ -182,7 +182,7 @@ export default function MessageComposer({ onClose }: MessageComposerProps) {
           </TabsContent>
 
           <TabsContent value="location" className="space-y-3 pt-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Latitude</Label>
                 <Input type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} />

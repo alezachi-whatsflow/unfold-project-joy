@@ -472,7 +472,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           {/* Recursos Contratados */}
           <section className="space-y-2">
             <SectionTitle>Recursos Contratados</SectionTitle>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <NumField label="Atendentes Base" value={form.base_attendants} onChange={(v) => set('base_attendants', v)} />
               <NumField label="Extra Atendentes" value={form.extra_attendants} onChange={(v) => set('extra_attendants', v)} />
               <NumField label="Disp. Web (base)" value={form.base_devices_web} onChange={(v) => set('base_devices_web', v)} />
@@ -782,7 +782,7 @@ function SplitRow({
           />
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Tipo</Label>
           <Select

@@ -216,7 +216,7 @@ export default function CommissionRulesTab() {
           <CardDescription className="text-xs">Modelo de comissão padrão para consultores</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-xs text-muted-foreground">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="rounded-md border border-border p-2">
               <p className="font-medium text-foreground mb-1">Split Direto (Parcelas 1-3)</p>
               <p>1ª parcela: <span className="text-primary font-semibold">23%</span> = {formatCurrency(359 * 0.23)}</p>
@@ -241,7 +241,7 @@ export default function CommissionRulesTab() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Nome da Regra</Label>
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Comissão Plano Profissional" className="text-xs" />
@@ -259,7 +259,7 @@ export default function CommissionRulesTab() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Produto / Serviço</Label>
                 <Input value={form.product_name} onChange={(e) => setForm({ ...form, product_name: e.target.value })} placeholder="Ex: Plano Profissional" className="text-xs" />
@@ -314,7 +314,7 @@ export default function CommissionRulesTab() {
                       <Percent className="h-3.5 w-3.5" /> Comissão Recorrente (performance)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="grid grid-cols-3 gap-3">
+                  <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <div>
                       <Label className="text-[10px]">A partir da parcela</Label>
                       <Input

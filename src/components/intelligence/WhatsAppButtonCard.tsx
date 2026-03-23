@@ -37,7 +37,7 @@ export function WhatsAppButtonCard({ analysis }: WhatsAppButtonCardProps) {
       <CardContent className="space-y-4">
         {/* Current config */}
         {analysis.encontrado && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
               { label: "Posição", value: analysis.configuracao_atual.posicao },
               { label: "Label texto", value: analysis.configuracao_atual.tem_label_texto ? "Sim" : "Não" },

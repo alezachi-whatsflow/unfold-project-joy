@@ -141,7 +141,7 @@ export default function QualifierModal({
                 )}
 
                 {q.type === 'multiple_choice' && q.options && (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {q.options.map(opt => (
                       <Button
                         key={opt}

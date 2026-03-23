@@ -96,7 +96,7 @@ export function ActivityFormDialog({ open, onOpenChange, onSave, editing }: Prop
             <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} placeholder="Detalhes da atividade..." />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
@@ -122,7 +122,7 @@ export function ActivityFormDialog({ open, onOpenChange, onSave, editing }: Prop
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Data</Label>
               <Popover>

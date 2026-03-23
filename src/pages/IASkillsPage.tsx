@@ -178,7 +178,7 @@ export default function IASkillsPage() {
       {/* Maturity Stages Banner */}
       <Card className="border-dashed">
         <CardContent className="py-4">
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
             <div className="space-y-1">
               <Zap className="h-5 w-5 mx-auto text-teal-400" />
               <p className="text-xs font-medium text-foreground">Estágio 1</p>

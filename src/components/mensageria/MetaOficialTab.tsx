@@ -312,7 +312,7 @@ export default function MetaOficialTab() {
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                   <span className="text-sm font-medium text-emerald-400">Conta conectada</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div><span className="text-muted-foreground">WABA ID:</span> <span className="font-mono text-foreground">{config.wabaId}</span></div>
                   <div><span className="text-muted-foreground">Phone Number ID:</span> <span className="font-mono text-foreground">{config.phoneNumberId}</span></div>
                 </div>

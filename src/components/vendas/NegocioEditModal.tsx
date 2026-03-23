@@ -153,7 +153,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
             <Label className="text-xs text-muted-foreground">Título *</Label>
             <Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Nome do negócio" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Cliente</Label>
               <div className="relative">
@@ -169,7 +169,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Origem</Label>
               <Select value={origem} onValueChange={v => setOrigem(v as NegocioOrigem)}>
@@ -283,7 +283,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
           )}
 
           {/* Totals */}
-          <div className="grid grid-cols-2 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Desconto geral</Label>
               <div className="flex gap-2">
@@ -317,7 +317,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
         {/* ── Section: Pagamento ── */}
         <section className="space-y-3">
           <SectionHeader icon={CreditCard} title="Pagamento" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Forma de pagamento</Label>
               <Select value={formaPagamento} onValueChange={setFormaPagamento}>

@@ -277,7 +277,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     <div style={{ backgroundColor: "var(--wa-bg-header)", borderTop: "1px solid var(--wa-border)" }}>
       {showAttach && !attachMode && (
         <div
-          className="mx-4 mt-2 rounded-xl p-3 grid grid-cols-3 gap-2"
+          className="mx-4 mt-2 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
           style={{ backgroundColor: "#233138", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "messageIn 200ms ease-out" }}
         >
           {attachmentItems.map((item) => (

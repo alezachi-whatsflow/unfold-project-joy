@@ -705,7 +705,7 @@ function CreateWhitelabelModal({
           name: form.company_name,
           slug: slugify(form.company_name),
           email: form.company_email || null,
-          cpf_cnpj: cnpjClean && cnpjClean.length > 0 ? form.company_cnpj.trim() : null,
+          cpf_cnpj: cnpjClean && cnpjClean.length > 0 ? cnpjClean : null,
         })
         .select()
         .single();
@@ -901,7 +901,7 @@ function CreateWhitelabelModal({
 
           {/* Suporte */}
           <Section title="Suporte">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="E-mail de suporte">
                 <Input type="email" placeholder="suporte@parceiro.com" value={form.support_email} onChange={(e) => set('support_email', e.target.value)} />
               </Field>
@@ -1079,7 +1079,7 @@ function EditWhitelabelModal({
         const { error: tErr } = await supabase.from('tenants').update({
           name: form.company_name,
           email: form.company_email || null,
-          cpf_cnpj: cnpjClean && cnpjClean.length > 0 ? form.company_cnpj.trim() : null,
+          cpf_cnpj: cnpjClean && cnpjClean.length > 0 ? cnpjClean : null,
         }).eq('id', row.tenant_id);
         if (tErr) {
           if (tErr.message.includes('idx_tenants_cpf_cnpj')) {
@@ -1220,7 +1220,7 @@ function EditWhitelabelModal({
 
           {/* Suporte */}
           <Section title="Suporte">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="E-mail de suporte">
                 <Input type="email" placeholder="suporte@parceiro.com" value={form.support_email} onChange={(e) => set('support_email', e.target.value)} />
               </Field>

@@ -172,7 +172,7 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs">Tipo de Cobrança</Label>
             <Select
@@ -266,7 +266,7 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
                 ? "Configurações do Boleto (aplicadas quando pago via boleto)"
                 : "Configurações do Boleto"}
             </p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-[10px]">Multa (%)</Label>
                 <Input

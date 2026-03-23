@@ -514,7 +514,7 @@ export default function NexusLicenses() {
                           <Badge className={`text-[9px] ${tc.className}`}>{tc.label}</Badge>
                           <Badge variant="outline" className="text-[9px]">{l.plan === 'profissional' ? 'Prof.' : l.plan === 'solo_pro' ? 'Solo Pro' : l.plan}</Badge>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
                           <div>
                             <p className="text-xs font-bold text-foreground">{totalAtt}</p>
                             <p className="text-[10px] text-muted-foreground">Atend.</p>

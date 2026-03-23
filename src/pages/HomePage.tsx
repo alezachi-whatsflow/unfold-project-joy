@@ -232,7 +232,7 @@ export default function HomePage() {
         {/* Card 3 – Clientes & Produtos */}
         <Glass className="col-span-12 sm:col-span-6 lg:col-span-4 min-h-[170px]" delay={260}>
           <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00C896] mb-4">Clientes & Produtos</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {cpLinks.map((l) => (
               <button key={l.route} onClick={() => go(l.route)}
                 className="flex flex-col items-center gap-2 py-3 rounded-xl hover:bg-[rgba(0,200,150,0.08)] hover:scale-105 transition-all">

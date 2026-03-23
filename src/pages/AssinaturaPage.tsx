@@ -305,7 +305,7 @@ function UpsellSection({ accountInfo, userRole }: { accountInfo: any; userRole: 
             {limits.facilite === 'none' && <p className="text-xs text-muted-foreground mb-3">Suporte especializado com horas mensais dedicadas.</p>}
             {limits.facilite === 'basico' && <p className="text-xs text-amber-500 mb-3">Você tem o Facilite Básico. Faça upgrade.</p>}
             {limits.facilite === 'intermediario' && <p className="text-xs text-amber-500 mb-3">Upgrade disponível para Avançado (R$ 1.500/mês).</p>}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {limits.facilite === 'none' && (
                 <>
                   <button onClick={() => handle('facilite_basico', 'Facilite Básico', 250)} className="rounded-lg border p-2 text-xs font-bold hover:border-purple-400 transition">Básico<br />R$ 250</button>

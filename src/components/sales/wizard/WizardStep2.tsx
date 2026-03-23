@@ -158,7 +158,7 @@ export default function WizardStep2({ onNext, onBack }: Props) {
         </div>
 
         {/* Thresholds */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Score mínimo — Lead Quente</Label>
             <div className="flex items-center gap-3">

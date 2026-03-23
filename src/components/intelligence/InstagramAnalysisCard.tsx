@@ -84,7 +84,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
         </div>
 
         {/* Key Metrics Grid */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <MetricBox icon={Users} label="Seguidores" value={formatNumber(profile.followers)} />
           <MetricBox icon={Users} label="Seguindo" value={formatNumber(profile.following)} />
           <MetricBox icon={Image} label="Posts" value={formatNumber(profile.posts_count)} />

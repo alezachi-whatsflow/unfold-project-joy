@@ -51,7 +51,7 @@ export default function NFViewDialog({ nf, open, onOpenChange }: Props) {
 
           <div>
             <h4 className="font-semibold text-foreground mb-2">Tributos</h4>
-            <div className="grid grid-cols-2 gap-1 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
               {nf.tributos.issValor > 0 && <><span className="text-muted-foreground">ISS ({nf.tributos.issPercent}%)</span><span className="text-right">R$ {nf.tributos.issValor.toFixed(2)}</span></>}
               {nf.tributos.pisValor > 0 && <><span className="text-muted-foreground">PIS ({nf.tributos.pisPercent}%)</span><span className="text-right">R$ {nf.tributos.pisValor.toFixed(2)}</span></>}
               {nf.tributos.cofinsValor > 0 && <><span className="text-muted-foreground">COFINS ({nf.tributos.cofinsPercent}%)</span><span className="text-right">R$ {nf.tributos.cofinsValor.toFixed(2)}</span></>}

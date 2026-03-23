@@ -154,7 +154,7 @@ export default function CertificateUploadCard({ onCertificateValidated }: Props)
                   <CheckCircle2 className="h-5 w-5 text-primary" />
                   <span className="font-semibold text-sm text-foreground">Certificado válido</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <div><span className="text-muted-foreground">CNPJ:</span> <span className="text-foreground">{result.meta.cnpj}</span></div>
                   <div><span className="text-muted-foreground">Razão Social:</span> <span className="text-foreground">{result.meta.razaoSocial}</span></div>
                   <div><span className="text-muted-foreground">Validade:</span> <span className="text-foreground">{new Date(result.meta.validoAte).toLocaleDateString("pt-BR")}</span></div>

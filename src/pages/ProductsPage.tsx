@@ -77,7 +77,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
       <div className="space-y-5">
         <section>
           <SectionLabel>Informações Básicas</SectionLabel>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <DetailRow label="Categoria" value={CATEGORY_LABELS[product.category]} />
             <DetailRow label="Status" value={STATUS_LABELS[product.status]} />
             <DetailRow label="Tipo" value={product.type === "recurring" ? "Recorrente" : "Único"} />
@@ -88,7 +88,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
 
         <section>
           <SectionLabel>Precificação & Custos</SectionLabel>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <DetailRow label="Preço de Venda" value={`${formatCurrency(product.price)}${product.type === "recurring" ? "/mês" : ""}`} />
             <DetailRow label="COGS (Custo Variável)" value={formatCurrency(product.cogs)} />
             <DetailRow label="Custo de Mão de Obra" value={formatCurrency(product.laborCost)} />
@@ -120,7 +120,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
 
         <section>
           <SectionLabel>Dados Comerciais</SectionLabel>
-          <div className="grid grid-cols-3 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
             <DetailRow label="Clientes Ativos" value={String(product.activeCustomers)} />
             <DetailRow label={product.type === "recurring" ? "MRR" : "Receita Total"} value={formatCurrency(product.type === "recurring" ? product.mrr : product.totalRevenue)} />
             {product.churnRate !== undefined && <DetailRow label="Churn Rate" value={formatPercent(product.churnRate)} />}
@@ -142,7 +142,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
         {product.monthlyHours && (
           <section>
             <SectionLabel>Horas de Serviço</SectionLabel>
-            <div className="grid grid-cols-3 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
               <DetailRow label="Horas Mensais" value={`${product.monthlyHours}h`} />
               <DetailRow label="Horas Semanais" value={`${product.weeklyHours}h`} />
               <DetailRow label="Custo por Hora" value={formatCurrency(product.hourlyRate || 0)} />
@@ -156,7 +156,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
 
         <section>
           <SectionLabel>Registro</SectionLabel>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <DetailRow label="Criado em" value={new Date(product.createdAt).toLocaleDateString("pt-BR")} />
             <DetailRow label="Atualizado em" value={new Date(product.updatedAt).toLocaleDateString("pt-BR")} />
           </div>
@@ -512,7 +512,7 @@ function NewProductModal() {
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
               Preview de Rentabilidade
             </h4>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">Margem de Contribuição</p>
                 <p className="font-display text-xl font-bold text-card-foreground">{formatCurrency(margin)}</p>

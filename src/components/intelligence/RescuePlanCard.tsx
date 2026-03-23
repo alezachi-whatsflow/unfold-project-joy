@@ -109,7 +109,7 @@ export function RescuePlanCard({
                 Benchmark de Mercado — {rescuePlan.nicho_detectado}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-center">
               {[
                 { label: "Website", val: rescuePlan.benchmark_mercado.website, current: websiteThreshold?.score },
                 { label: "Instagram", val: rescuePlan.benchmark_mercado.instagram, current: instagramThreshold?.score },

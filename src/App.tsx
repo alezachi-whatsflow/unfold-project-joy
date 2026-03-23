@@ -107,6 +107,7 @@ import AguardandoAtivacaoPage from "./pages/AguardandoAtivacaoPage";
 import ActivationPage from "./pages/ActivationPage";
 
 import { Loader2 } from "lucide-react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -231,6 +232,7 @@ const AppRoutes = () => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
     <ThemeProvider>
     <TooltipProvider>
       <Toaster />
@@ -260,6 +262,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   </QueryClientProvider>
 );
 

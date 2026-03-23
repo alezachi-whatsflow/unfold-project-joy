@@ -178,7 +178,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
         )}
 
         {/* Profile Completeness Indicators */}
-        <div className="rounded-lg bg-secondary/50 p-3 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-secondary/50 p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
           <StatusBadge active={products.length > 0 || hasAttributes} label="Produtos/Serviços" />
           <StatusBadge active={posts.length > 0} label="Feed Atualizado" />
           <StatusBadge active={!!business.website} label="Website" />
@@ -249,7 +249,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
               <ShoppingBag className="h-3.5 w-3.5" />
               Produtos / Serviços
             </h4>
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
               {products.map((p, i) => (
                 <div key={i} className="rounded-lg border border-border bg-muted/50 p-2">
                   {p.image_url && (
