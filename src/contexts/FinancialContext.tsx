@@ -87,10 +87,23 @@ export function FinancialProvider({
   const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>(1);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Get tenant from user_tenants via a simple query (context can't use hooks)
+  const [tenantId, setTenantId] = useState<string | undefined>();
+  useEffect(() => {
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase.from("user_tenants").select("tenant_id").eq("user_id", user.id).limit(1).single()
+            .then(({ data }) => { if (data?.tenant_id) setTenantId(data.tenant_id); });
+        }
+      });
+    });
+  }, []);
+
   const loadEntries = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await fetchEntries();
+      const data = await fetchEntries(tenantId);
       setEntries(data);
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
@@ -98,7 +111,7 @@ export function FinancialProvider({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [tenantId]);
 
   useEffect(() => {
     loadEntries();
@@ -161,7 +174,7 @@ export function FinancialProvider({
   const addEntry = useCallback(
     async (entry: FinancialEntry) => {
       try {
-        await upsertEntry(entry);
+        await upsertEntry(entry, tenantId);
         await loadEntries();
       } catch (err) {
         console.error("Erro ao salvar entrada:", err);
@@ -203,7 +216,7 @@ export function FinancialProvider({
   const importEntries = useCallback(
     async (newEntries: FinancialEntry[]) => {
       try {
-        await importEntriesBatch(newEntries);
+        await importEntriesBatch(newEntries, tenantId);
         await loadEntries();
         toast.success(`${newEntries.length} registros importados com sucesso!`);
       } catch (err) {

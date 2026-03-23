@@ -64,22 +64,25 @@ function entryToRow(
   };
 }
 
-export async function fetchEntries(): Promise<FinancialEntry[]> {
-  const { data, error } = await supabase
+export async function fetchEntries(tenantId?: string): Promise<FinancialEntry[]> {
+  let query = supabase
     .from("financial_entries")
     .select("*")
     .order("month", { ascending: true });
 
+  if (tenantId) query = query.eq("tenant_id", tenantId);
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data as FinancialEntryRow[]).map(rowToEntry);
 }
 
-export async function upsertEntry(entry: FinancialEntry): Promise<void> {
+export async function upsertEntry(entry: FinancialEntry, tenantId?: string): Promise<void> {
   const row = entryToRow(entry);
   const { error } = await supabase
     .from("financial_entries")
     .upsert(
-      { ...row, updated_at: new Date().toISOString() },
+      { ...row, updated_at: new Date().toISOString(), ...(tenantId ? { tenant_id: tenantId } : {}) },
       { onConflict: "month" }
     );
 
@@ -96,11 +99,13 @@ export async function deleteEntryById(id: string): Promise<void> {
 }
 
 export async function importEntriesBatch(
-  entries: FinancialEntry[]
+  entries: FinancialEntry[],
+  tenantId?: string
 ): Promise<void> {
   const rows = entries.map((e) => ({
     ...entryToRow(e),
     updated_at: new Date().toISOString(),
+    ...(tenantId ? { tenant_id: tenantId } : {}),
   }));
 
   const { error } = await supabase

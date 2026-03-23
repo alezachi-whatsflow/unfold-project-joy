@@ -36,14 +36,27 @@ export function AsaasProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [environment, setEnvironment] = useState<"sandbox" | "production">("sandbox");
+  const [tenantId, setTenantId] = useState<string>("");
+
+  useEffect(() => {
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase.from("user_tenants").select("tenant_id").eq("user_id", user.id).limit(1).single()
+            .then(({ data }) => { if (data?.tenant_id) setTenantId(data.tenant_id); });
+        }
+      });
+    });
+  }, []);
 
   const loadData = useCallback(async () => {
+    if (!tenantId) return;
     try {
       setIsLoading(true);
       const [p, c, d] = await Promise.all([
-        fetchAsaasPayments(),
-        fetchAsaasCustomers(),
-        fetchDunningRules(),
+        fetchAsaasPayments(tenantId),
+        fetchAsaasCustomers(tenantId),
+        fetchDunningRules(tenantId),
       ]);
       setPayments(p);
       setCustomers(c);
@@ -54,7 +67,7 @@ export function AsaasProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [tenantId]);
 
   useEffect(() => {
     loadData();
@@ -63,7 +76,7 @@ export function AsaasProvider({ children }: { children: React.ReactNode }) {
   const syncCustomersHandler = useCallback(async () => {
     try {
       setIsSyncing(true);
-      const count = await syncCustomersFromAsaas(environment);
+      const count = await syncCustomersFromAsaas(tenantId, environment);
       toast.success(`${count} clientes sincronizados do Asaas`);
       await loadData();
     } catch (err) {
@@ -77,7 +90,7 @@ export function AsaasProvider({ children }: { children: React.ReactNode }) {
   const syncPaymentsHandler = useCallback(async () => {
     try {
       setIsSyncing(true);
-      const count = await syncPaymentsFromAsaas(environment);
+      const count = await syncPaymentsFromAsaas(tenantId, environment);
       toast.success(`${count} cobranças sincronizadas do Asaas`);
       await loadData();
     } catch (err) {
