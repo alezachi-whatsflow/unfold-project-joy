@@ -59,10 +59,10 @@ function fmtDate(val: string | null): string {
   return val ? new Date(val).toLocaleDateString('pt-BR') : '—';
 }
 
-function getColValue(l: any, col: string): string {
+function getColValue(l: any, col: string, wlMap?: Record<string, string>): string {
   switch (col) {
     case 'status':      return STATUS_LABELS[l.status] || l.status || '—';
-    case 'whitelabel':  return l.parent?.tenants?.name || '—';
+    case 'whitelabel':  return (wlMap && l.parent_license_id ? wlMap[l.parent_license_id] : null) || l.parent?.tenants?.name || '—';
     case 'starts_at':   return fmtDate(l.starts_at);
     case 'cancelled_at':return fmtDate(l.cancelled_at);
     case 'blocked_at':  return fmtDate(l.blocked_at);
@@ -97,6 +97,22 @@ export default function NexusLicenses() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [colFilters, setColFilters] = useState<Record<string, Set<string>>>({});
+  const [wlNameMap, setWlNameMap] = useState<Record<string, string>>({});
+
+  // Load WhiteLabel parent names once
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('licenses')
+        .select('id, whitelabel_slug, tenants(name)')
+        .not('whitelabel_slug', 'is', null);
+      const map: Record<string, string> = {};
+      (data || []).forEach((wl: any) => {
+        if (wl.id) map[wl.id] = wl.tenants?.name || wl.whitelabel_slug || '—';
+      });
+      setWlNameMap(map);
+    })();
+  }, []);
 
   // Debounce search: wait 400ms after user stops typing
   useEffect(() => {
@@ -128,8 +144,7 @@ export default function NexusLicenses() {
       .from('licenses')
       .select(`
         *,
-        tenants(name, slug, email, cpf_cnpj),
-        parent:licenses!parent_license_id(id, tenants(name))
+        tenants(name, slug, email, cpf_cnpj)
       `, { count: 'exact' });
 
     if (statusFilter !== 'all') {
@@ -164,7 +179,7 @@ export default function NexusLicenses() {
     let result = licenses;
     for (const [col, values] of Object.entries(colFilters)) {
       if (!values || values.size === 0) continue;
-      result = result.filter((l: any) => values.has(getColValue(l, col)));
+      result = result.filter((l: any) => values.has(getColValue(l, col, wlNameMap)));
     }
     return result;
   }, [licenses, colFilters]);
@@ -173,8 +188,8 @@ export default function NexusLicenses() {
 
   function colUniqueValues(col: string): string[] {
     // For other columns, derive from current page + allLicenses (analytics dataset)
-    const fromAll = allLicenses.map((l: any) => getColValue(l, col));
-    const fromPage = licenses.map((l: any) => getColValue(l, col));
+    const fromAll = allLicenses.map((l: any) => getColValue(l, col, wlNameMap));
+    const fromPage = licenses.map((l: any) => getColValue(l, col, wlNameMap));
     if (col === 'status') {
       // Merge hardcoded defaults with actual DB-derived values so nothing is missing
       const defaults = ['Ativo', 'Inativo', 'Bloqueado', 'Suspenso', 'Trial'];
@@ -700,8 +715,8 @@ export default function NexusLicenses() {
                           </TableCell>
                           {/* WhiteLabel */}
                           <TableCell>
-                            {l.parent?.tenants?.name
-                              ? <span className="text-purple-400 font-medium">{l.parent.tenants.name}</span>
+                            {(l.parent_license_id && wlNameMap[l.parent_license_id])
+                              ? <span className="text-purple-400 font-medium">{wlNameMap[l.parent_license_id]}</span>
                               : <span className="text-muted-foreground">—</span>
                             }
                           </TableCell>
