@@ -85,12 +85,18 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
     const lines = text.split('\n').filter((l) => l.trim());
     if (lines.length < 2) { setErrors(['Arquivo vazio ou sem dados']); return; }
 
-    const header = lines[0].split(';').map((h) => h.trim().toUpperCase());
+    // Auto-detect separator: count ; vs , in first line
+    const firstLine = lines[0];
+    const semicolons = (firstLine.match(/;/g) || []).length;
+    const commas = (firstLine.match(/,/g) || []).length;
+    const separator = semicolons >= commas ? ';' : ',';
+
+    const header = lines[0].split(separator).map((h) => h.trim().toUpperCase());
     const parsed: ParsedRow[] = [];
     const errs: string[] = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(';').map((c) => c.trim());
+      const cols = lines[i].split(separator).map((c) => c.trim());
       try {
         const get = (name: string) => {
           // Try exact match first, then fuzzy match (handles encoding issues)
