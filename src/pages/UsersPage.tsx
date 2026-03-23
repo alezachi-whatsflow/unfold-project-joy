@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Users, UserPlus, Shield, ShieldCheck, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Users, UserPlus, Shield, ShieldCheck, Pencil, RotateCcw, Trash2, Mail, Link2, Copy, Check, Loader2 } from "lucide-react";
 import { InvitationTimeline } from "@/components/users/InvitationTimeline";
 
 const ROLES: UserRole[] = ["admin", "gestor", "financeiro", "consultor", "representante"];
@@ -343,6 +343,10 @@ function EditUserForm({ profile, currentUserId, isAdmin, onClose }: {
   const isSelf = profile.id === currentUserId;
   const currentRole = (profile.role || "consultor") as UserRole;
   const [role, setRole] = useState<UserRole>(currentRole);
+  const [resending, setResending] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [manualLink, setManualLink] = useState("");
+  const [copied, setCopied] = useState(false);
 
   // Initialize custom permissions from saved data or defaults
   const [customPerms, setCustomPerms] = useState<Record<string, ModulePermission>>(() => {
@@ -448,6 +452,87 @@ function EditUserForm({ profile, currentUserId, isAdmin, onClose }: {
           <p className="text-xs text-muted-foreground">
             As permissões na aba "Permissões" são baseadas no perfil selecionado. Você pode personalizá-las individualmente.
           </p>
+
+          {/* Reenviar / Gerar Link — only for non-active users */}
+          {profile.invitation_status !== "active" && (
+            <div className="space-y-3 pt-4 border-t border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Acesso do usuário</p>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  disabled={resending}
+                  onClick={async () => {
+                    setResending(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke("invite-user", {
+                        body: { user_id: profile.id, full_name: profile.full_name || "Usuário", role },
+                      });
+                      if (error) throw error;
+                      toast.success(data?.message || "Link reenviado!");
+                    } catch (err: any) {
+                      toast.error(err?.message || "Erro ao reenviar link");
+                    } finally {
+                      setResending(false);
+                    }
+                  }}
+                >
+                  {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  Reenviar link por e-mail
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  disabled={generatingLink}
+                  onClick={async () => {
+                    setGeneratingLink(true);
+                    setManualLink("");
+                    try {
+                      const { data, error } = await supabase.functions.invoke("generate-access-link", {
+                        body: { user_id: profile.id },
+                      });
+                      if (error) throw error;
+                      setManualLink(data?.link || "");
+                      toast.success("Link gerado! Copie e envie ao usuário.");
+                    } catch (err: any) {
+                      toast.error(err?.message || "Erro ao gerar link");
+                    } finally {
+                      setGeneratingLink(false);
+                    }
+                  }}
+                >
+                  {generatingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                  Gerar link manual
+                </Button>
+              </div>
+
+              {manualLink && (
+                <div className="flex gap-2 items-center">
+                  <input
+                    readOnly
+                    value={manualLink}
+                    className="flex-1 bg-secondary px-3 py-2 rounded-lg text-xs font-mono truncate"
+                  />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(manualLink);
+                      setCopied(true);
+                      toast.success("Link copiado!");
+                      setTimeout(() => setCopied(false), 2500);
+                    }}
+                  >
+                    {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="permissoes" className="space-y-4 pt-2">

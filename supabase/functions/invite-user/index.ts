@@ -125,7 +125,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, full_name, role, tenant_id, license_id } = await req.json();
+    const { email: rawEmail, full_name, role, tenant_id, license_id, user_id } = await req.json();
+
+    // Resolve email: either passed directly or looked up by user_id
+    let email = rawEmail;
+    if (!email && user_id) {
+      const { data: { user: targetUser } } = await adminClient.auth.admin.getUserById(user_id);
+      email = targetUser?.email;
+    }
 
     if (!email || !full_name) {
       return new Response(JSON.stringify({ error: "E-mail e nome são obrigatórios" }), {
