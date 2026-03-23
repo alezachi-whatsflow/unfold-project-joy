@@ -39,29 +39,32 @@ export default function ResetPasswordPage() {
     try {
       await updatePassword(password);
 
-      // If this is the first time setting a password (invite), activate the license
-      if (tokenType === "invite") {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Mark profile as active
+      // Always check if profile needs activation (invite or recovery for new users)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("invitation_status, license_id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        // Activate profile if not already active
+        if (profile && profile.invitation_status !== "active") {
           await supabase.from("profiles")
             .update({ invitation_status: "active", invite_accepted_at: new Date().toISOString() })
             .eq("id", user.id);
 
-          // Set starts_at on the associated license if not already set
-          const { data: profile } = await supabase
-            .from("profiles").select("license_id").eq("id", user.id).maybeSingle();
-          if (profile?.license_id) {
+          // Set starts_at on associated license if not already set
+          if (profile.license_id) {
             await supabase.from("licenses")
               .update({ starts_at: new Date().toISOString().slice(0, 10) })
               .eq("id", profile.license_id)
-              .is("starts_at", null); // only if not already set
+              .is("starts_at", null);
           }
         }
-        toast.success("Senha criada com sucesso! Bem-vindo(a)!");
-      } else {
-        toast.success("Senha atualizada com sucesso!");
       }
+
+      toast.success(tokenType === "invite" ? "Senha criada com sucesso! Bem-vindo(a)!" : "Senha atualizada com sucesso!");
 
       navigate("/");
     } catch (err: any) {
