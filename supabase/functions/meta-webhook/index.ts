@@ -1,176 +1,192 @@
+/**
+ * meta-webhook
+ * Unified webhook receiver for WhatsApp and Instagram.
+ * GET: Hub verification (challenge response)
+ * POST: Incoming messages/events
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
   const url = new URL(req.url);
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, serviceKey);
+  const adminClient = createClient(supabaseUrl, serviceKey);
 
-  // GET = webhook verification from Meta
+  // ─── GET: Webhook Verification (Hub Challenge) ─────────────────────────
   if (req.method === "GET") {
     const mode = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
 
-    if (mode === "subscribe" && token) {
-      // Look up the verify token in meta_connections
-      const { data: conn } = await supabase
-        .from("meta_connections")
-        .select("webhook_verify_token")
-        .eq("webhook_verify_token", token)
-        .eq("is_active", true)
-        .limit(1)
-        .single();
-
-      if (conn) {
-        // Mark webhook as configured
-        await supabase
-          .from("meta_connections")
-          .update({ webhook_configured: true })
-          .eq("webhook_verify_token", token);
-
-        return new Response(challenge, { status: 200, headers: corsHeaders });
-      }
+    if (mode !== "subscribe" || !token || !challenge) {
+      return new Response("Bad request", { status: 400 });
     }
-    return new Response("Forbidden", { status: 403, headers: corsHeaders });
+
+    // Check if any integration has this verify token
+    const { data: integration } = await adminClient
+      .from("channel_integrations")
+      .select("id, provider")
+      .eq("webhook_verify_token", token)
+      .maybeSingle();
+
+    // Also check global fallback token
+    const globalToken = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") || "";
+
+    if (integration || token === globalToken) {
+      console.log(`[meta-webhook] Verification successful for token ${token.substring(0, 8)}...`);
+      return new Response(challenge, { status: 200, headers: { "Content-Type": "text/plain" } });
+    }
+
+    console.warn(`[meta-webhook] Verification failed: unknown token ${token.substring(0, 8)}...`);
+    return new Response("Forbidden", { status: 403 });
   }
 
-  // POST = incoming webhook events
+  // ─── POST: Incoming Messages/Events ────────────────────────────────────
   if (req.method === "POST") {
     try {
-      const body = await req.json();
+      const payload = await req.json();
+      const object = payload.object; // "whatsapp_business_account" or "instagram" or "page"
 
-      if (body.object !== "whatsapp_business_account") {
-        return new Response("Not a WhatsApp event", { status: 404, headers: corsHeaders });
+      console.log(`[meta-webhook] Received ${object} event`);
+
+      if (object === "whatsapp_business_account") {
+        await handleWhatsAppWebhook(adminClient, payload);
+      } else if (object === "instagram" || object === "page") {
+        await handleInstagramWebhook(adminClient, payload);
+      } else {
+        console.warn(`[meta-webhook] Unknown object type: ${object}`);
       }
 
-      for (const entry of body.entry || []) {
-        const wabaId = entry.id;
+      return new Response("OK", { status: 200 });
+    } catch (e: any) {
+      console.error("[meta-webhook] POST error:", e);
+      // Always return 200 to prevent Meta from retrying
+      return new Response("OK", { status: 200 });
+    }
+  }
 
-        // Find the meta connection for this WABA
-        const { data: conn } = await supabase
-          .from("meta_connections")
-          .select("*")
-          .eq("waba_id", wabaId)
-          .eq("is_active", true)
-          .limit(1)
-          .single();
+  return new Response("Method not allowed", { status: 405 });
+});
 
-        if (!conn) continue;
+// ─── WHATSAPP WEBHOOK HANDLER ────────────────────────────────────────────────
+async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, payload: any) {
+  for (const entry of payload.entry || []) {
+    for (const change of entry.changes || []) {
+      const value = change.value;
+      if (!value) continue;
 
-        for (const change of entry.changes || []) {
-          if (change.field === "messages") {
-            const value = change.value;
-            const phoneNumberId = value.metadata?.phone_number_id;
+      const phoneNumberId = value.metadata?.phone_number_id;
+      if (!phoneNumberId) continue;
 
-            // Process incoming messages
-            for (const message of value.messages || []) {
-              const remoteJid = `${message.from}@s.whatsapp.net`;
-              const messageId = message.id;
+      // Resolve integration by phone_number_id (operational key)
+      const { data: integration } = await client
+        .from("channel_integrations")
+        .select("id, tenant_id, name")
+        .eq("phone_number_id", phoneNumberId)
+        .eq("status", "active")
+        .maybeSingle();
 
-              let body = "";
-              let type = message.type || "text";
-              let mediaUrl = null;
-              let caption = null;
+      if (!integration) {
+        console.warn(`[meta-webhook] No active integration for phone_number_id ${phoneNumberId}`);
+        continue;
+      }
 
-              if (type === "text") {
-                body = message.text?.body || "";
-              } else if (type === "image") {
-                body = "[imagem]";
-                mediaUrl = message.image?.id || null; // Media ID, needs download
-                caption = message.image?.caption || null;
-              } else if (type === "video") {
-                body = "[vídeo]";
-                mediaUrl = message.video?.id || null;
-                caption = message.video?.caption || null;
-              } else if (type === "audio" || type === "voice") {
-                body = "[áudio]";
-                mediaUrl = message.audio?.id || message.voice?.id || null;
-                type = "audio";
-              } else if (type === "document") {
-                body = message.document?.filename || "[documento]";
-                mediaUrl = message.document?.id || null;
-                caption = message.document?.caption || null;
-              } else if (type === "location") {
-                body = `[localização: ${message.location?.latitude}, ${message.location?.longitude}]`;
-              } else if (type === "contacts") {
-                body = `[contato: ${message.contacts?.[0]?.name?.formatted_name || ""}]`;
-              } else if (type === "sticker") {
-                body = "[figurinha]";
-                mediaUrl = message.sticker?.id || null;
-              } else if (type === "reaction") {
-                body = message.reaction?.emoji || "[reação]";
-              }
+      // Process messages
+      if (value.messages) {
+        for (const msg of value.messages) {
+          console.log(`[meta-webhook] WhatsApp msg from ${msg.from} → integration ${integration.id}: ${msg.type}`);
 
-              // Get contact name
-              const contactName = value.contacts?.find((c: any) => c.wa_id === message.from)?.profile?.name || null;
-
-              // Upsert into whatsapp_messages
-              await supabase.from("whatsapp_messages").upsert({
-                message_id: messageId,
-                instance_name: `meta:${phoneNumberId}`,
-                remote_jid: remoteJid,
-                direction: "incoming",
-                type,
-                body,
-                caption,
-                media_url: mediaUrl,
-                status: 0,
-                track_source: "meta",
-                raw_payload: message,
-              }, { onConflict: "message_id" });
-
-              // Upsert contact info
-              if (contactName) {
-                await supabase.from("whatsapp_contacts").upsert({
-                  jid: remoteJid,
-                  push_name: contactName,
-                  name: contactName,
-                  instance_name: `meta:${phoneNumberId}`,
-                }, { onConflict: "jid" });
-              }
-            }
-
-            // Process status updates
-            for (const status of value.statuses || []) {
-              const statusMap: Record<string, number> = {
-                sent: 1,
-                delivered: 2,
-                read: 3,
-                failed: -1,
-              };
-              const statusNum = statusMap[status.status] ?? 0;
-
-              await supabase
-                .from("whatsapp_messages")
-                .update({ status: statusNum, updated_at: new Date().toISOString() })
-                .eq("message_id", status.id);
-            }
-          }
+          await client.from("chat_messages").insert({
+            tenant_id: integration.tenant_id,
+            conversation_id: null,
+            sender_type: "customer",
+            sender_id: msg.from,
+            content: extractMessageContent(msg),
+            message_type: msg.type,
+            direction: "inbound",
+            timestamp: new Date(parseInt(msg.timestamp) * 1000).toISOString(),
+            metadata: {
+              provider: "WABA",
+              integration_id: integration.id,
+              phone_number_id: phoneNumberId,
+              wa_message_id: msg.id,
+              raw: msg,
+            },
+          }).then(({ error }) => {
+            if (error) console.error("[meta-webhook] Store msg error:", error.message);
+          });
         }
       }
 
-      return new Response(JSON.stringify({ ok: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      console.error("meta-webhook error:", err);
-      return new Response(JSON.stringify({ ok: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Process status updates
+      if (value.statuses) {
+        for (const status of value.statuses) {
+          console.log(`[meta-webhook] WhatsApp status: ${status.id} → ${status.status}`);
+        }
+      }
     }
   }
+}
 
-  return new Response("Method not allowed", { status: 405, headers: corsHeaders });
-});
+// ─── INSTAGRAM WEBHOOK HANDLER ───────────────────────────────────────────────
+async function handleInstagramWebhook(client: ReturnType<typeof createClient>, payload: any) {
+  for (const entry of payload.entry || []) {
+    const pageId = entry.id;
+
+    const { data: integration } = await client
+      .from("channel_integrations")
+      .select("id, tenant_id, name")
+      .or(`facebook_page_id.eq.${pageId},instagram_business_account_id.eq.${pageId}`)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!integration) {
+      console.warn(`[meta-webhook] No active integration for page/account ${pageId}`);
+      continue;
+    }
+
+    for (const messaging of entry.messaging || []) {
+      if (messaging.message) {
+        const senderId = messaging.sender?.id;
+        const text = messaging.message.text || "";
+        console.log(`[meta-webhook] Instagram msg from ${senderId} → integration ${integration.id}`);
+
+        await client.from("chat_messages").insert({
+          tenant_id: integration.tenant_id,
+          conversation_id: null,
+          sender_type: "customer",
+          sender_id: senderId,
+          content: text,
+          message_type: messaging.message.attachments ? "attachment" : "text",
+          direction: "inbound",
+          timestamp: new Date(messaging.timestamp * 1000).toISOString(),
+          metadata: {
+            provider: "INSTAGRAM",
+            integration_id: integration.id,
+            page_id: pageId,
+            ig_message_id: messaging.message.mid,
+            raw: messaging,
+          },
+        }).then(({ error }) => {
+          if (error) console.error("[meta-webhook] Store IG msg error:", error.message);
+        });
+      }
+    }
+  }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function extractMessageContent(msg: any): string {
+  switch (msg.type) {
+    case "text": return msg.text?.body || "";
+    case "image": return msg.image?.caption || "[Imagem]";
+    case "video": return msg.video?.caption || "[Vídeo]";
+    case "audio": return "[Áudio]";
+    case "document": return msg.document?.filename || "[Documento]";
+    case "sticker": return "[Sticker]";
+    case "location": return `[Localização: ${msg.location?.latitude}, ${msg.location?.longitude}]`;
+    case "contacts": return "[Contato]";
+    case "reaction": return msg.reaction?.emoji || "[Reação]";
+    default: return `[${msg.type}]`;
+  }
+}
