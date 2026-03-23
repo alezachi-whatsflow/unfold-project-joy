@@ -1,6 +1,7 @@
 // resend-activation-email
-// Generates a new activation token and resends the email.
+// Generates a new activation token and resends the email via SMTP2GO.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendEmail } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,8 +16,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
-    const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
-    const APP_URL    = Deno.env.get("APP_URL") || "https://app.whatsflow.com.br";
+    const APP_URL = Deno.env.get("APP_URL") || "https://app.whatsflow.com.br";
 
     const { token: oldToken } = await req.json();
     if (!oldToken) throw new Error("token is required");
@@ -44,10 +44,10 @@ Deno.serve(async (req) => {
       status: "pending",
     }).select().single();
 
-    if (!newToken || !RESEND_KEY) throw new Error("Could not create new token or RESEND_API_KEY missing");
+    if (!newToken) throw new Error("Could not create new token");
 
     // Load WL branding
-    let fromEmail = "noreply@whatsflow.com.br";
+    let fromEmail = "no-reply@whatsflow.com.br";
     let fromName  = "Whatsflow";
     let appName   = "Whatsflow";
     let logoHtml  = "";
@@ -70,15 +70,11 @@ Deno.serve(async (req) => {
       <p style="color:#64748b;font-size:12px;">Link válido por 24h · Uso único.</p>
     </div>`;
 
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: `${fromName} <${fromEmail}>`,
-        to: [session.buyer_email],
-        subject: `Novo link de ativação — ${appName}`,
-        html,
-      }),
+    await sendEmail({
+      from: `${fromName} <${fromEmail}>`,
+      to: session.buyer_email,
+      subject: `Novo link de ativação — ${appName}`,
+      html,
     });
 
     console.log(`[resend-activation] New email sent to ${session.buyer_email}`);

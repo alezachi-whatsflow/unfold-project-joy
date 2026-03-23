@@ -67,40 +67,14 @@ function buildRecoveryEmail(full_name: string, actionLink: string) {
   };
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
-  const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
-  if (!RESEND_KEY) throw new Error("RESEND_API_KEY não configurada");
-
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: "Whatsflow <noreply@whatsflow.com.br>",
-      to: [to],
-      subject,
-      html,
-    }),
+async function sendEmailSmtp(to: string, subject: string, html: string) {
+  const { sendEmail } = await import("../_shared/smtp.ts");
+  await sendEmail({
+    from: "Whatsflow <no-reply@whatsflow.com.br>",
+    to,
+    subject,
+    html,
   });
-
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("Resend error:", err);
-    // Fallback: try with default Resend domain
-    const res2 = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: "Whatsflow <onboarding@resend.dev>",
-        to: [to],
-        subject,
-        html,
-      }),
-    });
-    if (!res2.ok) {
-      const err2 = await res2.text();
-      throw new Error(`Falha ao enviar email: ${err2}`);
-    }
-  }
 }
 
 Deno.serve(async (req) => {
@@ -203,7 +177,7 @@ Deno.serve(async (req) => {
       }
 
       const emailContent = buildRecoveryEmail(full_name, linkData.properties.action_link);
-      await sendEmail(email, emailContent.subject, emailContent.html);
+      await sendEmailSmtp(email, emailContent.subject, emailContent.html);
 
       return new Response(
         JSON.stringify({
@@ -268,7 +242,7 @@ Deno.serve(async (req) => {
 
     // Send custom email in Portuguese via Resend
     const emailContent = buildInviteEmail(full_name, linkData.properties.action_link);
-    await sendEmail(email, emailContent.subject, emailContent.html);
+    await sendEmailSmtp(email, emailContent.subject, emailContent.html);
 
     return new Response(
       JSON.stringify({

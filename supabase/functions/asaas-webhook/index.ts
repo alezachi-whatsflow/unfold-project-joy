@@ -221,11 +221,10 @@ async function handleRenewal(supabase: ReturnType<typeof createClient>, session:
 }
 
 async function sendActivationEmail(supabase: ReturnType<typeof createClient>, session: Record<string, any>, token: string) {
-  const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
+  const { sendEmail } = await import("../_shared/smtp.ts");
   const APP_URL = Deno.env.get("APP_URL") || "https://app.whatsflow.com.br";
-  if (!RESEND_KEY) { console.warn("[checkout] RESEND_API_KEY not set"); return; }
 
-  let fromEmail = "noreply@whatsflow.com.br";
+  let fromEmail = "no-reply@whatsflow.com.br";
   let fromName = "Whatsflow";
   let appName = "Whatsflow";
   let logoHtml = "";
@@ -248,10 +247,11 @@ async function sendActivationEmail(supabase: ReturnType<typeof createClient>, se
     <p style="color:#64748b;font-size:12px;">Link válido por 24h · Uso único · Se não foi você, ignore.</p>
   </div>`;
 
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: `${fromName} <${fromEmail}>`, to: [session.buyer_email], subject: `Ative sua conta no ${appName}`, html }),
+  await sendEmail({
+    from: `${fromName} <${fromEmail}>`,
+    to: session.buyer_email,
+    subject: `Ative sua conta no ${appName}`,
+    html,
   });
   console.log(`[checkout] Email sent to ${session.buyer_email}`);
 }
