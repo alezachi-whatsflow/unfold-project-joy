@@ -135,7 +135,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
             )}
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="top" className="w-48 mb-1">
+        <DropdownMenuContent align="end" side="right" className="w-48 ml-2">
           <DropdownMenuItem onClick={() => navigate("/perfil")}><User className="mr-2 h-4 w-4" /> Meu Perfil</DropdownMenuItem>
           {isNexusUser && (
             <DropdownMenuItem onClick={() => navigate("/nexus")}>
@@ -551,7 +551,7 @@ export function AppSidebar() {
       aria-label="Menu principal"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="flex flex-col h-screen shrink-0 overflow-hidden"
+      className="flex flex-col h-screen shrink-0 overflow-x-hidden overflow-y-auto"
       style={{
         width: isMobile ? 260 : sidebarW,
         background: "rgba(var(--sidebar-glass-rgb, 255,255,255), var(--sidebar-glass-alpha, 0.65))",
