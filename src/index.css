@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Liquid Glass Design System */
+@import './styles/liquid-glass.css';
+
 @layer base {
   /* ===== ARGON DASHBOARD THEME (default) — Light SaaS Premium ===== */
   :root {

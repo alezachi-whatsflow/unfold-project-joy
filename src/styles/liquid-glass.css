@@ -1,0 +1,180 @@
+/* ══════════════════════════════════════════════════════
+   Liquid Glass Design System — Whatsflow Finance
+   Inspired by iOS 26 translucent glass effects
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Glass background layers ── */
+  --glass-bg-1: rgba(15, 23, 42, 0.55);
+  --glass-bg-2: rgba(30, 41, 59, 0.45);
+  --glass-bg-3: rgba(30, 41, 59, 0.30);
+
+  --glass-blur-sm: blur(8px);
+  --glass-blur-md: blur(16px);
+  --glass-blur-lg: blur(24px);
+
+  /* Luminous border — signature of Liquid Glass */
+  --glass-border: 1px solid rgba(255, 255, 255, 0.10);
+  --glass-border-accent: 1px solid rgba(37, 211, 102, 0.25);
+
+  /* Specular reflection — polished glass effect */
+  --glass-shine: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    transparent 100%
+  );
+
+  /* Depth shadows */
+  --glass-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --glass-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+  /* Sidebar glass tokens */
+  --sidebar-glass-rgb: 15, 23, 42;
+  --sidebar-glass-alpha: 0.55;
+}
+
+/* ── Base glass class ── */
+.glass {
+  background: var(--glass-bg-2);
+  backdrop-filter: var(--glass-blur-md);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  border: var(--glass-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-shine);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Variants ── */
+.glass-dark { background: var(--glass-bg-1); backdrop-filter: var(--glass-blur-lg); -webkit-backdrop-filter: var(--glass-blur-lg); }
+.glass-light { background: var(--glass-bg-3); backdrop-filter: var(--glass-blur-sm); -webkit-backdrop-filter: var(--glass-blur-sm); }
+.glass-accent { border: var(--glass-border-accent); }
+
+/* ── Entry animation ── */
+.glass-enter {
+  animation: glassReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes glassReveal {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); backdrop-filter: blur(0px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); backdrop-filter: var(--glass-blur-md); }
+}
+
+/* ── Sidebar ── */
+.glass-sidebar {
+  background: var(--glass-bg-1);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border-right: var(--glass-border);
+}
+
+/* ── Header/Topbar ── */
+.glass-header {
+  background: var(--glass-bg-1);
+  backdrop-filter: var(--glass-blur-md);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  border-bottom: var(--glass-border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Card ── */
+.glass-card {
+  background: var(--glass-bg-2);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.glass-card:hover {
+  box-shadow: var(--glass-shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ── Modal/Dialog ── */
+.glass-modal {
+  background: var(--glass-bg-1);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border: var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow-lg);
+}
+
+/* ── Dropdown/Popover ── */
+.glass-popover {
+  background: var(--glass-bg-1);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border: var(--glass-border);
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow-md);
+}
+
+/* ── Tab bar mobile — floating pill ── */
+.glass-tabbar {
+  background: var(--glass-bg-1);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border: var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ── Badge/Pill ── */
+.glass-badge {
+  background: rgba(37, 211, 102, 0.15);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(37, 211, 102, 0.30);
+  border-radius: 999px;
+}
+
+/* ── Input ── */
+.glass-input {
+  background: rgba(15, 23, 42, 0.60);
+  backdrop-filter: blur(8px);
+  border: var(--glass-border);
+  border-radius: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.glass-input:focus {
+  border-color: rgba(37, 211, 102, 0.40);
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.10);
+  outline: none;
+}
+
+/* ── Ambient background for glass refraction ── */
+.glass-ambient-bg {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(37, 211, 102, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+    hsl(var(--background));
+}
+
+/* ── Tab bar scroll behavior ── */
+.tabbar-shrink {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tabbar-shrink.scrolled-down {
+  transform: scale(0.95);
+}
+
+/* ── Performance: disable blur on weak devices ── */
+@media (prefers-reduced-motion: reduce) {
+  .glass, .glass-dark, .glass-light,
+  .glass-sidebar, .glass-header, .glass-modal,
+  .glass-tabbar, .glass-card, .glass-popover {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(15, 23, 42, 0.95);
+  }
+}

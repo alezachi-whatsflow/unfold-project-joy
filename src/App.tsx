@@ -1,4 +1,5 @@
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -249,6 +250,7 @@ const App = () => (
                 <AsaasProvider>
                   <TourOverlay />
                   <AppRoutes />
+                  <MobileTabBar />
                   <PWAInstallPrompt />
                 </AsaasProvider>
                 </IntelligenceProvider>

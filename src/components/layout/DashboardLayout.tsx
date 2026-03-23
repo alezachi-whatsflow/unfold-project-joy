@@ -77,10 +77,10 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full glass-ambient-bg">
       <AppSidebar />
       <div className="flex flex-1 flex-col min-h-screen overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center gap-3 bg-card px-6" style={{ boxShadow: 'var(--shadow-navbar, 0 2px 12px 0 rgba(0,0,0,0.16))' }}>
+        <header className="flex h-14 shrink-0 items-center gap-3 glass-header px-6">
           {isMobile && <div className="w-10" />}
           <div className="ml-auto flex items-center gap-2">
             <Tooltip>
@@ -94,7 +94,7 @@ export function DashboardLayout() {
             <ThemeSwitcher />
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6 md:p-8" style={{ backgroundColor: 'var(--wl-bg, hsl(var(--background)))' }}>
+        <main className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 pb-24 md:pb-8" style={{ backgroundColor: 'var(--wl-bg, hsl(var(--background)))' }}>
           <Outlet />
         </main>
       </div>
