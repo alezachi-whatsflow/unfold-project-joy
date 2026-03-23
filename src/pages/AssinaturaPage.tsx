@@ -108,7 +108,7 @@ export default function AssinaturaPage() {
 
   const prepareContactMessage = (resource: string) => {
     const message = `Olá! Sou ${user?.user_metadata?.full_name || "Admin"} da empresa ${accountName}. Preciso expandir: ${resource}.`;
-    const wpNumber = tenantInfo?.branding?.support_whatsapp || "5511999999999";
+    const wpNumber = tenantInfo?.branding?.support_whatsapp || "5511954665605";
     return `https://wa.me/${wpNumber}?text=${encodeURIComponent(message)}`;
   };
 
@@ -232,7 +232,7 @@ export default function AssinaturaPage() {
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
           <Button
             className="bg-[#25D366] hover:bg-[#128C7E] text-white"
-            onClick={() => window.open(prepareContactMessage("Aumentar limites da licença"), "_blank")}
+            onClick={() => window.open(prepareContactMessage("Preciso de mais recursos"), "_blank")}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
             {getContactButtonLabel()}
