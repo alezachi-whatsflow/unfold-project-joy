@@ -301,6 +301,7 @@ Deno.serve(async (req) => {
             status: snapshotStatus,
             raw_payload: rd,
             created_at: messageIso,
+            updated_at: new Date().toISOString(),
           },
           { onConflict: "message_id" }
         );

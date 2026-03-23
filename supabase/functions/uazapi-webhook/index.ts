@@ -463,7 +463,7 @@ Deno.serve(async (req) => {
             console.log(`uazapi-webhook: updating message ${messageId} status to ${newStatus}`);
             const { error: updateError } = await supabase
               .from("whatsapp_messages")
-              .update({ status: newStatus })
+              .update({ status: newStatus, updated_at: new Date().toISOString() })
               .eq("message_id", String(messageId));
 
             if (updateError) {
