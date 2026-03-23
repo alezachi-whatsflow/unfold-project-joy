@@ -91,21 +91,30 @@ export default function CSVImportModal({ open, onOpenChange, onImported }: Props
     const commas = (firstLine.match(/,/g) || []).length;
     const separator = semicolons >= commas ? ';' : ',';
 
-    const header = lines[0].split(separator).map((h) => h.trim().toUpperCase());
+    const header = lines[0].split(separator).map((h) => h.trim().replace(/^["']+|["']+$/g, '').toUpperCase());
     const parsed: ParsedRow[] = [];
     const errs: string[] = [];
+    console.log('[CSV Import] Separator:', JSON.stringify(separator), '| Columns:', header.length, '| Header:', JSON.stringify(header.slice(0, 6)));
+    // Also log first data line for debugging
+    if (lines.length > 1) {
+      const sample = lines[1].split(separator);
+      console.log('[CSV Import] First row cols:', sample.length, '| Sample:', JSON.stringify(sample.slice(0, 6)));
+    }
 
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(separator).map((c) => c.trim());
       try {
         const get = (name: string) => {
-          // Try exact match first, then fuzzy match (handles encoding issues)
           let idx = header.indexOf(name);
-          if (idx < 0) idx = header.findIndex(h => h.replace(/[^\w\s/]/g, '').trim() === name.replace(/[^\w\s/]/g, '').trim());
-          if (idx < 0) idx = header.findIndex(h => h.includes(name.slice(0, 6)));
+          // Fallback: strip accents and special chars for comparison
+          if (idx < 0) {
+            const clean = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s/]/g, '').trim();
+            const target = clean(name);
+            idx = header.findIndex(h => clean(h) === target);
+          }
           return idx >= 0 ? cols[idx] || '' : '';
         };
-        const company = get('EMPRESA / TITULAR') || get('EMPRESA') || get('EMPRES');
+        const company = get('EMPRESA / TITULAR') || get('EMPRESA');
         if (!company) continue; // skip empty rows
 
         parsed.push({
