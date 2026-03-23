@@ -54,8 +54,8 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {/* Chat Header */}
-      <div style={{ backgroundColor: "var(--wa-bg-header)", borderBottom: "1px solid var(--wa-border)" }}>
-        <div className="flex items-center justify-between px-4" style={{ height: 60 }}>
+      <div className="msg-chat-header" style={{ flexDirection: "column", height: "auto" }}>
+        <div className="flex items-center justify-between w-full" style={{ height: 56 }}>
           <div className="flex items-center gap-3 min-w-0">
             <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={40} isOnline={c.isOnline} />
             <div className="min-w-0">

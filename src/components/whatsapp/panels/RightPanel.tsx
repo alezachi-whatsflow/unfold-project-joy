@@ -37,12 +37,8 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
 
   return (
     <div
-      className="right-panel-wa h-full flex flex-col overflow-y-auto shrink-0"
-      style={{
-        width: 320,
-        backgroundColor: "var(--wa-bg-panel)",
-        borderLeft: "1px solid var(--wa-border)",
-      }}
+      className="right-panel-wa h-full flex flex-col overflow-y-auto shrink-0 msg-right-panel"
+      style={{ width: 320 }}
     >
       {/* Close button */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--wa-border)" }}>

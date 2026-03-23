@@ -5,6 +5,9 @@
 /* Liquid Glass Design System */
 @import './styles/liquid-glass.css';
 
+/* Mensageria Redesign */
+@import './styles/mensageria-redesign.css';
+
 /* Hide scrollbars globally — content still scrollable */
 * {
   scrollbar-width: none;

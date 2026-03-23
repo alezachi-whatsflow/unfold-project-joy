@@ -48,11 +48,11 @@ export default function LeftPanel({ conversations, selectedId, onSelect, onNewCo
   };
 
   return (
-    <div className="relative flex flex-col h-full" style={{ backgroundColor: "var(--wa-bg-panel)", borderRight: "1px solid var(--wa-border)" }}>
+    <div className="relative flex flex-col h-full msg-left-panel">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 shrink-0"
-        style={{ height: 60, backgroundColor: "var(--wa-bg-header)" }}
+        className="flex items-center justify-between px-4 shrink-0 glass-header"
+        style={{ height: 56 }}
       >
         <WaAvatar initials="AZ" color="#00A884" size={32} />
         <div className="flex items-center gap-4">
