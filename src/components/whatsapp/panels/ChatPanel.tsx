@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Conversation } from "@/data/mockConversations";
 import type { Message } from "@/data/mockMessages";
 import WaAvatar from "../shared/Avatar";
@@ -86,12 +87,16 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
         </div>
 
         {/* Quick Actions Bar */}
-        <div className="flex items-center gap-2 px-4 py-1.5 overflow-x-auto" style={{ backgroundColor: "#182229", height: 36 }}>
+        <div className="flex items-center gap-2 px-4 py-1.5 overflow-x-auto border-t border-white/[0.04]" style={{ height: 36 }}>
           {quickActions.map((a) => (
             <button
               key={a.id}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-2xl text-xs font-medium shrink-0"
-              style={{ backgroundColor: a.bg, color: a.text, border: `1px solid ${a.border}` }}
+              className={cn(
+                "msg-pill flex items-center gap-1.5 shrink-0",
+                a.id === "resolve" && "pill-green",
+                a.id === "ai" && "pill-blue",
+                a.id === "transfer" && "pill-orange",
+              )}
             >
               <a.icon size={13} />
               {a.label}
