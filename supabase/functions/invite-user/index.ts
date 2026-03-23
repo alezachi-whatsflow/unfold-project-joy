@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendEmail } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,7 +69,6 @@ function buildRecoveryEmail(full_name: string, actionLink: string) {
 }
 
 async function sendEmailSmtp(to: string, subject: string, html: string) {
-  const { sendEmail } = await import("../_shared/smtp.ts");
   await sendEmail({
     from: "Whatsflow <no-reply@whatsflow.com.br>",
     to,

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendEmail } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -221,7 +222,6 @@ async function handleRenewal(supabase: ReturnType<typeof createClient>, session:
 }
 
 async function sendActivationEmail(supabase: ReturnType<typeof createClient>, session: Record<string, any>, token: string) {
-  const { sendEmail } = await import("../_shared/smtp.ts");
   const APP_URL = Deno.env.get("APP_URL") || "https://app.whatsflow.com.br";
 
   let fromEmail = "no-reply@whatsflow.com.br";
