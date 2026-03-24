@@ -54,7 +54,10 @@ export function usePermissions() {
     return base;
   }, [userRole, profile?.custom_permissions]);
 
+  const isSuperAdmin = userRole === 'superadmin';
+
   const can = (module: string, action: PermissionAction): boolean => {
+    if (isSuperAdmin) return true; // superadmin has unrestricted access to everything
     const mod = permissions[module];
     if (!mod) return false;
     return mod[action] ?? false;
