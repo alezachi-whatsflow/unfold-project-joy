@@ -162,3 +162,85 @@ async function callGemini(config: AIConfig, options: AICallOptions): Promise<str
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
+
+// ─── OPENAI ASSISTANTS API ───────────────────────────────────────────────────
+
+interface AssistantCallOptions {
+  assistantId: string;
+  message: string;
+  tenantId?: string;
+  pollIntervalMs?: number;
+  maxWaitMs?: number;
+}
+
+/**
+ * Call an OpenAI Assistant (Assistants API v2).
+ * Creates a thread, sends a message, runs the assistant, polls until complete.
+ * The prompt/instructions live in the Assistant config on OpenAI, not here.
+ */
+export async function callAssistant(options: AssistantCallOptions): Promise<string> {
+  const config = await getAIConfig(options.tenantId);
+  if (config.provider !== "openai") {
+    // Fallback to chat completions for non-OpenAI
+    return callAI({ messages: [{ role: "user", content: options.message }], tenantId: options.tenantId });
+  }
+
+  const headers: Record<string, string> = {
+    "Authorization": `Bearer ${config.api_key}`,
+    "Content-Type": "application/json",
+    "OpenAI-Beta": "assistants=v2",
+  };
+  if (config.project_id) headers["OpenAI-Project"] = config.project_id;
+
+  const api = (path: string, method = "GET", body?: any) =>
+    fetch(`https://api.openai.com/v1${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    }).then(r => r.json());
+
+  // 1. Create thread
+  const thread = await api("/threads", "POST", {});
+  if (!thread.id) throw new Error("Failed to create thread");
+
+  // 2. Add message
+  await api(`/threads/${thread.id}/messages`, "POST", {
+    role: "user",
+    content: options.message,
+  });
+
+  // 3. Create run
+  const run = await api(`/threads/${thread.id}/runs`, "POST", {
+    assistant_id: options.assistantId,
+  });
+  if (!run.id) throw new Error("Failed to create run");
+
+  // 4. Poll until complete
+  const maxWait = options.maxWaitMs ?? 60000;
+  const interval = options.pollIntervalMs ?? 2000;
+  const start = Date.now();
+
+  while (Date.now() - start < maxWait) {
+    await new Promise(r => setTimeout(r, interval));
+    const status = await api(`/threads/${thread.id}/runs/${run.id}`);
+
+    if (status.status === "completed") {
+      // 5. Get messages
+      const msgs = await api(`/threads/${thread.id}/messages?order=desc&limit=1`);
+      const assistantMsg = msgs.data?.[0];
+      const text = assistantMsg?.content?.[0]?.text?.value ?? "";
+
+      // 6. Cleanup thread
+      await api(`/threads/${thread.id}`, "DELETE").catch(() => {});
+
+      return text;
+    }
+
+    if (status.status === "failed" || status.status === "cancelled" || status.status === "expired") {
+      const errMsg = status.last_error?.message || `Run ${status.status}`;
+      throw new Error(`Assistant run failed: ${errMsg}`);
+    }
+  }
+
+  throw new Error("Assistant run timed out");
+}

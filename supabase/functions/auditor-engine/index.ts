@@ -88,16 +88,26 @@ Deno.serve(async (req) => {
     const criteria = payload.config?.criteria?.length ? payload.config.criteria : DEFAULT_CRITERIA
     const prompt = buildAuditorPrompt(payload.messages, criteria)
 
-    // Call AI using configured provider (OpenAI/Anthropic/Gemini)
-    const { callAI } = await import("../_shared/ai.ts");
+    // Call AI via Assistant or Chat Completions
+    const { callAssistant, callAI } = await import("../_shared/ai.ts");
+    const assistantId = Deno.env.get("OPENAI_ASSISTANT_ID");
 
-    const rawContent = await callAI({
-      messages: [
-        { role: 'system', content: 'Você é um auditor de qualidade de atendimento. Responda APENAS em JSON válido.' },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.3,
-    });
+    let rawContent: string;
+    if (assistantId) {
+      rawContent = await callAssistant({
+        assistantId,
+        message: `Faça uma auditoria de qualidade de atendimento. Responda em JSON válido.\n\n${prompt}`,
+        maxWaitMs: 60000,
+      });
+    } else {
+      rawContent = await callAI({
+        messages: [
+          { role: 'system', content: 'Você é um auditor de qualidade de atendimento. Responda APENAS em JSON válido.' },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.3,
+      });
+    }
 
     // Parse JSON from AI response (handle markdown code blocks)
     let jsonStr = rawContent
