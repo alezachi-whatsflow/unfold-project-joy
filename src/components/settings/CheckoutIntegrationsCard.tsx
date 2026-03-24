@@ -279,7 +279,7 @@ function ConfigureProviderDialog({
     setTesting(false);
   };
 
-  const webhookBase = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+  const webhookBase = `${import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co"}/functions/v1`;
   const suggestedWebhook = `${webhookBase}/${provider.id}-webhook`;
 
   return (

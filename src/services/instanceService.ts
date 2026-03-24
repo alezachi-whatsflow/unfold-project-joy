@@ -70,7 +70,7 @@ export const instanceService = {
       );
 
       // Configurar webhook automaticamente
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
       const webhookUrl = `${supabaseUrl}/functions/v1/uazapi-webhook`;
 
       try {
