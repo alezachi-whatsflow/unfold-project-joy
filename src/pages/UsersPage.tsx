@@ -27,6 +27,7 @@ const ACTION_LABELS: Record<PermissionAction, string> = { view: "Ver", create: "
 interface ProfileRow {
   id: string;
   full_name: string | null;
+  email: string | null;
   role: string | null;
   avatar_url: string | null;
   created_at: string | null;
@@ -160,8 +161,11 @@ export default function UsersPage() {
                   >
                     {(p.full_name || "?").charAt(0).toUpperCase()}
                   </span>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-0.5">
                     <span className="font-medium text-foreground text-sm leading-tight">{p.full_name || "Sem nome"}</span>
+                    {p.email && (
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[180px]">{p.email}</span>
+                    )}
                     <Badge
                       className="text-[10px] font-bold w-fit"
                       style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}

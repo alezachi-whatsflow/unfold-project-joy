@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ROLE_COLORS } from "@/types/roles";
+import { ROLE_COLORS, ROLE_LABELS } from "@/types/roles";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -128,9 +128,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
             {!isCollapsed && (
               <div className="min-w-0 text-left flex-1">
                 <p className="text-xs font-semibold truncate text-foreground">{userName}</p>
-                {companyName && (
-                  <p className="text-[10px] truncate text-muted-foreground">{companyName}</p>
-                )}
+                <p className="text-[10px] truncate" style={{ color: roleColor }}>{ROLE_LABELS[userRole] || userRole}</p>
               </div>
             )}
           </button>
