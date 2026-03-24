@@ -49,19 +49,18 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           url: webhookUrl,
           enabled: true,
+          addUrlEvents: false,
+          addUrlTypesMessages: false,
           events: [
             "messages",
             "messages.upsert",
             "messages_update",
             "messages.update",
-            "message.update",
             "message_ack",
-            "message-ack",
             "ack",
-            "message_status",
-            "status",
             "connection",
             "leads",
+            "status",
           ],
         }),
       });

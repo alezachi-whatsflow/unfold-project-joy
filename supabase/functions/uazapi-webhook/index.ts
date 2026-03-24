@@ -339,16 +339,32 @@ Deno.serve(async (req) => {
           const normalized = normalizeMessage(msg, payload, instance);
           if (!normalized) continue;
 
-          // Never downgrade status: check existing message status before upsert
+          // Never overwrite outgoing messages saved by the proxy with webhook echo
           const { data: existing } = await supabase
             .from("whatsapp_messages")
-            .select("status")
+            .select("status, direction")
             .eq("message_id", normalized.message_id)
             .maybeSingle();
 
-          if (existing && typeof existing.status === "number" && existing.status > (normalized.status ?? 0)) {
-            // Keep higher status, just update other fields
-            normalized.status = existing.status;
+          if (existing) {
+            // If proxy already saved as outgoing, keep its data (webhook echo has wrong direction)
+            if (existing.direction === "outgoing" && normalized.direction === "incoming") {
+              // Only update status if it's higher (e.g., read ack)
+              if (typeof existing.status === "number" && (normalized.status ?? 0) <= existing.status) {
+                continue; // Skip entirely — proxy data is authoritative
+              }
+              // Status is higher (ack update), just update status field
+              await supabase
+                .from("whatsapp_messages")
+                .update({ status: normalized.status, updated_at: new Date().toISOString() })
+                .eq("message_id", normalized.message_id);
+              saved += 1;
+              continue;
+            }
+            // Never downgrade status
+            if (typeof existing.status === "number" && existing.status > (normalized.status ?? 0)) {
+              normalized.status = existing.status;
+            }
           }
           normalized.updated_at = new Date().toISOString();
 
