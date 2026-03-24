@@ -327,9 +327,28 @@ export default function WhatsAppLayout() {
           }))
         );
 
-        const mapped: Message[] = resolvedRows.map(({ row, resolvedMediaUrl }) =>
-          mapDbMessageToUi(row, resolvedMediaUrl)
-        );
+        // Heuristic: if an outgoing message (status<=2) has a later incoming reply,
+        // the contact must have read it — upgrade to "read" (status=3)
+        const lastIncomingTime = (() => {
+          for (let i = data.length - 1; i >= 0; i--) {
+            if (data[i].direction === "incoming") return new Date(data[i].created_at).getTime();
+          }
+          return 0;
+        })();
+
+        const mapped: Message[] = resolvedRows.map(({ row, resolvedMediaUrl }) => {
+          const msg = mapDbMessageToUi(row, resolvedMediaUrl);
+          // If outgoing with status<=2 and there's a later incoming message, mark as read
+          if (
+            msg.direction === "outgoing" &&
+            (msg.status === "delivered" || msg.status === "sent") &&
+            lastIncomingTime > 0 &&
+            new Date(row.created_at).getTime() < lastIncomingTime
+          ) {
+            msg.status = "read";
+          }
+          return msg;
+        });
 
         const syncTs = data.length > 0 ? data[data.length - 1].created_at : "1970-01-01T00:00:00Z";
         lastSyncRef.current = syncTs;
