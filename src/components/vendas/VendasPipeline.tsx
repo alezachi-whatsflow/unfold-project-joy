@@ -25,7 +25,7 @@ import PipelineManager from "@/components/vendas/PipelineManager";
 export default function VendasPipeline() {
   const tenantId = useTenantId();
   const { pipelines, selectedPipeline, selectedPipelineId, selectPipeline, isLoading: pipelinesLoading, createPipeline } = usePipelines(tenantId);
-  const { negocios, isLoading, changeStatus } = useNegocios(selectedPipelineId);
+  const { negocios, isLoading, changeStatus } = useNegocios(tenantId, selectedPipelineId);
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [showClosed, setShowClosed] = useState(false);

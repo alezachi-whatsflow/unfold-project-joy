@@ -53,7 +53,7 @@ export default function VendasAtividades() {
   const [editingActivity, setEditingActivity] = useState<any>(null);
   const { activities, isLoading: activitiesLoading, createActivity, updateActivity, deleteActivity } = useActivities();
   const { selectedPipelineId } = usePipelines(tenantId);
-  const { negocios, isLoading: negociosLoading } = useNegocios(selectedPipelineId);
+  const { negocios, isLoading: negociosLoading } = useNegocios(tenantId, selectedPipelineId);
 
   const merged = useMemo(() => {
     const fromDeals = negocios.map(negocioToActivity);

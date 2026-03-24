@@ -111,7 +111,17 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
         pipelineId = firstPipeline?.id || null;
       }
       
+      // Get tenant_id
+      const { data: userTenants } = await supabase
+        .from("user_tenants")
+        .select("tenant_id")
+        .eq("user_id", user?.id || "")
+        .limit(1)
+        .maybeSingle();
+      const tenantIdValue = userTenants?.tenant_id || "00000000-0000-0000-0000-000000000001";
+
       const { data, error } = await supabase.from("negocios").insert({
+        tenant_id: tenantIdValue,
         titulo: lead.name,
         status: stage,
         origem: "digital_intelligence",
