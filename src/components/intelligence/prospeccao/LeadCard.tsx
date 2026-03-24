@@ -65,6 +65,7 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
   const meta = scoreMeta[cat];
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
 
   const savedData = getSentLeads()[lead.id];
@@ -159,7 +160,7 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
             variant="outline"
             className="gap-1 text-xs shrink-0"
             style={{ borderColor: "#00C896", color: "#00C896" }}
-            onClick={() => navigate(`/vendas?highlight=${negocioId}`)}
+            onClick={() => navigate(`/app/${slug || "whatsflow"}/vendas?highlight=${negocioId}`)}
           >
             <ExternalLink className="h-3 w-3" /> Ver no CRM
           </Button>
@@ -174,12 +175,11 @@ export function LeadCard({ lead, niche, city, onSentToCRM }: Props) {
   };
 
   const handleViewInCRM = () => {
-    navigate(`/vendas?highlight=${sentNegocioId}`);
+    navigate(`/app/${slug || "whatsflow"}/vendas?highlight=${sentNegocioId}`);
   };
 
   // Navigate to Intelligence page with URL pre-filled for analysis
   const handleAnalyze = () => {
-    const { slug } = useParams<{ slug: string }>();
 
     if (lead.url) {
       navigate(`/app/${slug || 'whatsflow'}/intelligence?analyze=${encodeURIComponent(lead.url)}`);
