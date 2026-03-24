@@ -23,7 +23,7 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
   return (
     <button
       onClick={onClick}
-      className={cn("msg-conv-item w-full flex gap-3 text-left", isSelected && "active")}
+      className={cn("msg-conv-item w-full flex gap-3 text-left overflow-hidden", isSelected && "active")}
     >
       <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={36} isOnline={c.isOnline} imageUrl={c.avatarUrl} />
       <div className="flex-1 min-w-0">

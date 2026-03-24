@@ -693,7 +693,7 @@ export default function WhatsAppLayout() {
 
   return (
     <div className="flex h-full overflow-hidden" style={{ backgroundColor: "var(--wa-bg-deep)" }}>
-      <div className="shrink-0 h-full hidden md:flex" style={{ width: 360 }}>
+      <div className="shrink-0 h-full hidden md:flex overflow-hidden" style={{ width: 360, minWidth: 360, maxWidth: 360 }}>
         <LeftPanel
           conversations={conversations}
           selectedId={selectedJid}
