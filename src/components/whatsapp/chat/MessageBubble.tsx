@@ -13,6 +13,24 @@ function nameColor(name: string): string {
   return colors[Math.abs(h) % colors.length];
 }
 
+// Format timestamp: "23/03/2026 07:37"
+function formatMsgTime(ts: string): string {
+  if (!ts) return "";
+  // ts can be "2026-03-23 07:37" or "2026-03-23T07:37:00Z" or just "07:37"
+  try {
+    const d = new Date(ts.replace(" ", "T"));
+    if (isNaN(d.getTime())) return ts.split(" ")[1] || ts;
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+  } catch {
+    return ts.split(" ")[1] || ts;
+  }
+}
+
 interface MessageBubbleProps {
   message: Message;
   showSender: boolean;
@@ -94,8 +112,8 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
             <WaAvatar initials={m.senderName.charAt(0)} color={nameColor(m.senderName)} size={25} />
           )}
           <div className="flex items-center gap-1 ml-1">
-            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-              {m.timestamp.split(" ")[1]}
+            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
+              {formatMsgTime(m.timestamp)}
             </span>
             {isOut && <TickIcons status={m.status} />}
           </div>
@@ -134,8 +152,8 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
             </p>
           )}
           <div className="flex items-center justify-end gap-1 px-2.5 pb-1">
-            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-              {m.timestamp.split(" ")[1]}
+            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
+              {formatMsgTime(m.timestamp)}
             </span>
             {isOut && <TickIcons status={m.status} />}
           </div>
@@ -172,8 +190,8 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
             </p>
           )}
           <div className="flex items-center justify-end gap-1 px-2.5 pb-1">
-            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-              {m.timestamp.split(" ")[1]}
+            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
+              {formatMsgTime(m.timestamp)}
             </span>
             {isOut && <TickIcons status={m.status} />}
           </div>
@@ -204,8 +222,8 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
             </span>
           </div>
           <div className="flex items-center justify-end gap-1 mt-1">
-            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-              {m.timestamp.split(" ")[1]}
+            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
+              {formatMsgTime(m.timestamp)}
             </span>
             {isOut && <TickIcons status={m.status} />}
           </div>
@@ -241,8 +259,8 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
         <p className="text-[14.5px] leading-5 whitespace-pre-wrap" style={{ color: "var(--wa-text-primary)" }}>
           {m.content}
           <span className="inline-flex items-center gap-1 ml-2 align-bottom float-right mt-1">
-            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-              {m.timestamp.split(" ")[1]}
+            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
+              {formatMsgTime(m.timestamp)}
             </span>
             {isOut && <TickIcons status={m.status} />}
           </span>
