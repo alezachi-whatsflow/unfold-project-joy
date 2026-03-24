@@ -98,18 +98,17 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
 
           await client.from("chat_messages").insert({
             tenant_id: integration.tenant_id,
-            conversation_id: null,
-            sender_type: "customer",
             sender_id: msg.from,
             content: extractMessageContent(msg),
+            content_type: msg.type,
             message_type: msg.type,
-            direction: "inbound",
+            direction: "incoming",
             timestamp: new Date(parseInt(msg.timestamp) * 1000).toISOString(),
+            wa_message_id: msg.id,
             metadata: {
               provider: "WABA",
               integration_id: integration.id,
               phone_number_id: phoneNumberId,
-              wa_message_id: msg.id,
               raw: msg,
             },
           }).then(({ error }) => {
@@ -153,18 +152,17 @@ async function handleInstagramWebhook(client: ReturnType<typeof createClient>, p
 
         await client.from("chat_messages").insert({
           tenant_id: integration.tenant_id,
-          conversation_id: null,
-          sender_type: "customer",
           sender_id: senderId,
           content: text,
+          content_type: messaging.message.attachments ? "attachment" : "text",
           message_type: messaging.message.attachments ? "attachment" : "text",
-          direction: "inbound",
+          direction: "incoming",
           timestamp: new Date(messaging.timestamp * 1000).toISOString(),
+          wa_message_id: messaging.message.mid,
           metadata: {
             provider: "INSTAGRAM",
             integration_id: integration.id,
             page_id: pageId,
-            ig_message_id: messaging.message.mid,
             raw: messaging,
           },
         }).then(({ error }) => {
