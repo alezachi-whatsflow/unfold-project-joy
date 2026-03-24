@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -102,12 +103,12 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md border-border">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden"
-            style={{ background: logoUrl ? 'transparent' : primaryColor }}>
-            {logoUrl
-              ? <img src={logoUrl} alt={displayName} className="h-12 w-12 object-cover rounded-xl" />
-              : <span className="font-display text-xl font-bold text-white">{displayName[0]?.toUpperCase()}</span>
-            }
+          <div className="mx-auto mb-4">
+            <img
+              src={logoUrl || whatsflowLogo}
+              alt={displayName}
+              className="h-12 mx-auto object-contain"
+            />
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">{displayName}</CardTitle>
           <CardDescription>Entre com suas credenciais</CardDescription>
