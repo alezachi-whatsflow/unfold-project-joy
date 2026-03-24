@@ -25,7 +25,7 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
       onClick={onClick}
       className={cn("msg-conv-item w-full flex gap-3 text-left", isSelected && "active")}
     >
-      <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={36} isOnline={c.isOnline} />
+      <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={36} isOnline={c.isOnline} imageUrl={c.avatarUrl} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <span className="conv-name truncate">{c.name}</span>

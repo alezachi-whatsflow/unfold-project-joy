@@ -9,6 +9,7 @@ export interface Conversation {
   isOnline: boolean;
   avatarColor: string;
   avatarInitials: string;
+  avatarUrl?: string;
   instanceName: string;
   tags: Array<{
     label: string;

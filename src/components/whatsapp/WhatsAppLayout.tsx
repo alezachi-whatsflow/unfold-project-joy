@@ -84,6 +84,8 @@ export default function WhatsAppLayout() {
   const lastStatusSyncRef = useRef<string>("1970-01-01T00:00:00Z");
   const didBootstrapSyncRef = useRef(false);
   const mediaUrlCacheRef = useRef<Map<string, string>>(new Map());
+  // Message cache: keeps messages in memory per conversation so they persist on switch
+  const messagesCacheRef = useRef<Map<string, { messages: Message[]; lastSync: string; lastStatusSync: string }>>(new Map());
 
   const resolveMessageMediaUrl = useCallback(async (row: any): Promise<string | null> => {
     const mappedType = mapMessageType(row?.type);
@@ -262,6 +264,9 @@ export default function WhatsAppLayout() {
           msgName ||
           phone;
 
+      // Avatar: prefer profile_pic_url from whatsapp_contacts
+      const avatarUrl = contact?.profile_pic_url || null;
+
       convs.push({
         id: jid,
         name,
@@ -273,6 +278,7 @@ export default function WhatsAppLayout() {
         isOnline: false,
         avatarColor: colorFromJid(jid),
         avatarInitials: isGroup ? groupInitials(name) : phoneInitials(phone),
+        avatarUrl: avatarUrl || undefined,
         instanceName: latest.instance_name,
         tags: lead?.lead_tags?.length
           ? lead.lead_tags.map((t: string) => ({ label: t, color: "lead" as const }))
@@ -296,7 +302,16 @@ export default function WhatsAppLayout() {
 
   /* ── fetch messages for selected conversation ──── */
   const fetchMessages = useCallback(
-    async (jid: string) => {
+    async (jid: string, forceRefresh = false) => {
+      // If we have cached messages for this jid, show them immediately
+      const cached = messagesCacheRef.current.get(jid);
+      if (cached && !forceRefresh) {
+        setMessages(cached.messages);
+        lastSyncRef.current = cached.lastSync;
+        lastStatusSyncRef.current = cached.lastStatusSync;
+        return;
+      }
+
       const { data } = await supabase
         .from("whatsapp_messages")
         .select("*")
@@ -316,10 +331,18 @@ export default function WhatsAppLayout() {
           mapDbMessageToUi(row, resolvedMediaUrl)
         );
 
+        const syncTs = data.length > 0 ? data[data.length - 1].created_at : "1970-01-01T00:00:00Z";
+        lastSyncRef.current = syncTs;
+        lastStatusSyncRef.current = new Date().toISOString();
+
+        // Save to cache
+        messagesCacheRef.current.set(jid, {
+          messages: mapped,
+          lastSync: syncTs,
+          lastStatusSync: lastStatusSyncRef.current,
+        });
+
         setMessages(mapped);
-        if (data.length > 0) {
-          lastSyncRef.current = data[data.length - 1].created_at;
-        }
       }
     },
     [mapDbMessageToUi, resolveMessageMediaUrl]
@@ -333,17 +356,42 @@ export default function WhatsAppLayout() {
   /* ── load messages when selecting a conversation ── */
   useEffect(() => {
     if (selectedJid) {
-      lastStatusSyncRef.current = "1970-01-01T00:00:00Z";
-      fetchMessages(selectedJid);
+      // Show cached messages instantly, then refresh from DB in background
+      const cached = messagesCacheRef.current.get(selectedJid);
+      if (cached) {
+        setMessages(cached.messages);
+        lastSyncRef.current = cached.lastSync;
+        lastStatusSyncRef.current = cached.lastStatusSync;
+      } else {
+        setMessages([]);
+        lastStatusSyncRef.current = "1970-01-01T00:00:00Z";
+      }
+      fetchMessages(selectedJid, !cached);
     } else {
       setMessages([]);
     }
   }, [selectedJid, fetchMessages]);
 
+  // Helper to update both state and cache when messages change
+  const updateMessagesWithCache = useCallback((jid: string, updater: (prev: Message[]) => Message[]) => {
+    setMessages((prev) => {
+      const next = updater(prev);
+      if (next !== prev) {
+        messagesCacheRef.current.set(jid, {
+          messages: next,
+          lastSync: lastSyncRef.current,
+          lastStatusSync: lastStatusSyncRef.current,
+        });
+      }
+      return next;
+    });
+  }, []);
+
   /* ── Realtime subscription + polling fallback ───── */
   useEffect(() => {
     let isActive = true;
     let pollInterval = 3000;
+    const MAX_POLL_INTERVAL = 8000; // cap at 8s instead of 15s for faster updates
 
     const channel = supabase
       .channel("wa-messages-rt")
@@ -358,23 +406,42 @@ export default function WhatsAppLayout() {
             // Refresh conversations list
             fetchConversations();
 
-            // If the new message belongs to the selected conversation, append it
-            if (selectedJid && newMsg.remote_jid === selectedJid && payload.eventType === "INSERT") {
-              const resolvedMediaUrl = await resolveMessageMediaUrl(newMsg);
+            const msgJid = newMsg.remote_jid;
 
-              setMessages((prev) => {
-                if (prev.some((m) => m.id === newMsg.id)) return prev;
-                return [...prev, mapDbMessageToUi(newMsg, resolvedMediaUrl)];
-              });
+            // INSERT: append new message (to selected or to cache of any conversation)
+            if (payload.eventType === "INSERT") {
+              const resolvedMediaUrl = await resolveMessageMediaUrl(newMsg);
+              const uiMsg = mapDbMessageToUi(newMsg, resolvedMediaUrl);
+
+              if (selectedJid && msgJid === selectedJid) {
+                updateMessagesWithCache(selectedJid, (prev) => {
+                  if (prev.some((m) => m.id === newMsg.id)) return prev;
+                  return [...prev, uiMsg];
+                });
+              } else if (messagesCacheRef.current.has(msgJid)) {
+                // Update cache for non-selected conversations too
+                const cached = messagesCacheRef.current.get(msgJid)!;
+                if (!cached.messages.some((m) => m.id === newMsg.id)) {
+                  cached.messages = [...cached.messages, uiMsg];
+                  cached.lastSync = newMsg.created_at;
+                }
+              }
             }
 
-            // Update status on UPDATE events
-            if (payload.eventType === "UPDATE" && selectedJid && newMsg.remote_jid === selectedJid) {
-              setMessages((prev) =>
-                prev.map((m) =>
+            // UPDATE: update status (ticks) for any conversation in cache
+            if (payload.eventType === "UPDATE") {
+              if (selectedJid && msgJid === selectedJid) {
+                updateMessagesWithCache(selectedJid, (prev) =>
+                  prev.map((m) =>
+                    m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
+                  )
+                );
+              } else if (messagesCacheRef.current.has(msgJid)) {
+                const cached = messagesCacheRef.current.get(msgJid)!;
+                cached.messages = cached.messages.map((m) =>
                   m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
-                )
-              );
+                );
+              }
             }
 
             pollInterval = 3000; // reset
@@ -390,6 +457,8 @@ export default function WhatsAppLayout() {
       await fetchConversations();
 
       if (selectedJid) {
+        let hadUpdates = false;
+
         // 1) Fetch NEW messages by created_at
         const { data } = await supabase
           .from("whatsapp_messages")
@@ -406,7 +475,7 @@ export default function WhatsAppLayout() {
             }))
           );
 
-          setMessages((prev) => {
+          updateMessagesWithCache(selectedJid, (prev) => {
             const existingIds = new Set(prev.map((m) => m.id));
             const newMsgs: Message[] = resolvedRows
               .filter(({ row }) => !existingIds.has(row.id))
@@ -416,11 +485,10 @@ export default function WhatsAppLayout() {
               lastSyncRef.current = data[data.length - 1].created_at;
               return [...prev, ...newMsgs];
             }
-
             return prev;
           });
 
-          pollInterval = 3000;
+          hadUpdates = true;
         }
 
         // 2) Fetch STATUS UPDATES via updated_at (catches ack/read changes)
@@ -433,7 +501,7 @@ export default function WhatsAppLayout() {
 
         if (updatedMsgs && updatedMsgs.length > 0) {
           const statusMap = new Map(updatedMsgs.map((m: any) => [m.id, m.status]));
-          setMessages((prev) =>
+          updateMessagesWithCache(selectedJid, (prev) =>
             prev.map((m) => {
               const newStatus = statusMap.get(m.id);
               if (newStatus !== undefined) {
@@ -443,11 +511,13 @@ export default function WhatsAppLayout() {
             })
           );
           lastStatusSyncRef.current = updatedMsgs[updatedMsgs.length - 1].updated_at;
-          pollInterval = 3000;
+          hadUpdates = true;
         }
 
-        if ((!data || data.length === 0) && (!updatedMsgs || updatedMsgs.length === 0)) {
-          pollInterval = Math.min(pollInterval * 1.5, 15000);
+        if (hadUpdates) {
+          pollInterval = 3000;
+        } else {
+          pollInterval = Math.min(pollInterval * 1.3, MAX_POLL_INTERVAL);
         }
       }
 
@@ -463,7 +533,7 @@ export default function WhatsAppLayout() {
       clearTimeout(pollTimeoutRef.current);
       supabase.removeChannel(channel);
     };
-  }, [selectedJid, fetchConversations, mapDbMessageToUi, resolveMessageMediaUrl]);
+  }, [selectedJid, fetchConversations, mapDbMessageToUi, resolveMessageMediaUrl, updateMessagesWithCache]);
 
   /* ── detect if conversation uses Meta API ─────── */
   const isMetaConversation = (instanceName: string) => instanceName?.startsWith("meta:");
