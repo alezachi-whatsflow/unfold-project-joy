@@ -142,6 +142,21 @@ export default function IntelligencePage() {
     };
     addProfile(profile);
 
+    // Run AI deep analysis (7 pillars)
+    setCurrentStatus("analyzing");
+    try {
+      const { data: aiData } = await supabase.functions.invoke("instagram-ai-analysis", {
+        body: { profile: { ...profile, verified: data.profile?.verified, is_business: data.profile?.is_business, bio_links: data.profile?.bio_links, latest_posts_summary: data.profile?.latest_posts_summary } },
+      });
+      if (aiData?.analysis) {
+        const aiScore = aiData.analysis.score_geral ?? profile.authority_score ?? 0;
+        profile.authority_score = aiScore;
+        profile.content_strategy_notes = aiData.analysis.diagnostico_geral || profile.content_strategy_notes;
+      }
+    } catch (aiErr) {
+      console.warn("AI analysis failed, using basic score:", aiErr);
+    }
+
     const igScore = profile.authority_score ?? 0;
     const igThreshold = getInstagramThreshold(igScore);
     setInstagramThreshold(igThreshold);
