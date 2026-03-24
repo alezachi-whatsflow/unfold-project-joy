@@ -1,0 +1,46 @@
+# Whatsflow Finance — LLM Context Index
+# Use this file as quick reference for AI-assisted development
+
+## What is this?
+Multi-tenant SaaS: CRM + WhatsApp + Finance + AI Intelligence for Brazilian SMBs.
+Stack: React 18 + Supabase + Edge Functions + OpenAI.
+
+## Key Files
+- Routes: src/App.tsx (all routes defined here)
+- Navigation: src/config/navigation.ts (sidebar menu)
+- Permissions: src/config/permissions.ts (role matrix)
+- Supabase Client: src/integrations/supabase/client.ts
+- Tenant Hook: src/hooks/useTenantId.ts (ALWAYS use this for tenant)
+- Auth Hook: src/hooks/useAuth.tsx
+- Themes: src/styles/themes.css (3 themes via CSS vars)
+
+## Architecture Rules
+1. Never hardcode tenant IDs — use useTenantId()
+2. Never hardcode URLs — use .env (VITE_ prefix for frontend)
+3. Edge Functions use Deno.env for secrets
+4. RLS on all tables — use get_my_tenant_ids() or is_nexus_user()
+5. AI calls go through _shared/ai.ts → callAssistant() or callAI()
+6. Email via _shared/smtp.ts → auto-detects SMTP2GO vs SendGrid
+7. All routes under /app/:slug for client portal
+8. Supabase anon key is public (safe for fallbacks)
+
+## Portals
+- /app/:slug — Client (DashboardLayout)
+- /nexus — Admin (NexusLayout)
+- /wl/:slug — WhiteLabel (WLLayout)
+- /superadmin — SuperAdmin
+- /god-admin — God Admin
+
+## Database (75 tables)
+Core: tenants, profiles, user_tenants, licenses, negocios, whatsapp_messages
+Functions: get_my_role(), get_my_tenant_ids(), is_nexus_user()
+
+## Edge Functions (35+)
+Email: invite-user, send-recovery-email, resend-activation-email
+Payment: asaas-webhook, create-checkout-payment, asaas-proxy
+WhatsApp: uazapi-proxy, uazapi-webhook, meta-webhook, meta-send-message
+AI: auditor-engine, instagram-ai-analysis, generate-rescue-plan
+OAuth: meta-oauth-start, meta-oauth-callback
+
+## Context Files
+See .context/ directory for full documentation (18 documents).

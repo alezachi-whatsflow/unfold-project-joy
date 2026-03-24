@@ -1,19 +1,79 @@
-# Arquitetura do Sistema
+# 02 — Architecture
 
-A arquitetura segue o modelo moderno de **Backend as a Service (BaaS)** impulsionado por reatividade no frontend.
+## Pattern: SPA + BaaS (Supabase) + Serverless Edge Functions
 
-## Diagrama Lógico (Textual)
-[ UI Client - Vite/React SPA ] <----(HTTPS / WSS)----> [ Supabase API Gateway ]
-       |                                                    |--- Auth (GoTrue)
-       |--> [ Componentes Shadcn ]                          |--- DB (Postgres via PostgREST)
-       |--> [ Estado Global / React Query ]                 |--- Storage
-       |--> [ Rotas React Router ]                          |--- Edge Functions (Deno) <---> [ Asaas / OpenAI / Evolution API ]
+```
+┌──────────────────────────────────────────────────────┐
+│                     CLIENTS                           │
+│  Browser (React SPA)  |  Mobile (PWA)                │
+└──────────────┬───────────────────────────────────────┘
+               │ HTTPS
+┌──────────────▼───────────────────────────────────────┐
+│              RAILWAY (Static Hosting)                  │
+│  Serves: dist/ (Vite build output)                    │
+│  Auto-deploy from GitHub main                         │
+└──────────────┬───────────────────────────────────────┘
+               │ HTTPS (REST + WebSocket)
+┌──────────────▼───────────────────────────────────────┐
+│              SUPABASE CLOUD                           │
+│                                                       │
+│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐  │
+│  │PostgREST│ │ GoTrue   │ │ Realtime │ │ Storage │  │
+│  │(REST API)│ │(Auth/JWT)│ │(WebSocket│ │(S3)     │  │
+│  └────┬────┘ └────┬─────┘ └────┬─────┘ └─────────┘  │
+│       │           │            │                      │
+│  ┌────▼───────────▼────────────▼─────┐               │
+│  │         PostgreSQL 15              │               │
+│  │  75 tables | RLS | 24 functions   │               │
+│  │  56 migrations | 5 cron jobs      │               │
+│  └───────────────────────────────────┘               │
+│                                                       │
+│  ┌───────────────────────────────────┐               │
+│  │    Edge Functions (Deno Deploy)    │               │
+│  │    35+ serverless functions        │──────────┐   │
+│  └───────────────────────────────────┘           │   │
+└──────────────────────────────────────────────────┘   │
+                                                        │
+┌───────────────────────────────────────────────────────┤
+│                 EXTERNAL SERVICES                      │
+│  Asaas (Payments) | Meta Graph API (WA+IG)            │
+│  uazapi (WA Web)  | SMTP2GO (Email)                  │
+│  Firecrawl (Scrape)| Apify (Scrape)                  │
+│  OpenAI (AI)       |                                  │
+└───────────────────────────────────────────────────────┘
+```
 
-## Backend e Banco
-- **Postgres (Supabase)**: Banco relacional atuando como a única fonte da verdade. O RLS é o guardião dos dados multitenancy.
-- **Edge Functions**: Scripts serverless hospedados no Supabase para rodar lógicas críticas que expõem credenciais privadas (Webhook de PIX, integração Whatsapp API oficial/Evolution).
+## Design Decisions
 
-## Organização Front-end
-- Arquitetura baseada em features em `src/`: `pages/`, `components/`, `hooks/` para regras de negócios (ex: `useNegocios`, `useICPProfile`), e `lib/` para configurações e utils gerais.
+| Decision | Rationale |
+|----------|-----------|
+| No custom backend | Supabase Edge Functions sufficient; reduces infra |
+| RLS for data isolation | Built into Postgres, enforced at DB level |
+| JWT auth (not session) | Stateless, works with Edge Functions |
+| Multi-provider WhatsApp | uazapi (legacy) + Meta Cloud API (official) |
+| AI via Assistants API | Prompts managed in OpenAI platform, not code |
+| CSS variables for themes | Runtime switching, no rebuild needed |
+| Dynamic env vars | All URLs/IDs from .env, zero hardcoded |
+| Shared DB, tenant isolation | Cost-effective, RLS enforces isolation |
 
-STATUS RLS: Implementado nativamente usando `auth.uid()` e junções na tabela de filiação de workspace.
+## Data Flow Patterns
+
+### Request → Response (typical)
+```
+Browser → supabase.from("table").select() → PostgREST → PostgreSQL (RLS) → JSON
+```
+
+### Edge Function call
+```
+Browser → supabase.functions.invoke("fn") → Edge Function → External API → Response
+```
+
+### Webhook (inbound)
+```
+External → Edge Function (no JWT) → PostgreSQL → Realtime → Browser (live update)
+```
+
+### Auth flow
+```
+Login → GoTrue → JWT → stored in memory → sent with every request
+```
