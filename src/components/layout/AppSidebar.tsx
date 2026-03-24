@@ -140,8 +140,8 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
               <Shield className="mr-2 h-4 w-4 text-emerald-400" /> Nexus Admin
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => setTheme(theme === "sapphire" ? "slate" : theme === "slate" ? "forest" : "sapphire")}>
-            {theme === "sapphire" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+          <DropdownMenuItem onClick={() => setTheme(theme === "cafe-noturno" ? "pacifico" : theme === "pacifico" ? "cosmos" : "cafe-noturno")}>
+            {theme === "pacifico" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
             Alternar Tema
           </DropdownMenuItem>
           <DropdownMenuSeparator />

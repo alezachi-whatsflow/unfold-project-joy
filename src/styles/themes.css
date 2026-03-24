@@ -1,288 +1,366 @@
 /* =============================================
-   WHATSFLOW — SISTEMA DE TEMAS PROFISSIONAIS
-   v3.0 — Deep Sapphire / Midnight Slate / Obsidian Forest
+   WHATSFLOW — SISTEMA DE TEMAS v4.0
+   Base científica: redução de fadiga visual
+   (American Academy of Ophthalmology, 2025)
    ============================================= */
 
-/* -----------------------------------------------
-   TEMA 1: DEEP SAPPHIRE
-   Azul profundo — estilo cockpit noturno
-   ----------------------------------------------- */
-[data-theme="sapphire"] {
-  --sidebar-glass-rgb: 10,22,40;
+/* ── TEMA 1: CAFÉ NOTURNO (padrão) ─────────
+   Warm dark · Âmbar · Uso prolongado
+   Elimina comprimentos de onda azuis
+   ─────────────────────────────────────────── */
+[data-theme="cafe-noturno"] {
+  /* New design tokens */
+  --bg-base: #18140f;
+  --bg-surface: #211b14;
+  --bg-card: #2c2318;
+  --bg-active: #1e190f;
+  --bg-hover: #261e14;
+  --bg-input: #2c2318;
+  --border-soft: #3a2f2222;
+  --border: #3a2f22;
+  --border-strong: #4a3c2c;
+  --acc: #e8a84a;
+  --acc-bg: #e8a84a1a;
+  --acc-border: #e8a84a30;
+  --acc-dark: #b07a20;
+  --text-primary: #f5ede0;
+  --text-secondary: #b09880;
+  --text-muted: #7a6a58;
+  --unread-bg: #e8a84a;
+  --unread-text: #18140f;
+  --sent-bg: #261e13;
+  --sent-border: #3a2f22;
+  --tag-bg: #e8a84a1a;
+  --tag-text: #e8a84a;
+  --logo-accent: #e8a84a;
+  --danger: #e85454;
+  --success: #4caf7d;
+  --warning: #e8a84a;
+  --scrollbar: #3a2f22;
+  --shadow: 0 2px 12px #00000060;
+
+  /* Shadcn/UI mapping */
+  --sidebar-glass-rgb: 24,20,15;
   --sidebar-glass-alpha: 0.70;
-  --background: 220 50% 7%;
-  --foreground: 216 40% 92%;
-  --card: 220 45% 10%;
-  --card-foreground: 216 40% 92%;
-  --popover: 220 45% 12%;
-  --popover-foreground: 216 40% 92%;
-  --primary: 213 60% 57%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 220 40% 18%;
-  --secondary-foreground: 216 30% 75%;
-  --muted: 220 35% 15%;
-  --muted-foreground: 213 30% 50%;
-  --accent: 213 60% 57%;
+  --background: 24 30% 8%;
+  --foreground: 35 40% 92%;
+  --card: 24 28% 13%;
+  --card-foreground: 35 40% 92%;
+  --popover: 24 28% 15%;
+  --popover-foreground: 35 40% 92%;
+  --primary: 36 78% 60%;
+  --primary-foreground: 24 30% 8%;
+  --secondary: 24 22% 16%;
+  --secondary-foreground: 35 25% 70%;
+  --muted: 24 18% 14%;
+  --muted-foreground: 30 20% 45%;
+  --accent: 36 78% 60%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 349 89% 58%;
+  --destructive: 0 72% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 220 35% 18%;
-  --input: 220 40% 20%;
-  --ring: 213 60% 57%;
+  --border: 30 22% 18%;
+  --input: 24 22% 18%;
+  --ring: 36 78% 60%;
   --radius: 0.5rem;
-  --success: 152 69% 49%;
+  --success: 152 45% 50%;
   --success-foreground: 0 0% 100%;
-  --warning: 12 96% 62%;
-  --warning-foreground: 0 0% 100%;
-
-  --chart-1: 213 60% 57%;
-  --chart-2: 152 69% 49%;
-  --chart-3: 188 93% 50%;
-  --chart-4: 12 96% 62%;
-  --chart-5: 349 89% 58%;
-
-  --sidebar-background: 220 55% 5%;
-  --sidebar-foreground: 213 30% 65%;
-  --sidebar-primary: 213 60% 57%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 40% 15%;
-  --sidebar-accent-foreground: 216 40% 92%;
-  --sidebar-border: 220 35% 14%;
-  --sidebar-ring: 213 60% 57%;
+  --warning: 36 78% 60%;
+  --warning-foreground: 24 30% 8%;
+  --chart-1: 36 78% 60%;
+  --chart-2: 152 45% 50%;
+  --chart-3: 188 70% 50%;
+  --chart-4: 12 80% 58%;
+  --chart-5: 349 72% 55%;
+  --sidebar-background: 24 35% 5%;
+  --sidebar-foreground: 35 25% 65%;
+  --sidebar-primary: 36 78% 60%;
+  --sidebar-primary-foreground: 24 30% 8%;
+  --sidebar-accent: 24 22% 14%;
+  --sidebar-accent-foreground: 35 40% 92%;
+  --sidebar-border: 30 22% 14%;
+  --sidebar-ring: 36 78% 60%;
 
   /* Extended tokens */
-  --bg-card-glass: rgba(15, 30, 56, 0.80);
-  --bg-card-hover: rgba(15, 30, 56, 0.95);
-  --bg-chat: #0a1628;
-  --bg-bubble-in: #152848;
-  --bg-bubble-out: rgba(74, 144, 217, 0.18);
-  --accent-primary: #4a90d9;
-  --accent-primary-bg: rgba(74, 144, 217, 0.15);
-  --accent-secondary: #2dce89;
-  --accent-secondary-bg: rgba(45, 206, 137, 0.12);
-  --border-subtle: rgba(74, 144, 217, 0.12);
-  --border-card: rgba(74, 144, 217, 0.12);
-  --border-sidebar: rgba(74, 144, 217, 0.08);
-  --section-accent: #4a90d9;
-  --glass-blur: 12px;
-  --glass-border: rgba(74, 144, 217, 0.12);
-  --text-bubble-in: #e8eef8;
-  --text-bubble-out: #b5d4f4;
-
-  /* Glass overlay */
-  --glass-overlay-rgb: 255, 255, 255;
-
-  /* WhatsApp theme overrides — Deep Sapphire */
-  --wa-bg-deep: #071020;
-  --wa-bg-panel: #0f1e38;
-  --wa-bg-chat: #0a1628;
-  --wa-bg-header: #0f1e38;
-  --wa-bg-input: #152848;
-  --wa-bg-hover: rgba(74, 144, 217, 0.12);
-  --wa-bg-selected: rgba(74, 144, 217, 0.18);
-  --wa-bg-msg-out: rgba(74, 144, 217, 0.18);
-  --wa-bg-msg-in: #152848;
-  --wa-bg-system: rgba(74, 144, 217, 0.10);
-  --wa-text-primary: #e8eef8;
-  --wa-text-secondary: #7a9cc4;
-  --wa-text-tertiary: #3d5a7a;
-  --wa-text-link: #4a90d9;
-  --wa-green: #4a90d9;
-  --wa-green-dark: #2d6bb5;
-  --wa-teal: #11CDEF;
-  --wa-blue-read: #4a90d9;
-  --wa-border: rgba(74, 144, 217, 0.12);
-  --wa-border-input: rgba(74, 144, 217, 0.22);
-  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a90d9' fill-opacity='0.06'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
-
-/* -----------------------------------------------
-   TEMA 2: MIDNIGHT SLATE
-   Ardósia quente — máximo conforto noturno
-   ----------------------------------------------- */
-[data-theme="slate"] {
-  --sidebar-glass-rgb: 14,12,10;
-  --sidebar-glass-alpha: 0.70;
-  --background: 20 12% 7%;
-  --foreground: 30 20% 92%;
-  --card: 20 12% 10%;
-  --card-foreground: 30 20% 92%;
-  --popover: 20 12% 12%;
-  --popover-foreground: 30 20% 92%;
-  --primary: 25 50% 60%;
-  --primary-foreground: 20 12% 7%;
-  --secondary: 20 15% 16%;
-  --secondary-foreground: 30 15% 65%;
-  --muted: 20 12% 14%;
-  --muted-foreground: 25 15% 45%;
-  --accent: 25 50% 60%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 349 89% 58%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 20 12% 16%;
-  --input: 20 15% 18%;
-  --ring: 25 50% 60%;
-  --radius: 0.5rem;
-  --success: 152 69% 49%;
-  --success-foreground: 0 0% 100%;
-  --warning: 12 96% 62%;
-  --warning-foreground: 0 0% 100%;
-
-  --chart-1: 25 50% 60%;
-  --chart-2: 152 69% 49%;
-  --chart-3: 188 93% 50%;
-  --chart-4: 12 96% 62%;
-  --chart-5: 349 89% 58%;
-
-  --sidebar-background: 20 15% 4%;
-  --sidebar-foreground: 30 15% 60%;
-  --sidebar-primary: 25 50% 60%;
-  --sidebar-primary-foreground: 20 12% 7%;
-  --sidebar-accent: 20 12% 14%;
-  --sidebar-accent-foreground: 30 20% 92%;
-  --sidebar-border: 20 12% 12%;
-  --sidebar-ring: 25 50% 60%;
-
-  --bg-card-glass: rgba(26, 23, 20, 0.80);
-  --bg-card-hover: rgba(26, 23, 20, 0.95);
-  --bg-chat: #12100e;
-  --bg-bubble-in: #221e1a;
-  --bg-bubble-out: rgba(200, 149, 106, 0.15);
-  --accent-primary: #c8956a;
-  --accent-primary-bg: rgba(200, 149, 106, 0.12);
-  --accent-secondary: #2dce89;
-  --accent-secondary-bg: rgba(45, 206, 137, 0.12);
-  --border-subtle: rgba(200, 149, 106, 0.10);
-  --border-card: rgba(200, 149, 106, 0.10);
-  --border-sidebar: rgba(200, 149, 106, 0.07);
-  --section-accent: #c8956a;
+  --bg-card-glass: rgba(44, 35, 24, 0.80);
+  --bg-card-hover: rgba(44, 35, 24, 0.95);
+  --bg-chat: #18140f;
+  --bg-bubble-in: #2c2318;
+  --bg-bubble-out: rgba(232, 168, 74, 0.15);
+  --accent-primary: #e8a84a;
+  --accent-primary-bg: rgba(232, 168, 74, 0.12);
+  --accent-secondary: #4caf7d;
+  --accent-secondary-bg: rgba(76, 175, 125, 0.12);
+  --border-subtle: rgba(58, 47, 34, 0.40);
+  --border-card: rgba(232, 168, 74, 0.10);
+  --border-sidebar: rgba(232, 168, 74, 0.07);
+  --section-accent: #e8a84a;
   --glass-blur: 10px;
-  --glass-border: rgba(200, 149, 106, 0.10);
-  --text-bubble-in: #f0ece6;
-  --text-bubble-out: #e8c4a0;
-
-  /* Glass overlay */
+  --glass-border: rgba(232, 168, 74, 0.10);
   --glass-overlay-rgb: 255, 255, 255;
+  --text-bubble-in: #f5ede0;
+  --text-bubble-out: #f0d8a0;
 
-  /* WhatsApp theme overrides — Midnight Slate */
-  --wa-bg-deep: #0e0c0a;
-  --wa-bg-panel: #1a1714;
-  --wa-bg-chat: #12100e;
-  --wa-bg-header: #1a1714;
-  --wa-bg-input: #221e1a;
-  --wa-bg-hover: rgba(200, 149, 106, 0.10);
-  --wa-bg-selected: rgba(200, 149, 106, 0.15);
-  --wa-bg-msg-out: rgba(200, 149, 106, 0.15);
-  --wa-bg-msg-in: #221e1a;
-  --wa-bg-system: rgba(200, 149, 106, 0.08);
-  --wa-text-primary: #f0ece6;
-  --wa-text-secondary: #9a8878;
-  --wa-text-tertiary: #5a4c40;
-  --wa-text-link: #c8956a;
-  --wa-green: #c8956a;
-  --wa-green-dark: #a87048;
-  --wa-teal: #c8956a;
-  --wa-blue-read: #c8956a;
-  --wa-border: rgba(200, 149, 106, 0.10);
-  --wa-border-input: rgba(200, 149, 106, 0.20);
-  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8956a' fill-opacity='0.05'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* WhatsApp overrides */
+  --wa-bg-deep: #14100c;
+  --wa-bg-panel: #211b14;
+  --wa-bg-chat: #18140f;
+  --wa-bg-header: #211b14;
+  --wa-bg-input: #2c2318;
+  --wa-bg-hover: rgba(232, 168, 74, 0.10);
+  --wa-bg-selected: rgba(232, 168, 74, 0.15);
+  --wa-bg-msg-out: rgba(232, 168, 74, 0.15);
+  --wa-bg-msg-in: #2c2318;
+  --wa-bg-system: rgba(232, 168, 74, 0.08);
+  --wa-text-primary: #f5ede0;
+  --wa-text-secondary: #b09880;
+  --wa-text-tertiary: #7a6a58;
+  --wa-text-link: #e8a84a;
+  --wa-green: #e8a84a;
+  --wa-green-dark: #b07a20;
+  --wa-teal: #e8a84a;
+  --wa-blue-read: #e8a84a;
+  --wa-border: rgba(58, 47, 34, 0.50);
+  --wa-border-input: rgba(58, 47, 34, 0.70);
+  --wa-wallpaper-pattern: none;
 }
 
-/* -----------------------------------------------
-   TEMA 3: OBSIDIAN FOREST
-   Verde esmeralda — identidade Whatsflow
-   ----------------------------------------------- */
-[data-theme="forest"] {
-  --sidebar-glass-rgb: 7,16,32;
-  --sidebar-glass-alpha: 0.70;
-  --background: 218 50% 7%;
-  --foreground: 140 20% 92%;
-  --card: 218 40% 10%;
-  --card-foreground: 140 20% 92%;
-  --popover: 218 40% 12%;
-  --popover-foreground: 140 20% 92%;
-  --primary: 145 72% 49%;
-  --primary-foreground: 218 50% 7%;
-  --secondary: 218 30% 16%;
-  --secondary-foreground: 140 20% 65%;
-  --muted: 218 25% 14%;
-  --muted-foreground: 140 15% 40%;
-  --accent: 145 72% 40%;
+/* ── TEMA 2: PACÍFICO ──────────────────────
+   Light warm · Verde · Ambientes iluminados
+   Off-white quente elimina glare
+   ─────────────────────────────────────────── */
+[data-theme="pacifico"] {
+  --bg-base: #f5f2ed;
+  --bg-surface: #faf8f5;
+  --bg-card: #edeae4;
+  --bg-active: #e8f4ef;
+  --bg-hover: #eeece8;
+  --bg-input: #edeae4;
+  --border-soft: #d8d2c822;
+  --border: #d8d2c8;
+  --border-strong: #c8c0b4;
+  --acc: #0e8a5c;
+  --acc-bg: #0e8a5c15;
+  --acc-border: #0e8a5c28;
+  --acc-dark: #0a6844;
+  --text-primary: #2a2520;
+  --text-secondary: #7a6e62;
+  --text-muted: #b0a494;
+  --unread-bg: #0e8a5c;
+  --unread-text: #ffffff;
+  --sent-bg: #e0f4ec;
+  --sent-border: #b4dfc8;
+  --tag-bg: #0e8a5c18;
+  --tag-text: #0a6844;
+  --logo-accent: #0e8a5c;
+  --danger: #d63031;
+  --success: #0e8a5c;
+  --warning: #e17055;
+  --scrollbar: #d8d2c8;
+  --shadow: 0 2px 12px #00000015;
+
+  /* Shadcn/UI mapping */
+  --sidebar-glass-rgb: 245,242,237;
+  --sidebar-glass-alpha: 0.60;
+  --background: 35 20% 95%;
+  --foreground: 20 15% 15%;
+  --card: 35 15% 92%;
+  --card-foreground: 20 15% 15%;
+  --popover: 35 20% 97%;
+  --popover-foreground: 20 15% 15%;
+  --primary: 155 80% 30%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 35 12% 89%;
+  --secondary-foreground: 20 15% 30%;
+  --muted: 35 14% 91%;
+  --muted-foreground: 25 12% 50%;
+  --accent: 155 80% 30%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 0 85% 55%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 218 25% 16%;
-  --input: 218 30% 18%;
-  --ring: 145 72% 49%;
-  --radius: 0.75rem;
-  --success: 145 72% 40%;
+  --destructive: 0 72% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 15% 83%;
+  --input: 30 12% 80%;
+  --ring: 155 80% 30%;
+  --radius: 0.5rem;
+  --success: 155 80% 30%;
   --success-foreground: 0 0% 100%;
-  --warning: 45 100% 55%;
-  --warning-foreground: 45 10% 10%;
+  --warning: 14 70% 55%;
+  --warning-foreground: 0 0% 100%;
+  --chart-1: 155 80% 30%;
+  --chart-2: 36 78% 50%;
+  --chart-3: 188 70% 45%;
+  --chart-4: 14 70% 55%;
+  --chart-5: 349 72% 50%;
+  --sidebar-background: 35 20% 97%;
+  --sidebar-foreground: 20 15% 30%;
+  --sidebar-primary: 155 80% 30%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 155 60% 95%;
+  --sidebar-accent-foreground: 155 80% 30%;
+  --sidebar-border: 30 15% 90%;
+  --sidebar-ring: 155 80% 30%;
 
-  --chart-1: 145 72% 49%;
-  --chart-2: 145 72% 40%;
-  --chart-3: 214 100% 64%;
-  --chart-4: 45 100% 55%;
-  --chart-5: 0 72% 51%;
+  --bg-card-glass: rgba(250, 248, 245, 0.80);
+  --bg-card-hover: rgba(250, 248, 245, 0.95);
+  --bg-chat: #f5f2ed;
+  --bg-bubble-in: #faf8f5;
+  --bg-bubble-out: rgba(14, 138, 92, 0.10);
+  --accent-primary: #0e8a5c;
+  --accent-primary-bg: rgba(14, 138, 92, 0.10);
+  --accent-secondary: #0a6844;
+  --accent-secondary-bg: rgba(10, 104, 68, 0.10);
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-card: rgba(0, 0, 0, 0.06);
+  --border-sidebar: rgba(0, 0, 0, 0.04);
+  --section-accent: #0e8a5c;
+  --glass-blur: 12px;
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-overlay-rgb: 0, 0, 0;
+  --text-bubble-in: #2a2520;
+  --text-bubble-out: #0a6844;
 
-  --sidebar-background: 218 55% 4%;
-  --sidebar-foreground: 140 20% 60%;
-  --sidebar-primary: 145 72% 49%;
-  --sidebar-primary-foreground: 218 50% 7%;
-  --sidebar-accent: 218 25% 14%;
-  --sidebar-accent-foreground: 140 20% 92%;
-  --sidebar-border: 218 25% 12%;
-  --sidebar-ring: 145 72% 49%;
-
-  --bg-card-glass: rgba(15, 30, 53, 0.80);
-  --bg-card-hover: rgba(15, 30, 53, 0.95);
-  --bg-chat: #0a1628;
-  --bg-bubble-in: #152540;
-  --bg-bubble-out: rgba(37, 211, 102, 0.15);
-  --accent-primary: #25d366;
-  --accent-primary-bg: rgba(37, 211, 102, 0.12);
-  --accent-secondary: #1aab52;
-  --accent-secondary-bg: rgba(26, 171, 82, 0.12);
-  --border-subtle: rgba(37, 211, 102, 0.08);
-  --border-card: rgba(37, 211, 102, 0.10);
-  --border-sidebar: rgba(37, 211, 102, 0.07);
-  --section-accent: #25d366;
-  --glass-blur: 14px;
-  --glass-border: rgba(37, 211, 102, 0.08);
-  --text-bubble-in: #e8f0e8;
-  --text-bubble-out: #c8f0d8;
-
-  /* Glass overlay */
-  --glass-overlay-rgb: 255, 255, 255;
-
-  /* WhatsApp theme overrides — Obsidian Forest */
-  --wa-bg-deep: #071020;
-  --wa-bg-panel: #0f1e35;
-  --wa-bg-chat: #0a1628;
-  --wa-bg-header: #0f1e35;
-  --wa-bg-input: #152540;
-  --wa-bg-hover: rgba(37, 211, 102, 0.10);
-  --wa-bg-selected: rgba(37, 211, 102, 0.15);
-  --wa-bg-msg-out: rgba(37, 211, 102, 0.15);
-  --wa-bg-msg-in: #152540;
-  --wa-bg-system: rgba(37, 211, 102, 0.08);
-  --wa-text-primary: #e8f0e8;
-  --wa-text-secondary: #8fa89a;
-  --wa-text-tertiary: #546a5e;
-  --wa-text-link: #25d366;
-  --wa-green: #25d366;
-  --wa-green-dark: #1aab52;
-  --wa-teal: #25d366;
-  --wa-blue-read: #25d366;
-  --wa-border: rgba(37, 211, 102, 0.08);
-  --wa-border-input: rgba(37, 211, 102, 0.16);
-  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2325d366' fill-opacity='0.05'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  --wa-bg-deep: #f0ede7;
+  --wa-bg-panel: #faf8f5;
+  --wa-bg-chat: #f5f2ed;
+  --wa-bg-header: #faf8f5;
+  --wa-bg-input: #edeae4;
+  --wa-bg-hover: rgba(14, 138, 92, 0.08);
+  --wa-bg-selected: rgba(14, 138, 92, 0.12);
+  --wa-bg-msg-out: #e0f4ec;
+  --wa-bg-msg-in: #faf8f5;
+  --wa-bg-system: rgba(14, 138, 92, 0.06);
+  --wa-text-primary: #2a2520;
+  --wa-text-secondary: #7a6e62;
+  --wa-text-tertiary: #b0a494;
+  --wa-text-link: #0e8a5c;
+  --wa-green: #0e8a5c;
+  --wa-green-dark: #0a6844;
+  --wa-teal: #0e8a5c;
+  --wa-blue-read: #0e8a5c;
+  --wa-border: #d8d2c8;
+  --wa-border-input: #c8c0b4;
+  --wa-wallpaper-pattern: none;
 }
 
-/* -----------------------------------------------
-   VARIÁVEIS GLOBAIS (compartilhadas por todos os temas)
-   ----------------------------------------------- */
+/* ── TEMA 3: COSMOS ────────────────────────
+   Deep navy · Azul gelo · Power user técnico
+   Contraste alto sem extremos de luminância
+   ─────────────────────────────────────────── */
+[data-theme="cosmos"] {
+  --bg-base: #06080f;
+  --bg-surface: #0a0e1a;
+  --bg-card: #111828;
+  --bg-active: #0d1830;
+  --bg-hover: #0f1525;
+  --bg-input: #111828;
+  --border-soft: #1a254022;
+  --border: #1a2540;
+  --border-strong: #243254;
+  --acc: #5b9ef7;
+  --acc-bg: #5b9ef718;
+  --acc-border: #5b9ef730;
+  --acc-dark: #2e72cc;
+  --text-primary: #dce8ff;
+  --text-secondary: #7a9cc8;
+  --text-muted: #3a5278;
+  --unread-bg: #5b9ef7;
+  --unread-text: #06080f;
+  --sent-bg: #0d1830;
+  --sent-border: #1a2540;
+  --tag-bg: #5b9ef718;
+  --tag-text: #5b9ef7;
+  --logo-accent: #5b9ef7;
+  --danger: #ff6b6b;
+  --success: #51cf66;
+  --warning: #fcc419;
+  --scrollbar: #1a2540;
+  --shadow: 0 2px 16px #00000080;
+
+  /* Shadcn/UI mapping */
+  --sidebar-glass-rgb: 6,8,15;
+  --sidebar-glass-alpha: 0.70;
+  --background: 222 50% 4%;
+  --foreground: 220 50% 92%;
+  --card: 222 40% 11%;
+  --card-foreground: 220 50% 92%;
+  --popover: 222 40% 13%;
+  --popover-foreground: 220 50% 92%;
+  --primary: 215 90% 66%;
+  --primary-foreground: 222 50% 4%;
+  --secondary: 222 30% 16%;
+  --secondary-foreground: 220 30% 70%;
+  --muted: 222 25% 13%;
+  --muted-foreground: 215 25% 45%;
+  --accent: 215 90% 66%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 100% 70%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 30% 17%;
+  --input: 222 30% 19%;
+  --ring: 215 90% 66%;
+  --radius: 0.5rem;
+  --success: 134 60% 56%;
+  --success-foreground: 0 0% 100%;
+  --warning: 46 96% 55%;
+  --warning-foreground: 46 10% 10%;
+  --chart-1: 215 90% 66%;
+  --chart-2: 134 60% 56%;
+  --chart-3: 188 90% 55%;
+  --chart-4: 46 96% 55%;
+  --chart-5: 0 100% 70%;
+  --sidebar-background: 222 55% 3%;
+  --sidebar-foreground: 215 25% 60%;
+  --sidebar-primary: 215 90% 66%;
+  --sidebar-primary-foreground: 222 50% 4%;
+  --sidebar-accent: 222 25% 13%;
+  --sidebar-accent-foreground: 220 50% 92%;
+  --sidebar-border: 222 25% 12%;
+  --sidebar-ring: 215 90% 66%;
+
+  --bg-card-glass: rgba(17, 24, 40, 0.80);
+  --bg-card-hover: rgba(17, 24, 40, 0.95);
+  --bg-chat: #06080f;
+  --bg-bubble-in: #111828;
+  --bg-bubble-out: rgba(91, 158, 247, 0.15);
+  --accent-primary: #5b9ef7;
+  --accent-primary-bg: rgba(91, 158, 247, 0.12);
+  --accent-secondary: #51cf66;
+  --accent-secondary-bg: rgba(81, 207, 102, 0.12);
+  --border-subtle: rgba(26, 37, 64, 0.50);
+  --border-card: rgba(91, 158, 247, 0.10);
+  --border-sidebar: rgba(91, 158, 247, 0.07);
+  --section-accent: #5b9ef7;
+  --glass-blur: 12px;
+  --glass-border: rgba(91, 158, 247, 0.10);
+  --glass-overlay-rgb: 255, 255, 255;
+  --text-bubble-in: #dce8ff;
+  --text-bubble-out: #a8ccff;
+
+  --wa-bg-deep: #040610;
+  --wa-bg-panel: #0a0e1a;
+  --wa-bg-chat: #06080f;
+  --wa-bg-header: #0a0e1a;
+  --wa-bg-input: #111828;
+  --wa-bg-hover: rgba(91, 158, 247, 0.10);
+  --wa-bg-selected: rgba(91, 158, 247, 0.15);
+  --wa-bg-msg-out: rgba(91, 158, 247, 0.15);
+  --wa-bg-msg-in: #111828;
+  --wa-bg-system: rgba(91, 158, 247, 0.08);
+  --wa-text-primary: #dce8ff;
+  --wa-text-secondary: #7a9cc8;
+  --wa-text-tertiary: #3a5278;
+  --wa-text-link: #5b9ef7;
+  --wa-green: #5b9ef7;
+  --wa-green-dark: #2e72cc;
+  --wa-teal: #5b9ef7;
+  --wa-blue-read: #5b9ef7;
+  --wa-border: rgba(26, 37, 64, 0.60);
+  --wa-border-input: rgba(26, 37, 64, 0.80);
+  --wa-wallpaper-pattern: none;
+}
+
+/* ───────────────────────────────────────────
+   VARIÁVEIS GLOBAIS
+   ─────────────────────────────────────────── */
 :root {
   --shadow-card: 0 0 2rem 0 rgba(136, 152, 170, 0.15);
   --shadow-float: 0 8px 26px -4px rgba(20, 20, 20, 0.15), 0 8px 9px -5px rgba(20, 20, 20, 0.06);
@@ -294,9 +372,9 @@
   --color-warning: #fb6340;
 }
 
-/* -----------------------------------------------
-   GLASSMORPHISM utility classes
-   ----------------------------------------------- */
+/* ───────────────────────────────────────────
+   UTILITY CLASSES (preserved from v3)
+   ─────────────────────────────────────────── */
 .glass-metric-card {
   background: var(--bg-card-glass);
   border: 1px solid var(--border-card);
@@ -320,147 +398,60 @@
   background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
 }
 
-/* -----------------------------------------------
-   SIDEBAR ITEM — 3 estados: repouso / hover / ativo
-   ----------------------------------------------- */
 .sidebar-icon-item {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
+  width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
   background: transparent;
   color: var(--muted-foreground, rgba(255,255,255,0.35));
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 }
-
 .sidebar-icon-item:hover:not(.sidebar-icon-active) {
   background: var(--accent-secondary-bg);
   color: var(--accent-secondary);
   transform: scale(1.08);
 }
-
 .sidebar-icon-active {
   background: var(--accent-primary-bg);
   color: var(--accent-primary);
 }
-
-.sidebar-icon-item:active {
-  transform: scale(0.96);
-}
-
+.sidebar-icon-item:active { transform: scale(0.96); }
 .sidebar-icon-active::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  background: var(--accent-primary);
-  border-radius: 2px 0 0 2px;
+  content: ''; position: absolute; right: -1px; top: 50%;
+  transform: translateY(-50%); width: 3px; height: 20px;
+  background: var(--accent-primary); border-radius: 2px 0 0 2px;
 }
 
-/* -----------------------------------------------
-   Mensageria theme overrides
-   ----------------------------------------------- */
-.wf-chat-area {
-  background: var(--bg-chat);
-}
-
+.wf-chat-area { background: var(--bg-chat); }
 .wf-bubble-in {
-  background: var(--bg-bubble-in);
-  color: var(--text-bubble-in);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  border-bottom-left-radius: 4px;
+  background: var(--bg-bubble-in); color: var(--text-bubble-in);
+  border: 1px solid var(--border-subtle); border-radius: 12px; border-bottom-left-radius: 4px;
 }
-
 .wf-bubble-out {
-  background: var(--bg-bubble-out);
-  color: var(--text-bubble-out);
-  border: 1px solid var(--border-card);
-  border-radius: 12px;
-  border-bottom-right-radius: 4px;
+  background: var(--bg-bubble-out); color: var(--text-bubble-out);
+  border: 1px solid var(--border-card); border-radius: 12px; border-bottom-right-radius: 4px;
 }
 
-/* -----------------------------------------------
-   Section headers with accent bar
-   ----------------------------------------------- */
-.wf-section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
+.wf-section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
 .wf-section-header::before {
-  content: '';
-  width: 16px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--section-accent);
-  display: inline-block;
+  content: ''; width: 16px; height: 3px; border-radius: 2px;
+  background: var(--section-accent); display: inline-block;
 }
 
-/* ─────────────────────────────────────────────
-   TIMELINE ROW — Animações
-   ───────────────────────────────────────────── */
-@keyframes wf-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.4; transform: scale(1.4); }
-}
+@keyframes wf-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
+@keyframes wf-shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
-@keyframes wf-shimmer {
-  0%, 100% { opacity: 0.5; }
-  50%       { opacity: 1; }
-}
-
-/* ─────────────────────────────────────────────
-   TIMELINE ROW — Responsividade
-   ───────────────────────────────────────────── */
-
-/* Desktop ultrawide (2560px+) */
 @media (min-width: 2560px) {
-  .wf-timeline-row {
-    border-radius: 18px;
-  }
-  .wf-timeline-content {
-    padding: 16px 24px !important;
-    gap: 20px !important;
-  }
-  .wf-stage-pills {
-    gap: 10px !important;
-  }
+  .wf-timeline-row { border-radius: 18px; }
+  .wf-timeline-content { padding: 16px 24px !important; gap: 20px !important; }
+  .wf-stage-pills { gap: 10px !important; }
 }
-
-/* Tablet (768px–1279px) */
 @media (max-width: 1279px) {
-  .wf-timeline-content {
-    gap: 10px !important;
-    padding: 10px 12px !important;
-  }
-  .wf-timeline-content > div:nth-child(2) {
-    min-width: 130px !important;
-  }
+  .wf-timeline-content { gap: 10px !important; padding: 10px 12px !important; }
+  .wf-timeline-content > div:nth-child(2) { min-width: 130px !important; }
 }
-
-/* Mobile (< 768px) */
 @media (max-width: 767px) {
-  .wf-timeline-row {
-    border-radius: 14px !important;
-  }
-  .wf-stage-pills {
-    width: 100%;
-    overflow-x: auto;
-    justify-content: flex-start !important;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
+  .wf-timeline-row { border-radius: 14px !important; }
+  .wf-stage-pills { width: 100%; overflow-x: auto; justify-content: flex-start !important; padding-bottom: 2px; scrollbar-width: none; }
   .wf-stage-pills::-webkit-scrollbar { display: none; }
 }
