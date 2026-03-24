@@ -285,7 +285,9 @@ Deno.serve(async (req) => {
           ? body?.file || rd?.fileURL || rd?.fileUrl || null
           : rd?.fileURL || rd?.fileUrl || null;
       const caption = typeof body?.text === "string" ? body.text : null;
-      const snapshotStatus = toMessageStatus(rd?.status ?? rd?.ack ?? rd?.chatMessageStatusCode ?? null) ?? 1;
+      // When API returns success, message is at least "sent" (2 = delivered is safe default for outgoing)
+      const rawStatus = toMessageStatus(rd?.status ?? rd?.ack ?? rd?.chatMessageStatusCode ?? null);
+      const snapshotStatus = rawStatus !== undefined && rawStatus >= 2 ? rawStatus : 2;
 
       if (remoteJid && providerMessageId) {
         await supabase.from("whatsapp_messages").upsert(
