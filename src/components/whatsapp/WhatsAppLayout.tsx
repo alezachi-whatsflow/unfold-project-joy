@@ -315,13 +315,13 @@ export default function WhatsAppLayout() {
   /* ── fetch messages for selected conversation ──── */
   const fetchMessages = useCallback(
     async (jid: string, forceRefresh = false) => {
-      // If we have cached messages for this jid, show them immediately
+      // Show cached messages instantly while we refresh from DB
       const cached = messagesCacheRef.current.get(jid);
       if (cached && !forceRefresh) {
         setMessages(cached.messages);
         lastSyncRef.current = cached.lastSync;
         lastStatusSyncRef.current = cached.lastStatusSync;
-        return;
+        // Don't return — continue to refresh from DB below
       }
 
       const { data } = await supabase
