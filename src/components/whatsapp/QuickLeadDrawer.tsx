@@ -75,7 +75,7 @@ export function QuickLeadDrawer({ open, onClose, contactName, contactPhone, conv
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-sm glass-modal h-full flex flex-col animate-in slide-in-from-right duration-200" style={{ borderRadius: 0 }}>
+      <div className="relative w-full max-w-sm bg-popover border-l border-border h-full flex flex-col animate-in slide-in-from-right duration-200" style={{ borderRadius: 0 }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-2">
