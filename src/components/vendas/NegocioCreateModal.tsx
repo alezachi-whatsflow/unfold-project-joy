@@ -56,6 +56,12 @@ export default function NegocioCreateModal({ onClose }: Props) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
+  // Indicação — quem indicou
+  const [indicadoPorNome, setIndicadoPorNome] = useState("");
+  const [indicadoPorId, setIndicadoPorId] = useState<string | null>(null);
+  const [indicadoPorSearch, setIndicadoPorSearch] = useState("");
+  const [indicadoPorPopoverOpen, setIndicadoPorPopoverOpen] = useState(false);
+
   // Step 2
   const [produtos, setProdutos] = useState<NegocioProduto[]>([]);
   const [descontoGeral, setDescontoGeral] = useState(0);
@@ -183,8 +189,12 @@ export default function NegocioCreateModal({ onClose }: Props) {
         forma_pagamento: formaPagamento,
         condicao_pagamento: condicao,
         probabilidade,
-        notas,
-        tags,
+        notas: origem === 'indicacao' && indicadoPorNome
+          ? `${notas}\n\n📣 Indicado por: ${indicadoPorNome}${indicadoPorId ? ` (ID: ${indicadoPorId})` : ''}`
+          : notas,
+        tags: origem === 'indicacao' && indicadoPorNome
+          ? [...tags, "Indicação", `Indicado por: ${indicadoPorNome}`]
+          : tags,
       });
       toast.success("Negócio criado com sucesso!");
       onClose();
@@ -340,6 +350,64 @@ export default function NegocioCreateModal({ onClose }: Props) {
               </Select>
             </div>
           </div>
+
+          {/* Campo condicional: Quem indicou (só aparece quando origem = indicação) */}
+          {origem === 'indicacao' && (
+            <div className="space-y-2 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5">
+              <Label className="flex items-center gap-1.5 text-amber-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Quem indicou? (Programa de Indicação)
+              </Label>
+              <Popover open={indicadoPorPopoverOpen} onOpenChange={setIndicadoPorPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Input
+                    value={indicadoPorNome}
+                    onChange={e => {
+                      setIndicadoPorNome(e.target.value);
+                      setIndicadoPorSearch(e.target.value);
+                      setIndicadoPorId(null);
+                      if (e.target.value.length >= 2) setIndicadoPorPopoverOpen(true);
+                    }}
+                    placeholder="Buscar cliente que indicou..."
+                  />
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[300px]" align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                  <Command>
+                    <CommandInput placeholder="Buscar cliente..." value={indicadoPorSearch} onValueChange={setIndicadoPorSearch} />
+                    <CommandList>
+                      <CommandEmpty>
+                        <p className="text-xs text-muted-foreground p-2">Nenhum cliente encontrado</p>
+                      </CommandEmpty>
+                      <CommandGroup heading="Clientes">
+                        {crmContacts
+                          .filter(c => c.name.toLowerCase().includes(indicadoPorSearch.toLowerCase()))
+                          .slice(0, 8)
+                          .map(c => (
+                            <CommandItem
+                              key={c.id}
+                              onSelect={() => {
+                                setIndicadoPorNome(c.name);
+                                setIndicadoPorId(c.id);
+                                setIndicadoPorPopoverOpen(false);
+                              }}
+                              className="text-xs"
+                            >
+                              <span>{c.name}</span>
+                              {c.company && <span className="ml-auto text-[10px] text-muted-foreground">{c.company}</span>}
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {indicadoPorId && (
+                <p className="text-[10px] text-amber-500/70">
+                  Este cliente participará do programa de indicações ao fechar o negócio.
+                </p>
+              )}
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Tags</Label>
             <div className="flex gap-2">
