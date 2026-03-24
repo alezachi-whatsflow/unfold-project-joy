@@ -180,12 +180,24 @@ export default function WhatsAppLayout() {
 
   /* ── fetch conversations (distinct remote_jid) ──── */
   const fetchConversations = useCallback(async () => {
-    // Get latest message per remote_jid
-    let { data: allMsgs } = await supabase
+    // Only show messages from instances the user owns
+    const { data: instances } = await supabase
+      .from("whatsapp_instances")
+      .select("instance_name");
+    const instanceNames = (instances ?? []).map((i: any) => i.instance_name);
+
+    // Get latest message per remote_jid, filtered by user's instances
+    let query = supabase
       .from("whatsapp_messages")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1000);
+
+    if (instanceNames.length > 0) {
+      query = query.in("instance_name", instanceNames);
+    }
+
+    let { data: allMsgs } = await query;
 
     // Bootstrap sync (1x) if banco ainda vazio
     if ((!allMsgs || allMsgs.length === 0) && !didBootstrapSyncRef.current) {

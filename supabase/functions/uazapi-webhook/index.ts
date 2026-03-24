@@ -257,6 +257,21 @@ Deno.serve(async (req) => {
 
     console.log(`uazapi-webhook: event=${event}, instance=${instance}`);
 
+    // Only process messages from known instances
+    if (instance) {
+      const { data: knownInst } = await supabase
+        .from("whatsapp_instances")
+        .select("id")
+        .or(`instance_name.eq.${instance},instance_token.eq.${instance},session_id.eq.${instance}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (!knownInst) {
+        console.warn(`uazapi-webhook: ignoring unknown instance: ${instance}`);
+        return new Response("OK", { status: 200, headers: corsHeaders });
+      }
+    }
+
     if (!event && payload.message) {
       const normalized = normalizeMessage(payload.message, payload, instance);
       if (normalized) {
