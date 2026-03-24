@@ -207,7 +207,8 @@ export default function NexusLicenseDetail() {
                   if (licenseType === 'whitelabel' && license.whitelabel_slug) {
                     navigate(`/lab/${license.whitelabel_slug}`);
                   } else {
-                    navigate('/');
+                    const tenantSlug = tenant?.slug;
+                    navigate(tenantSlug ? `/app/${tenantSlug}` : '/');
                   }
                 }}
               >

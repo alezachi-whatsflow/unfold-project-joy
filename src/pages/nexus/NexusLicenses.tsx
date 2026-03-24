@@ -821,7 +821,8 @@ export default function NexusLicenses() {
                                       if (l.license_type === 'whitelabel' && l.whitelabel_slug) {
                                         navigate(`/lab/${l.whitelabel_slug}`);
                                       } else {
-                                        navigate('/');
+                                        const slug = l.tenants?.slug;
+                                        navigate(slug ? `/app/${slug}` : '/');
                                       }
                                     }}
                                   >
