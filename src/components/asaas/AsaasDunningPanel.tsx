@@ -20,6 +20,7 @@ import {
   FileText, ArrowRight, CheckCircle2, XCircle, Clock
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTenantId } from "@/hooks/useTenantId";
 
 const ACTION_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   notification: { label: "Notificação", icon: Bell, color: "text-blue-500" },
@@ -69,6 +70,7 @@ const TEMPLATES = [
 ];
 
 export function AsaasDunningPanel() {
+  const tenantId = useTenantId();
   const { dunningRules, refetch, environment } = useAsaas();
   const [editingRule, setEditingRule] = useState<Partial<DunningRule & { checkout_source_id?: string; template_key?: string }> | null>(null);
   const [simulatePaymentId, setSimulatePaymentId] = useState("");
@@ -79,7 +81,7 @@ export function AsaasDunningPanel() {
   const [loadingExecs, setLoadingExecs] = useState(false);
 
   useEffect(() => {
-    fetchCheckoutSources().then(setCheckoutSources).catch(console.error);
+    fetchCheckoutSources(tenantId || "").then(setCheckoutSources).catch(console.error);
   }, []);
 
   const handleNewRule = () => setShowTemplates(true);
@@ -125,7 +127,7 @@ export function AsaasDunningPanel() {
     }
     try {
       const newVersion = editingRule.id ? (editingRule.version || 1) + 1 : 1;
-      await upsertDunningRule({
+      await upsertDunningRule(tenantId || "", {
         ...editingRule,
         version: newVersion,
       });

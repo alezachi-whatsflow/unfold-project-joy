@@ -151,7 +151,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       .not('whitelabel_slug', 'is', null)
       .order('created_at', { ascending: false });
     setWhitelabels(wls || []);
-    fetchSalesPeople().then(setSalesPeople).catch(() => {});
+    fetchSalesPeople("").then(setSalesPeople).catch(() => {});
 
     if (isEdit && license?.tenant_id) {
       const { data: t } = await supabase.from('tenants').select('cpf_cnpj, phone').eq('id', license.tenant_id).maybeSingle();

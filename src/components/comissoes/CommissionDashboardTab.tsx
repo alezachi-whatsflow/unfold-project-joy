@@ -41,7 +41,7 @@ export default function CommissionDashboardTab() {
     setLoading(true);
     try {
       const [sp, { data: splitsData }] = await Promise.all([
-        fetchSalesPeople(),
+        fetchSalesPeople(tenantId || ""),
         supabase
           .from("asaas_splits")
           .select("*")

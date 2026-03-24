@@ -112,7 +112,7 @@ export default function CommissionClosingTab() {
     const load = async () => {
       setLoading(true);
       const [sp, { data: splitsData }, { data: paymentsData }, { data: customersData }, { data: rulesData }] = await Promise.all([
-        fetchSalesPeople(),
+        fetchSalesPeople(tenantId || ""),
         supabase.from("asaas_splits").select("*").eq("tenant_id", tenantId || ""),
         supabase.from("asaas_payments").select("id,description,value,due_date,payment_date,created_at,status,customer_id,external_reference").eq("tenant_id", tenantId || ""),
         supabase.from("asaas_customers").select("id,name").eq("tenant_id", tenantId || ""),

@@ -66,7 +66,7 @@ export function SplitConfigCard({ split, setSplit, billingValue = 0 }: Props) {
   const [saving, setSaving] = useState(false);
 
   const loadSalesPeople = () => {
-    fetchSalesPeople().then(setSalesPeople).catch(console.error);
+    fetchSalesPeople(tenantId || "").then(setSalesPeople).catch(console.error);
   };
 
   useEffect(() => {
