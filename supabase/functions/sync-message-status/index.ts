@@ -14,13 +14,27 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+const statusMap: Record<string, number> = {
+  ERROR: 0, PENDING: 0,
+  SERVER_ACK: 1, SENT: 1,
+  DELIVERY_ACK: 2, DELIVERED: 2,
+  READ: 3, PLAYED: 3,
+};
+
+function parseStatus(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const key = String(value).trim().toUpperCase();
+  if (key in statusMap) return statusMap[key];
+  const n = Number(value);
+  if (!Number.isNaN(n)) return n >= 3 ? 3 : n <= 0 ? 0 : n;
+  return null;
+}
+
 /**
- * Sync message ack/status from uazapi for recent outgoing messages.
- * Called by the frontend polling to update ticks (sent → delivered → read).
+ * Syncs message ack/read status from uazapi using POST /message/find.
+ * Also syncs profile pictures using POST /chat/details.
  *
- * Body: { instanceName: string, messageIds?: string[] }
- *  - If messageIds provided, checks only those
- *  - Otherwise, checks all outgoing messages with status < 3 from last 24h
+ * Body: { instanceName: string, remoteJid?: string, syncAvatars?: boolean }
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,7 +42,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { instanceName, messageIds } = await req.json();
+    const { instanceName, remoteJid, syncAvatars } = await req.json();
 
     if (!instanceName) {
       return new Response(
@@ -37,7 +51,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get instance token
     const { data: inst } = await supabase
       .from("whatsapp_instances")
       .select("instance_token")
@@ -51,85 +64,95 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get messages to check
-    let msgsToCheck: { id: string; message_id: string; status: number }[];
+    const token = inst.instance_token;
+    let statusUpdated = 0;
+    let avatarsUpdated = 0;
 
-    if (messageIds && messageIds.length > 0) {
-      const { data } = await supabase
-        .from("whatsapp_messages")
-        .select("id, message_id, status")
-        .in("message_id", messageIds)
-        .eq("direction", "outgoing")
-        .lt("status", 3);
-      msgsToCheck = data ?? [];
-    } else {
-      // Get recent outgoing messages that haven't reached "read" status
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { data } = await supabase
+    // ── Sync message status via /message/find ──
+    if (remoteJid) {
+      // Sync specific conversation
+      const { data: pendingMsgs } = await supabase
         .from("whatsapp_messages")
         .select("id, message_id, status")
         .eq("instance_name", instanceName)
+        .eq("remote_jid", remoteJid)
         .eq("direction", "outgoing")
         .lt("status", 3)
-        .gt("created_at", since)
         .order("created_at", { ascending: false })
-        .limit(50);
-      msgsToCheck = data ?? [];
-    }
+        .limit(30);
 
-    if (msgsToCheck.length === 0) {
-      return new Response(
-        JSON.stringify({ updated: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    let updated = 0;
-
-    // Check status for each message via uazapi API
-    for (const msg of msgsToCheck) {
-      try {
-        const res = await fetch(`${UAZAPI_BASE_URL}/message/status`, {
+      if (pendingMsgs && pendingMsgs.length > 0) {
+        const res = await fetch(`${UAZAPI_BASE_URL}/message/find`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            token: inst.instance_token,
-          },
-          body: JSON.stringify({ id: msg.message_id }),
+          headers: { "Content-Type": "application/json", token },
+          body: JSON.stringify({ chatid: remoteJid, limit: 50 }),
         });
 
-        if (!res.ok) continue;
+        if (res.ok) {
+          const data = await res.json();
+          const apiMsgs = data.messages || [];
+          const apiStatusMap = new Map<string, number>();
 
-        const data = await res.json();
-        // uazapi returns { ack: N } or { status: N } or { chatMessageStatusCode: N }
-        const ack = data?.ack ?? data?.status ?? data?.chatMessageStatusCode;
+          for (const msg of apiMsgs) {
+            const mid = msg.messageid || msg.id?.split(":").pop();
+            const s = parseStatus(msg.status);
+            if (mid && s !== null) apiStatusMap.set(mid, s);
+          }
 
-        let newStatus: number | null = null;
-        if (typeof ack === "number") {
-          newStatus = ack >= 3 ? 3 : ack;
-        } else if (typeof ack === "string") {
-          const upper = ack.toUpperCase();
-          if (upper === "READ" || upper === "PLAYED") newStatus = 3;
-          else if (upper === "DELIVERED" || upper === "DELIVERY_ACK") newStatus = 2;
-          else if (upper === "SENT" || upper === "SERVER_ACK") newStatus = 1;
+          for (const dbMsg of pendingMsgs) {
+            const apiStatus = apiStatusMap.get(dbMsg.message_id);
+            if (apiStatus !== undefined && apiStatus > dbMsg.status) {
+              await supabase
+                .from("whatsapp_messages")
+                .update({ status: apiStatus, updated_at: new Date().toISOString() })
+                .eq("id", dbMsg.id);
+              statusUpdated++;
+            }
+          }
         }
+      }
+    }
 
-        // Only update if status increased
-        if (newStatus !== null && newStatus > msg.status) {
-          await supabase
-            .from("whatsapp_messages")
-            .update({ status: newStatus, updated_at: new Date().toISOString() })
-            .eq("id", msg.id);
-          updated++;
+    // ── Sync profile pictures via /chat/details ──
+    if (syncAvatars) {
+      // Get distinct remote_jids that don't have profile_pic_url
+      const { data: contacts } = await supabase
+        .from("whatsapp_contacts")
+        .select("id, jid, profile_pic_url")
+        .eq("instance_name", instanceName)
+        .is("profile_pic_url", null)
+        .limit(20);
+
+      for (const contact of contacts || []) {
+        try {
+          const phone = contact.jid?.replace(/@.*$/, "");
+          if (!phone) continue;
+
+          const res = await fetch(`${UAZAPI_BASE_URL}/chat/details`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", token },
+            body: JSON.stringify({ number: phone, preview: true }),
+          });
+
+          if (!res.ok) continue;
+          const data = await res.json();
+          const picUrl = data.imagePreview || data.image || null;
+
+          if (picUrl) {
+            await supabase
+              .from("whatsapp_contacts")
+              .update({ profile_pic_url: picUrl, updated_at: new Date().toISOString() })
+              .eq("id", contact.id);
+            avatarsUpdated++;
+          }
+        } catch {
+          // Skip individual errors
         }
-      } catch (e) {
-        // Skip individual message errors
-        console.warn(`sync-message-status: error checking ${msg.message_id}:`, e);
       }
     }
 
     return new Response(
-      JSON.stringify({ checked: msgsToCheck.length, updated }),
+      JSON.stringify({ statusUpdated, avatarsUpdated }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

@@ -382,6 +382,14 @@ export default function WhatsAppLayout() {
   /* ── initial load ───────────────────────────────── */
   useEffect(() => {
     fetchConversations();
+    // Trigger avatar sync in background (best-effort)
+    supabase.from("whatsapp_instances").select("instance_name").then(({ data: insts }) => {
+      for (const inst of insts ?? []) {
+        supabase.functions.invoke("sync-message-status", {
+          body: { instanceName: inst.instance_name, syncAvatars: true },
+        }).catch(() => {});
+      }
+    });
   }, [fetchConversations]);
 
   /* ── load messages when selecting a conversation ── */
@@ -543,6 +551,37 @@ export default function WhatsAppLayout() {
           );
           lastStatusSyncRef.current = updatedMsgs[updatedMsgs.length - 1].updated_at;
           hadUpdates = true;
+        }
+
+        // 3) Active status sync via uazapi /message/find
+        const conv = conversations.find((c) => c.id === selectedJid);
+        if (conv?.instanceName && !conv.instanceName.startsWith("meta:")) {
+          try {
+            const { data: syncResult } = await supabase.functions.invoke("sync-message-status", {
+              body: { instanceName: conv.instanceName, remoteJid: selectedJid },
+            });
+            if ((syncResult as any)?.statusUpdated > 0) {
+              hadUpdates = true;
+              // Re-fetch updated statuses from DB
+              const { data: refreshed } = await supabase
+                .from("whatsapp_messages")
+                .select("id, status")
+                .eq("remote_jid", selectedJid)
+                .eq("direction", "outgoing")
+                .gte("status", 3);
+              if (refreshed && refreshed.length > 0) {
+                const readMap = new Map(refreshed.map((m: any) => [m.id, m.status]));
+                updateMessagesWithCache(selectedJid, (prev) =>
+                  prev.map((m) => {
+                    const s = readMap.get(m.id);
+                    return s !== undefined ? { ...m, status: statusNumToLabel(s) } : m;
+                  })
+                );
+              }
+            }
+          } catch {
+            // best-effort
+          }
         }
 
         if (hadUpdates) {

@@ -317,6 +317,26 @@ Deno.serve(async (req) => {
         if (status === "connected" || status === "open") {
           updateData.qr_code = null;
           updateData.pair_code = null;
+
+          // Auto-set presence to "available" so we receive delivery/read receipts
+          const UAZAPI_BASE_URL = Deno.env.get("UAZAPI_BASE_URL");
+          if (UAZAPI_BASE_URL) {
+            const { data: instToken } = await supabase
+              .from("whatsapp_instances")
+              .select("instance_token")
+              .or(`instance_name.eq.${instance},instance_token.eq.${instance},session_id.eq.${instance}`)
+              .limit(1)
+              .maybeSingle();
+
+            if (instToken?.instance_token) {
+              fetch(`${UAZAPI_BASE_URL}/instance/presence`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", token: instToken.instance_token },
+                body: JSON.stringify({ presence: "available" }),
+              }).catch(() => {});
+              console.log("uazapi-webhook: auto-set presence to available for", instance);
+            }
+          }
         }
 
         if (status === "disconnected" || status === "close") {
