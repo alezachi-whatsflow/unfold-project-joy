@@ -1,48 +1,91 @@
-# Frontend
+# 03 — Frontend
 
-**Frameworks**: React 18, compilado por Vite usando o plugin `@vitejs/plugin-react-swc`.
-**Sistema de Rotas**: `react-router-dom` com lazy loading (componentes carregados sob demanda). As rotas raízes ficam em `src/App.tsx` ou `src/Index.tsx`.
+## Stack
+React 18 + TypeScript 5.8 + Vite 5 + Tailwind CSS 3 + Shadcn/UI (Radix)
 
-**Estrutura de Páginas Encontradas**:
-- `AcessoNegadoPage`
-- `ActivitiesPage`
-- `AnalyticsPage`
-- `AssinaturaPage`
-- `CobrancasPage`
-- `ComissoesPage`
-- `ConversationsPage`
-- `CrmPage`
-- `CustomersPage`
-- `DataInputPage`
-- `ExpensesPage`
-- `FiscalPage`
-- `ForgotPasswordPage`
-- `HomePage`
-- `IAAuditorPage`
-- `IASkillsPage`
-- `Index`
-- `IntegracoesPage`
-- `IntelligencePage`
-- `LoginPage`
-- `ManualPage`
-- `MensageriaPage`
-- `NotFound`
-- `ProductsPage`
-- `ProfilePage`
-- `ReportsPage`
-- `ResetPasswordPage`
-- `RevenuePage`
-- `SettingsPage`
-- `SignupPage`
-- `UsersPage`
-- `VendasPage`
-- `WaConnectionsPage`
-- `WhatsAppPage`
+## Routing (React Router v6)
+5 portals with nested routes:
 
-**Componentes Chave (UI)**:
-- Biblioteca **shadcn/ui** integrando Radix (@radix-ui) para acessibilidade (Modals/Dialogs, Drawers, Tabs, Dropdowns). Tailwind v3.4 com animate para os estilos de classes.
-- Gerenciamento de Formulários por **React Hook Form** integrado ao **Zod** para tipagem em tempo real e esquemas de validação no cliente.
+### Public (no auth)
+`/login` `/signup` `/forgot-password` `/reset-password` `/checkout` `/ativar/:token`
 
-**Gerenciamento de Estado**:
-- Servidor: **React Query** (assumivelmente para caching e staleness das chamadas `supabase.from`).
-- UI Local / Hooks React: Estados voláteis locais `useState` em grande parte, modais globais e contextos Auth em `useAuth.tsx` ou Zustand (se usado internamente).
+### Client Portal `/app/:slug`
+| Route | Page | Module |
+|-------|------|--------|
+| `/dashboard` | Index | Dashboard KPIs (real data) |
+| `/vendas` | VendasPage | Pipeline, Lista, Atividades, Relatórios |
+| `/customers` | CustomersPage | Customer management |
+| `/products` | ProductsPage | Product catalog |
+| `/revenue` | RevenuePage | Revenue tracking |
+| `/expenses` | ExpensesPage | Expense management |
+| `/cobrancas` | CobrancasPage | Collections/billing |
+| `/fiscal` | FiscalPage | Tax/NF-e (5 tabs) |
+| `/comissoes` | ComissoesPage | Commissions |
+| `/intelligence` | IntelligencePage | AI digital analysis |
+| `/mensageria` | MensageriaPage | WhatsApp inbox |
+| `/analytics` | AnalyticsPage | Advanced analytics |
+| `/reports` | ReportsPage | Reports (real data) |
+| `/integracoes` | IntegracoesPage | Meta + uazapi channels |
+| `/assinatura` | AssinaturaPage | License (real data) |
+| `/usuarios` | UsersPage | User management |
+| `/settings` | SettingsPage | App settings |
+| `/ia` | IASkillsPage | AI skills |
+| `/ia/auditor` | IAAuditorPage | AI auditor |
+
+### Nexus Portal `/nexus` (admin)
+14 pages: Dashboard, Licenças, WhiteLabels, Checkouts, Financeiro, Equipe, Auditoria, Lifecycle, Flags, Tickets, I.A. Config, Configurações
+
+### WhiteLabel Portal `/wl/:slug`
+7 pages: Dashboard, Clientes, Licenças, Branding, Suporte, Config
+
+### SuperAdmin `/superadmin` + God Admin `/god-admin`
+5+8 pages for system-level management
+
+## State Management
+
+| Pattern | Usage |
+|---------|-------|
+| **React Context** | 10 providers (Financial, Customer, Product, Asaas, Intelligence, Theme, Tour, Sidebar, Nexus, CostLines) |
+| **React Query** | Server state (useQuery with staleTime, cache) |
+| **localStorage** | Theme (`wf-theme`), Sidebar prefs (`wf_sidebar_prefs`), Tenant (`whatsflow_default_tenant_id`) |
+| **Supabase Realtime** | `whatsapp_messages` live updates |
+
+## Custom Hooks (18)
+| Hook | Purpose |
+|------|---------|
+| `useAuth` | Auth provider + signIn/signOut/resetPassword |
+| `useTenantId` | Centralized tenant resolution |
+| `usePermissions` | Role-based access (canView/canEdit/canDelete) |
+| `useNegocios(tenantId)` | CRM deals CRUD |
+| `usePipelines(tenantId)` | Sales pipelines |
+| `useCompanyProfile(tenantId)` | Company profile |
+| `useICPProfile(tenantId)` | Ideal customer profile |
+| `useLicenseLimits(tenantId)` | License usage vs limits |
+| `useChannelIntegrations` | Meta/WA channel data |
+| `useUserTenants` | User's tenant list |
+
+## Components (~135 files in 15 directories)
+- `ui/` — 51 Shadcn/UI base components
+- `vendas/` — Pipeline, NegocioDrawer, VendasRelatorios (3 sub-tabs)
+- `whatsapp/` — ChatPanel, MessageList, ChatInput, ConversationItem
+- `fiscal/` — 8 components (NF-e, tributos, certificados)
+- `asaas/` — Cockpit, Payments, Reconciliation, Split, Dunning
+- `intelligence/` — 11 analysis + prospecting components
+- `mensageria/` — 14 messaging config components
+- `dashboard/` — 7 KPI/chart components
+- `layout/` — DashboardLayout, AppSidebar, CommandPalette
+
+## Navigation (src/config/navigation.ts)
+3 categories: Financeiro (6 items) → Clientes & Produtos (11 items) → Sistema (8 items)
+
+## Themes (src/styles/themes.css)
+| Theme | Identity | Background |
+|-------|----------|-----------|
+| Deep Sapphire | Blue cockpit | `#0a1628` |
+| Midnight Slate | Warm amber | `#12100e` |
+| Obsidian Forest | Green Whatsflow | `#0a1628` + `#25d366` |
+
+Applied via `data-theme` attribute on `<html>`. CSS variables cascade.
+
+## Key Libraries
+Recharts (charts), DND Kit (drag&drop), React Hook Form + Zod (forms), html2canvas + jsPDF (export), Embla (carousel), Lucide (icons), Sonner (toasts)
