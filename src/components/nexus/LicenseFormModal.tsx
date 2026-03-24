@@ -306,7 +306,41 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
           action: 'license_create', license_id: data.id,
         });
-        toast({ title: 'Licença criada com sucesso!' });
+
+        // Send activation email to the tenant email
+        let activationEmail = newTenantEmail.trim() || null;
+        let tenantName = newTenantName.trim() || 'Cliente';
+
+        // If using existing tenant, fetch their email
+        if (!activationEmail && tenantId && !createNewTenant) {
+          const { data: tenantData } = await supabase
+            .from('tenants')
+            .select('email, name')
+            .eq('id', tenantId)
+            .single();
+          activationEmail = tenantData?.email || null;
+          tenantName = tenantData?.name || tenantName;
+        }
+
+        if (activationEmail && tenantId) {
+          const { error: inviteError } = await supabase.functions.invoke('invite-user', {
+            body: {
+              email: activationEmail,
+              full_name: tenantName,
+              role: form.license_type === 'whitelabel' ? 'wl_admin' : 'admin',
+              tenant_id: tenantId,
+              license_id: data.id,
+            },
+          });
+          if (inviteError) {
+            console.error('Erro ao enviar e-mail de ativação:', inviteError);
+            toast({ title: 'Licença criada, mas e-mail de ativação falhou', description: inviteError.message, variant: 'destructive' });
+          } else {
+            toast({ title: 'Licença criada e e-mail de ativação enviado!' });
+          }
+        } else {
+          toast({ title: 'Licença criada com sucesso!' });
+        }
       }
     }
     setSaving(false);
