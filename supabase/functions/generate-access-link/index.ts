@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PRODUCTION_URL = "https://unfold-project-joy-production.up.railway.app";
+const PRODUCTION_URL = Deno.env.get("APP_URL") || "https://unfold-project-joy-production.up.railway.app";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

@@ -223,7 +223,7 @@ async function discoverWhatsApp(token: string, tenantId: string) {
     const sysToken = Deno.env.get("META_SYSTEM_USER_TOKEN");
     if (sysToken) {
       try {
-        const bizId = "688498549631942"; // Known business ID
+        const bizId = Deno.env.get("META_BUSINESS_ID") || "688498549631942";
         const wabas = await graphGet(`${bizId}/owned_whatsapp_business_accounts?fields=id,name&limit=50`, sysToken);
         // Find the most recently created WABA (likely the one just created by Embedded Signup)
         if (wabas?.data?.length > 0) {

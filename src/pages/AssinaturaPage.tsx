@@ -108,7 +108,7 @@ export default function AssinaturaPage() {
 
   const prepareContactMessage = (resource: string) => {
     const message = `Olá! Sou ${user?.user_metadata?.full_name || "Admin"} da empresa ${accountName}. Preciso expandir: ${resource}.`;
-    const wpNumber = tenantInfo?.branding?.support_whatsapp || "5511954665605";
+    const wpNumber = tenantInfo?.branding?.support_whatsapp || import.meta.env.VITE_WHATSAPP_SUPPORT_NUMBER || "5511954665605";
     return `https://wa.me/${wpNumber}?text=${encodeURIComponent(message)}`;
   };
 

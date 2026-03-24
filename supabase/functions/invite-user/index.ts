@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PRODUCTION_URL = "https://unfold-project-joy-production.up.railway.app";
+const PRODUCTION_URL = Deno.env.get("APP_URL") || "https://unfold-project-joy-production.up.railway.app";
 
 function buildInviteEmail(full_name: string, actionLink: string) {
   // Replace the lovable.app domain in the link with Railway production URL
