@@ -227,7 +227,7 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     body: body || captionVal,
     media_url: mediaUrl,
     caption: captionVal,
-    status: parsedStatus ?? (fromMe ? 1 : 4),
+    status: parsedStatus ?? (fromMe ? 2 : 4),
     track_source: msg?.trackSource ?? msg?.track_source ?? null,
     track_id: msg?.trackId ?? msg?.track_id ?? null,
     raw_payload: enrichedPayload,
@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
       const newStatus = toMessageStatus(statusKey);
       if (messageId && newStatus !== undefined) {
         console.log(`uazapi-webhook: no-event status update ${messageId} -> ${newStatus}`);
-        await supabase.from("whatsapp_messages").update({ status: newStatus }).eq("message_id", String(messageId));
+        await supabase.from("whatsapp_messages").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("message_id", String(messageId));
       }
       return new Response("OK", { status: 200, headers: corsHeaders });
     }
@@ -338,6 +338,19 @@ Deno.serve(async (req) => {
         for (const msg of msgs) {
           const normalized = normalizeMessage(msg, payload, instance);
           if (!normalized) continue;
+
+          // Never downgrade status: check existing message status before upsert
+          const { data: existing } = await supabase
+            .from("whatsapp_messages")
+            .select("status")
+            .eq("message_id", normalized.message_id)
+            .maybeSingle();
+
+          if (existing && typeof existing.status === "number" && existing.status > (normalized.status ?? 0)) {
+            // Keep higher status, just update other fields
+            normalized.status = existing.status;
+          }
+          normalized.updated_at = new Date().toISOString();
 
           const { error } = await supabase
             .from("whatsapp_messages")
