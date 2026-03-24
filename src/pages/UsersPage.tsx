@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useTenantId } from "@/hooks/useTenantId";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { ROLE_LABELS, ROLE_COLORS, type UserRole } from "@/types/roles";
 import { ALL_MODULES, MODULE_LABELS, DEFAULT_PERMISSIONS, type PermissionAction, type ModulePermission, type PermissionMatrix } from "@/config/permissions";
@@ -42,6 +43,7 @@ interface ProfileRow {
 export default function UsersPage() {
   const { user } = useAuth();
   const { isAdmin } = usePermissions();
+  const tenantId = useTenantId();
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editUser, setEditUser] = useState<ProfileRow | null>(null);
@@ -49,12 +51,26 @@ export default function UsersPage() {
   const [deleting, setDeleting] = useState(false);
 
   const { data: profiles = [], isLoading } = useQuery({
-    queryKey: ["all-profiles"],
+    queryKey: ["all-profiles", tenantId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: true });
+      if (!tenantId) return [];
+      // Get user IDs belonging to this tenant
+      const { data: tenantUsers } = await supabase
+        .from("user_tenants")
+        .select("user_id")
+        .eq("tenant_id", tenantId);
+      const userIds = (tenantUsers || []).map((tu: any) => tu.user_id);
+      if (userIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds)
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return (data || []) as ProfileRow[];
     },
+    enabled: !!tenantId,
   });
 
   const counts = useMemo(() => {
