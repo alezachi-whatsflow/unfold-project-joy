@@ -85,6 +85,10 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
   const [ganhoModal, setGanhoModal] = useState(false);
   const [perdaModal, setPerdaModal] = useState(false);
   const [qualifierOpen, setQualifierOpen] = useState(false);
+  const [localIcp, setLocalIcp] = useState<{ score: number; label: string; action?: string } | null>(null);
+  const icpScore = localIcp?.score ?? (negocio as any).icp_score;
+  const icpLabel = localIcp?.label ?? (negocio as any).icp_label;
+  const icpAction = localIcp?.action ?? (negocio as any).recommended_action;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
@@ -204,14 +208,6 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
             <PermissionGate module="vendas" action="delete">
               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
             </PermissionGate>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>
@@ -366,20 +362,20 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase">Qualificação ICP</h3>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setQualifierOpen(true)}>
-                <ClipboardList className="h-3 w-3" /> {(negocio as any).icp_score ? 'Requalificar' : 'Qualificar Lead'}
+                <ClipboardList className="h-3 w-3" /> {icpScore ? 'Requalificar' : 'Qualificar Lead'}
               </Button>
             </div>
-            {(negocio as any).icp_score !== null && (negocio as any).icp_score !== undefined && (
+            {icpScore !== null && icpScore !== undefined && (
               <div className="flex items-center gap-3">
                 <span className={`text-2xl font-black ${
-                  (negocio as any).icp_label === 'quente' ? 'text-emerald-500' :
-                  (negocio as any).icp_label === 'morno' ? 'text-amber-500' : 'text-blue-400'
-                }`}>{(negocio as any).icp_score}/100</span>
-                <Badge variant="secondary" className="capitalize">{(negocio as any).icp_label || 'frio'}</Badge>
+                  icpLabel === 'quente' ? 'text-emerald-500' :
+                  icpLabel === 'morno' ? 'text-amber-500' : 'text-blue-400'
+                }`}>{icpScore}/100</span>
+                <Badge variant="secondary" className="capitalize">{icpLabel || 'frio'}</Badge>
               </div>
             )}
-            {(negocio as any).recommended_action && (
-              <p className="text-xs text-muted-foreground mt-1.5">{(negocio as any).recommended_action}</p>
+            {icpAction && (
+              <p className="text-xs text-muted-foreground mt-1.5">{icpAction}</p>
             )}
           </section>
         )}
@@ -515,6 +511,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
               recommended_action: result.recommended_action,
               questionnaire_answers: answers,
             } as any);
+            setLocalIcp({ score: result.score, label: result.label, action: result.recommended_action });
           }}
         />
       )}
