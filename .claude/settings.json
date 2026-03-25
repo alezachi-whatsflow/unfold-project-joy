@@ -46,7 +46,8 @@
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase db push --linked -p \"Alegria753!\")",
       "Bash(node -e \":*)",
       "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
-      "Bash(grep -l \"parent_license_id\\\\|license_type\\\\|whitelabel_slug\" \"f:/WFW New/supabase/migrations/\"*.sql)"
+      "Bash(grep -l \"parent_license_id\\\\|license_type\\\\|whitelabel_slug\" \"f:/WFW New/supabase/migrations/\"*.sql)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase secrets set REDIS_CORE_HOST=\"filascore.whatsflow.com.br\" REDIS_CORE_PORT=\"6379\" REDIS_SCHEDULE_HOST=\"filasschedule.whatsflow.com.br\" REDIS_SCHEDULE_PORT=\"6379\" REDIS_CAMPAIGN_HOST=\"filascampaign.whatsflow.com.br\" REDIS_CAMPAIGN_PORT=\"6379\" REDIS_PASSWORD=\"rD9!vQ2#xL7@pN4$zT8&kM6^yF3*\" --project-ref jtlrglzcsmqmapizqgzu)"
     ]
   }
 }

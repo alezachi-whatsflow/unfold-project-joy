@@ -3,23 +3,22 @@ import "dotenv/config";
 export const config = {
   redis: {
     core: {
-      url: process.env.REDIS_CORE_URL!,
-      host: process.env.REDIS_CORE_HOST || "2804:8fbc:0:5::a152",
-      port: parseInt(process.env.REDIS_CORE_PORT || "16379"),
-      password: process.env.REDIS_PASSWORD || "rD9!vQ2#xL7@pN4$zT8&kM6^yF3*",
-      family: 6 as const, // IPv6
+      host: process.env.REDIS_CORE_HOST || "filascore.whatsflow.com.br",
+      port: parseInt(process.env.REDIS_CORE_PORT || "6379"),
+      password: process.env.REDIS_PASSWORD || "",
+      family: 0 as const, // 0 = auto-detect IPv4/IPv6 via DNS
     },
     schedule: {
-      host: process.env.REDIS_SCHEDULE_HOST || "2804:8fbc:0:5::a152",
-      port: parseInt(process.env.REDIS_SCHEDULE_PORT || "16380"),
-      password: process.env.REDIS_PASSWORD || "rD9!vQ2#xL7@pN4$zT8&kM6^yF3*",
-      family: 6 as const,
+      host: process.env.REDIS_SCHEDULE_HOST || "filasschedule.whatsflow.com.br",
+      port: parseInt(process.env.REDIS_SCHEDULE_PORT || "6379"),
+      password: process.env.REDIS_PASSWORD || "",
+      family: 0 as const,
     },
     campaign: {
-      host: process.env.REDIS_CAMPAIGN_HOST || "2804:8fbc:0:5::a152",
-      port: parseInt(process.env.REDIS_CAMPAIGN_PORT || "16381"),
-      password: process.env.REDIS_PASSWORD || "rD9!vQ2#xL7@pN4$zT8&kM6^yF3*",
-      family: 6 as const,
+      host: process.env.REDIS_CAMPAIGN_HOST || "filascampaign.whatsflow.com.br",
+      port: parseInt(process.env.REDIS_CAMPAIGN_PORT || "6379"),
+      password: process.env.REDIS_PASSWORD || "",
+      family: 0 as const,
     },
   },
   supabase: {
