@@ -47,7 +47,10 @@
       "Bash(node -e \":*)",
       "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
       "Bash(grep -l \"parent_license_id\\\\|license_type\\\\|whitelabel_slug\" \"f:/WFW New/supabase/migrations/\"*.sql)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase secrets set REDIS_CORE_HOST=\"filascore.whatsflow.com.br\" REDIS_CORE_PORT=\"6379\" REDIS_SCHEDULE_HOST=\"filasschedule.whatsflow.com.br\" REDIS_SCHEDULE_PORT=\"6379\" REDIS_CAMPAIGN_HOST=\"filascampaign.whatsflow.com.br\" REDIS_CAMPAIGN_PORT=\"6379\" REDIS_PASSWORD=\"rD9!vQ2#xL7@pN4$zT8&kM6^yF3*\" --project-ref jtlrglzcsmqmapizqgzu)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase secrets set REDIS_CORE_HOST=\"filascore.whatsflow.com.br\" REDIS_CORE_PORT=\"6379\" REDIS_SCHEDULE_HOST=\"filasschedule.whatsflow.com.br\" REDIS_SCHEDULE_PORT=\"6379\" REDIS_CAMPAIGN_HOST=\"filascampaign.whatsflow.com.br\" REDIS_CAMPAIGN_PORT=\"6379\" REDIS_PASSWORD=\"rD9!vQ2#xL7@pN4$zT8&kM6^yF3*\" --project-ref jtlrglzcsmqmapizqgzu)",
+      "Bash(find 'f:\\\\WFW New' -name *whatsapp_instances* -type f)",
+      "Bash(grep -r \"S3\\\\|R2\\\\|cloudflare\\\\|aws\\\\|minio\" 'f:\\\\WFW New' --include=*.ts --include=*.tsx --include=*.sql --include=*.env* --include=*.json)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase secrets set OBJS_ACCESS_KEY_ID=\"PLACEHOLDER_SET_REAL_KEY\" OBJS_SECRET_ACCESS_KEY=\"PLACEHOLDER_SET_REAL_SECRET\" OBJS_ENDPOINT=\"https://PLACEHOLDER.r2.cloudflarestorage.com/whatsflow-objects\" OBJS_PUBLIC_URL=\"https://PLACEHOLDER.r2.dev\" --project-ref jtlrglzcsmqmapizqgzu)"
     ]
   }
 }

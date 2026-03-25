@@ -98,18 +98,20 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
   const isFileMode = attachMode === "media" || attachMode === "document" || attachMode === "audio";
 
   const uploadFileAndGetUrl = async (file: File) => {
-    const ext = (file.name.split(".").pop() || "bin").toLowerCase();
-    const safeName = sanitizeFileName(file.name);
-    const path = `${Date.now()}_${crypto.randomUUID()}.${ext}_${safeName}`;
+    // Convert file to base64
+    const buffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-    const { error } = await supabase.storage.from("chat-attachments").upload(path, file, {
-      contentType: file.type || "application/octet-stream",
-      upsert: false,
+    const { data, error } = await supabase.functions.invoke("r2-upload", {
+      body: {
+        file: base64,
+        filename: file.name,
+        contentType: file.type || "application/octet-stream",
+      },
     });
 
     if (error) throw new Error(`Falha no upload de ${file.name}`);
-
-    const { data } = supabase.storage.from("chat-attachments").getPublicUrl(path);
+    if (data?.error) throw new Error(data.error);
     if (!data?.publicUrl) throw new Error(`Falha ao obter URL de ${file.name}`);
 
     return data.publicUrl;

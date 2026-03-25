@@ -1,8 +1,10 @@
 // delete-device-files
 // Processa a fila de exclusão de arquivos de dispositivos removidos.
 // Chamado a cada hora pelo pg_cron via net.http_post.
+// Limpa arquivos tanto no Supabase Storage quanto no Cloudflare R2.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { deleteByPrefixFromR2, bulkDeleteFromR2, extractKeyFromUrl } from '../_shared/r2.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -116,16 +118,44 @@ Deno.serve(async (req: Request) => {
         })
         .eq('id', item.id);
 
+      // Also clean R2 files for this tenant/device
+      let r2Deleted = 0;
+      try {
+        if (item.operation_type === 'delete_tenant_storage' && item.tenant_id) {
+          // Delete entire tenant prefix from R2
+          const r2Result = await deleteByPrefixFromR2(`${item.tenant_id}/`);
+          r2Deleted = r2Result.deleted;
+        } else if (item.connection_id && item.tenant_id) {
+          // Collect R2 keys from DB for this device
+          const r2Keys: string[] = [];
+          const { data: msgs } = await supabase
+            .from('whatsapp_messages')
+            .select('media_url')
+            .eq('instance_name', item.connection_id)
+            .not('media_url', 'is', null);
+          for (const m of msgs || []) {
+            const key = extractKeyFromUrl(m.media_url);
+            if (key) r2Keys.push(key);
+          }
+          if (r2Keys.length > 0) {
+            const r2Result = await bulkDeleteFromR2(r2Keys);
+            r2Deleted = r2Result.deleted;
+          }
+        }
+      } catch (_r2Err) {
+        // R2 cleanup is best-effort — don't fail the whole job
+      }
+
       // Atualizar audit log com bytes liberados
       if (item.tenant_id) {
         await supabase.from('data_lifecycle_audit').insert({
           tenant_id: item.tenant_id,
           operation_type: item.operation_type,
           operation_status: 'completed',
-          files_deleted: files.length,
+          files_deleted: files.length + r2Deleted,
           storage_bytes_freed: bytesFreed,
           triggered_by: 'edge_function',
-          metadata: { storage_path: storagePath, connection_id: item.connection_id },
+          metadata: { storage_path: storagePath, connection_id: item.connection_id, r2_deleted: r2Deleted },
         });
       }
 
