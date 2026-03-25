@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import MassSendHistory from "./MassSendHistory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,7 @@ import { messageService } from "@/services/messageService";
 import { toast } from "sonner";
 import {
   Send, Loader2, Type, Image, MapPin, User, CreditCard, ArrowLeft,
-  Clock, Users, Tag, X, Plus, AlertTriangle,
+  Clock, Users, Tag, X, Plus, AlertTriangle, History,
 } from "lucide-react";
 
 interface MessageComposerProps {
@@ -31,6 +32,9 @@ export default function MessageComposer({ onClose }: MessageComposerProps) {
   const [trackEnabled, setTrackEnabled] = useState(false);
   const [trackSource, setTrackSource] = useState("financeiro");
   const [trackId, setTrackId] = useState("");
+
+  // View: composer or history
+  const [view, setView] = useState<"compose" | "history">("compose");
 
   // Mode: individual or mass
   const [mode, setMode] = useState<"individual" | "mass">("mass");
@@ -175,24 +179,85 @@ export default function MessageComposer({ onClose }: MessageComposerProps) {
     setSendProgress({ current: 0, total: matchedContacts.length, failed: 0 });
     let failed = 0;
 
+    // Create batch record
+    const { data: batch } = await supabase.from("mass_send_batches").insert({
+      tenant_id: tenantId,
+      instance_name: selectedInstance,
+      message_type: msgType,
+      message_body: msgType === "text" ? text : caption || `[${msgType}]`,
+      include_tags: includeTags,
+      exclude_tags: excludeTags,
+      delay_seconds: delaySeconds,
+      total_contacts: matchedContacts.length,
+      status: "running",
+    }).select("id").single();
+
+    const batchId = batch?.id;
+
+    // Insert all contacts as pending results
+    if (batchId) {
+      const resultRows = matchedContacts.map((c) => ({
+        batch_id: batchId,
+        tenant_id: tenantId,
+        phone: c.phone,
+        contact_name: c.name,
+        status: "pending",
+      }));
+      await supabase.from("mass_send_results").insert(resultRows);
+    }
+
     for (let i = 0; i < matchedContacts.length; i++) {
       const contact = matchedContacts[i];
+      let errorMsg: string | null = null;
+
       try {
         if (msgType === "text") {
           await messageService.sendText(selectedInstance, contact.phone, text, getTrackFields());
         } else if (msgType === "media") {
           await messageService.sendMedia(selectedInstance, contact.phone, { type: mediaType, file: mediaUrl, text: caption, ...getTrackFields() });
         }
-      } catch {
+
+        // Update result as sent
+        if (batchId) {
+          await supabase.from("mass_send_results")
+            .update({ status: "sent", sent_at: new Date().toISOString() })
+            .eq("batch_id", batchId).eq("phone", contact.phone);
+        }
+      } catch (err: any) {
         failed++;
+        errorMsg = err?.message || "Erro desconhecido";
+
+        // Update result as failed
+        if (batchId) {
+          await supabase.from("mass_send_results")
+            .update({ status: "failed", error_message: errorMsg, sent_at: new Date().toISOString() })
+            .eq("batch_id", batchId).eq("phone", contact.phone);
+        }
       }
 
       setSendProgress({ current: i + 1, total: matchedContacts.length, failed });
+
+      // Update batch counts in real-time
+      if (batchId && (i + 1) % 5 === 0) {
+        await supabase.from("mass_send_batches")
+          .update({ sent_count: i + 1 - failed, failed_count: failed })
+          .eq("id", batchId);
+      }
 
       // Wait delay between messages (except last)
       if (i < matchedContacts.length - 1 && delaySeconds > 0) {
         await new Promise((r) => setTimeout(r, delaySeconds * 1000));
       }
+    }
+
+    // Final batch update
+    if (batchId) {
+      await supabase.from("mass_send_batches").update({
+        sent_count: matchedContacts.length - failed,
+        failed_count: failed,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      }).eq("id", batchId);
     }
 
     setSending(false);
@@ -203,6 +268,11 @@ export default function MessageComposer({ onClose }: MessageComposerProps) {
   const estimatedTime = matchedContacts.length > 0
     ? Math.ceil((matchedContacts.length - 1) * delaySeconds / 60)
     : 0;
+
+  // Show history view
+  if (view === "history") {
+    return <MassSendHistory onBack={() => setView("compose")} />;
+  }
 
   return (
     <Card className="h-full overflow-y-auto">
@@ -222,6 +292,9 @@ export default function MessageComposer({ onClose }: MessageComposerProps) {
           </Button>
           <Button variant={mode === "individual" ? "default" : "outline"} size="sm" onClick={() => setMode("individual")} className="gap-1">
             <User size={14} /> Individual
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setView("history")} className="gap-1 ml-auto">
+            <History size={14} /> Msgs Enviadas
           </Button>
         </div>
 
