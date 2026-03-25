@@ -20,6 +20,30 @@ export type NegocioOrigem =
   | 'linkedin_ads'
   | 'whatsapp';
 
+/* ── Metadata-Driven UI: Dynamic CRM Fields ────────────── */
+
+/** Field types supported by the dynamic card schema */
+export type CardFieldType = 'text' | 'number' | 'currency' | 'date' | 'select' | 'boolean' | 'url' | 'email' | 'phone';
+
+/** Schema definition for a single custom field in a pipeline */
+export interface CardFieldSchema {
+  key: string;           // Unique identifier (snake_case), maps to custom_fields key
+  label: string;         // Display label in Portuguese
+  type: CardFieldType;   // Input type for rendering
+  options?: string[];    // Only for type 'select' — dropdown choices
+  required: boolean;     // Whether the field is mandatory
+  placeholder?: string;  // Optional input placeholder
+  defaultValue?: string | number | boolean; // Optional default
+}
+
+/** The card_schema column on sales_pipelines */
+export type PipelineCardSchema = CardFieldSchema[];
+
+/** The custom_fields column on negocios */
+export type NegocioCustomFields = Record<string, string | number | boolean | null>;
+
+/* ── End Dynamic Fields ────────────────────────────────── */
+
 export interface NegocioProduto {
   produtoId: string;
   nome: string;
@@ -68,6 +92,7 @@ export interface Negocio {
   historico: HistoricoItem[];
   motivo_perda: string | null;
   motivo_perda_detalhe: string | null;
+  custom_fields: NegocioCustomFields;
   created_at: string;
   updated_at: string;
 }
