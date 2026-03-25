@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
   Inbox, Send, Megaphone, Kanban, Users, UsersRound, Receipt, ScrollText,
-  Settings, Link2, UserCog, Building2, MessageSquareText, Tag, Bot,
-  HelpCircle, Menu, ChevronDown, ChevronUp,
+  Link2, UserCog, Building2, MessageSquareText, Tag, Bot,
+  HelpCircle, Menu,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -26,31 +26,29 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   // Group 1 — Operation
-  { id: "inbox",     label: "Caixa de Entrada", icon: Inbox,            group: "operation" },
+  { id: "inbox",     label: "Caixa de Entrada",   icon: Inbox,            group: "operation" },
   // Group 2 — Tools
-  { id: "enviar",    label: "Envios em Massa",  icon: Send,             group: "tools" },
-  { id: "campanhas", label: "Campanhas",         icon: Megaphone,        group: "tools" },
-  { id: "leads",     label: "Leads",             icon: Kanban,           group: "tools" },
-  { id: "grupos",    label: "Grupos",             icon: UsersRound,       group: "tools" },
-  { id: "contatos",  label: "Contatos",          icon: Users,            group: "tools" },
-  { id: "cobranca",  label: "Cobrança",          icon: Receipt,          group: "tools" },
-  { id: "logs",      label: "Logs",              icon: ScrollText,       group: "tools" },
+  { id: "enviar",    label: "Envios em Massa",    icon: Send,             group: "tools" },
+  { id: "campanhas", label: "Campanhas",           icon: Megaphone,        group: "tools" },
+  { id: "leads",     label: "Leads",               icon: Kanban,           group: "tools" },
+  { id: "grupos",    label: "Grupos",               icon: UsersRound,       group: "tools" },
+  { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
+  { id: "cobranca",  label: "Cobrança",            icon: Receipt,          group: "tools" },
+  { id: "logs",      label: "Logs",                 icon: ScrollText,       group: "tools" },
+  // Former "Configurações" sub-items — now flat
+  { id: "integracoes",      label: "Integrações",          icon: Link2,              group: "config" },
+  { id: "atendentes",       label: "Atendentes",           icon: UserCog,            group: "config" },
+  { id: "setores",          label: "Setores",              icon: Building2,          group: "config" },
+  { id: "msg-predefinidas", label: "Msgs Pré-definidas",   icon: MessageSquareText,  group: "config" },
+  { id: "tags-contato",     label: "Tags de Contato",      icon: Tag,                group: "config" },
+  { id: "automacoes",       label: "Automações",           icon: Bot,                group: "config" },
 ];
 
-const CONFIG_ITEMS = [
-  { id: "integracoes",    label: "Integrações",          icon: Link2 },
-  { id: "atendentes",     label: "Atendentes",           icon: UserCog },
-  { id: "setores",        label: "Setores",              icon: Building2 },
-  { id: "msg-predefinidas", label: "Msgs Pré-definidas", icon: MessageSquareText },
-  { id: "tags-contato",   label: "Tags de Contato",      icon: Tag },
-  { id: "automacoes",     label: "Automações",           icon: Bot },
-];
 
 /* ── Component ── */
 const MensageriaPage = () => {
   const [activeTab, setActiveTab] = useState("inbox");
   const { expanded, toggle } = useSidebarState("wf_msg_sidebar");
-  const [configOpen, setConfigOpen] = useState(false);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -132,47 +130,10 @@ const MensageriaPage = () => {
           {/* Separator */}
           <div className="h-px bg-border/20 my-2" />
 
-          {/* Config group (collapsible) */}
-          <div>
-            {expanded ? (
-              <button
-                onClick={() => setConfigOpen(!configOpen)}
-                className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-all duration-150"
-              >
-                <div className="flex items-center gap-3">
-                  <Settings size={18} className="shrink-0" />
-                  <span className="text-xs font-medium">Configurações</span>
-                </div>
-                {configOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => { if (!expanded) toggle(); setConfigOpen(true); }}
-                    className="flex justify-center w-full py-2.5 text-muted-foreground hover:bg-muted/50 rounded-lg transition-colors"
-                  >
-                    <Settings size={18} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">Configurações</TooltipContent>
-              </Tooltip>
-            )}
-
-            {configOpen && expanded && (
-              <div className="ml-4 pl-3 border-l border-border/20 mt-1 space-y-0.5 animate-fade-in">
-                {CONFIG_ITEMS.map(item => (
-                  <button
-                    key={item.id}
-                    className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all duration-150"
-                  >
-                    <item.icon size={14} className="shrink-0" />
-                    <span className="text-[11px] truncate">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Config items (flat, no collapsible) */}
+          {NAV_ITEMS.filter(i => i.group === "config").map(item => (
+            <SidebarItem key={item.id} item={item} />
+          ))}
         </nav>
 
         {/* Footer */}
