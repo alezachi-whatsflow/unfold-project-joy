@@ -36,33 +36,51 @@ export default function ContactTagManager() {
     queryFn: async () => {
       if (!tenantId) return [];
 
-      // Get tags from crm_contacts
-      const { data: contacts } = await supabase
-        .from("crm_contacts")
-        .select("tags")
-        .eq("tenant_id", tenantId)
-        .not("tags", "is", null);
+      // Aggregate tags from ALL sources
+      const [
+        { data: contacts },
+        { data: leads },
+        { data: negocios },
+        { data: conversations },
+        { data: activities },
+        { data: groups },
+      ] = await Promise.all([
+        supabase.from("crm_contacts").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
+        supabase.from("whatsapp_leads").select("lead_tags"),
+        supabase.from("negocios").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
+        supabase.from("conversations").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
+        supabase.from("activities").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
+        supabase.from("whatsapp_groups").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
+      ]);
 
-      // Get tags from whatsapp_leads
-      const { data: leads } = await supabase
-        .from("whatsapp_leads")
-        .select("lead_tags");
+      // Merge all tags into a frequency map with source tracking
+      const tagMap = new Map<string, { count: number; sources: Set<string> }>();
 
-      // Merge all tags into a frequency map
-      const tagMap = new Map<string, number>();
-      for (const c of contacts || []) {
-        for (const t of (c.tags as string[]) || []) {
-          tagMap.set(t, (tagMap.get(t) || 0) + 1);
+      const addTags = (rows: any[] | null, field: string, source: string) => {
+        for (const row of rows || []) {
+          for (const t of (row[field] as string[]) || []) {
+            if (!t) continue;
+            const existing = tagMap.get(t) || { count: 0, sources: new Set() };
+            existing.count++;
+            existing.sources.add(source);
+            tagMap.set(t, existing);
+          }
         }
-      }
-      for (const l of leads || []) {
-        for (const t of (l.lead_tags as string[]) || []) {
-          tagMap.set(t, (tagMap.get(t) || 0) + 1);
-        }
-      }
+      };
+
+      addTags(contacts, "tags", "Contatos");
+      addTags(leads, "lead_tags", "Leads");
+      addTags(negocios, "tags", "Negócios");
+      addTags(conversations, "tags", "Conversas");
+      addTags(activities, "tags", "Atividades");
+      addTags(groups, "tags", "Grupos");
 
       return Array.from(tagMap.entries())
-        .map(([name, count]) => ({ name, usage_count: count }))
+        .map(([name, { count, sources }]) => ({
+          name,
+          usage_count: count,
+          sources: Array.from(sources),
+        }))
         .sort((a, b) => b.usage_count - a.usage_count);
     },
     enabled: !!tenantId,
@@ -85,7 +103,7 @@ export default function ContactTagManager() {
         <div>
           <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Tags de Contato</h2>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Tags extraídas dos contatos e leads. {tags.length} tags em uso.
+            Tags de Contatos, Negócios, Leads, Conversas, Atividades e Grupos. {tags.length} tags em uso.
           </p>
         </div>
       </div>
@@ -116,21 +134,29 @@ export default function ContactTagManager() {
           <thead>
             <tr className="border-b" style={{ borderColor: "var(--border)" }}>
               <th className="text-left py-2 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Tag</th>
-              <th className="text-right py-2 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Contatos</th>
+              <th className="text-left py-2 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Fontes</th>
+              <th className="text-right py-2 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Usos</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={2} className="text-center py-8 text-xs" style={{ color: "var(--text-muted)" }}>Carregando...</td></tr>
+              <tr><td colSpan={3} className="text-center py-8 text-xs" style={{ color: "var(--text-muted)" }}>Carregando...</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={2} className="text-center py-8 text-xs" style={{ color: "var(--text-muted)" }}>Nenhuma tag encontrada</td></tr>
+              <tr><td colSpan={3} className="text-center py-8 text-xs" style={{ color: "var(--text-muted)" }}>Nenhuma tag encontrada</td></tr>
             ) : (
-              filtered.map((t) => (
+              filtered.map((t: any) => (
                 <tr key={t.name} className="border-b" style={{ borderColor: "var(--border-soft, var(--border))" }}>
                   <td className="py-2.5">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ background: getColor(t.name) }} />
-                      <span style={{ color: "var(--text-primary)" }}>{t.name}</span>
+                      <span className="text-sm" style={{ color: "var(--text-primary)" }}>{t.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5">
+                    <div className="flex gap-1 flex-wrap">
+                      {(t.sources || []).map((s: string) => (
+                        <span key={s} className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: "var(--bg-card)", color: "var(--text-muted)" }}>{s}</span>
+                      ))}
                     </div>
                   </td>
                   <td className="text-right py-2.5">
