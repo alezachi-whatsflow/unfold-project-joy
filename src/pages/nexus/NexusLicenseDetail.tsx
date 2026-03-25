@@ -202,8 +202,7 @@ export default function NexusLicenseDetail() {
               </Button>
               <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
                 onClick={() => {
-                  localStorage.setItem('whatsflow_default_tenant_id', license.tenant_id);
-                  window.dispatchEvent(new Event('tenant-changed'));
+                  localStorage.removeItem('whatsflow_default_tenant_id');
                   if (licenseType === 'whitelabel' && license.whitelabel_slug) {
                     navigate(`/lab/${license.whitelabel_slug}`);
                   } else {

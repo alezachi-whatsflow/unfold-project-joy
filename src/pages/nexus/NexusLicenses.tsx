@@ -816,8 +816,7 @@ export default function NexusLicenses() {
                                   <DropdownMenuItem
                                     className="text-purple-400 focus:text-purple-400"
                                     onClick={() => {
-                                      localStorage.setItem('whatsflow_default_tenant_id', l.tenant_id);
-                                      window.dispatchEvent(new Event('tenant-changed'));
+                                      localStorage.removeItem('whatsflow_default_tenant_id');
                                       if (l.license_type === 'whitelabel' && l.whitelabel_slug) {
                                         navigate(`/lab/${l.whitelabel_slug}`);
                                       } else {

@@ -28,13 +28,9 @@ export function useTenantId(): string | undefined {
     staleTime: 5 * 60_000,
   });
 
-  // Priority: slug tenant → localStorage override → user's own tenant
+  // Priority: URL slug → user's own tenant
+  // Note: localStorage override removed — URL slug is the source of truth
   if (slugTenant) return slugTenant;
-
-  const override = typeof window !== "undefined"
-    ? localStorage.getItem("whatsflow_default_tenant_id")
-    : null;
-  if (override) return override;
 
   return tenants?.[0]?.tenant_id;
 }
