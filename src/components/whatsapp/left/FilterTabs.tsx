@@ -35,7 +35,15 @@ export default function FilterTabs({ active, onChange, totalCount, unreadCount, 
           >
             {tab.label}
             {count !== undefined && count > 0 && (
-              <span className="ml-1 opacity-70">{count}</span>
+              <span
+                className="ml-1 text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{
+                  background: isActive ? "var(--acc-bg, rgba(255,255,255,0.1))" : "var(--bg-card, rgba(255,255,255,0.05))",
+                  color: isActive ? "var(--acc, inherit)" : "var(--text-muted, inherit)",
+                }}
+              >
+                {count}
+              </span>
             )}
           </button>
         );
