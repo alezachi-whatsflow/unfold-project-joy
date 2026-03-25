@@ -58,7 +58,8 @@
       "Read(//f:/**)",
       "Bash(grep -i \"whatsapp_groups\\\\|whatsapp_group\" \"/f/WFW New/supabase/migrations/\"*.sql)",
       "Bash(grep -l \"whatsapp\" \"/f/WFW New/supabase/migrations/\"*.sql)",
-      "Bash(find '/f/WFW New/.context' -type f -name *.md)"
+      "Bash(find '/f/WFW New/.context' -type f -name *.md)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy uazapi-webhook --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
     ]
   }
 }

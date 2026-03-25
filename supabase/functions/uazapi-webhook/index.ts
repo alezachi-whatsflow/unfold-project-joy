@@ -431,6 +431,52 @@ Deno.serve(async (req) => {
               );
             }
           }
+
+          // Auto-sync group to whatsapp_groups table for Kanban
+          if (String(normalized.remote_jid).endsWith("@g.us")) {
+            const groupSubjectVal =
+              msg?.groupSubject || payload?.chat?.name || payload?.chat?.subject || null;
+
+            // Get tenant_id from the instance
+            const { data: instRow } = await supabase
+              .from("whatsapp_instances")
+              .select("tenant_id")
+              .or(`instance_name.eq.${instance},instance_token.eq.${instance}`)
+              .limit(1)
+              .maybeSingle();
+
+            if (instRow?.tenant_id) {
+              // Get default kanban column for this tenant
+              const { data: defaultCol } = await supabase
+                .from("group_kanban_columns")
+                .select("id")
+                .eq("tenant_id", instRow.tenant_id)
+                .eq("is_default", true)
+                .limit(1)
+                .maybeSingle();
+
+              await supabase.from("whatsapp_groups").upsert(
+                {
+                  tenant_id: instRow.tenant_id,
+                  instance_name: instance,
+                  jid: normalized.remote_jid,
+                  name: groupSubjectVal || undefined,
+                  last_message_at: normalized.created_at || new Date().toISOString(),
+                  kanban_column_id: defaultCol?.id || undefined,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "tenant_id,jid", ignoreDuplicates: false }
+              ).then(({ error: groupErr }) => {
+                if (groupErr) console.error("whatsapp_groups upsert error:", groupErr.message);
+              });
+
+              // Increment unread count
+              await supabase.rpc("increment_group_unread", {
+                p_tenant_id: instRow.tenant_id,
+                p_jid: normalized.remote_jid,
+              }).catch(() => {}); // best-effort — function may not exist yet
+            }
+          }
         }
 
         // fallback: cria um snapshot com último conteúdo do chat quando payload vem sem message detalhada
