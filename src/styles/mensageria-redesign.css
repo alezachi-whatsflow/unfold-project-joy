@@ -1,30 +1,58 @@
 /* ══════════════════════════════════════════════════════
-   Mensageria Redesign — Uses theme CSS variables
+   Mensageria Design System — Aesthetic Master Spec
+   Base: #FAFAF8 bg · #E8E5DF borders · Flat · No shadows
+   Active: Pacífico emerald rgba(14,138,92,0.08/0.25)
    ══════════════════════════════════════════════════════ */
+
+:root {
+  --inbox-bg: var(--bg-base, #FAFAF8);
+  --inbox-surface: var(--bg-surface, #FFFFFF);
+  --inbox-card: var(--bg-card, #FAFAF8);
+  --inbox-border: var(--border, #E8E5DF);
+  --inbox-border-soft: var(--border-soft, #F0EDE7);
+  --inbox-text: var(--text-primary, #2A2520);
+  --inbox-text-secondary: var(--text-secondary, #7A6E62);
+  --inbox-text-muted: var(--text-muted, #A09888);
+  --inbox-active-bg: rgba(14, 138, 92, 0.08);
+  --inbox-active-border: rgba(14, 138, 92, 0.25);
+  --inbox-active-color: #0E8A5C;
+  --inbox-dot-inactive: #D8D2C8;
+  --inbox-radius: 10px;
+  --inbox-radius-lg: 12px;
+}
+
+/* ── Section titles (uppercase) ── */
+.inbox-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--inbox-text-muted);
+  margin-bottom: 8px;
+}
 
 /* ── Left Panel ── */
 .msg-left-panel {
-  background: var(--bg-surface, hsl(var(--card)));
-  border-right: 1px solid var(--border, hsl(var(--border)));
+  background: var(--inbox-surface);
+  border-right: 1px solid var(--inbox-border);
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
 }
 
-/* ── Glass header ── */
 .glass-header {
-  background: var(--bg-surface, hsl(var(--card)));
-  border-bottom: 1px solid var(--border-soft, hsl(var(--border)));
+  background: var(--inbox-surface);
+  border-bottom: 1px solid var(--inbox-border);
 }
 
 /* ── Conversation item ── */
 .msg-conv-item {
   padding: 10px 12px;
   margin: 1px 6px;
-  border-radius: 8px;
+  border-radius: var(--inbox-radius);
   border: 1px solid transparent;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: all 0.15s ease;
   cursor: pointer;
   overflow: hidden;
   display: flex;
@@ -32,25 +60,25 @@
   gap: 10px;
 }
 .msg-conv-item:hover {
-  background: var(--bg-hover, hsl(var(--accent)));
+  background: var(--inbox-border-soft);
 }
 .msg-conv-item.active {
-  background: var(--acc-bg, hsl(var(--accent)));
-  border-color: var(--acc-border, hsl(var(--primary) / 0.3));
-  border-left: 2px solid var(--acc, hsl(var(--primary)));
+  background: var(--inbox-active-bg);
+  border-color: var(--inbox-active-border);
+  border-left: 2px solid var(--inbox-active-color);
 }
 .msg-conv-item .conv-name {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary, hsl(var(--foreground)));
+  color: var(--inbox-text);
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .msg-conv-item .conv-preview {
-  font-size: 12px;
-  color: var(--text-secondary, hsl(var(--muted-foreground)));
+  font-size: 11px;
+  color: var(--inbox-text-secondary);
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -58,12 +86,12 @@
 }
 .msg-conv-item .conv-time {
   font-size: 10px;
-  color: var(--text-muted, hsl(var(--muted-foreground)));
+  color: var(--inbox-text-muted);
   white-space: nowrap;
 }
 .msg-conv-item .conv-badge {
-  background: var(--unread-bg, hsl(var(--primary)));
-  color: var(--unread-text, hsl(var(--primary-foreground)));
+  background: var(--inbox-active-color);
+  color: #FFFFFF;
   font-size: 10px;
   font-weight: 700;
   border-radius: 999px;
@@ -78,8 +106,8 @@
 
 /* ── Chat header ── */
 .msg-chat-header {
-  background: var(--bg-surface, hsl(var(--card)));
-  border-bottom: 1px solid var(--border, hsl(var(--border)));
+  background: var(--inbox-surface);
+  border-bottom: 1px solid var(--inbox-border);
   padding: 0 16px;
   height: 56px;
   display: flex;
@@ -88,37 +116,37 @@
   flex-shrink: 0;
 }
 
-/* ── Action pills in chat header ── */
+/* ── Action pills ── */
 .msg-pill {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 4px 12px;
   border-radius: 999px;
-  border: 1px solid var(--border, hsl(var(--border)));
-  background: var(--bg-card, hsl(var(--card)));
-  color: var(--text-primary, hsl(var(--foreground)));
+  border: 1px solid var(--inbox-border);
+  background: var(--inbox-card);
+  color: var(--inbox-text);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
   flex-shrink: 0;
 }
 .msg-pill:hover {
-  background: var(--bg-hover, hsl(var(--accent)));
+  background: var(--inbox-border-soft);
 }
 .msg-pill.pill-green {
-  background: rgba(45, 206, 137, 0.15);
-  border-color: rgba(45, 206, 137, 0.25);
-  color: #2dce89;
+  background: rgba(14, 138, 92, 0.10);
+  border-color: rgba(14, 138, 92, 0.25);
+  color: #0E8A5C;
 }
 .msg-pill.pill-blue {
-  background: rgba(94, 114, 228, 0.15);
-  border-color: rgba(94, 114, 228, 0.25);
-  color: #5e72e4;
+  background: rgba(91, 158, 247, 0.10);
+  border-color: rgba(91, 158, 247, 0.25);
+  color: #5B9EF7;
 }
 .msg-pill.pill-orange {
-  background: rgba(251, 99, 64, 0.15);
-  border-color: rgba(251, 99, 64, 0.25);
-  color: #fb6340;
+  background: rgba(232, 168, 74, 0.10);
+  border-color: rgba(232, 168, 74, 0.25);
+  color: #E8A84A;
 }
 
 /* ── Message bubbles ── */
@@ -127,7 +155,7 @@
   font-size: 13px;
   line-height: 1.5;
   padding: 8px 12px;
-  border-radius: 12px;
+  border-radius: var(--inbox-radius-lg);
   position: relative;
   word-wrap: break-word;
   overflow-wrap: anywhere;
@@ -137,20 +165,20 @@
   overflow: hidden;
 }
 .msg-bubble-in {
-  background: var(--bg-bubble-in, hsl(var(--card)));
-  color: var(--wa-text-primary, hsl(var(--foreground)));
+  background: var(--bg-bubble-in, #F5F2ED);
+  color: var(--inbox-text);
   border-bottom-left-radius: 4px;
   margin-right: auto;
 }
 .msg-bubble-out {
-  background: var(--bg-bubble-out, hsl(var(--primary) / 0.15));
-  color: var(--wa-text-primary, hsl(var(--foreground)));
+  background: var(--bg-bubble-out, rgba(14, 138, 92, 0.08));
+  color: var(--inbox-text);
   border-bottom-right-radius: 4px;
   margin-left: auto;
 }
 .msg-bubble .msg-time {
   font-size: 10px;
-  color: var(--text-muted, hsl(var(--muted-foreground)));
+  color: var(--inbox-text-muted);
   text-align: right;
   margin-top: 2px;
   display: flex;
@@ -167,27 +195,27 @@
 }
 .msg-date-sep span {
   font-size: 10px;
-  color: var(--text-secondary, hsl(var(--muted-foreground)));
-  background: var(--bg-card, hsl(var(--card)));
-  border: 1px solid var(--border-soft, hsl(var(--border)));
+  color: var(--inbox-text-muted);
+  background: var(--inbox-card);
+  border: 1px solid var(--inbox-border);
   border-radius: 999px;
   padding: 4px 14px;
 }
 
-/* ── Chat input area ── */
+/* ── Chat input ── */
 .msg-input-area {
-  background: var(--bg-surface, hsl(var(--card)));
-  border-top: 1px solid var(--border, hsl(var(--border)));
+  background: var(--inbox-surface);
+  border-top: 1px solid var(--inbox-border);
   padding: 10px 16px;
   flex-shrink: 0;
 }
 .msg-input-field {
-  background: var(--bg-input, hsl(var(--input)));
-  border: 1px solid var(--border, hsl(var(--border)));
-  border-radius: 10px;
+  background: var(--inbox-card);
+  border: 1px solid var(--inbox-border);
+  border-radius: var(--inbox-radius);
   padding: 8px 12px;
   font-size: 13px;
-  color: var(--text-primary, hsl(var(--foreground)));
+  color: var(--inbox-text);
   min-height: 36px;
   max-height: 120px;
   resize: none;
@@ -196,29 +224,29 @@
   transition: border-color 0.15s ease;
 }
 .msg-input-field:focus {
-  border-color: var(--acc, hsl(var(--primary)));
+  border-color: var(--inbox-active-color);
 }
 .msg-input-field::placeholder {
-  color: var(--text-muted, hsl(var(--muted-foreground)));
+  color: var(--inbox-text-muted);
 }
 
-/* ── Search input ── */
+/* ── Search ── */
 .msg-search {
-  background: var(--bg-input, hsl(var(--input)));
-  border: 1px solid var(--border-soft, hsl(var(--border)));
+  background: var(--inbox-card);
+  border: 1px solid var(--inbox-border);
   border-radius: 8px;
   padding: 8px 12px 8px 32px;
   font-size: 12px;
-  color: var(--text-primary, hsl(var(--foreground)));
+  color: var(--inbox-text);
   width: 100%;
   outline: none;
   transition: border-color 0.15s ease;
 }
 .msg-search:focus {
-  border-color: var(--acc, hsl(var(--primary)));
+  border-color: var(--inbox-active-color);
 }
 .msg-search::placeholder {
-  color: var(--text-muted, hsl(var(--muted-foreground)));
+  color: var(--inbox-text-muted);
 }
 
 /* ── Filter tabs ── */
@@ -227,7 +255,7 @@
   align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--border-soft, hsl(var(--border)));
+  border-bottom: 1px solid var(--inbox-border);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -236,7 +264,7 @@
   font-weight: 500;
   padding: 5px 10px;
   border-radius: 6px;
-  color: var(--text-secondary, hsl(var(--muted-foreground)));
+  color: var(--inbox-text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
   border: none;
@@ -246,18 +274,19 @@
   gap: 4px;
 }
 .msg-filter-tab:hover {
-  background: var(--bg-hover, hsl(var(--accent)));
+  background: var(--inbox-border-soft);
+  color: var(--inbox-text-secondary);
 }
 .msg-filter-tab.active {
-  background: var(--acc-bg, hsl(var(--accent)));
-  color: var(--acc, hsl(var(--primary)));
+  background: var(--inbox-active-bg);
+  color: var(--inbox-active-color);
   font-weight: 600;
 }
 
 /* ── Right panel ── */
 .msg-right-panel {
-  background: var(--bg-surface, hsl(var(--card)));
-  border-left: 1px solid var(--border, hsl(var(--border)));
+  background: var(--inbox-surface);
+  border-left: 1px solid var(--inbox-border);
 }
 
 /* ── Empty state ── */
@@ -268,18 +297,119 @@
   justify-content: center;
   height: 100%;
   gap: 16px;
-  color: var(--text-secondary, hsl(var(--muted-foreground)));
+  color: var(--inbox-text-muted);
 }
-.msg-empty-state svg {
-  opacity: 0.3;
-}
+.msg-empty-state svg { opacity: 0.3; }
 
-/* ── Chat wallpaper (clean background) ── */
+/* ── Chat wallpaper ── */
 .chat-wallpaper {
-  background: var(--wa-bg-deep, var(--bg-base, hsl(var(--background))));
+  background: var(--wa-bg-deep, var(--inbox-bg));
 }
 
-/* ── Performance: disable effects on weak devices ── */
+/* ── Kanban columns ── */
+.kanban-column {
+  background: var(--inbox-card);
+  border: 1px solid var(--inbox-border);
+  border-radius: var(--inbox-radius-lg);
+  min-width: 280px;
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.kanban-column.drag-over {
+  border-color: var(--inbox-active-border);
+  background: var(--inbox-active-bg);
+}
+.kanban-column-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--inbox-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kanban-column-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Kanban card (group) ── */
+.kanban-card {
+  background: var(--inbox-surface);
+  border: 1px solid var(--inbox-border);
+  border-radius: var(--inbox-radius);
+  padding: 12px;
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+.kanban-card:hover {
+  border-color: var(--inbox-active-border);
+}
+.kanban-card.active, .kanban-card:active {
+  cursor: grabbing;
+  border-color: var(--inbox-active-border);
+  background: var(--inbox-active-bg);
+}
+.kanban-card .card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--inbox-text);
+}
+.kanban-card .card-desc {
+  font-size: 11px;
+  color: var(--inbox-text-muted);
+}
+.kanban-card .card-meta {
+  font-size: 11px;
+  color: var(--inbox-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── SLA dot indicators ── */
+.sla-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sla-dot.ok { background: #0E8A5C; box-shadow: 0 0 8px #0E8A5C80; }
+.sla-dot.warn { background: #E8A84A; box-shadow: 0 0 8px #E8A84A80; }
+.sla-dot.critical { background: #EF4444; box-shadow: 0 0 8px #EF444480; }
+.sla-dot.inactive { background: #D8D2C8; box-shadow: none; }
+
+/* ── Toggle switch (pill-shaped) ── */
+.toggle-pill {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.toggle-pill.on { background: var(--inbox-active-color); }
+.toggle-pill.off { background: var(--inbox-dot-inactive); }
+.toggle-pill .knob {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #FFF;
+  position: absolute;
+  top: 2px;
+  transition: left 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.toggle-pill.on .knob { left: 18px; }
+.toggle-pill.off .knob { left: 2px; }
+
+/* ── Performance ── */
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; }
 }

@@ -11,40 +11,37 @@ export function GroupKanbanColumn({ column, groups }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
-    <div
-      ref={setNodeRef}
-      className="flex flex-col rounded-xl min-w-[280px] w-[300px] shrink-0 transition-colors"
-      style={{
-        background: isOver ? "var(--bg-active)" : "var(--bg-surface)",
-        border: `1px solid ${isOver ? column.color : "var(--border)"}`,
-      }}
-    >
+    <div ref={setNodeRef} className={`kanban-column ${isOver ? "drag-over" : ""}`}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="w-2.5 h-2.5 rounded-full" style={{ background: column.color }} />
-        <span className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+      <div className="kanban-column-header">
+        <div style={{ width: 10, height: 10, borderRadius: "50%", background: column.color }} />
+        <span style={{ fontSize: 13, fontWeight: 600, flex: 1, color: "var(--inbox-text)" }}>
           {column.name}
         </span>
-        <span
-          className="ml-auto text-xs font-medium px-1.5 py-0.5 rounded-full"
-          style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
-        >
+        <span style={{
+          fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 999,
+          background: "var(--inbox-card)", color: "var(--inbox-text-muted)",
+          border: "1px solid var(--inbox-border)",
+        }}>
           {groups.length}
         </span>
         {column.sla_minutes && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--acc-bg)", color: "var(--acc)" }}>
+          <span style={{
+            fontSize: 9, padding: "2px 6px", borderRadius: 999,
+            background: "var(--inbox-active-bg)", color: "var(--inbox-active-color)",
+          }}>
             SLA {column.sla_minutes}min
           </span>
         )}
       </div>
 
       {/* Cards */}
-      <div className="flex flex-col gap-2 p-2 overflow-y-auto flex-1">
+      <div className="kanban-column-body">
         {groups.map((group) => (
           <GroupCard key={group.id} group={group} />
         ))}
         {groups.length === 0 && (
-          <p className="text-xs text-center py-6" style={{ color: "var(--text-muted)" }}>
+          <p style={{ fontSize: 11, textAlign: "center", padding: "24px 0", color: "var(--inbox-text-muted)" }}>
             Arraste grupos aqui
           </p>
         )}
