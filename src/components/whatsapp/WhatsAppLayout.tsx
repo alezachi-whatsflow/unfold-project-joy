@@ -75,7 +75,11 @@ function extractDownloadUrl(payload: any): string | null {
 }
 
 /* ── main component ────────────────────────────────── */
-export default function WhatsAppLayout() {
+interface WhatsAppLayoutProps {
+  initialFilter?: "inbox" | "queue" | "groups" | "resolved";
+}
+
+export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = {}) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedJid, setSelectedJid] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -765,6 +769,7 @@ export default function WhatsAppLayout() {
           viewMode={groupViewMode}
           onViewModeChange={setGroupViewMode}
           onFilterChange={setActiveFilter}
+          initialFilter={initialFilter}
         />
       </div>
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Inbox, Send, Megaphone, Kanban, Users, Receipt, ScrollText,
+  Inbox, Send, Megaphone, Kanban, Users, UsersRound, Receipt, ScrollText,
   Settings, Link2, UserCog, Building2, MessageSquareText, Tag, Bot,
   HelpCircle, Menu, ChevronDown, ChevronUp,
 } from "lucide-react";
@@ -14,6 +14,7 @@ import MessageComposer from "@/components/mensageria/MessageComposer";
 import ContactChecker from "@/components/mensageria/ContactChecker";
 import LeadKanban from "@/components/mensageria/LeadKanban";
 import CampaignsTab from "@/components/mensageria/CampaignsTab";
+import { GroupKanbanBoard } from "@/components/whatsapp/groups/GroupKanbanBoard";
 
 /* ── Sidebar nav items ── */
 interface NavItem {
@@ -30,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "enviar",    label: "Envios em Massa",  icon: Send,             group: "tools" },
   { id: "campanhas", label: "Campanhas",         icon: Megaphone,        group: "tools" },
   { id: "leads",     label: "Leads",             icon: Kanban,           group: "tools" },
+  { id: "grupos",    label: "Grupos",             icon: UsersRound,       group: "tools" },
   { id: "contatos",  label: "Contatos",          icon: Users,            group: "tools" },
   { id: "cobranca",  label: "Cobrança",          icon: Receipt,          group: "tools" },
   { id: "logs",      label: "Logs",              icon: ScrollText,       group: "tools" },
@@ -56,6 +58,7 @@ const MensageriaPage = () => {
       case "enviar":    return <MessageComposer onClose={() => setActiveTab("inbox")} />;
       case "campanhas": return <CampaignsTab />;
       case "leads":     return <LeadKanban />;
+      case "grupos":    return <div className="h-full p-4 overflow-hidden"><GroupKanbanBoard /></div>;
       case "contatos":  return <ContactChecker />;
       case "cobranca":  return <BillingRulesTab />;
       case "logs":      return <LogsTab />;
@@ -105,11 +108,10 @@ const MensageriaPage = () => {
         )}
       >
         {/* Toggle */}
-        <div className={cn("flex items-center shrink-0 border-b border-border/30", expanded ? "px-3 py-3 justify-between" : "justify-center py-3")}>
+        <div className={cn("flex items-center shrink-0 border-b border-border/30", expanded ? "px-3 py-3" : "justify-center py-3")}>
           <button onClick={toggle} className="text-muted-foreground hover:text-foreground transition-colors">
             <Menu size={18} />
           </button>
-          {expanded && <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Mensageria</span>}
         </div>
 
         {/* Nav */}

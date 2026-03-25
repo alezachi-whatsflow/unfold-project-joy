@@ -18,18 +18,24 @@ interface LeftPanelProps {
   viewMode?: "list" | "kanban";
   onViewModeChange?: (mode: "list" | "kanban") => void;
   onFilterChange?: (filter: string) => void;
+  initialFilter?: string;
 }
 
 export default function LeftPanel({
   conversations, selectedId, onSelect, onNewConversationStarted,
   newConvOpen: externalOpen, onNewConvOpenChange,
-  viewMode, onViewModeChange, onFilterChange,
+  viewMode, onViewModeChange, onFilterChange, initialFilter,
 }: LeftPanelProps) {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("inbox");
+  const [filter, setFilter] = useState(initialFilter || "inbox");
 
   const newConvOpen = externalOpen ?? false;
   const setNewConvOpen = (v: boolean) => onNewConvOpenChange?.(v);
+
+  // Sync filter when parent changes it (e.g., InboxTab tabs)
+  useEffect(() => {
+    if (initialFilter && initialFilter !== filter) setFilter(initialFilter);
+  }, [initialFilter]);
 
   // Notify parent of filter changes
   useEffect(() => { onFilterChange?.(filter); }, [filter, onFilterChange]);
