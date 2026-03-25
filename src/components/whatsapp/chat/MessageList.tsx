@@ -12,8 +12,20 @@ export default function MessageList({ messages }: MessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
+  const prevLengthRef = useRef(0);
+
   useEffect(() => {
-    if (isAtBottom) endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const newCount = messages.length;
+    const wasAdded = newCount > prevLengthRef.current;
+    prevLengthRef.current = newCount;
+
+    // Always scroll when a new outgoing message is added (user just sent)
+    const lastMsg = messages[messages.length - 1];
+    const isNewOutgoing = wasAdded && lastMsg?.direction === "outgoing";
+
+    if (isNewOutgoing || isAtBottom) {
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, isAtBottom]);
 
   const handleScroll = () => {
