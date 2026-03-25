@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
   Inbox, Send, Megaphone, Kanban, Users, UsersRound, Receipt, ScrollText,
-  Link2, UserCog, Building2, MessageSquareText, Tag, Bot,
-  HelpCircle, Menu,
+  UserCog, Building2, MessageSquareText, Tag, Bot,
+  Menu,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: "cobranca",  label: "Cobrança",            icon: Receipt,          group: "tools" },
   { id: "logs",      label: "Logs",                 icon: ScrollText,       group: "tools" },
   // Former "Configurações" sub-items — now flat
-  { id: "integracoes",      label: "Integrações",          icon: Link2,              group: "config" },
   { id: "atendentes",       label: "Atendentes",           icon: UserCog,            group: "config" },
   { id: "setores",          label: "Setores",              icon: Building2,          group: "config" },
   { id: "msg-predefinidas", label: "Msgs Pré-definidas",   icon: MessageSquareText,  group: "config" },
@@ -136,24 +135,6 @@ const MensageriaPage = () => {
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className={cn("border-t border-border/30 shrink-0", expanded ? "px-3 py-2" : "py-2 flex justify-center")}>
-          {expanded ? (
-            <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-full px-1 py-1">
-              <HelpCircle size={16} />
-              <span className="text-[11px]">Suporte</span>
-            </button>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="text-muted-foreground hover:text-foreground transition-colors">
-                  <HelpCircle size={16} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-xs">Suporte</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
       </aside>
 
       {/* Content */}
