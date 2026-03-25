@@ -72,7 +72,8 @@
       "Bash(ANON=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1OTQ4ODQsImV4cCI6MjA4NjE3MDg4NH0.sODjBO9xMwr_Fg-JueCcYF0tOGwvtQ0y1L5_BF8_0Jc\" SERVICE=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" __NEW_LINE_a8d6bc174badfbc7__ curl -sv -X POST -H \"apikey: $ANON\" -H \"Authorization: Bearer $SERVICE\" -H \"Content-Type: application/json\" \"https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/enqueue-message\" -d '{\"\"\"\"queue\"\"\"\":\"\"\"\"msg:transactional\"\"\"\",\"\"\"\"job\"\"\"\":{\"\"\"\"type\"\"\"\":\"\"\"\"text\"\"\"\",\"\"\"\"number\"\"\"\":\"\"\"\"554396443912\"\"\"\",\"\"\"\"text\"\"\"\":\"\"\"\"teste fila\"\"\"\"}}')",
       "Bash(__NEW_LINE_b4a4c21c42a83440__ curl:*)",
       "Bash(node -e ':*)",
-      "Bash(__NEW_LINE_a3818b7f904cf471__ curl:*)"
+      "Bash(__NEW_LINE_a3818b7f904cf471__ curl:*)",
+      "Bash(ls \"f:/WFW New/supabase/migrations/\"*missing_rls*)"
     ]
   }
 }
