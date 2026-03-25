@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { LayoutGrid, List } from "lucide-react";
 
 interface FilterTabsProps {
   active: string;
@@ -7,6 +8,8 @@ interface FilterTabsProps {
   unreadCount: number;
   groupCount: number;
   resolvedCount: number;
+  viewMode?: "list" | "kanban";
+  onViewModeChange?: (mode: "list" | "kanban") => void;
 }
 
 const tabs = [
@@ -16,7 +19,7 @@ const tabs = [
   { id: "resolved", label: "Resolvidas", countKey: "resolvedCount" },
 ] as const;
 
-export default function FilterTabs({ active, onChange, totalCount, unreadCount, groupCount, resolvedCount }: FilterTabsProps) {
+export default function FilterTabs({ active, onChange, totalCount, unreadCount, groupCount, resolvedCount, viewMode, onViewModeChange }: FilterTabsProps) {
   const counts: Record<string, number> = { totalCount, unreadCount, groupCount, resolvedCount };
 
   return (
@@ -37,6 +40,34 @@ export default function FilterTabs({ active, onChange, totalCount, unreadCount, 
           </button>
         );
       })}
+
+      {/* Kanban toggle — only visible when "Grupos" tab is active */}
+      {active === "groups" && onViewModeChange && (
+        <div className="ml-auto flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "var(--bg-card)" }}>
+          <button
+            onClick={() => onViewModeChange("list")}
+            className={cn("p-1 rounded", viewMode === "list" && "shadow-sm")}
+            style={{
+              background: viewMode === "list" ? "var(--acc-bg)" : "transparent",
+              color: viewMode === "list" ? "var(--acc)" : "var(--text-muted)",
+            }}
+            title="Lista"
+          >
+            <List size={14} />
+          </button>
+          <button
+            onClick={() => onViewModeChange("kanban")}
+            className={cn("p-1 rounded", viewMode === "kanban" && "shadow-sm")}
+            style={{
+              background: viewMode === "kanban" ? "var(--acc-bg)" : "transparent",
+              color: viewMode === "kanban" ? "var(--acc)" : "var(--text-muted)",
+            }}
+            title="Kanban"
+          >
+            <LayoutGrid size={14} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import LeftPanel from "./panels/LeftPanel";
 import ChatPanel from "./panels/ChatPanel";
 import RightPanel from "./panels/RightPanel";
+import { GroupKanbanBoard } from "./groups/GroupKanbanBoard";
 import type { Conversation } from "@/data/mockConversations";
 import type { Message } from "@/data/mockMessages";
 import type { AttachmentPayload } from "./chat/ChatInput";
@@ -741,6 +742,11 @@ export default function WhatsAppLayout() {
 
   const selectedConv = conversations.find((c) => c.id === selectedJid) || null;
   const [newConvOpen, setNewConvOpen] = useState(false);
+  const [groupViewMode, setGroupViewMode] = useState<"list" | "kanban">("list");
+
+  // Detect if currently on "groups" filter (LeftPanel manages its own filter state,
+  // but we need to know when to show the kanban instead of chat)
+  const [activeFilter, setActiveFilter] = useState("inbox");
 
   return (
     <div className="flex h-full overflow-hidden" style={{ backgroundColor: "var(--wa-bg-deep)" }}>
@@ -755,22 +761,32 @@ export default function WhatsAppLayout() {
             fetchConversations();
             setSelectedJid(jid);
           }}
+          viewMode={groupViewMode}
+          onViewModeChange={setGroupViewMode}
         />
       </div>
-      <ChatPanel
-        conversation={selectedConv}
-        messages={messages}
-        isRightOpen={rightOpen}
-        onToggleRight={() => setRightOpen(!rightOpen)}
-        onSend={handleSend}
-        onSendAttachment={handleSendAttachment}
-        onNewConversation={() => setNewConvOpen(true)}
-      />
-      <RightPanel
-        conversation={selectedConv}
-        isOpen={rightOpen}
-        onClose={() => setRightOpen(false)}
-      />
+      {groupViewMode === "kanban" ? (
+        <div className="flex-1 overflow-hidden">
+          <GroupKanbanBoard />
+        </div>
+      ) : (
+        <>
+          <ChatPanel
+            conversation={selectedConv}
+            messages={messages}
+            isRightOpen={rightOpen}
+            onToggleRight={() => setRightOpen(!rightOpen)}
+            onSend={handleSend}
+            onSendAttachment={handleSendAttachment}
+            onNewConversation={() => setNewConvOpen(true)}
+          />
+          <RightPanel
+            conversation={selectedConv}
+            isOpen={rightOpen}
+            onClose={() => setRightOpen(false)}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -54,7 +54,11 @@
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase secrets set OBJS_ACCESS_KEY_ID=\"49de2acad5ff9cbdf3c11f01c7c1f9fa\" OBJS_SECRET_ACCESS_KEY=\"d5e9695300698958f6077c95a8f12808e3580626b952536b6f899eb9bb96d716\" OBJS_ENDPOINT=\"https://c8a4ed7c197002f834db5947a0391f8d.r2.cloudflarestorage.com/whatsflow-objects\" OBJS_PUBLIC_URL=\"https://pub-edf86b6ca76d4eaaa99f37f708349164.r2.dev\" --project-ref jtlrglzcsmqmapizqgzu)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy r2-upload --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy r2-delete --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy delete-device-files --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy delete-device-files --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Read(//f:/**)",
+      "Bash(grep -i \"whatsapp_groups\\\\|whatsapp_group\" \"/f/WFW New/supabase/migrations/\"*.sql)",
+      "Bash(grep -l \"whatsapp\" \"/f/WFW New/supabase/migrations/\"*.sql)",
+      "Bash(find '/f/WFW New/.context' -type f -name *.md)"
     ]
   }
 }

@@ -15,9 +15,11 @@ interface LeftPanelProps {
   onNewConversationStarted?: (jid: string) => void;
   newConvOpen?: boolean;
   onNewConvOpenChange?: (open: boolean) => void;
+  viewMode?: "list" | "kanban";
+  onViewModeChange?: (mode: "list" | "kanban") => void;
 }
 
-export default function LeftPanel({ conversations, selectedId, onSelect, onNewConversationStarted, newConvOpen: externalOpen, onNewConvOpenChange }: LeftPanelProps) {
+export default function LeftPanel({ conversations, selectedId, onSelect, onNewConversationStarted, newConvOpen: externalOpen, onNewConvOpenChange, viewMode, onViewModeChange }: LeftPanelProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("inbox");
 
@@ -85,7 +87,7 @@ export default function LeftPanel({ conversations, selectedId, onSelect, onNewCo
       </div>
 
       <SearchBar value={search} onChange={setSearch} />
-      <FilterTabs active={filter} onChange={setFilter} totalCount={inboxCount} unreadCount={queueCount} groupCount={groupCount} resolvedCount={resolvedCount} />
+      <FilterTabs active={filter} onChange={setFilter} totalCount={inboxCount} unreadCount={queueCount} groupCount={groupCount} resolvedCount={resolvedCount} viewMode={viewMode} onViewModeChange={onViewModeChange} />
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
