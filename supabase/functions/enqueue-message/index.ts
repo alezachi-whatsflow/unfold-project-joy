@@ -3,7 +3,7 @@ import { connect } from "https://deno.land/x/redis@v0.32.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-service-key",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -31,16 +31,26 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // 1. Auth
-    const authHeader = req.headers.get("Authorization");
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: { Authorization: authHeader! } } }
-    );
+    // 1. Auth — accept user JWT, service_role JWT, or internal API key
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
+    const internalKey = req.headers.get("x-api-key") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) return json({ error: "Unauthorized" }, 401);
+    // Bypass auth for service_role or internal API key
+    const isInternal = token === serviceKey || internalKey === serviceKey;
+
+    if (!isInternal && authHeader) {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user }, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !user) return json({ error: "Unauthorized" }, 401);
+    } else if (!isInternal) {
+      return json({ error: "Unauthorized" }, 401);
+    }
 
     // 2. Parse body
     const body = await req.json();

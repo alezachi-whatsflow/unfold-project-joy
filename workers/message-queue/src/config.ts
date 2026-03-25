@@ -4,19 +4,19 @@ export const config = {
   redis: {
     core: {
       host: process.env.REDIS_CORE_HOST || "filascore.whatsflow.com.br",
-      port: parseInt(process.env.REDIS_CORE_PORT || "6379"),
+      port: parseInt(process.env.REDIS_CORE_PORT || "16379"),
       password: process.env.REDIS_PASSWORD || "",
       family: 0 as const, // 0 = auto-detect IPv4/IPv6 via DNS
     },
     schedule: {
       host: process.env.REDIS_SCHEDULE_HOST || "filasschedule.whatsflow.com.br",
-      port: parseInt(process.env.REDIS_SCHEDULE_PORT || "6379"),
+      port: parseInt(process.env.REDIS_SCHEDULE_PORT || "16380"),
       password: process.env.REDIS_PASSWORD || "",
       family: 0 as const,
     },
     campaign: {
       host: process.env.REDIS_CAMPAIGN_HOST || "filascampaign.whatsflow.com.br",
-      port: parseInt(process.env.REDIS_CAMPAIGN_PORT || "6379"),
+      port: parseInt(process.env.REDIS_CAMPAIGN_PORT || "16381"),
       password: process.env.REDIS_PASSWORD || "",
       family: 0 as const,
     },

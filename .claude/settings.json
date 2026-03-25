@@ -59,7 +59,18 @@
       "Bash(grep -i \"whatsapp_groups\\\\|whatsapp_group\" \"/f/WFW New/supabase/migrations/\"*.sql)",
       "Bash(grep -l \"whatsapp\" \"/f/WFW New/supabase/migrations/\"*.sql)",
       "Bash(find '/f/WFW New/.context' -type f -name *.md)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy uazapi-webhook --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy uazapi-webhook --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy enqueue-message --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Bash(SERVICE=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\")",
+      "Bash(__NEW_LINE_d4a3b709f841cb2d__ curl:*)",
+      "Bash(__NEW_LINE_f6883f024792171e__ curl:*)",
+      "Bash(__NEW_LINE_e6f3a84832fab95a__ curl:*)",
+      "Bash(__NEW_LINE_5a1cebb3aba1adcb__ curl:*)",
+      "Bash(ANON=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1OTQ4ODQsImV4cCI6MjA4NjE3MDg4NH0.sODjBO9xMwr_Fg-JueCcYF0tOGwvtQ0y1L5_BF8_0Jc\" SERVICE=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" __NEW_LINE_a70b24ed17f4a8cd__ curl -sv -X POST -H \"x-service-key: $SERVICE\" -H \"Content-Type: application/json\" \"https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/enqueue-message\" -d '{\"\"\"\"queue\"\"\"\":\"\"\"\"msg:transactional\"\"\"\",\"\"\"\"job\"\"\"\":{\"\"\"\"type\"\"\"\":\"\"\"\"text\"\"\"\",\"\"\"\"number\"\"\"\":\"\"\"\"554396443912\"\"\"\",\"\"\"\"text\"\"\"\":\"\"\"\"teste fila\"\"\"\"}}')",
+      "Bash(__NEW_LINE_07330017a264403e__ curl:*)",
+      "Bash(__NEW_LINE_2c81c7183fa64915__ curl:*)",
+      "Bash(ANON=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1OTQ4ODQsImV4cCI6MjA4NjE3MDg4NH0.sODjBO9xMwr_Fg-JueCcYF0tOGwvtQ0y1L5_BF8_0Jc\" SERVICE=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" __NEW_LINE_a8d6bc174badfbc7__ curl -sv -X POST -H \"apikey: $ANON\" -H \"Authorization: Bearer $SERVICE\" -H \"Content-Type: application/json\" \"https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/enqueue-message\" -d '{\"\"\"\"queue\"\"\"\":\"\"\"\"msg:transactional\"\"\"\",\"\"\"\"job\"\"\"\":{\"\"\"\"type\"\"\"\":\"\"\"\"text\"\"\"\",\"\"\"\"number\"\"\"\":\"\"\"\"554396443912\"\"\"\",\"\"\"\"text\"\"\"\":\"\"\"\"teste fila\"\"\"\"}}')",
+      "Bash(__NEW_LINE_b4a4c21c42a83440__ curl:*)"
     ]
   }
 }
