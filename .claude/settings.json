@@ -44,7 +44,9 @@
       "Bash(grep -v \"^f:/WFW New/supabase/functions$\")",
       "Bash(ls supabase/migrations/*fix_p0*)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase db push --linked -p \"Alegria753!\")",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
+      "Bash(grep -l \"parent_license_id\\\\|license_type\\\\|whitelabel_slug\" \"f:/WFW New/supabase/migrations/\"*.sql)"
     ]
   }
 }
