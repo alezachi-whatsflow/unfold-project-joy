@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Inbox, Send, Megaphone, Kanban, Users, UsersRound, Receipt, ScrollText,
-  UserCog, Building2, MessageSquareText, Tag, Bot,
+  UserCog, Building2, MessageSquareText, Tag, Bot, FileText, Zap,
   Menu,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -15,6 +15,10 @@ import ContactChecker from "@/components/mensageria/ContactChecker";
 import LeadKanban from "@/components/mensageria/LeadKanban";
 import CampaignsTab from "@/components/mensageria/CampaignsTab";
 import { GroupKanbanBoard } from "@/components/whatsapp/groups/GroupKanbanBoard";
+import QuickReplyManager from "@/components/mensageria/quick-replies/QuickReplyManager";
+import AgentDashboard from "@/components/mensageria/agents/AgentDashboard";
+import HSMTemplateManager from "@/components/mensageria/templates/HSMTemplateManager";
+import AutomationManager from "@/components/mensageria/automation/AutomationManager";
 
 /* ── Sidebar nav items ── */
 interface NavItem {
@@ -33,14 +37,15 @@ const NAV_ITEMS: NavItem[] = [
   { id: "leads",     label: "Leads",               icon: Kanban,           group: "tools" },
   { id: "grupos",    label: "Grupos",               icon: UsersRound,       group: "tools" },
   { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
-  { id: "cobranca",  label: "Cobrança",            icon: Receipt,          group: "tools" },
-  { id: "logs",      label: "Logs",                 icon: ScrollText,       group: "tools" },
-  // Former "Configurações" sub-items — now flat
+  { id: "templates",  label: "Templates HSM",        icon: FileText,         group: "tools" },
+  { id: "cobranca",  label: "Cobrança",              icon: Receipt,          group: "tools" },
+  { id: "logs",      label: "Logs",                   icon: ScrollText,       group: "tools" },
+  // Config items
   { id: "atendentes",       label: "Atendentes",           icon: UserCog,            group: "config" },
   { id: "setores",          label: "Setores",              icon: Building2,          group: "config" },
-  { id: "msg-predefinidas", label: "Msgs Pré-definidas",   icon: MessageSquareText,  group: "config" },
+  { id: "msg-predefinidas", label: "Respostas Rápidas",    icon: MessageSquareText,  group: "config" },
   { id: "tags-contato",     label: "Tags de Contato",      icon: Tag,                group: "config" },
-  { id: "automacoes",       label: "Automações",           icon: Bot,                group: "config" },
+  { id: "automacoes",       label: "Automações",           icon: Zap,                group: "config" },
 ];
 
 
@@ -51,15 +56,23 @@ const MensageriaPage = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "inbox":     return <InboxTab />;
-      case "enviar":    return <MessageComposer onClose={() => setActiveTab("inbox")} />;
-      case "campanhas": return <CampaignsTab />;
-      case "leads":     return <LeadKanban />;
-      case "grupos":    return <div className="h-full p-4 overflow-hidden"><GroupKanbanBoard /></div>;
-      case "contatos":  return <ContactChecker />;
-      case "cobranca":  return <BillingRulesTab />;
-      case "logs":      return <LogsTab />;
-      default:          return <InboxTab />;
+      // Operation
+      case "inbox":           return <InboxTab />;
+      // Tools
+      case "enviar":          return <MessageComposer onClose={() => setActiveTab("inbox")} />;
+      case "campanhas":       return <CampaignsTab />;
+      case "leads":           return <LeadKanban />;
+      case "grupos":          return <div className="h-full overflow-hidden"><GroupKanbanBoard /></div>;
+      case "contatos":        return <ContactChecker />;
+      case "templates":       return <HSMTemplateManager />;
+      case "cobranca":        return <BillingRulesTab />;
+      case "logs":            return <LogsTab />;
+      // Config
+      case "atendentes":      return <AgentDashboard />;
+      case "setores":         return <AgentDashboard />;
+      case "msg-predefinidas": return <QuickReplyManager />;
+      case "automacoes":      return <AutomationManager />;
+      default:                return <InboxTab />;
     }
   };
 

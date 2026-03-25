@@ -73,7 +73,8 @@
       "Bash(__NEW_LINE_b4a4c21c42a83440__ curl:*)",
       "Bash(node -e ':*)",
       "Bash(__NEW_LINE_a3818b7f904cf471__ curl:*)",
-      "Bash(ls \"f:/WFW New/supabase/migrations/\"*missing_rls*)"
+      "Bash(ls \"f:/WFW New/supabase/migrations/\"*missing_rls*)",
+      "Bash(ls \"f:/WFW New/supabase/migrations/\"*all_phases*)"
     ]
   }
 }
