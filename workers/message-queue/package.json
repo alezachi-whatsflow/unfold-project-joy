@@ -1,0 +1,24 @@
+{
+  "name": "@whatsflow/message-queue",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "test:redis": "tsx src/test-connection.ts"
+  },
+  "dependencies": {
+    "bullmq": "^5.34.0",
+    "ioredis": "^5.4.2",
+    "@supabase/supabase-js": "^2.98.0",
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.3",
+    "@types/node": "^22.0.0"
+  }
+}

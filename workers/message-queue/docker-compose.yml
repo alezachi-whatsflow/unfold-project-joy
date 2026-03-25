@@ -1,0 +1,82 @@
+# ═══════════════════════════════════════════
+# Whatsflow Message Queue Worker
+# Runs alongside the Redis containers
+# ═══════════════════════════════════════════
+
+services:
+  wf-queue-worker:
+    build: .
+    restart: unless-stopped
+    container_name: wf-queue-worker
+    environment:
+      - REDIS_PASSWORD=rD9!vQ2#xL7@pN4$zT8&kM6^yF3*
+      - REDIS_CORE_HOST=redis-core
+      - REDIS_CORE_PORT=6379
+      - REDIS_SCHEDULE_HOST=redis-schedule
+      - REDIS_SCHEDULE_PORT=6379
+      - REDIS_CAMPAIGN_HOST=redis-campaign
+      - REDIS_CAMPAIGN_PORT=6379
+      - SUPABASE_URL=https://jtlrglzcsmqmapizqgzu.supabase.co
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - UAZAPI_BASE_URL=https://whatsflow.uazapi.com
+      - UAZAPI_ADMIN_TOKEN=${UAZAPI_ADMIN_TOKEN}
+      - WORKER_CONCURRENCY=5
+      - CAMPAIGN_DELAY_MIN_MS=1500
+      - CAMPAIGN_DELAY_MAX_MS=4000
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+    networks:
+      - redis-net
+    depends_on:
+      - redis-core
+      - redis-schedule
+      - redis-campaign
+
+  redis-core:
+    image: redis:7
+    restart: unless-stopped
+    container_name: redis-core
+    ports:
+      - "[::]:16379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "rD9!vQ2#xL7@pN4$zT8&kM6^yF3*"]
+    volumes:
+      - redis_core_data:/data
+    networks:
+      - redis-net
+
+  redis-schedule:
+    image: redis:7
+    restart: unless-stopped
+    container_name: redis-schedule
+    ports:
+      - "[::]:16380:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "rD9!vQ2#xL7@pN4$zT8&kM6^yF3*"]
+    volumes:
+      - redis_schedule_data:/data
+    networks:
+      - redis-net
+
+  redis-campaign:
+    image: redis:7
+    restart: unless-stopped
+    container_name: redis-campaign
+    ports:
+      - "[::]:16381:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "rD9!vQ2#xL7@pN4$zT8&kM6^yF3*"]
+    volumes:
+      - redis_campaign_data:/data
+    networks:
+      - redis-net
+
+volumes:
+  redis_core_data:
+  redis_schedule_data:
+  redis_campaign_data:
+
+networks:
+  redis-net:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: "fd00:wf:1::/48"
