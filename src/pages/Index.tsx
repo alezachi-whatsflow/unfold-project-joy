@@ -29,6 +29,7 @@ export default function Index() {
         // Pipeline value
         supabase.from("negocios").select("status, valor_total, valor_liquido").eq("tenant_id", tenantId),
         // Recent messages count
+        // Messages filtered via RLS (WA_Messages_Security policy uses instance→tenant)
         supabase.from("whatsapp_messages").select("id, direction, created_at").order("created_at", { ascending: false }).limit(500),
       ]);
 

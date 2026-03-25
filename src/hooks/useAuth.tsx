@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/App";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -55,6 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Clear ALL caches to prevent cross-tenant data leakage
+    queryClient.clear();
+    localStorage.removeItem("wf_theme");
+    localStorage.removeItem("whatsflow_default_tenant_id");
+    sessionStorage.clear();
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   }, []);

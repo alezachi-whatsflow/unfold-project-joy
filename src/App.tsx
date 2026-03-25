@@ -111,7 +111,7 @@ import ActivationPage from "./pages/ActivationPage";
 import { Loader2 } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
