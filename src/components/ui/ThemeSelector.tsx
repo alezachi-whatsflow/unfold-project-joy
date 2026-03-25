@@ -2,30 +2,24 @@ import { useTheme, ThemeMode } from "@/contexts/ThemeContext";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const THEMES: { id: ThemeMode; name: string; description: string; dot: string; badge: string; badgeClass: string }[] = [
+const THEMES: { id: ThemeMode; name: string; description: string; dot: string }[] = [
   {
     id: "cafe-noturno",
     name: "Café Noturno",
     description: "Âmbar quente · Uso prolongado",
-    dot: "#e8a84a",
-    badge: "Oftalmológico",
-    badgeClass: "bg-amber-900/40 text-amber-400 border border-amber-800/50",
+    dot: "#E8A84A",
   },
   {
     id: "pacifico",
     name: "Pacífico",
     description: "Verde natural · Ambientes claros",
-    dot: "#0e8a5c",
-    badge: "Diurno",
-    badgeClass: "bg-emerald-900/30 text-emerald-400 border border-emerald-800/40",
+    dot: "#0E8A5C",
   },
   {
     id: "cosmos",
     name: "Cosmos",
     description: "Azul profundo · Power user",
-    dot: "#5b9ef7",
-    badge: "Técnico",
-    badgeClass: "bg-blue-900/30 text-blue-400 border border-blue-800/40",
+    dot: "#5B9EF7",
   },
 ];
 
@@ -35,18 +29,25 @@ export function ThemeSelector({ compact = false }: { compact?: boolean }) {
   if (compact) {
     return (
       <div className="flex flex-col gap-1 px-2 py-1">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Aparência</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 2, color: "#A09888", textTransform: "uppercase" as const }}>
+          Aparência
+        </span>
         <div className="flex gap-1.5">
-          {THEMES.map(t => (
+          {THEMES.map((t) => (
             <button
               key={t.id}
               onClick={() => setTheme(t.id)}
               title={t.name}
-              className={cn(
-                "w-5 h-5 rounded-full border-2 transition-all duration-200",
-                theme === t.id ? "scale-110 border-white/60" : "border-transparent opacity-50 hover:opacity-80"
-              )}
-              style={{ background: t.dot }}
+              className="transition-all duration-200"
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: "50%",
+                background: t.dot,
+                border: theme === t.id ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
+                transform: theme === t.id ? "scale(1.15)" : "scale(1)",
+                opacity: theme === t.id ? 1 : 0.5,
+              }}
             />
           ))}
         </div>
@@ -55,40 +56,98 @@ export function ThemeSelector({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="flex flex-col gap-1.5 p-3 bg-card border border-border rounded-xl min-w-[210px]">
-      <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase mb-1">Aparência</p>
-      {THEMES.map(t => (
-        <button
-          key={t.id}
-          onClick={() => setTheme(t.id)}
-          className={cn(
-            "flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all w-full text-left",
-            theme === t.id ? "ring-1 ring-[var(--acc)]" : "opacity-70 hover:opacity-100"
-          )}
-          style={{
-            background: theme === t.id ? "var(--acc-bg)" : "transparent",
-            border: theme === t.id ? "1px solid var(--acc-border)" : "1px solid transparent",
-          }}
-        >
-          <div
-            className="shrink-0 rounded-full"
-            style={{
-              width: 14, height: 14, background: t.dot,
-              boxShadow: theme === t.id ? `0 0 8px ${t.dot}80` : "none",
-            }}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[12px] font-medium text-foreground">{t.name}</span>
-              {theme === t.id && <Check size={11} className="text-[var(--acc)]" />}
-            </div>
-            <span className="text-[10px] text-muted-foreground">{t.description}</span>
-          </div>
-          <span className={cn("text-[8px] font-semibold px-1.5 py-0.5 rounded-full", t.badgeClass)}>
-            {t.badge}
-          </span>
-        </button>
-      ))}
+    <div style={{
+      background: "#FAFAF8",
+      border: "1px solid #E8E5DF",
+      borderRadius: 12,
+      padding: 16,
+    }}>
+      {/* Title */}
+      <p style={{
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: 2,
+        color: "#A09888",
+        textTransform: "uppercase" as const,
+        marginBottom: 12,
+      }}>
+        Aparência
+      </p>
+
+      {/* Theme options */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {THEMES.map((t) => {
+          const isActive = theme === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTheme(t.id)}
+              className="transition-all duration-200"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: 12,
+                borderRadius: 10,
+                border: isActive ? `1px solid ${t.dot}40` : "1px solid transparent",
+                background: isActive ? `${t.dot}14` : "transparent",
+                cursor: "pointer",
+                width: "100%",
+                textAlign: "left" as const,
+              }}
+            >
+              {/* Color dot */}
+              <div style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: t.dot,
+                flexShrink: 0,
+                boxShadow: isActive ? `0 0 8px ${t.dot}80` : "none",
+              }} />
+
+              {/* Name + description */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: "#2A2520" }}>
+                    {t.name}
+                  </span>
+                  {isActive && <Check size={12} style={{ color: t.dot }} />}
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 400, color: "#B0A494" }}>
+                  {t.description}
+                </span>
+              </div>
+
+              {/* Toggle switch */}
+              <div
+                className="transition-all duration-200"
+                style={{
+                  width: 36,
+                  height: 20,
+                  borderRadius: 999,
+                  background: isActive ? t.dot : "#D8D2C8",
+                  position: "relative" as const,
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  className="transition-transform duration-200"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    background: "#FFFFFF",
+                    position: "absolute" as const,
+                    top: 2,
+                    left: isActive ? 18 : 2,
+                  }}
+                />
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
