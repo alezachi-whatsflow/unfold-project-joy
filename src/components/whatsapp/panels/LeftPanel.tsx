@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MessageSquarePlus, Users, MoreVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import WaAvatar from "../shared/Avatar";
@@ -17,14 +17,29 @@ interface LeftPanelProps {
   onNewConvOpenChange?: (open: boolean) => void;
   viewMode?: "list" | "kanban";
   onViewModeChange?: (mode: "list" | "kanban") => void;
+  onFilterChange?: (filter: string) => void;
 }
 
-export default function LeftPanel({ conversations, selectedId, onSelect, onNewConversationStarted, newConvOpen: externalOpen, onNewConvOpenChange, viewMode, onViewModeChange }: LeftPanelProps) {
+export default function LeftPanel({
+  conversations, selectedId, onSelect, onNewConversationStarted,
+  newConvOpen: externalOpen, onNewConvOpenChange,
+  viewMode, onViewModeChange, onFilterChange,
+}: LeftPanelProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("inbox");
 
   const newConvOpen = externalOpen ?? false;
   const setNewConvOpen = (v: boolean) => onNewConvOpenChange?.(v);
+
+  // Notify parent of filter changes
+  useEffect(() => { onFilterChange?.(filter); }, [filter, onFilterChange]);
+
+  // Reset viewMode when leaving groups tab
+  useEffect(() => {
+    if (filter !== "groups" && viewMode === "kanban") {
+      onViewModeChange?.("list");
+    }
+  }, [filter, viewMode, onViewModeChange]);
 
   const filtered = useMemo(() => {
     let list = conversations;
@@ -44,68 +59,58 @@ export default function LeftPanel({ conversations, selectedId, onSelect, onNewCo
   const groupCount = conversations.filter((c) => c.isGroup).length;
   const resolvedCount = conversations.filter((c) => c.status === "resolved").length;
 
-  const handleNewConvStarted = (jid: string) => {
-    onNewConversationStarted?.(jid);
-    onSelect(jid);
-  };
-
   return (
-    <div className="relative flex flex-col h-full msg-left-panel">
+    <div className="flex flex-col h-full msg-left-panel">
       {/* Header */}
-      <div
-        className="flex items-center justify-between px-4 shrink-0 glass-header"
-        style={{ height: 56 }}
-      >
+      <div className="flex items-center justify-between px-4 shrink-0 glass-header" style={{ height: 56 }}>
         <WaAvatar initials="AZ" color="#00A884" size={32} />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
-                className="transition-colors"
-                style={{ color: "var(--wa-text-secondary)" }}
-                onClick={() => setNewConvOpen(true)}
-              >
-                <MessageSquarePlus size={22} />
+              <button style={{ color: "var(--text-secondary)" }} onClick={() => setNewConvOpen(true)}>
+                <MessageSquarePlus size={20} />
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">Nova conversa</TooltipContent>
           </Tooltip>
-          {[
-            { Icon: Users, label: "Nova comunidade" },
-            { Icon: MoreVertical, label: "Mais opções" },
-          ].map(({ Icon, label }, i) => (
-            <Tooltip key={i}>
-              <TooltipTrigger asChild>
-                <button className="transition-colors" style={{ color: "var(--wa-text-secondary)" }}>
-                  <Icon size={22} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">{label}</TooltipContent>
-            </Tooltip>
-          ))}
         </div>
       </div>
 
       <SearchBar value={search} onChange={setSearch} />
-      <FilterTabs active={filter} onChange={setFilter} totalCount={inboxCount} unreadCount={queueCount} groupCount={groupCount} resolvedCount={resolvedCount} viewMode={viewMode} onViewModeChange={onViewModeChange} />
+
+      <FilterTabs
+        active={filter}
+        onChange={setFilter}
+        totalCount={inboxCount}
+        unreadCount={queueCount}
+        groupCount={groupCount}
+        resolvedCount={resolvedCount}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
+      />
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
-        {filtered.map((c) => (
-          <ConversationItem
-            key={c.id}
-            conversation={c}
-            isSelected={selectedId === c.id}
-            onClick={() => onSelect(c.id)}
-          />
-        ))}
+        {filtered.length === 0 ? (
+          <p className="text-center text-xs py-8" style={{ color: "var(--text-muted)" }}>
+            Nenhuma conversa encontrada
+          </p>
+        ) : (
+          filtered.map((c) => (
+            <ConversationItem
+              key={c.id}
+              conversation={c}
+              isSelected={selectedId === c.id}
+              onClick={() => onSelect(c.id)}
+            />
+          ))
+        )}
       </div>
 
-      {/* New Conversation Dialog */}
       <NewConversationDialog
         open={newConvOpen}
         onClose={() => setNewConvOpen(false)}
-        onConversationStarted={handleNewConvStarted}
+        onConversationStarted={(jid) => { onNewConversationStarted?.(jid); onSelect(jid); }}
       />
     </div>
   );

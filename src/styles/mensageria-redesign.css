@@ -1,46 +1,56 @@
 /* ══════════════════════════════════════════════════════
-   Mensageria Redesign — Phase A: Visual Polish
-   Uses existing theme variables, adds refinements
+   Mensageria Redesign — Uses theme CSS variables
    ══════════════════════════════════════════════════════ */
 
-/* ── Left Panel refinements ── */
+/* ── Left Panel ── */
 .msg-left-panel {
-  background: var(--glass-bg-1);
-  backdrop-filter: var(--glass-blur-md);
-  -webkit-backdrop-filter: var(--glass-blur-md);
-  border-right: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  background: var(--bg-surface, hsl(var(--card)));
+  border-right: 1px solid var(--border, hsl(var(--border)));
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Glass header ── */
+.glass-header {
+  background: var(--bg-surface, hsl(var(--card)));
+  border-bottom: 1px solid var(--border-soft, hsl(var(--border)));
 }
 
 /* ── Conversation item ── */
 .msg-conv-item {
   padding: 10px 12px;
-  margin: 2px 6px;
+  margin: 1px 6px;
   border-radius: 8px;
-  border-bottom: none;
   border: 1px solid transparent;
   transition: background 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
   overflow: hidden;
-  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .msg-conv-item:hover {
-  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
-  border-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  background: var(--bg-hover, hsl(var(--accent)));
 }
 .msg-conv-item.active {
-  background: rgba(var(--accent-rgb, 94, 114, 228), 0.12);
-  border-color: hsl(var(--primary) / 0.3);
-  border-left: 2px solid hsl(var(--primary));
+  background: var(--acc-bg, hsl(var(--accent)));
+  border-color: var(--acc-border, hsl(var(--primary) / 0.3));
+  border-left: 2px solid var(--acc, hsl(var(--primary)));
 }
 .msg-conv-item .conv-name {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--wa-text-primary, hsl(var(--foreground)));
+  color: var(--text-primary, hsl(var(--foreground)));
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .msg-conv-item .conv-preview {
-  font-size: 11.5px;
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
+  font-size: 12px;
+  color: var(--text-secondary, hsl(var(--muted-foreground)));
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -48,11 +58,12 @@
 }
 .msg-conv-item .conv-time {
   font-size: 10px;
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
+  color: var(--text-muted, hsl(var(--muted-foreground)));
+  white-space: nowrap;
 }
 .msg-conv-item .conv-badge {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  background: var(--unread-bg, hsl(var(--primary)));
+  color: var(--unread-text, hsl(var(--primary-foreground)));
   font-size: 10px;
   font-weight: 700;
   border-radius: 999px;
@@ -62,19 +73,19 @@
   align-items: center;
   justify-content: center;
   padding: 0 5px;
+  flex-shrink: 0;
 }
 
 /* ── Chat header ── */
 .msg-chat-header {
-  background: var(--glass-bg-1);
-  backdrop-filter: var(--glass-blur-md);
-  -webkit-backdrop-filter: var(--glass-blur-md);
-  border-bottom: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  background: var(--bg-surface, hsl(var(--card)));
+  border-bottom: 1px solid var(--border, hsl(var(--border)));
   padding: 0 16px;
   height: 56px;
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 /* ── Action pills in chat header ── */
@@ -83,15 +94,16 @@
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.10);
-  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
-  color: hsl(var(--foreground));
+  border: 1px solid var(--border, hsl(var(--border)));
+  background: var(--bg-card, hsl(var(--card)));
+  color: var(--text-primary, hsl(var(--foreground)));
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .msg-pill:hover {
-  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.10);
+  background: var(--bg-hover, hsl(var(--accent)));
 }
 .msg-pill.pill-green {
   background: rgba(45, 206, 137, 0.15);
@@ -111,31 +123,36 @@
 
 /* ── Message bubbles ── */
 .msg-bubble {
-  max-width: 62%;
-  font-size: 12.5px;
+  max-width: 65%;
+  font-size: 13px;
   line-height: 1.5;
   padding: 8px 12px;
   border-radius: 12px;
   position: relative;
   word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .msg-bubble-in {
-  background: var(--bg-bubble-in, rgba(30, 42, 48, 0.95));
+  background: var(--bg-bubble-in, hsl(var(--card)));
   color: var(--wa-text-primary, hsl(var(--foreground)));
   border-bottom-left-radius: 4px;
   margin-right: auto;
 }
 .msg-bubble-out {
-  background: var(--bg-bubble-out, rgba(94, 114, 228, 0.15));
+  background: var(--bg-bubble-out, hsl(var(--primary) / 0.15));
   color: var(--wa-text-primary, hsl(var(--foreground)));
   border-bottom-right-radius: 4px;
   margin-left: auto;
 }
 .msg-bubble .msg-time {
   font-size: 10px;
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
+  color: var(--text-muted, hsl(var(--muted-foreground)));
   text-align: right;
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 /* ── Date separator ── */
@@ -146,114 +163,97 @@
 }
 .msg-date-sep span {
   font-size: 10px;
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
-  background: var(--glass-bg-2);
-  border: 0.5px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
+  color: var(--text-secondary, hsl(var(--muted-foreground)));
+  background: var(--bg-card, hsl(var(--card)));
+  border: 1px solid var(--border-soft, hsl(var(--border)));
   border-radius: 999px;
-  padding: 3px 12px;
-  backdrop-filter: blur(8px);
+  padding: 4px 14px;
 }
 
 /* ── Chat input area ── */
 .msg-input-area {
-  background: var(--glass-bg-1);
-  backdrop-filter: var(--glass-blur-sm);
-  -webkit-backdrop-filter: var(--glass-blur-sm);
-  border-top: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  background: var(--bg-surface, hsl(var(--card)));
+  border-top: 1px solid var(--border, hsl(var(--border)));
   padding: 10px 16px;
+  flex-shrink: 0;
 }
 .msg-input-field {
-  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.05);
-  border: 0.5px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
+  background: var(--bg-input, hsl(var(--input)));
+  border: 1px solid var(--border, hsl(var(--border)));
   border-radius: 10px;
   padding: 8px 12px;
-  font-size: 12.5px;
-  color: hsl(var(--foreground));
+  font-size: 13px;
+  color: var(--text-primary, hsl(var(--foreground)));
   min-height: 36px;
-  max-height: 100px;
+  max-height: 120px;
   resize: none;
   width: 100%;
   outline: none;
   transition: border-color 0.15s ease;
 }
 .msg-input-field:focus {
-  border-color: hsl(var(--primary));
+  border-color: var(--acc, hsl(var(--primary)));
 }
 .msg-input-field::placeholder {
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
-}
-
-/* ── Send button ── */
-.msg-send-btn {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.1s ease;
-}
-.msg-send-btn:hover {
-  opacity: 0.9;
-}
-.msg-send-btn:active {
-  transform: scale(0.97);
+  color: var(--text-muted, hsl(var(--muted-foreground)));
 }
 
 /* ── Search input ── */
 .msg-search {
-  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.05);
-  border: 0.5px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
+  background: var(--bg-input, hsl(var(--input)));
+  border: 1px solid var(--border-soft, hsl(var(--border)));
   border-radius: 8px;
-  padding: 7px 12px 7px 32px;
+  padding: 8px 12px 8px 32px;
   font-size: 12px;
-  color: hsl(var(--foreground));
+  color: var(--text-primary, hsl(var(--foreground)));
   width: 100%;
   outline: none;
   transition: border-color 0.15s ease;
 }
 .msg-search:focus {
-  border-color: hsl(var(--primary));
+  border-color: var(--acc, hsl(var(--primary)));
 }
 .msg-search::placeholder {
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
+  color: var(--text-muted, hsl(var(--muted-foreground)));
 }
 
 /* ── Filter tabs ── */
 .msg-filter-tabs {
   display: flex;
+  align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  border-bottom: 0.5px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.04);
+  border-bottom: 1px solid var(--border-soft, hsl(var(--border)));
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .msg-filter-tab {
   font-size: 11px;
   font-weight: 500;
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 6px;
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
+  color: var(--text-secondary, hsl(var(--muted-foreground)));
   cursor: pointer;
   transition: all 0.15s ease;
   border: none;
   background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .msg-filter-tab:hover {
-  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.05);
+  background: var(--bg-hover, hsl(var(--accent)));
 }
 .msg-filter-tab.active {
-  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
-  color: hsl(var(--primary));
+  background: var(--acc-bg, hsl(var(--accent)));
+  color: var(--acc, hsl(var(--primary)));
   font-weight: 600;
 }
 
 /* ── Right panel ── */
 .msg-right-panel {
-  background: var(--glass-bg-1);
-  backdrop-filter: var(--glass-blur-md);
-  -webkit-backdrop-filter: var(--glass-blur-md);
-  border-left: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  background: var(--bg-surface, hsl(var(--card)));
+  border-left: 1px solid var(--border, hsl(var(--border)));
 }
 
 /* ── Empty state ── */
@@ -264,16 +264,18 @@
   justify-content: center;
   height: 100%;
   gap: 16px;
-  color: var(--wa-text-secondary, hsl(var(--muted-foreground)));
+  color: var(--text-secondary, hsl(var(--muted-foreground)));
 }
 .msg-empty-state svg {
   opacity: 0.3;
 }
 
-/* ── Performance: disable blur on weak devices ── */
+/* ── Chat wallpaper (clean background) ── */
+.chat-wallpaper {
+  background: var(--wa-bg-deep, var(--bg-base, hsl(var(--background))));
+}
+
+/* ── Performance: disable effects on weak devices ── */
 @media (prefers-reduced-motion: reduce) {
-  .msg-left-panel, .msg-chat-header, .msg-input-area, .msg-right-panel {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
+  * { transition-duration: 0.01ms !important; }
 }

@@ -745,12 +745,13 @@ export default function WhatsAppLayout() {
   const [groupViewMode, setGroupViewMode] = useState<"list" | "kanban">("list");
 
   // Detect if currently on "groups" filter (LeftPanel manages its own filter state,
-  // but we need to know when to show the kanban instead of chat)
   const [activeFilter, setActiveFilter] = useState("inbox");
+  const showKanban = activeFilter === "groups" && groupViewMode === "kanban";
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ backgroundColor: "var(--wa-bg-deep)" }}>
-      <div className="shrink-0 h-full hidden md:flex overflow-hidden" style={{ width: 360, minWidth: 360, maxWidth: 360 }}>
+    <div className="flex h-full overflow-hidden" style={{ background: "var(--wa-bg-deep, var(--bg-base))" }}>
+      {/* Left Panel — conversation list */}
+      <div className="shrink-0 h-full hidden md:flex overflow-hidden" style={{ width: 340 }}>
         <LeftPanel
           conversations={conversations}
           selectedId={selectedJid}
@@ -763,10 +764,13 @@ export default function WhatsAppLayout() {
           }}
           viewMode={groupViewMode}
           onViewModeChange={setGroupViewMode}
+          onFilterChange={setActiveFilter}
         />
       </div>
-      {groupViewMode === "kanban" ? (
-        <div className="flex-1 overflow-hidden">
+
+      {/* Central panel — chat or kanban */}
+      {showKanban ? (
+        <div className="flex-1 overflow-hidden" style={{ background: "var(--bg-base)" }}>
           <GroupKanbanBoard />
         </div>
       ) : (
