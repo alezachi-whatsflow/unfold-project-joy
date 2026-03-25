@@ -5,15 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Centralized hook to get the current tenant ID.
- * Priority: URL slug → localStorage override → user's first tenant.
+ * Priority: URL slug (if found) → user's first tenant.
  * This allows Nexus admins to "Acessar como Admin" and see the correct tenant data.
  */
 export function useTenantId(): string | undefined {
   const { slug } = useParams<{ slug?: string }>();
   const { data: tenants } = useUserTenants();
+  const userTenantId = tenants?.[0]?.tenant_id;
 
   // Resolve tenant_id from URL slug
-  const { data: slugTenant } = useQuery({
+  const { data: slugTenantId, isLoading: slugLoading } = useQuery({
     queryKey: ["tenant-by-slug", slug],
     queryFn: async () => {
       if (!slug) return null;
@@ -28,9 +29,10 @@ export function useTenantId(): string | undefined {
     staleTime: 5 * 60_000,
   });
 
-  // Priority: URL slug → user's own tenant
-  // Note: localStorage override removed — URL slug is the source of truth
-  if (slugTenant) return slugTenant;
+  // If URL has a slug and it resolved to a tenant, use it (Nexus admin access)
+  if (slug && slugTenantId) return slugTenantId;
 
-  return tenants?.[0]?.tenant_id;
+  // Otherwise always use the user's own tenant
+  // (covers: no slug in URL, slug not found, slug still loading)
+  return userTenantId;
 }
