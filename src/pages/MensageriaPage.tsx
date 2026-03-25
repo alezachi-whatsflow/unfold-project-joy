@@ -17,6 +17,8 @@ import CampaignsTab from "@/components/mensageria/CampaignsTab";
 import { GroupKanbanBoard } from "@/components/whatsapp/groups/GroupKanbanBoard";
 import QuickReplyManager from "@/components/mensageria/quick-replies/QuickReplyManager";
 import AgentDashboard from "@/components/mensageria/agents/AgentDashboard";
+import DepartmentManager from "@/components/mensageria/agents/DepartmentManager";
+import ContactTagManager from "@/components/mensageria/agents/ContactTagManager";
 import HSMTemplateManager from "@/components/mensageria/templates/HSMTemplateManager";
 import AutomationManager from "@/components/mensageria/automation/AutomationManager";
 
@@ -69,8 +71,9 @@ const MensageriaPage = () => {
       case "logs":            return <LogsTab />;
       // Config
       case "atendentes":      return <AgentDashboard />;
-      case "setores":         return <AgentDashboard />;
+      case "setores":         return <DepartmentManager />;
       case "msg-predefinidas": return <QuickReplyManager />;
+      case "tags-contato":    return <ContactTagManager />;
       case "automacoes":      return <AutomationManager />;
       default:                return <InboxTab />;
     }
