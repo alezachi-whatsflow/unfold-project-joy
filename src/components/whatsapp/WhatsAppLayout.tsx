@@ -237,7 +237,15 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
       supabase.from("whatsapp_contacts").select("*"),
     ]);
     const leadMap = new Map((leads ?? []).map((l: any) => [l.chat_id, l]));
-    const contactMap = new Map((contacts ?? []).map((c: any) => [c.jid, c]));
+    // Build contact map with multiple keys: jid, phone@s.whatsapp.net, phone
+    const contactMap = new Map<string, any>();
+    for (const c of contacts ?? []) {
+      if (c.jid) contactMap.set(c.jid, c);
+      if (c.phone) {
+        contactMap.set(c.phone, c);
+        if (!c.phone.includes("@")) contactMap.set(`${c.phone}@s.whatsapp.net`, c);
+      }
+    }
 
     const convs: Conversation[] = [];
     for (const [jid, jidMsgs] of grouped) {
