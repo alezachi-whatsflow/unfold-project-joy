@@ -57,6 +57,7 @@ export default function NexusIntegracoes() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [expandedTenant, setExpandedTenant] = useState<string | null>(null);
+  const [providerModalOpen, setProviderModalOpen] = useState(false);
   const [editProvider, setEditProvider] = useState<Provider | null>(null);
   const [providerForm, setProviderForm] = useState({ name: "", slug: "", base_url: "", admin_token: "", description: "", max_instances: 1000 });
 
@@ -115,7 +116,7 @@ export default function NexusIntegracoes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["whatsapp-providers"] });
-      setEditProvider(null);
+      closeProviderModal();
       toast.success(editProvider ? "Provedor atualizado" : "Provedor criado");
     },
   });
@@ -154,6 +155,13 @@ export default function NexusIntegracoes() {
     setEditProvider(p);
     setProviderForm(p ? { name: p.name, slug: p.slug, base_url: p.base_url, admin_token: p.admin_token || "", description: p.description || "", max_instances: p.max_instances }
       : { name: "", slug: "", base_url: "", admin_token: "", description: "", max_instances: 1000 });
+    setProviderModalOpen(true);
+  };
+
+  const closeProviderModal = () => {
+    setProviderModalOpen(false);
+    setEditProvider(null);
+    setProviderForm({ name: "", slug: "", base_url: "", admin_token: "", description: "", max_instances: 1000 });
   };
 
   return (
@@ -306,7 +314,7 @@ export default function NexusIntegracoes() {
       </div>
 
       {/* ═══ Provider Edit Modal ═══ */}
-      <Dialog open={editProvider !== undefined && editProvider !== null || providerForm.name !== "" && editProvider === null} onOpenChange={(o) => { if (!o) { setEditProvider(null); setProviderForm({ name: "", slug: "", base_url: "", admin_token: "", description: "", max_instances: 1000 }); } }}>
+      <Dialog open={providerModalOpen} onOpenChange={(o) => { if (!o) closeProviderModal(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>{editProvider ? `Editar ${editProvider.name}` : "Novo Provedor"}</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
@@ -318,7 +326,7 @@ export default function NexusIntegracoes() {
             <div><Label>Máx. instâncias</Label><Input type="number" value={providerForm.max_instances} onChange={(e) => setProviderForm({ ...providerForm, max_instances: parseInt(e.target.value) || 0 })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditProvider(null); setProviderForm({ name: "", slug: "", base_url: "", admin_token: "", description: "", max_instances: 1000 }); }}>Cancelar</Button>
+            <Button variant="outline" onClick={closeProviderModal}>Cancelar</Button>
             <Button onClick={() => saveProvider.mutate()} disabled={!providerForm.name || !providerForm.base_url || saveProvider.isPending}>
               {saveProvider.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
               {editProvider ? "Salvar" : "Criar Provedor"}
