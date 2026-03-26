@@ -85,7 +85,8 @@
       "Bash(grep -B 2 -A 10 \"chat_messages.*ADD COLUMN\\\\|ADD COLUMN.*message_type\" supabase/migrations/*.sql)",
       "Bash(grep -A 50 \"meta-send-message\\\\|messenger\\\\|facebook.*page\" supabase/functions/*/index.ts)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy meta-webhook --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy messenger-send --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy messenger-send --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy send-csat --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
     ]
   }
 }

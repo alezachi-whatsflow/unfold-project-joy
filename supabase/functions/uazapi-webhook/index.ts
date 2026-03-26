@@ -413,6 +413,48 @@ Deno.serve(async (req) => {
             saved += 1;
           }
 
+          // ── CSAT detection: if incoming message is 1-5, save as rating ──
+          if (normalized.direction === "incoming" && normalized.body) {
+            const trimmed = String(normalized.body).trim();
+            if (/^[1-5]$/.test(trimmed)) {
+              const rating = parseInt(trimmed);
+              const phone = normalized.remote_jid?.replace(/@.*$/, "");
+              // Check if CSAT was recently sent for this contact
+              const { data: instForCsat } = await supabase
+                .from("whatsapp_instances")
+                .select("tenant_id")
+                .or(`instance_name.eq.${instance},instance_token.eq.${instance}`)
+                .limit(1)
+                .maybeSingle();
+
+              if (instForCsat?.tenant_id) {
+                const { data: recentCsat } = await supabase
+                  .from("conversations")
+                  .select("id, assigned_to")
+                  .eq("tenant_id", instForCsat.tenant_id)
+                  .eq("csat_sent", true)
+                  .is("csat_rating", null)
+                  .limit(1)
+                  .maybeSingle();
+
+                if (recentCsat) {
+                  // Save CSAT rating
+                  await supabase.from("csat_ratings").insert({
+                    tenant_id: instForCsat.tenant_id,
+                    conversation_id: recentCsat.id,
+                    contact_phone: phone,
+                    rating,
+                    channel: "whatsapp",
+                    agent_id: recentCsat.assigned_to,
+                  });
+                  // Update conversation
+                  await supabase.from("conversations").update({ csat_rating: rating }).eq("id", recentCsat.id);
+                  console.log(`uazapi-webhook: CSAT rating ${rating} from ${phone}`);
+                }
+              }
+            }
+          }
+
           // Upsert contact info from incoming messages
           if (normalized.direction === "incoming" && normalized.remote_jid) {
             const contactName = msg?.senderName || msg?.pushName || msg?.verifiedBizName || null;
@@ -528,6 +570,53 @@ Deno.serve(async (req) => {
           .from("whatsapp_instances")
           .update({ ultimo_ping: new Date().toISOString() })
           .or(`instance_name.eq.${instance},instance_token.eq.${instance},session_id.eq.${instance}`);
+
+        // ── Track conversation metrics (first_response_at, claimed_at) ──
+        for (const msg of msgs) {
+          const normalized = normalizeMessage(msg, payload, instance);
+          if (!normalized?.remote_jid || String(normalized.remote_jid).endsWith("@g.us")) continue;
+
+          const isOutgoing = normalized.direction === "outgoing";
+          const jid = normalized.remote_jid;
+
+          // Get tenant_id for this instance
+          const { data: instForMetrics } = await supabase
+            .from("whatsapp_instances")
+            .select("tenant_id")
+            .or(`instance_name.eq.${instance},instance_token.eq.${instance}`)
+            .limit(1)
+            .maybeSingle();
+
+          if (!instForMetrics?.tenant_id) continue;
+
+          // Upsert conversation tracking
+          const now = new Date().toISOString();
+          const convData: Record<string, unknown> = {
+            tenant_id: instForMetrics.tenant_id,
+            channel: "whatsapp",
+            status: "open",
+            last_message_at: now,
+            updated_at: now,
+          };
+
+          if (isOutgoing) {
+            // Agent responded — set first_response_at if not set
+            const { data: existingConv } = await supabase
+              .from("conversations")
+              .select("id, first_response_at, claimed_at")
+              .eq("tenant_id", instForMetrics.tenant_id)
+              .eq("channel", "whatsapp")
+              .limit(1)
+              .maybeSingle();
+
+            if (existingConv) {
+              const updates: Record<string, unknown> = { last_message_at: now };
+              if (!existingConv.first_response_at) updates.first_response_at = now;
+              if (!existingConv.claimed_at) updates.claimed_at = now;
+              await supabase.from("conversations").update(updates).eq("id", existingConv.id);
+            }
+          }
+        }
 
         break;
       }

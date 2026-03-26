@@ -228,10 +228,34 @@ export default function AttendanceMetrics() {
     staleTime: 30000,
   });
 
+  // ── Query 5: CSAT metrics ──
+  const { data: csatMetrics } = useQuery({
+    queryKey: ["attendance-csat", tenantId, period],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const { data } = await supabase
+        .from("csat_ratings")
+        .select("rating, created_at")
+        .eq("tenant_id", tenantId)
+        .gte("created_at", since);
+
+      if (!data || data.length === 0) return { avg: 0, count: 0, distribution: [0, 0, 0, 0, 0] };
+
+      const sum = data.reduce((a, r) => a + r.rating, 0);
+      const distribution = [0, 0, 0, 0, 0];
+      for (const r of data) distribution[r.rating - 1]++;
+
+      return { avg: sum / data.length, count: data.length, distribution };
+    },
+    enabled: !!tenantId,
+    staleTime: 30000,
+  });
+
   const c = convMetrics;
   const m = msgMetrics;
   const s = salesMetrics;
   const a = agentMetrics;
+  const csat = csatMetrics;
 
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 gap-6">
@@ -338,14 +362,47 @@ export default function AttendanceMetrics() {
         </div>
       </div>
 
-      {/* ── SEÇÃO 5: Métricas não disponíveis ── */}
+      {/* ── SEÇÃO 5: CSAT ── */}
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>Satisfação do Cliente (CSAT)</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <MetricCard
+            icon={CheckCircle2}
+            label="CSAT Médio"
+            value={csat?.avg ? `${(csat.avg).toFixed(1)} ⭐` : "—"}
+            color={csat?.avg && csat.avg >= 4 ? "#10b981" : csat?.avg && csat.avg >= 3 ? "#f59e0b" : "#ef4444"}
+            sub={`${csat?.count || 0} avaliações`}
+          />
+          <Card className="p-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <p className="text-[10px] font-medium mb-2" style={{ color: "var(--text-muted)" }}>Distribuição</p>
+            <div className="space-y-1">
+              {["⭐⭐⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐", "⭐⭐", "⭐"].map((stars, i) => {
+                const count = csat?.distribution?.[4 - i] || 0;
+                const total = csat?.count || 1;
+                const pct = (count / total) * 100;
+                return (
+                  <div key={i} className="flex items-center gap-2 text-[10px]">
+                    <span style={{ color: "var(--text-muted)", width: 20 }}>{5 - i}</span>
+                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct > 50 ? "#10b981" : "#f59e0b" }} />
+                    </div>
+                    <span style={{ color: "var(--text-muted)", width: 20, textAlign: "right" }}>{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* ── SEÇÃO 6: Em desenvolvimento ── */}
       <Card className="p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle size={14} style={{ color: "#f59e0b" }} />
           <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Em desenvolvimento</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {["CSAT (Satisfação)", "Multitarefas", "Tempo ocioso", "Primeira resposta resolutiva", "Tempo até primeiro 'sim'", "Índice de reclamações"].map((m) => (
+          {["Multitarefas", "Tempo ocioso", "Primeira resposta resolutiva", "Tempo até primeiro 'sim'", "Índice de reclamações (IA)"].map((m) => (
             <Badge key={m} variant="outline" className="text-[10px]" style={{ color: "var(--text-muted)" }}>{m}</Badge>
           ))}
         </div>
