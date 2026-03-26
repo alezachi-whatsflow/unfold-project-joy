@@ -48,22 +48,6 @@ export function TopNavBar() {
         flexShrink: 0,
       }}
     >
-      {/* Whatsflow logo → Central de Controle */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={() => navigate(`${basePath}/home`)}
-            className="nav-icon-hover"
-            style={{ width: 30, height: 30, border: "none", flexShrink: 0 }}
-          >
-            <img src={whatsflowLogo} alt="Whatsflow" style={{ width: 22, height: 22, borderRadius: 5 }} />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">Central de Controle</TooltipContent>
-      </Tooltip>
-
-      {/* Separator */}
-      <div style={{ width: 1, height: 18, background: "var(--border, #E8E5DF)", margin: "0 8px", flexShrink: 0 }} />
 
       {/* Centered nav items */}
       <div style={{
