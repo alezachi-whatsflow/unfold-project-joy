@@ -32,6 +32,10 @@ export type UazapiInstance = {
   openai_apikey: string | null;
   webhook_url: string;
   ultimo_ping: string | null;
+  last_disconnect: string | null;
+  last_disconnect_reason: string | null;
+  api_created_at: string | null;
+  api_updated_at: string | null;
   label: string;
   session_id: string;
   provedor: string;
@@ -116,7 +120,7 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
           </div>
 
           {/* Compact info row */}
-          <div style={{ display: "flex", gap: 12, fontSize: 11, color: "var(--text-secondary)" }}>
+          <div style={{ display: "flex", gap: 12, fontSize: 11, color: "var(--text-secondary)", flexWrap: "wrap" }}>
             <span>{instance.current_presence === "available" ? "🟢 Online" : "⚪ Offline"}</span>
             <span>{instance.chatbot_enabled ? "🤖 Bot ativo" : "🤖 Inativo"}</span>
             <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>
@@ -124,6 +128,24 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
                 ? formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })
                 : "—"}
             </span>
+          </div>
+
+          {/* Connection/Disconnection info */}
+          <div style={{ display: "flex", gap: 12, fontSize: 10, color: "var(--text-muted)", flexWrap: "wrap" }}>
+            {instance.api_created_at && (
+              <span>📅 Criado: {new Date(instance.api_created_at).toLocaleDateString("pt-BR")}</span>
+            )}
+            {instance.status === "connected" && instance.ultimo_ping && (
+              <span style={{ color: "var(--inbox-active-color, #0E8A5C)" }}>
+                ✅ Conectado {formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })}
+              </span>
+            )}
+            {instance.last_disconnect && (
+              <span style={{ color: instance.status === "disconnected" ? "#ef4444" : "var(--text-muted)" }}>
+                ⚠️ Última desconexão: {new Date(instance.last_disconnect).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                {instance.last_disconnect_reason && ` (${instance.last_disconnect_reason})`}
+              </span>
+            )}
           </div>
 
           {/* Actions by status */}
