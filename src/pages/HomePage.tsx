@@ -7,6 +7,7 @@ import {
   PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
   Users, Package, ShoppingCart, MessageSquare, LayoutDashboard, Radar,
   FileBarChart, Settings, Rocket, Bell, Menu, X, Plug,
+  BarChart3, Brain, Puzzle, CreditCard,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
@@ -67,21 +68,31 @@ export default function HomePage() {
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "Usuário";
 
-  /* dock items */
+  /* dock items — menu completo */
   const dock: DockItem[] = useMemo(() => [
+    // Financeiro
     { icon: PenLine, label: "Inserir Dados", route: "/input", group: 1 },
     { icon: TrendingUp, label: "Receitas", route: "/revenue", group: 1 },
     { icon: DollarSign, label: "Despesas", route: "/expenses", group: 1 },
     { icon: Receipt, label: "Cobranças", route: "/cobrancas", badge: pendingCount, group: 1 },
     { icon: FileText, label: "Fiscal", route: "/fiscal", group: 1 },
     { icon: UserCheck, label: "Comissões", route: "/comissoes", group: 1 },
+    // Clientes & Produtos
     { icon: Users, label: "Clientes", route: "/customers", group: 2 },
     { icon: Package, label: "Produtos", route: "/products", group: 2 },
     { icon: ShoppingCart, label: "Vendas", route: "/vendas", group: 2 },
-    { icon: MessageSquare, label: "Caixa de Entrada", route: "/whatsapp", group: 2 },
+    { icon: MessageSquare, label: "Caixa de Entrada", route: "/mensageria", group: 2 },
+    // Analytics
     { icon: LayoutDashboard, label: "Dashboard", route: "/dashboard", group: 3 },
+    { icon: BarChart3, label: "Analytics", route: "/analytics", group: 3 },
     { icon: Radar, label: "Int. Digital", route: "/intelligence", group: 3 },
     { icon: FileBarChart, label: "Relatórios", route: "/reports", group: 3 },
+    { icon: Brain, label: "IA Composable", route: "/ia", group: 3 },
+    // Sistema
+    { icon: Users, label: "Usuários", route: "/usuarios", group: 4 },
+    { icon: Settings, label: "Configurações", route: "/settings", group: 4 },
+    { icon: Puzzle, label: "Integrações", route: "/integracoes", group: 4 },
+    { icon: CreditCard, label: "Assinatura", route: "/assinatura", group: 4 },
   ], [pendingCount]);
 
   const finLinks = [
@@ -97,7 +108,7 @@ export default function HomePage() {
     { icon: Users, label: "Clientes", route: "/customers" },
     { icon: Package, label: "Produtos", route: "/products" },
     { icon: ShoppingCart, label: "Vendas", route: "/vendas" },
-    { icon: MessageSquare, label: "Caixa de Entrada", route: "/whatsapp" },
+    { icon: MessageSquare, label: "Caixa de Entrada", route: "/mensageria" },
   ];
 
   const analyticsLinks = [
