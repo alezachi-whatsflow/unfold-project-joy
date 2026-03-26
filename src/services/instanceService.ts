@@ -30,18 +30,27 @@ export const instanceService = {
    */
   create: async (params: {
     name: string;
+    tenantId: string;
     systemName?: string;
     adminField01?: string;
     adminField02?: string;
   }) => {
-    const result = await callProxy("/instance/init", "POST", params);
+    const result = await callProxy("/instance/init", "POST", {
+      name: params.name,
+      systemName: params.systemName || "whatsflow",
+      adminField01: params.adminField01,
+      adminField02: params.adminField02,
+    });
     const inst = result?.instance || {};
     const instanceToken = result?.token;
+    const instanceName = result?.name ?? params.name;
 
     if (instanceToken) {
+      // 1. Save instance to DB with tenant_id
       await supabase.from("whatsapp_instances").upsert(
         {
-          instance_name: result.name ?? params.name,
+          tenant_id: params.tenantId,
+          instance_name: instanceName,
           instance_token: instanceToken,
           status: inst.status ?? "disconnected",
           qr_code: inst.qrcode ?? null,
@@ -50,7 +59,7 @@ export const instanceService = {
           profile_pic_url: inst.profilePicUrl ?? null,
           is_business: inst.isBusiness ?? false,
           platform: inst.plataform ?? null,
-          system_name: inst.systemName ?? "uazapiGO",
+          system_name: inst.systemName ?? "whatsflow",
           owner_email: inst.owner ?? null,
           current_presence: inst.currentPresence ?? "available",
           chatbot_enabled: inst.chatbot_enabled ?? false,
@@ -60,30 +69,32 @@ export const instanceService = {
           openai_apikey: inst.openai_apikey ?? null,
           api_created_at: inst.created ?? null,
           api_updated_at: inst.updated ?? null,
-          // Campos legados
-          label: result.name ?? params.name,
-          session_id: result.name ?? params.name,
+          label: instanceName,
+          session_id: instanceName,
           provedor: "uazapi",
           token_api: instanceToken,
         },
         { onConflict: "session_id" }
       );
 
-      // Configurar webhook automaticamente
+      // 2. Configure webhook automatically (addUrlEvents: false!)
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
       const webhookUrl = `${supabaseUrl}/functions/v1/uazapi-webhook`;
 
       try {
         await callProxy("/webhook", "POST", {
           url: webhookUrl,
-          events: ["connection", "messages", "messages_update", "leads", "history"],
-          excludeMessages: ["wasSentByApi"],
-        }, result.name ?? params.name);
+          enabled: true,
+          addUrlEvents: false,
+          addUrlTypesMessages: false,
+          events: ["connection", "messages", "messages.upsert", "messages_update", "messages.update", "message_ack", "ack", "leads", "status", "history"],
+          excludeMessages: [],
+        }, instanceName);
 
         await supabase
           .from("whatsapp_instances")
           .update({ webhook_url: webhookUrl })
-          .eq("instance_name", result.name ?? params.name);
+          .eq("instance_name", instanceName);
       } catch (e) {
         console.warn("Webhook setup failed, continuing:", e);
       }

@@ -8,9 +8,11 @@ import InstanceCard, { type UazapiInstance } from "./InstanceCard";
 import UazapiQRCodeModal from "./UazapiQRCodeModal";
 import { supabase } from "@/integrations/supabase/client";
 import { instanceService } from "@/services/instanceService";
+import { useTenantId } from "@/hooks/useTenantId";
 import { toast } from "sonner";
 
 export default function UazapiInstancesTab() {
+  const tenantId = useTenantId();
   const [instances, setInstances] = useState<UazapiInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -79,8 +81,9 @@ export default function UazapiInstancesTab() {
     }
     setCreating(true);
     try {
-      await instanceService.create({ name: newName.trim() });
-      toast.success("Instância criada! Configure o webhook e conecte via QR Code.");
+      if (!tenantId) { toast.error("Tenant não encontrado."); return; }
+      await instanceService.create({ name: newName.trim(), tenantId });
+      toast.success("Instância criada! Clique em Conectar para escanear o QR Code.");
       setShowCreate(false);
       setNewName("");
       fetchInstances();
