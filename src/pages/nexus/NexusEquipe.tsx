@@ -73,6 +73,21 @@ export default function NexusEquipe() {
     loadUsers();
   }
 
+  async function deleteMember(member: any) {
+    if (!confirm(`Excluir permanentemente "${member.name}" da equipe Nexus?`)) return;
+    const { error } = await supabase.from('nexus_users').delete().eq('id', member.id);
+    if (error) {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+      return;
+    }
+    await supabase.from('nexus_audit_logs').insert({
+      actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
+      action: 'team_member_delete', target_entity: member.name,
+    });
+    toast({ title: 'Membro excluído permanentemente' });
+    loadUsers();
+  }
+
   const activeCount = users.filter(u => u.is_active && u.last_login).length;
   const pendingCount = users.filter(u => !u.last_login && u.invite_sent_at).length;
   const inactiveCount = users.filter(u => !u.is_active).length;
@@ -122,7 +137,7 @@ export default function NexusEquipe() {
               }}
               onDelete={(id) => {
                 const u = users.find(x => x.id === id);
-                if (u) toggleActive(u);
+                if (u) deleteMember(u);
               }}
             />
           ))}

@@ -76,7 +76,8 @@
       "Bash(ls \"f:/WFW New/supabase/migrations/\"*missing_rls*)",
       "Bash(ls \"f:/WFW New/supabase/migrations/\"*all_phases*)",
       "Bash(grep -A 5 \"CREATE TABLE.*group\" ./supabase/migrations/*.sql -i)",
-      "Bash(grep -A 20 \"CREATE TABLE.*whatsapp_groups\\\\|CREATE TABLE.*group_members\\\\|CREATE TABLE.*group_scheduled\\\\|CREATE TABLE.*group_moderation\" ./supabase/migrations/*.sql)"
+      "Bash(grep -A 20 \"CREATE TABLE.*whatsapp_groups\\\\|CREATE TABLE.*group_members\\\\|CREATE TABLE.*group_scheduled\\\\|CREATE TABLE.*group_moderation\" ./supabase/migrations/*.sql)",
+      "Bash(ls \"f:/WFW New/src/pages/nexus/\"*quipe* \"f:/WFW New/src/pages/nexus/\"*quip* \"f:/WFW New/src/pages/nexus/\"*Team*)"
     ]
   }
 }
