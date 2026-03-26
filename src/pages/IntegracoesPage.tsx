@@ -21,6 +21,12 @@ import { callAsaasProxy } from "@/lib/asaasQueries";
 const IntegracoesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedSection, setExpandedSection] = useState<string | null>("uazapi");
+
+  // Telegram state
+  const [tgToken, setTgToken] = useState("");
+  const [tgSaving, setTgSaving] = useState(false);
+  const [tgIntegration, setTgIntegration] = useState<any>(null);
+  const [tgStep, setTgStep] = useState<"form" | "connected">("form");
   const [mlConnecting, setMlConnecting] = useState(false);
   const [mlStep, setMlStep] = useState<"credentials" | "auth" | "connected">("credentials");
   const [mlForm, setMlForm] = useState({ appId: "", clientSecret: "" });
@@ -71,6 +77,70 @@ const IntegracoesPage = () => {
   };
 
   useEffect(() => { loadWebhooks(); }, [environment]);
+
+  // Load existing Telegram integration
+  useEffect(() => {
+    if (!tenantId) return;
+    supabase.from("channel_integrations")
+      .select("id, bot_token, bot_username, name, status")
+      .eq("tenant_id", tenantId)
+      .eq("provider", "TELEGRAM")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && data.status === "active") {
+          setTgIntegration(data);
+          setTgStep("connected");
+        }
+      });
+  }, [tenantId]);
+
+  const saveTelegramBot = async () => {
+    if (!tgToken.trim()) { toast.error("Informe o Bot Token"); return; }
+    if (!tenantId) { toast.error("Tenant não identificado"); return; }
+    setTgSaving(true);
+    try {
+      // 1. Validate token by calling Telegram getMe
+      const meRes = await fetch(`https://api.telegram.org/bot${tgToken.trim()}/getMe`);
+      const me = await meRes.json();
+      if (!me.ok) throw new Error(me.description || "Token inválido");
+
+      const botUsername = me.result?.username || "";
+      const botName = me.result?.first_name || `Bot @${botUsername}`;
+      const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co"}/functions/v1/telegram-webhook?token=${encodeURIComponent(tgToken.trim())}`;
+
+      // 2. Save to DB
+      const { error } = await supabase.from("channel_integrations").upsert({
+        tenant_id: tenantId,
+        provider: "TELEGRAM",
+        channel_id: `tg_${me.result?.id}`,
+        name: botName,
+        bot_token: tgToken.trim(),
+        bot_username: botUsername,
+        webhook_url: webhookUrl,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "channel_id" });
+      if (error) throw error;
+
+      // 3. Auto-register webhook on Telegram
+      const whRes = await fetch(`https://api.telegram.org/bot${tgToken.trim()}/setWebhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: webhookUrl }),
+      });
+      const whResult = await whRes.json();
+      if (!whResult.ok) console.warn("Webhook registration warning:", whResult.description);
+
+      setTgIntegration({ bot_username: botUsername, name: botName, status: "active" });
+      setTgStep("connected");
+      setTgToken("");
+      toast.success(`Bot @${botUsername} conectado! Webhook configurado automaticamente.`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar");
+    } finally {
+      setTgSaving(false);
+    }
+  };
 
   // Handle OAuth callbacks (Meta + ML)
   useEffect(() => {
@@ -487,6 +557,89 @@ const IntegracoesPage = () => {
           )}
         </Card>
 
+        {/* Telegram */}
+        <Card
+          style={{
+            border: expandedSection === "telegram" ? "1px solid rgba(34,158,217,0.4)" : "1px solid var(--border)",
+            background: "var(--bg-card)", borderRadius: 12, overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("telegram")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "telegram" ? "rgba(34,158,217,0.06)" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <ChannelIcon channel="telegram" size="lg" variant="icon" />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Telegram Bot</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Conecte seu bot via BotFather para roteamento centralizado</p>
+            </div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: expandedSection === "telegram" ? "#229ED9" : "var(--border)" }} />
+          </button>
+          {expandedSection === "telegram" && (
+            <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)" }}>
+              {tgStep === "connected" ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 8, background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.2)" }}>
+                  <ChannelIcon channel="telegram" size="md" variant="rounded" />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{tgIntegration?.name || "Telegram Bot"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>@{tgIntegration?.bot_username} · Webhook ativo</p>
+                  </div>
+                  <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 999, background: "#10b98120", color: "#10b981", fontWeight: 600 }}>Conectado</span>
+                </div>
+              ) : (
+                <div style={{ maxWidth: 400, margin: "0 auto" }}>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, textAlign: "center" }}>
+                    Insira o token gerado pelo{" "}
+                    <a href="https://t.me/BotFather" target="_blank" rel="noopener" style={{ color: "#229ED9", textDecoration: "underline" }}>@BotFather</a>
+                    {" "}no Telegram.
+                  </p>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>Bot Token</label>
+                    <input
+                      value={tgToken}
+                      onChange={(e) => setTgToken(e.target.value)}
+                      placeholder="Ex: 123456789:AABBccDDee..."
+                      type="password"
+                      style={{
+                        width: "100%", padding: "10px 12px", borderRadius: 0, fontSize: 13, fontFamily: "monospace",
+                        border: "1px solid var(--border)", background: "var(--bg-input, var(--bg-card))",
+                        color: "var(--text-primary)", outline: "none",
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={saveTelegramBot}
+                    disabled={tgSaving || !tgToken.trim()}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      width: "100%", padding: "10px", borderRadius: 0, cursor: "pointer",
+                      border: "none",
+                      background: !tgToken.trim() ? "var(--border)" : "#000000",
+                      color: !tgToken.trim() ? "var(--text-muted)" : "#FFFFFF",
+                      fontSize: 13, fontWeight: 600,
+                      opacity: tgSaving ? 0.6 : 1,
+                    }}
+                  >
+                    {tgSaving && <Loader2 size={14} className="animate-spin" />}
+                    Salvar Token
+                  </button>
+
+                  <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 12, textAlign: "center" }}>
+                    O webhook será configurado automaticamente após salvar.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+
         {/* Future */}
         <Card style={{ border: "1px solid var(--border)", background: "var(--bg-card)", borderRadius: 12, opacity: 0.6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px" }}>
@@ -495,7 +648,7 @@ const IntegracoesPage = () => {
             </div>
             <div>
               <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Mais integrações em breve</p>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Telegram, Email, Zapier, n8n, Make e mais</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Email, Zapier, n8n, Make e mais</p>
             </div>
           </div>
         </Card>
