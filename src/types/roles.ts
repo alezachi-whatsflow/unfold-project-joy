@@ -24,4 +24,8 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   representante: '#fb923c',  // laranja
 };
 
+// All roles (including superadmin for internal use)
 export const ALL_ROLES: UserRole[] = ['superadmin', 'admin', 'gestor', 'financeiro', 'consultor', 'representante'];
+
+// Roles available for client portal assignment (no superadmin)
+export const CLIENT_ROLES: UserRole[] = ['admin', 'gestor', 'financeiro', 'consultor', 'representante'];

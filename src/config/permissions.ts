@@ -183,25 +183,25 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
   },
 
   representante: {
-    dashboard:      viewOnly,
-    vendas:         { view: true, create: true, edit: true, delete: false, export: false },
-    cobrancas:      noAccess,
-    comissoes:      viewOnly,
-    receitas:       noAccess,
+    dashboard:      viewOnly,                                                         // Vê seus KPIs
+    vendas:         { view: true, create: true, edit: true, delete: false, export: true }, // Gerencia seus negócios
+    cobrancas:      viewOnly,                                                         // Vê cobranças dos seus clientes
+    comissoes:      { view: true, create: false, edit: false, delete: false, export: true }, // Vê e exporta suas comissões
+    receitas:       viewOnly,                                                         // Vê receitas dos seus negócios
     despesas:       noAccess,
-    clientes:       { view: true, create: true, edit: false, delete: false, export: false },
-    produtos:       viewOnly,
+    clientes:       { view: true, create: true, edit: true, delete: false, export: true },  // Gerencia seus clientes
+    produtos:       viewOnly,                                                         // Consulta catálogo
     fiscal:         noAccess,
     intelligence:   noAccess,
-    relatorios:     viewOnly,
+    relatorios:     { view: true, create: false, edit: false, delete: false, export: true }, // Vê e exporta relatórios
     configuracoes:  noAccess,
     usuarios:       noAccess,
     inserir_dados:  { view: true, create: true, edit: false, delete: false, export: false },
-    mensageria:     noAccess,
-    caixa_entrada:  noAccess,
+    mensageria:     viewOnly,                                                         // Vê mensagens dos seus leads
+    caixa_entrada:  viewOnly,                                                         // Vê conversas atribuídas a ele
     integracoes:    noAccess,
     ia_composable:  noAccess,
     assinatura:     noAccess,
-    analytics:      noAccess,
+    analytics:      viewOnly,                                                         // Vê analytics dos seus dados
   },
 };
