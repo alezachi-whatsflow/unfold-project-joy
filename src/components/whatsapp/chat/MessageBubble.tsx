@@ -13,13 +13,16 @@ function nameColor(name: string): string {
   return colors[Math.abs(h) % colors.length];
 }
 
-// Format timestamp: "23/03/2026 07:37"
+// Format timestamp: returns as-is if already formatted (DD/MM/YYYY HH:MM)
+// or parses ISO dates into that format
 function formatMsgTime(ts: string): string {
   if (!ts) return "";
-  // ts can be "2026-03-23 07:37" or "2026-03-23T07:37:00Z" or just "07:37"
+  // Already formatted as "DD/MM/YYYY HH:MM" — return as-is
+  if (/^\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}$/.test(ts)) return ts;
+  // Try parsing ISO format
   try {
-    const d = new Date(ts.replace(" ", "T"));
-    if (isNaN(d.getTime())) return ts.split(" ")[1] || ts;
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return ts;
     const dd = String(d.getDate()).padStart(2, "0");
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const yyyy = d.getFullYear();
@@ -27,7 +30,7 @@ function formatMsgTime(ts: string): string {
     const min = String(d.getMinutes()).padStart(2, "0");
     return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
   } catch {
-    return ts.split(" ")[1] || ts;
+    return ts;
   }
 }
 
