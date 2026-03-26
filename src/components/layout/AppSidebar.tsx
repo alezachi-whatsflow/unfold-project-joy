@@ -95,8 +95,29 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const roleColor = ROLE_COLORS[userRole] || '#888';
   const isCollapsed = collapsed && !isMobile;
-  const emailDomain = user?.email?.split('@')[1];
-  const companyName = emailDomain ? emailDomain.split('.')[0].charAt(0).toUpperCase() + emailDomain.split('.')[0].slice(1) : '';
+
+  // Fetch tenant/company name
+  const { data: tenantName } = useQuery({
+    queryKey: ["user-tenant-name", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return "";
+      const { data: ut } = await supabase
+        .from("user_tenants")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (!ut?.tenant_id) return "";
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("name")
+        .eq("id", ut.tenant_id)
+        .maybeSingle();
+      return tenant?.name || "";
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+  });
 
   // Check if user has Nexus access
   const { data: isNexusUser } = useQuery({
@@ -130,6 +151,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
               <div className="min-w-0 text-left flex-1">
                 <p className="text-xs font-semibold truncate text-foreground">{userName}</p>
                 <p className="text-[10px] truncate" style={{ color: roleColor }}>{ROLE_LABELS[userRole] || userRole}</p>
+                {tenantName && <p className="text-[9px] truncate text-muted-foreground">{tenantName}</p>}
               </div>
             )}
           </button>
