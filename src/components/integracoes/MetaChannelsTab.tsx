@@ -4,8 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Instagram, CheckCircle2, XCircle, Clock, Trash2, RefreshCw, ExternalLink, Phone, Hash } from "lucide-react";
+import { Loader2, MessageSquare, Instagram, CheckCircle2, XCircle, Clock, Trash2, RefreshCw, ExternalLink, Phone, Hash, Facebook } from "lucide-react";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
   active: { label: "Ativo", color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", icon: CheckCircle2 },
@@ -17,9 +20,41 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 export default function MetaChannelsTab() {
   const { data: integrations = [], isLoading, tenantId, invalidate } = useChannelIntegrations();
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [messengerModalOpen, setMessengerModalOpen] = useState(false);
+  const [messengerForm, setMessengerForm] = useState({ pageId: "", pageToken: "", pageName: "" });
+  const [savingMessenger, setSavingMessenger] = useState(false);
 
   const whatsappIntegrations = integrations.filter(i => i.provider === "WABA");
   const instagramIntegrations = integrations.filter(i => i.provider === "INSTAGRAM");
+  const messengerIntegrations = integrations.filter(i => i.provider === "MESSENGER");
+
+  async function saveMessengerConnection() {
+    if (!tenantId) { toast.error("Tenant não identificado"); return; }
+    if (!messengerForm.pageId || !messengerForm.pageToken) { toast.error("Preencha todos os campos"); return; }
+    setSavingMessenger(true);
+    try {
+      const { error } = await supabase.from("channel_integrations").upsert({
+        tenant_id: tenantId,
+        provider: "MESSENGER",
+        facebook_page_id: messengerForm.pageId,
+        page_access_token: messengerForm.pageToken,
+        page_name: messengerForm.pageName || `Página ${messengerForm.pageId}`,
+        name: messengerForm.pageName || `Messenger ${messengerForm.pageId}`,
+        access_token: messengerForm.pageToken,
+        status: "active",
+        channel_id: `messenger_${messengerForm.pageId}`,
+      }, { onConflict: "channel_id" });
+      if (error) throw error;
+      toast.success("Facebook Messenger conectado com sucesso!");
+      setMessengerModalOpen(false);
+      setMessengerForm({ pageId: "", pageToken: "", pageName: "" });
+      invalidate();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar conexão");
+    } finally {
+      setSavingMessenger(false);
+    }
+  }
 
   async function startOAuth(provider: "WABA" | "INSTAGRAM") {
     if (!tenantId) { toast.error("Tenant não identificado"); return; }
@@ -152,6 +187,81 @@ export default function MetaChannelsTab() {
           </div>
         )}
       </section>
+
+      {/* ═══ FACEBOOK MESSENGER ═══ */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <Facebook className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">Facebook Messenger</h2>
+              <p className="text-xs text-muted-foreground">Receba e responda mensagens da sua Página do Facebook diretamente no sistema</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setMessengerModalOpen(true)}
+            variant="outline"
+            className="border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+          >
+            <Facebook className="h-4 w-4 mr-2" />
+            Conectar Messenger
+          </Button>
+        </div>
+
+        {messengerIntegrations.length === 0 ? (
+          <Card className="p-6 text-center">
+            <Facebook className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground">Nenhuma página do Facebook conectada</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Conecte sua Página do Facebook para receber mensagens do Messenger</p>
+          </Card>
+        ) : (
+          <div className="grid gap-3">
+            {messengerIntegrations.map(i => (
+              <IntegrationCard key={i.id} integration={i} onToggle={toggleStatus} onDelete={deleteIntegration} onReconnect={() => setMessengerModalOpen(true)} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ═══ MESSENGER CONNECTION MODAL ═══ */}
+      <Dialog open={messengerModalOpen} onOpenChange={setMessengerModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Facebook className="h-5 w-5 text-blue-500" /> Conectar Facebook Messenger
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <Label>Nome da Página (opcional)</Label>
+              <Input placeholder="Ex: Minha Empresa" value={messengerForm.pageName} onChange={(e) => setMessengerForm({ ...messengerForm, pageName: e.target.value })} />
+            </div>
+            <div>
+              <Label>ID da Página (Page ID) *</Label>
+              <Input placeholder="Ex: 123456789012345" value={messengerForm.pageId} onChange={(e) => setMessengerForm({ ...messengerForm, pageId: e.target.value })} />
+              <p className="text-[10px] text-muted-foreground mt-1">Encontre em: Página do Facebook → Configurações → Sobre → ID da página</p>
+            </div>
+            <div>
+              <Label>Token de Acesso (Page Access Token) *</Label>
+              <Input type="password" placeholder="EAAx..." value={messengerForm.pageToken} onChange={(e) => setMessengerForm({ ...messengerForm, pageToken: e.target.value })} />
+              <p className="text-[10px] text-muted-foreground mt-1">Gere em: developers.facebook.com → Seu App → Messenger → Configurações</p>
+            </div>
+            <div className="rounded-lg p-3 text-xs" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.25)" }}>
+              Após salvar, configure o webhook da sua página apontando para:<br />
+              <code className="text-[10px] font-mono">https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/meta-webhook</code>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessengerModalOpen(false)}>Cancelar</Button>
+            <Button onClick={saveMessengerConnection} disabled={!messengerForm.pageId || !messengerForm.pageToken || savingMessenger} className="bg-blue-500 hover:bg-blue-600 text-white gap-1">
+              {savingMessenger && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Salvar Conexão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -171,14 +281,20 @@ function IntegrationCard({
   const status = STATUS_CONFIG[i.status] || STATUS_CONFIG.pending;
   const StatusIcon = status.icon;
   const isWhatsApp = i.provider === "WABA";
+  const isMessenger = i.provider === "MESSENGER";
+  const isInstagram = i.provider === "INSTAGRAM";
 
   return (
     <Card className="p-4">
       <div className="flex items-center gap-4">
         {/* Icon */}
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isWhatsApp ? "bg-[#25D366]/10" : "bg-gradient-to-br from-purple-500/20 to-pink-500/20"}`}>
-          {isWhatsApp
-            ? <MessageSquare className="h-5 w-5 text-[#25D366]" />
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+          isWhatsApp ? "bg-[#25D366]/10" :
+          isMessenger ? "bg-blue-500/10" :
+          "bg-gradient-to-br from-purple-500/20 to-pink-500/20"
+        }`}>
+          {isWhatsApp ? <MessageSquare className="h-5 w-5 text-[#25D366]" />
+            : isMessenger ? <Facebook className="h-5 w-5 text-blue-500" />
             : <Instagram className="h-5 w-5 text-pink-400" />}
         </div>
 
@@ -202,6 +318,15 @@ function IntegrationCard({
                 )}
                 {i.waba_id && (
                   <span className="flex items-center gap-1">WABA: {i.waba_id}</span>
+                )}
+              </>
+            ) : isMessenger ? (
+              <>
+                {i.facebook_page_id && (
+                  <span className="flex items-center gap-1"><Hash className="h-3 w-3" /> Page: {i.facebook_page_id}</span>
+                )}
+                {(i as any).page_name && (
+                  <span className="flex items-center gap-1">{(i as any).page_name}</span>
                 )}
               </>
             ) : (
