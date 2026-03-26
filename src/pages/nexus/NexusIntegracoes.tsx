@@ -74,7 +74,7 @@ export default function NexusIntegracoes() {
   const { data: instances = [], isLoading, refetch } = useQuery({
     queryKey: ["nexus-all-instances"],
     queryFn: async () => {
-      const { data } = await supabase.from("whatsapp_instances").select("*, tenants!inner(name)").order("status");
+      const { data } = await supabase.from("whatsapp_instances").select("*, tenants(name)").order("status");
       return (data || []).map((d: any) => ({ ...d, tenant_name: d.tenants?.name || "—" })) as InstanceRow[];
     },
   });
@@ -83,7 +83,7 @@ export default function NexusIntegracoes() {
   const { data: channels = [] } = useQuery({
     queryKey: ["nexus-all-channels"],
     queryFn: async () => {
-      const { data } = await supabase.from("channel_integrations").select("*, tenants!inner(name)").order("created_at", { ascending: false });
+      const { data } = await supabase.from("channel_integrations").select("*, tenants(name)").order("created_at", { ascending: false });
       return (data || []).map((d: any) => ({ ...d, tenant_name: d.tenants?.name || "—" })) as ChannelRow[];
     },
   });
