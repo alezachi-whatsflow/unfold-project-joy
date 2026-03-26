@@ -18,19 +18,19 @@ import { useQuery } from '@tanstack/react-query';
 import whatsflowLogo from '@/assets/whatsflow-logo.png';
 
 const ALL_NAV_ITEMS = [
-  { id: 'dashboard',      label: 'Dashboard',     icon: IconDashboard, path: '/nexus',                  end: true },
-  { id: 'licencas',       label: 'Licenças',       icon: IconDocuments, path: '/nexus/licencas' },
-  { id: 'whitelabels',    label: 'WhiteLabels',    icon: Globe,         path: '/nexus/whitelabels' },
-  { id: 'checkouts',      label: 'Checkouts',      icon: ShoppingCart,  path: '/nexus/checkouts' },
-  { id: 'financeiro',     label: 'Financeiro',     icon: IconFinance,   path: '/nexus/financeiro' },
-  { id: 'equipe',         label: 'Equipe',         icon: IconClients,   path: '/nexus/equipe' },
-  { id: 'auditoria',      label: 'Auditoria',      icon: IconReports,   path: '/nexus/auditoria' },
-  { id: 'flags',          label: 'Feature Flags',  icon: IconSettings,  path: '/nexus/flags' },
-  { id: 'tickets',        label: 'Tickets',        icon: IconMessages,  path: '/nexus/tickets' },
-  { id: 'lifecycle',      label: 'Lifecycle de Dados', icon: DatabaseZap, path: '/nexus/lifecycle' },
-  { id: 'ia',             label: 'I.A. Config',    icon: IconSettings,  path: '/nexus/ia' },
-  { id: 'configuracoes',  label: 'Configurações',  icon: IconSettings,  path: '/nexus/configuracoes' },
-  { id: 'integracoes',    label: 'Integrações',    icon: Wifi,          path: '/nexus/configuracoes/integracoes' },
+  { id: 'dashboard',      label: 'Dashboard',      icon: IconDashboard, path: '/nexus',                  end: true },
+  { id: 'licencas',       label: 'Licenças',        icon: IconDocuments, path: '/nexus/licencas' },
+  { id: 'integracoes',    label: 'Integrações',     icon: Wifi,          path: '/nexus/configuracoes/integracoes' },
+  { id: 'whitelabels',    label: 'WhiteLabels',     icon: Globe,         path: '/nexus/whitelabels' },
+  { id: 'checkouts',      label: 'Checkouts',       icon: ShoppingCart,  path: '/nexus/checkouts' },
+  { id: 'financeiro',     label: 'Financeiro',      icon: IconFinance,   path: '/nexus/financeiro' },
+  { id: 'equipe',         label: 'Equipe',          icon: IconClients,   path: '/nexus/equipe' },
+  { id: 'auditoria',      label: 'Auditoria',       icon: IconReports,   path: '/nexus/auditoria' },
+  { id: 'flags',          label: 'Feature Flags',   icon: IconSettings,  path: '/nexus/flags' },
+  { id: 'tickets',        label: 'Tickets',         icon: IconMessages,  path: '/nexus/tickets' },
+  { id: 'lifecycle',      label: 'Lifecycle',        icon: DatabaseZap,   path: '/nexus/lifecycle' },
+  { id: 'ia',             label: 'I.A. Config',     icon: IconSettings,  path: '/nexus/ia' },
+  { id: 'configuracoes',  label: 'Configurações',   icon: IconSettings,  path: '/nexus/configuracoes' },
 ];
 
 const NAV_BY_ROLE: Record<NexusRole, string[]> = {
