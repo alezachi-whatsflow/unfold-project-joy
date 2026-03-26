@@ -79,7 +79,13 @@
       "Bash(grep -A 20 \"CREATE TABLE.*whatsapp_groups\\\\|CREATE TABLE.*group_members\\\\|CREATE TABLE.*group_scheduled\\\\|CREATE TABLE.*group_moderation\" ./supabase/migrations/*.sql)",
       "Bash(ls \"f:/WFW New/src/pages/nexus/\"*quipe* \"f:/WFW New/src/pages/nexus/\"*quip* \"f:/WFW New/src/pages/nexus/\"*Team*)",
       "Bash(npm run:*)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy uazapi-proxy --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy uazapi-proxy --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Bash(grep -B 5 -A 20 \"ALTER TABLE public.chat_messages\" \"/f/WFW New\"/supabase/migrations/*.sql)",
+      "Bash(grep -B 5 -A 20 \"ALTER TABLE public.chat_messages\" supabase/migrations/*.sql)",
+      "Bash(grep -B 2 -A 10 \"chat_messages.*ADD COLUMN\\\\|ADD COLUMN.*message_type\" supabase/migrations/*.sql)",
+      "Bash(grep -A 50 \"meta-send-message\\\\|messenger\\\\|facebook.*page\" supabase/functions/*/index.ts)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy meta-webhook --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy messenger-send --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
     ]
   }
 }
