@@ -88,21 +88,20 @@ export function TopNavBar() {
           return (
             <span key={item.route} style={{ display: "flex", alignItems: "center" }}>
               {showSep && <div style={{ width: 1, height: 18, background: "var(--border, #E8E5DF)", margin: "0 6px", flexShrink: 0 }} />}
-              <button
-                onClick={() => navigate(fullRoute)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 4,
-                  padding: "4px 8px", borderRadius: 6, border: "none", cursor: "pointer",
-                  fontSize: 11, fontWeight: isActive ? 600 : 400,
-                  whiteSpace: "nowrap",
-                  background: isActive ? "var(--inbox-active-bg, rgba(14,138,92,0.08))" : "transparent",
-                  color: isActive ? "var(--inbox-active-color, #0E8A5C)" : "var(--text-muted, #A09888)",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <Icon size={12} />
-                {item.label}
-              </button>
+              <div className="relative" style={{ display: "inline-flex" }}>
+                <button
+                  onClick={() => navigate(fullRoute)}
+                  className={`nav-icon-hover ${isActive ? "active" : ""}`}
+                  style={{
+                    padding: "4px 8px", border: "none",
+                    gap: 4, fontSize: 11, fontWeight: isActive ? 600 : 400,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <Icon size={13} />
+                  {item.label}
+                </button>
+              </div>
             </span>
           );
         })}

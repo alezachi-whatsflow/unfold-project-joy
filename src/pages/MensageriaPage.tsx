@@ -83,32 +83,37 @@ const MensageriaPage = () => {
     const Icon = item.icon;
     const isActive = activeTab === item.id;
 
-    const btn = (
-      <button
-        onClick={() => setActiveTab(item.id)}
-        className={cn(
-          "flex items-center gap-3 w-full rounded-lg transition-all duration-150",
-          expanded ? "px-3 py-2" : "justify-center py-2.5",
-          isActive
-            ? "bg-primary/12 text-primary border-l-2 border-primary"
-            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-l-2 border-transparent"
-        )}
-      >
-        <Icon size={18} className="shrink-0" />
-        {expanded && <span className="text-xs font-medium truncate">{item.label}</span>}
-      </button>
-    );
-
     if (!expanded) {
+      // Collapsed: icon with scale effect + tooltip
       return (
-        <Tooltip>
-          <TooltipTrigger asChild>{btn}</TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
-        </Tooltip>
+        <div className="relative flex justify-center">
+          <button
+            onClick={() => setActiveTab(item.id)}
+            className={`nav-icon-hover ${isActive ? "active" : ""}`}
+            style={{ width: 38, height: 38 }}
+          >
+            <Icon size={18} />
+            <span className="nav-icon-tooltip-right">{item.label}</span>
+          </button>
+        </div>
       );
     }
 
-    return btn;
+    // Expanded: full label with hover effect
+    return (
+      <button
+        onClick={() => setActiveTab(item.id)}
+        className={cn(
+          "nav-icon-hover flex items-center gap-3 w-full rounded-lg",
+          expanded ? "px-3 py-2" : "justify-center py-2.5",
+          isActive ? "active" : ""
+        )}
+        style={{ transformOrigin: "left center", justifyContent: "flex-start" }}
+      >
+        <Icon size={18} className="shrink-0" />
+        <span className="text-xs font-medium truncate">{item.label}</span>
+      </button>
+    );
   };
 
   return (
