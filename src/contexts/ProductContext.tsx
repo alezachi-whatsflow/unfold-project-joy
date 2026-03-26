@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 import { Product, ProductMetrics, ProductHealth } from "@/types/products";
 import { WHATSFLOW_PRODUCTS } from "@/lib/productData";
+import { useTenantId } from "@/hooks/useTenantId";
 
 export function calculateProductMetrics(product: Product): ProductMetrics {
   const totalCosts =
@@ -40,8 +41,29 @@ interface ProductContextType {
 
 const ProductContext = createContext<ProductContextType | null>(null);
 
+const WHATSFLOW_TENANT = "00000000-0000-0000-0000-000000000001";
+
 export function ProductProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(WHATSFLOW_PRODUCTS);
+  const tenantId = useTenantId();
+
+  // Load products per tenant: only Whatsflow EDTECH has seed data, others start empty
+  const [products, setProducts] = useState<Product[]>(() => {
+    if (!tenantId) return [];
+    const key = `wf_products_${tenantId}`;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    // Only seed Whatsflow EDTECH with hardcoded products
+    return tenantId === WHATSFLOW_TENANT ? WHATSFLOW_PRODUCTS : [];
+  });
+
+  // Persist products to localStorage per tenant
+  useEffect(() => {
+    if (!tenantId) return;
+    const key = `wf_products_${tenantId}`;
+    try { localStorage.setItem(key, JSON.stringify(products)); } catch {}
+  }, [products, tenantId]);
 
   const addProduct = useCallback((product: Product) => {
     setProducts((prev) => [...prev, product]);
