@@ -5,10 +5,11 @@ export const callProxy = async (
   path: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: object,
-  instanceName?: string
+  instanceName?: string,
+  tenantId?: string
 ) => {
   const resp = await supabase.functions.invoke("uazapi-proxy", {
-    body: { path, method, body, instanceName },
+    body: { path, method, body, instanceName, tenantId },
   });
   if (resp.error) throw resp.error;
   const envelope = resp.data;
@@ -40,7 +41,7 @@ export const instanceService = {
       systemName: params.systemName || "whatsflow",
       adminField01: params.adminField01,
       adminField02: params.adminField02,
-    });
+    }, undefined, params.tenantId);
     const inst = result?.instance || {};
     const instanceToken = result?.token;
     const instanceName = result?.name ?? params.name;

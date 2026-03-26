@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized" }, 401);
     }
 
-    const { path, method = "GET", body, instanceName } = await req.json();
+    const { path, method = "GET", body, instanceName, tenantId: bodyTenantId } = await req.json();
 
     if (!path || typeof path !== "string") {
       return json({ error: "path is required and must be a string" }, 400);
@@ -196,8 +196,21 @@ Deno.serve(async (req) => {
       const inst = rd.instance || {};
       const instanceToken = rd.token; // Token SEMPRE na raiz
 
+      // Resolve tenant_id: from body, or from user_tenants
+      let resolvedTenantId = bodyTenantId || null;
+      if (!resolvedTenantId && user?.id) {
+        const { data: ut } = await supabase
+          .from("user_tenants")
+          .select("tenant_id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        resolvedTenantId = ut?.tenant_id || null;
+      }
+
       if (instanceToken) {
         const instanceData = {
+          ...(resolvedTenantId ? { tenant_id: resolvedTenantId } : {}),
           instance_name: rd.name || body?.name,
           instance_token: instanceToken,
           status: "disconnected", // Always start as disconnected — webhook updates to connected after QR scan
