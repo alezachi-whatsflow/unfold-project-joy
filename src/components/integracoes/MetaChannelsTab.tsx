@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, MessageSquare, Instagram, CheckCircle2, XCircle, Clock, Trash2, RefreshCw, ExternalLink, Phone, Hash, Facebook } from "lucide-react";
+import { ChannelIcon } from "@/components/ui/ChannelIcon";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
   active: { label: "Ativo", color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", icon: CheckCircle2 },
@@ -117,9 +118,7 @@ export default function MetaChannelsTab() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#25D366]/10 flex items-center justify-center">
-              <MessageSquare className="h-5 w-5 text-[#25D366]" />
-            </div>
+            <ChannelIcon channel="whatsapp_meta" size="lg" variant="icon" />
             <div>
               <h2 className="text-lg font-bold">WhatsApp API Cloud Meta</h2>
               <p className="text-xs text-muted-foreground">Integração via Meta Business — envie e receba mensagens pela API oficial</p>
@@ -154,9 +153,7 @@ export default function MetaChannelsTab() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-              <Instagram className="h-5 w-5 text-pink-400" />
-            </div>
+            <ChannelIcon channel="instagram" size="lg" variant="icon" />
             <div>
               <h2 className="text-lg font-bold">Instagram Messaging</h2>
               <p className="text-xs text-muted-foreground">Receba e responda DMs do Instagram diretamente no sistema</p>
@@ -192,9 +189,7 @@ export default function MetaChannelsTab() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-              <Facebook className="h-5 w-5 text-blue-500" />
-            </div>
+            <ChannelIcon channel="facebook" size="lg" variant="icon" />
             <div>
               <h2 className="text-lg font-bold">Facebook Messenger</h2>
               <p className="text-xs text-muted-foreground">Receba e responda mensagens da sua Página do Facebook diretamente no sistema</p>
@@ -288,15 +283,11 @@ function IntegrationCard({
     <Card className="p-4">
       <div className="flex items-center gap-4">
         {/* Icon */}
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-          isWhatsApp ? "bg-[#25D366]/10" :
-          isMessenger ? "bg-blue-500/10" :
-          "bg-gradient-to-br from-purple-500/20 to-pink-500/20"
-        }`}>
-          {isWhatsApp ? <MessageSquare className="h-5 w-5 text-[#25D366]" />
-            : isMessenger ? <Facebook className="h-5 w-5 text-blue-500" />
-            : <Instagram className="h-5 w-5 text-pink-400" />}
-        </div>
+        <ChannelIcon
+          channel={isWhatsApp ? "whatsapp_meta" : isMessenger ? "facebook" : "instagram"}
+          size="lg"
+          variant="icon"
+        />
 
         {/* Info */}
         <div className="flex-1 min-w-0">

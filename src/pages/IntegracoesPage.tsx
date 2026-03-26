@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { MessageSquare, Instagram, Wifi, Plus, RefreshCw } from "lucide-react";
+import { Plus } from "lucide-react";
+import { ChannelIcon } from "@/components/ui/ChannelIcon";
 import UazapiInstancesTab from "@/components/mensageria/UazapiInstancesTab";
 import MetaChannelsTab from "@/components/integracoes/MetaChannelsTab";
 
@@ -57,12 +58,7 @@ const IntegracoesPage = () => {
               textAlign: "left",
             }}
           >
-            <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: "#25D366", display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <MessageSquare size={20} color="#FFF" />
-            </div>
+            <ChannelIcon channel="whatsapp_web" size="lg" variant="icon" />
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>API WhatsApp Web</p>
               <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Conecte via QR Code — configuração automática</p>
@@ -97,12 +93,7 @@ const IntegracoesPage = () => {
               textAlign: "left",
             }}
           >
-            <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: "linear-gradient(135deg, #0088FF, #00C6FF)", display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <Wifi size={20} color="#FFF" />
-            </div>
+            <ChannelIcon channel="whatsapp_meta" size="lg" variant="icon" />
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>WhatsApp API Cloud + Instagram</p>
               <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Meta Business Platform — API oficial com templates HSM</p>
