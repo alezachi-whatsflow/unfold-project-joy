@@ -364,7 +364,7 @@ export default function VendasPipeline() {
       {/* Modals */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <NegocioCreateModal onClose={() => setCreateOpen(false)} />
+          <NegocioCreateModal onClose={() => setCreateOpen(false)} pipelineId={selectedPipelineId} />
         </DialogContent>
       </Dialog>
 

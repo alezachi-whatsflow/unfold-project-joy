@@ -28,9 +28,9 @@ import { NEGOCIO_STATUS_CONFIG, NEGOCIO_ORIGEM_LABELS, FORMAS_PAGAMENTO, ALL_STA
 const ORIGENS: NegocioOrigem[] = ['indicacao', 'outbound', 'inbound', 'representante', 'renovacao', 'upsell'];
 const CONDICOES = ['À vista', '30 dias', '30/60 dias', '30/60/90 dias', '30/60/90/120 dias'];
 
-interface Props { onClose: () => void; }
+interface Props { onClose: () => void; pipelineId?: string | null; }
 
-export default function NegocioCreateModal({ onClose }: Props) {
+export default function NegocioCreateModal({ onClose, pipelineId: propPipelineId }: Props) {
   const tenantId = useTenantId();
   const { createNegocio } = useNegocios(tenantId);
   const { user } = useAuth();
@@ -174,6 +174,7 @@ export default function NegocioCreateModal({ onClose }: Props) {
         titulo,
         status,
         origem,
+        pipeline_id: propPipelineId || undefined,
         cliente_id: clienteId,
         cliente_nome: clienteNome || null,
         consultor_id: consultorId || null,
