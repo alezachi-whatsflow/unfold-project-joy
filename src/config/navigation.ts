@@ -2,6 +2,14 @@ import type { NavCategory, SidebarPreferences } from '@/types/sidebar';
 
 export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
   {
+    id: 'central',
+    label: '',
+    icon: 'LayoutDashboard',
+    items: [
+      { id: 'central',    label: 'Central de Controle', icon: 'LayoutDashboard', route: '/',            module: 'dashboard'     },
+    ],
+  },
+  {
     id: 'financeiro',
     label: 'Financeiro',
     icon: 'DollarSign',
@@ -23,7 +31,6 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'produtos',    label: 'Produtos',      icon: 'Package',         route: '/products',     module: 'produtos'      },
       { id: 'atividades',  label: 'Atividades',    icon: 'CheckSquare',     route: '/atividades',   module: 'clientes'      },
       { id: 'vendas',      label: 'Vendas',        icon: 'ShoppingCart',    route: '/vendas',       module: 'vendas'        },
-      { id: 'dashboard',   label: 'Dashboard',     icon: 'LayoutDashboard', route: '/dashboard',    module: 'dashboard'     },
       { id: 'analytics',   label: 'Analytics',     icon: 'BarChart3',       route: '/analytics',    module: 'dashboard'     },
       { id: 'relatorios',  label: 'Relatórios',    icon: 'FileBarChart',    route: '/reports',      module: 'relatorios'    },
       { id: 'ia',          label: 'IA Composable', icon: 'Brain',           route: '/ia',           module: 'dashboard'     },
