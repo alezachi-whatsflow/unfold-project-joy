@@ -196,7 +196,7 @@ const AppRoutes = () => (
     
     {/* Phase 4: Client Portal */}
     <Route path="/app/:slug" element={<AuthGuard><DashboardLayout /></AuthGuard>}>
-      <Route index element={<ProtectedRoute module="dashboard"><Index /></ProtectedRoute>} />
+      <Route index element={<ProtectedRoute module="dashboard"><HomePage /></ProtectedRoute>} />
       <Route path="dashboard" element={<ProtectedRoute module="dashboard"><Index /></ProtectedRoute>} />
       <Route path="vendas" element={<ProtectedRoute module="vendas"><VendasPage /></ProtectedRoute>} />
       <Route path="input" element={<ProtectedRoute module="inserir_dados"><DataInputPage /></ProtectedRoute>} />
