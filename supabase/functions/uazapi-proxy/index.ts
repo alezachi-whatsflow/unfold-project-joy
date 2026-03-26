@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
         const instanceData = {
           instance_name: rd.name || body?.name,
           instance_token: instanceToken,
-          status: inst.status || "disconnected",
+          status: "disconnected", // Always start as disconnected — webhook updates to connected after QR scan
           qr_code: inst.qrcode || null,
           pair_code: inst.paircode || null,
           profile_name: inst.profileName || null,

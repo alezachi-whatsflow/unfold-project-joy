@@ -78,7 +78,8 @@
       "Bash(grep -A 5 \"CREATE TABLE.*group\" ./supabase/migrations/*.sql -i)",
       "Bash(grep -A 20 \"CREATE TABLE.*whatsapp_groups\\\\|CREATE TABLE.*group_members\\\\|CREATE TABLE.*group_scheduled\\\\|CREATE TABLE.*group_moderation\" ./supabase/migrations/*.sql)",
       "Bash(ls \"f:/WFW New/src/pages/nexus/\"*quipe* \"f:/WFW New/src/pages/nexus/\"*quip* \"f:/WFW New/src/pages/nexus/\"*Team*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy uazapi-proxy --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
     ]
   }
 }
