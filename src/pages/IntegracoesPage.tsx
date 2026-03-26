@@ -1,81 +1,151 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wifi, Puzzle, Smartphone } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import ProviderSelector, { type Provider } from "@/components/mensageria/ProviderSelector";
+import { MessageSquare, Instagram, Wifi, Plus, RefreshCw } from "lucide-react";
 import UazapiInstancesTab from "@/components/mensageria/UazapiInstancesTab";
-import WhatsAppConnectionsTab from "@/components/mensageria/WhatsAppConnectionsTab";
-import MetaOficialTab from "@/components/mensageria/MetaOficialTab";
-import WaConnectionsContent from "@/components/mensageria/WaConnectionsContent";
 import MetaChannelsTab from "@/components/integracoes/MetaChannelsTab";
 
 const IntegracoesPage = () => {
-  const [provider, setProvider] = useState<Provider>("uazapi");
-  const [activeTab, setActiveTab] = useState("canais-meta");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [expandedSection, setExpandedSection] = useState<string | null>("uazapi");
 
-  // Handle OAuth callback success/error toasts
+  // Handle OAuth callback
   useEffect(() => {
     const success = searchParams.get("success");
     const error = searchParams.get("error");
     if (success) {
-      const msgs: Record<string, string> = {
-        whatsapp_connected: "WhatsApp conectado com sucesso!",
-        whatsapp_updated: "WhatsApp reconectado com sucesso!",
-        instagram_connected: "Instagram conectado com sucesso!",
-        instagram_updated: "Instagram reconectado com sucesso!",
-      };
-      toast.success(msgs[success] || "Integração concluída!");
-      setActiveTab("canais-meta");
+      toast.success(success.includes("instagram") ? "Instagram conectado!" : "WhatsApp conectado!");
       searchParams.delete("success");
       setSearchParams(searchParams, { replace: true });
     }
     if (error) {
-      toast.error(`Erro na integração: ${decodeURIComponent(error)}`);
-      setActiveTab("canais-meta");
+      toast.error(`Erro: ${decodeURIComponent(error)}`);
       searchParams.delete("error");
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
 
+  const toggleSection = (id: string) => {
+    setExpandedSection(expandedSection === id ? null : id);
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Integrações</h1>
-        <p className="text-muted-foreground text-sm">Gerencie suas conexões com WhatsApp, Instagram e outros canais.</p>
+    <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Integrações</h1>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Gerencie todas as suas conexões em um só lugar.</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="canais-meta" className="gap-2"><Smartphone className="h-4 w-4" /> Canais Meta</TabsTrigger>
-          <TabsTrigger value="conexoes" className="gap-2"><Wifi className="h-4 w-4" /> Conexões WA</TabsTrigger>
-          <TabsTrigger value="provedores" className="gap-2"><Puzzle className="h-4 w-4" /> Provedores</TabsTrigger>
-        </TabsList>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
-        <TabsContent value="canais-meta" className="mt-4">
-          <MetaChannelsTab />
-        </TabsContent>
+        {/* WhatsApp Web (uazapi) */}
+        <Card
+          style={{
+            border: expandedSection === "uazapi" ? "1px solid var(--inbox-active-border, rgba(14,138,92,0.25))" : "1px solid var(--border)",
+            background: "var(--bg-card)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("uazapi")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "uazapi" ? "var(--inbox-active-bg, rgba(14,138,92,0.08))" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: "#25D366", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <MessageSquare size={20} color="#FFF" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>WhatsApp Web (uazapi)</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Conecte via QR Code — instâncias gerenciadas automaticamente</p>
+            </div>
+            <div style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: expandedSection === "uazapi" ? "#25D366" : "var(--border)",
+            }} />
+          </button>
+          {expandedSection === "uazapi" && (
+            <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--border)" }}>
+              <UazapiInstancesTab />
+            </div>
+          )}
+        </Card>
 
-        <TabsContent value="conexoes" className="mt-4">
-          <WaConnectionsContent />
-        </TabsContent>
+        {/* WhatsApp Cloud API + Instagram (Meta) */}
+        <Card
+          style={{
+            border: expandedSection === "meta" ? "1px solid var(--inbox-active-border, rgba(14,138,92,0.25))" : "1px solid var(--border)",
+            background: "var(--bg-card)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("meta")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "meta" ? "var(--inbox-active-bg, rgba(14,138,92,0.08))" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: "linear-gradient(135deg, #0088FF, #00C6FF)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Wifi size={20} color="#FFF" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>WhatsApp API Cloud + Instagram</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Meta Business Platform — API oficial com templates HSM</p>
+            </div>
+            <div style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: expandedSection === "meta" ? "#0088FF" : "var(--border)",
+            }} />
+          </button>
+          {expandedSection === "meta" && (
+            <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--border)" }}>
+              <MetaChannelsTab />
+            </div>
+          )}
+        </Card>
 
-        <TabsContent value="provedores" className="mt-4">
-          <ProviderSelector selected={provider} onChange={setProvider} />
-          <div className="mt-4">
-            {provider === "uazapi" && <UazapiInstancesTab />}
-            {provider === "zapi" && <WhatsAppConnectionsTab />}
-            {provider === "meta_oficial" && <MetaOficialTab />}
-            {provider === "custom" && (
-              <div className="text-center py-16 text-muted-foreground">
-                <p>Provedor customizado em desenvolvimento.</p>
-                <p className="text-xs mt-1">Em breve você poderá conectar Evolution API e outros provedores.</p>
-              </div>
-            )}
+        {/* Future: More integrations */}
+        <Card
+          style={{
+            border: "1px solid var(--border)",
+            background: "var(--bg-card)",
+            borderRadius: 12,
+            opacity: 0.6,
+          }}
+        >
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "16px 20px",
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: "var(--border)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Plus size={20} style={{ color: "var(--text-muted)" }} />
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Mais integrações em breve</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Telegram, Email, Zapier, n8n, Make e mais</p>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </Card>
+
+      </div>
     </div>
   );
 };
