@@ -5,6 +5,7 @@ import { CommandPalette } from "./CommandPalette";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, Outlet, useParams } from "react-router-dom";
 import { ExternalLink, Minimize2, Loader2 } from "lucide-react";
+import { TopNavBar } from "./TopNavBar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
@@ -76,12 +77,13 @@ export function DashboardLayout() {
     );
   }
 
-  // Fullscreen mode for Caixa de Entrada — no sidebar, no header
-  const isFullscreenRoute = location.pathname.includes("/mensageria");
+  // Inbox mode: main sidebar becomes horizontal icon bar at top
+  const isInboxRoute = location.pathname.includes("/mensageria");
 
-  if (isFullscreenRoute) {
+  if (isInboxRoute) {
     return (
-      <div className="flex min-h-screen w-full" style={{ background: "var(--bg-base, hsl(var(--background)))" }}>
+      <div className="flex flex-col min-h-screen w-full" style={{ background: "var(--bg-base, hsl(var(--background)))" }}>
+        <TopNavBar />
         <main className="flex-1 overflow-hidden">
           <Outlet />
         </main>
