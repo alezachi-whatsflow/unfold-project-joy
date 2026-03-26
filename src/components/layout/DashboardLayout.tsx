@@ -77,11 +77,11 @@ export function DashboardLayout() {
     );
   }
 
-  // Fullscreen routes: no sidebar, custom layout
+  // Fullscreen routes
   const isInboxRoute = location.pathname.includes("/mensageria");
-  const isHomePage = location.pathname.endsWith(`/app/${slug}`) || location.pathname.endsWith(`/app/${slug}/`);
+  const isHomePage = location.pathname.endsWith("/home");
 
-  // HomePage (Central de Controle) — fullscreen, own header
+  // Central de Controle — fullscreen, own header + dock
   if (isHomePage) {
     return (
       <div className="flex min-h-screen w-full flex-col" style={{ background: "hsl(var(--background))" }}>

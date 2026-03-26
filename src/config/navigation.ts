@@ -6,7 +6,7 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     label: '',
     icon: 'LayoutDashboard',
     items: [
-      { id: 'central',    label: 'Central de Controle', icon: 'LayoutDashboard', route: '/',            module: 'dashboard'     },
+      { id: 'central',    label: 'Central de Controle', icon: 'Home', route: '/home',        module: 'dashboard'     },
     ],
   },
   {
