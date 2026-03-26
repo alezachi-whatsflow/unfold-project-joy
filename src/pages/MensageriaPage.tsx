@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   Inbox, Send, Megaphone, Kanban, Users, UsersRound, Receipt, ScrollText,
   UserCog, Building2, MessageSquareText, Tag, Bot, FileText, Zap,
-  Menu,
+  BarChart3, Menu,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ import DepartmentManager from "@/components/mensageria/agents/DepartmentManager"
 import ContactTagManager from "@/components/mensageria/agents/ContactTagManager";
 import HSMTemplateManager from "@/components/mensageria/templates/HSMTemplateManager";
 import AutomationManager from "@/components/mensageria/automation/AutomationManager";
+import AttendanceMetrics from "@/components/mensageria/metrics/AttendanceMetrics";
 
 /* ── Sidebar nav items ── */
 interface NavItem {
@@ -43,6 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
   { id: "templates",  label: "Templates HSM",        icon: FileText,         group: "tools" },
   { id: "cobranca",  label: "Cobrança",              icon: Receipt,          group: "tools" },
+  { id: "metricas",  label: "Métricas",                icon: BarChart3,        group: "tools" },
   { id: "logs",      label: "Logs",                   icon: ScrollText,       group: "tools" },
   // Config items
   { id: "atendentes",       label: "Atendentes",           icon: UserCog,            group: "config" },
@@ -72,6 +74,7 @@ const MensageriaPage = () => {
       case "contatos":        return <ContactChecker />;
       case "templates":       return <HSMTemplateManager />;
       case "cobranca":        return <BillingRulesTab />;
+      case "metricas":        return <AttendanceMetrics />;
       case "logs":            return <LogsTab />;
       // Config
       case "atendentes":      return <AgentDashboard />;
