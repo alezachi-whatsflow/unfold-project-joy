@@ -3,27 +3,30 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import {
   Home, PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
-  Users, Package, CheckSquare, ShoppingCart, LayoutDashboard, BarChart3,
-  FileBarChart, Brain, Radar, MessageCircle, Settings, CreditCard,
+  Users, Package, CheckSquare, ShoppingCart, BarChart3,
+  FileBarChart, Brain, Radar, MessageSquare, Settings, CreditCard,
+  LayoutDashboard, Puzzle, Bell,
 } from "lucide-react";
 
-// Compact icon map for horizontal nav
-const NAV_ICONS: { route: string; icon: typeof Home; label: string; group: string }[] = [
-  // Financeiro
-  { route: "/input",       icon: PenLine,          label: "Inserir Dados",       group: "fin" },
-  { route: "/revenue",     icon: TrendingUp,       label: "Receitas",            group: "fin" },
-  { route: "/expenses",    icon: DollarSign,        label: "Despesas",            group: "fin" },
-  { route: "/cobrancas",   icon: Receipt,           label: "Cobranças",           group: "fin" },
-  { route: "/fiscal",      icon: FileText,          label: "Fiscal",              group: "fin" },
-  { route: "/comissoes",   icon: UserCheck,          label: "Comissões",           group: "fin" },
-  // Clientes & Produtos
-  { route: "/customers",   icon: Users,             label: "Clientes",            group: "crm" },
-  { route: "/products",    icon: Package,           label: "Produtos",            group: "crm" },
-  { route: "/vendas",      icon: ShoppingCart,       label: "Vendas",              group: "crm" },
-  { route: "/dashboard",   icon: LayoutDashboard,   label: "Dashboard",           group: "crm" },
-  { route: "/analytics",   icon: BarChart3,          label: "Analytics",           group: "ana" },
-  { route: "/reports",     icon: FileBarChart,       label: "Relatórios",          group: "ana" },
-  { route: "/ia",          icon: Brain,              label: "IA Composable",       group: "ana" },
+const NAV_ITEMS: { route: string; icon: typeof Home; label: string; group: string }[] = [
+  { route: "/input",       icon: PenLine,         label: "Inserir",        group: "fin" },
+  { route: "/revenue",     icon: TrendingUp,      label: "Receitas",       group: "fin" },
+  { route: "/expenses",    icon: DollarSign,       label: "Despesas",       group: "fin" },
+  { route: "/cobrancas",   icon: Receipt,          label: "Cobranças",      group: "fin" },
+  { route: "/fiscal",      icon: FileText,         label: "Fiscal",         group: "fin" },
+  { route: "/comissoes",   icon: UserCheck,         label: "Comissões",      group: "fin" },
+  { route: "/customers",   icon: Users,            label: "Clientes",       group: "crm" },
+  { route: "/products",    icon: Package,          label: "Produtos",       group: "crm" },
+  { route: "/vendas",      icon: ShoppingCart,      label: "Vendas",         group: "crm" },
+  { route: "/dashboard",   icon: LayoutDashboard,  label: "Dashboard",      group: "crm" },
+  { route: "/analytics",   icon: BarChart3,         label: "Analytics",      group: "ana" },
+  { route: "/reports",     icon: FileBarChart,      label: "Relatórios",     group: "ana" },
+  { route: "/ia",          icon: Brain,             label: "IA",             group: "ana" },
+  { route: "/intelligence",icon: Radar,             label: "Int. Digital",   group: "ana" },
+  { route: "/usuarios",    icon: Users,             label: "Usuários",       group: "sys" },
+  { route: "/integracoes", icon: Puzzle,            label: "Integrações",    group: "sys" },
+  { route: "/assinatura",  icon: CreditCard,        label: "Assinatura",     group: "sys" },
+  { route: "/settings",    icon: Settings,          label: "Config",         group: "sys" },
 ];
 
 export function TopNavBar() {
@@ -34,68 +37,82 @@ export function TopNavBar() {
 
   return (
     <div
-      className="flex items-center shrink-0 px-3 gap-1 overflow-x-auto"
       style={{
-        height: 42,
+        height: 40,
         background: "var(--bg-surface, hsl(var(--card)))",
         borderBottom: "1px solid var(--border, hsl(var(--border)))",
+        display: "flex",
+        alignItems: "center",
+        padding: "0 12px",
+        flexShrink: 0,
       }}
     >
-      {/* Home / Dashboard */}
+      {/* Home button */}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            onClick={() => navigate(`${basePath}/dashboard`)}
-            className="flex items-center justify-center rounded-md transition-colors shrink-0"
+            onClick={() => navigate(`${basePath}/`)}
             style={{
-              width: 32, height: 32,
-              background: "var(--acc-bg, hsl(var(--primary) / 0.1))",
-              color: "var(--acc, hsl(var(--primary)))",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 28, height: 28, borderRadius: 6, border: "none", cursor: "pointer",
+              background: "var(--acc-bg, rgba(14,138,92,0.08))",
+              color: "var(--acc, #0E8A5C)",
+              flexShrink: 0,
             }}
           >
-            <Home size={16} />
+            <Home size={14} />
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">Painel de Controle</TooltipContent>
+        <TooltipContent side="bottom" className="text-xs">Central de Controle</TooltipContent>
       </Tooltip>
 
       {/* Separator */}
-      <div style={{ width: 1, height: 20, background: "var(--border, #E8E5DF)", margin: "0 4px", flexShrink: 0 }} />
+      <div style={{ width: 1, height: 18, background: "var(--border, #E8E5DF)", margin: "0 8px", flexShrink: 0 }} />
 
-      {/* Nav items as icons */}
-      {NAV_ICONS.map((item, i) => {
-        const Icon = item.icon;
-        const fullRoute = basePath + item.route;
-        const isActive = location.pathname === fullRoute || location.pathname.startsWith(fullRoute + "/");
-        const prevGroup = i > 0 ? NAV_ICONS[i - 1].group : null;
-        const showSep = prevGroup && prevGroup !== item.group;
+      {/* Centered nav items */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 2,
+        overflowX: "auto",
+      }}>
+        {NAV_ITEMS.map((item, i) => {
+          const Icon = item.icon;
+          const fullRoute = basePath + item.route;
+          const isActive = location.pathname === fullRoute || location.pathname.startsWith(fullRoute + "/");
+          const prevGroup = i > 0 ? NAV_ITEMS[i - 1].group : null;
+          const showSep = prevGroup && prevGroup !== item.group;
 
-        return (
-          <span key={item.route} className="flex items-center">
-            {showSep && <div style={{ width: 1, height: 20, background: "var(--border, #E8E5DF)", margin: "0 4px", flexShrink: 0 }} />}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => navigate(fullRoute)}
-                  className="flex items-center justify-center rounded-md transition-all shrink-0"
-                  style={{
-                    width: 30, height: 30,
-                    background: isActive ? "var(--inbox-active-bg, rgba(14,138,92,0.08))" : "transparent",
-                    color: isActive ? "var(--inbox-active-color, #0E8A5C)" : "var(--text-muted, #A09888)",
-                    border: isActive ? "1px solid var(--inbox-active-border, rgba(14,138,92,0.25))" : "1px solid transparent",
-                  }}
-                >
-                  <Icon size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">{item.label}</TooltipContent>
-            </Tooltip>
-          </span>
-        );
-      })}
+          return (
+            <span key={item.route} style={{ display: "flex", alignItems: "center" }}>
+              {showSep && <div style={{ width: 1, height: 18, background: "var(--border, #E8E5DF)", margin: "0 6px", flexShrink: 0 }} />}
+              <button
+                onClick={() => navigate(fullRoute)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 4,
+                  padding: "4px 8px", borderRadius: 6, border: "none", cursor: "pointer",
+                  fontSize: 11, fontWeight: isActive ? 600 : 400,
+                  whiteSpace: "nowrap",
+                  background: isActive ? "var(--inbox-active-bg, rgba(14,138,92,0.08))" : "transparent",
+                  color: isActive ? "var(--inbox-active-color, #0E8A5C)" : "var(--text-muted, #A09888)",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <Icon size={12} />
+                {item.label}
+              </button>
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Separator */}
+      <div style={{ width: 1, height: 18, background: "var(--border, #E8E5DF)", margin: "0 8px", flexShrink: 0 }} />
 
       {/* Right side */}
-      <div className="ml-auto flex items-center gap-2 shrink-0">
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
         <ThemeSwitcher />
       </div>
     </div>
