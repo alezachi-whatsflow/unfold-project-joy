@@ -37,6 +37,7 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'intelligence', label: 'Inteligência Digital', icon: 'Radar',   route: '/intelligence', module: 'intelligence'  },
       { id: 'conversas',   label: 'Conversas',     icon: 'MessageSquare',   route: '/conversas',    module: 'mensageria'    },
       { id: 'mensageria',  label: 'Caixa de Entrada', icon: 'MessageCircle', route: '/mensageria',   module: 'mensageria'    },
+      { id: 'integracoes', label: 'Integrações',      icon: 'Puzzle',        route: '/integracoes',  module: 'integracoes'   },
     ],
   },
   {
@@ -45,7 +46,6 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
     icon: 'Settings2',
     items: [
       { id: 'usuarios',       label: 'Usuários',              icon: 'Users',      route: '/usuarios',           module: 'usuarios'      },
-      { id: 'integracoes',    label: 'Integrações',           icon: 'Puzzle',     route: '/integracoes',        module: 'mensageria'    },
       { id: 'assinatura',     label: 'Assinatura',            icon: 'CreditCard', route: '/assinatura',         module: 'dashboard'     },
       { id: 'configuracoes',  label: 'Configurações',         icon: 'Settings',   route: '/settings',           module: 'configuracoes' },
       { id: 'comunidade',     label: 'Comunidade',            icon: 'Users2',     route: '/sistema/comunidade', module: 'dashboard'     },
