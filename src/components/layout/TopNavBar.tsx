@@ -67,20 +67,16 @@ export function TopNavBar() {
 
           return (
             <span key={item.route} style={{ display: "flex", alignItems: "center" }}>
-              {showSep && <div style={{ width: 1, height: 18, background: "var(--border, #E8E5DF)", margin: "0 6px", flexShrink: 0 }} />}
-              <div className="relative" style={{ display: "inline-flex" }}>
+              {showSep && <div style={{ width: 1, height: 20, background: "var(--border, #E8E5DF)", margin: "0 4px", flexShrink: 0 }} />}
+              <div className="relative group" style={{ display: "inline-flex" }}>
                 <button
                   onClick={() => navigate(fullRoute)}
                   className={`nav-icon-hover ${isActive ? "active" : ""}`}
-                  style={{
-                    padding: "4px 8px", border: "none",
-                    gap: 4, fontSize: 11, fontWeight: isActive ? 600 : 400,
-                    whiteSpace: "nowrap",
-                  }}
+                  style={{ width: 32, height: 32, border: "none" }}
                 >
-                  <Icon size={13} />
-                  {item.label}
+                  <Icon size={16} />
                 </button>
+                <div className="nav-icon-tooltip">{item.label}</div>
               </div>
             </span>
           );
