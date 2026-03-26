@@ -28,7 +28,7 @@ const ICON_SCALES = { sm: 0.5, md: 0.6, lg: 0.65 } as const;
 
 const CHANNEL_COLORS: Record<ChannelType, string> = {
   whatsapp_web: "#25D366",
-  whatsapp_meta: "#0668E1",
+  whatsapp_meta: "#000000",
   instagram: "#E1306C",
   facebook: "#1877F2",
   telegram: "#229ED9",
@@ -133,7 +133,7 @@ function renderSVGContent(channel: ChannelType) {
     case "whatsapp_web":
       return <WhatsAppSVG color="#FFFFFF" />;
     case "whatsapp_meta":
-      return <MetaSVG />;
+      return <WhatsAppSVG color="#25D366" />;
     case "instagram":
       return <InstagramSVG />;
     case "facebook":

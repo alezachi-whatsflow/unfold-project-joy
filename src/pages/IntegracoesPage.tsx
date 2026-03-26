@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { ChannelIcon } from "@/components/ui/ChannelIcon";
+import { MetaBusinessPartnerBadge } from "@/components/ui/MetaBusinessPartnerBadge";
 import UazapiInstancesTab from "@/components/mensageria/UazapiInstancesTab";
 import MetaChannelsTab from "@/components/integracoes/MetaChannelsTab";
 
@@ -93,10 +94,10 @@ const IntegracoesPage = () => {
               textAlign: "left",
             }}
           >
-            <ChannelIcon channel="whatsapp_meta" size="lg" variant="icon" />
+            <MetaBusinessPartnerBadge size="md" />
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Contas Cloud API Meta + Instagram + Facebook</p>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Meta Business Platform — API oficial com templates HSM</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>API oficial com templates HSM</p>
             </div>
             <div style={{
               width: 8, height: 8, borderRadius: "50%",
