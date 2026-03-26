@@ -203,7 +203,7 @@ export default function NexusIntegracoes() {
                 {p.description && <p className="text-xs text-muted-foreground mb-3">{p.description}</p>}
 
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-3">
-                  <span>Instâncias: {p.current_instances}/{p.max_instances}</span>
+                  <span>Instâncias: {instances.filter(i => i.provedor === p.slug || (p.slug === 'uazapi' && i.provedor === 'uazapi')).length}/{p.max_instances}</span>
                   <span>•</span>
                   <span>Token: {p.admin_token ? "••••" + p.admin_token.slice(-4) : "—"}</span>
                 </div>
