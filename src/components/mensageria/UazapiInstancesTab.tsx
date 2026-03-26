@@ -22,11 +22,16 @@ export default function UazapiInstancesTab() {
 
   const fetchInstances = async () => {
     setLoading(true);
-    const { data } = await supabase
+    let query = supabase
       .from("whatsapp_instances")
       .select("*")
       .eq("provedor", "uazapi")
       .order("api_created_at", { ascending: false, nullsFirst: false });
+
+    // Filter by tenant if available (RLS should handle this, but explicit is safer)
+    if (tenantId) query = query.eq("tenant_id", tenantId);
+
+    const { data } = await query;
 
     if (data) {
       setInstances(data.map((d: any) => ({
