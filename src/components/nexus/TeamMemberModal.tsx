@@ -55,10 +55,41 @@ export default function TeamMemberModal({ open, onOpenChange, onSaved, member }:
         old_value: { role: member.role }, new_value: { role: form.role },
       });
     } else {
-      await supabase.from('nexus_users').insert({
-        name: form.name, email: form.email, role: form.role,
-        is_active: true, created_by: nexusUser?.id,
+      // 1. Send invite email (creates auth.user + sends activation email)
+      const { data: inviteResult, error: inviteErr } = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: form.email,
+          full_name: form.name,
+          role: "superadmin", // Nexus users get superadmin access
+        },
       });
+
+      if (inviteErr || inviteResult?.error) {
+        toast({ title: "Erro ao enviar convite", description: inviteResult?.error || inviteErr?.message, variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+
+      // 2. Get the auth user ID from the invite result
+      const authUserId = inviteResult?.userId || inviteResult?.user_id || null;
+
+      // 3. Insert into nexus_users with auth_user_id
+      const { error: insertErr } = await supabase.from('nexus_users').insert({
+        name: form.name,
+        email: form.email,
+        role: form.role,
+        is_active: true,
+        created_by: nexusUser?.id,
+        auth_user_id: authUserId,
+        invite_sent_at: new Date().toISOString(),
+      });
+
+      if (insertErr) {
+        toast({ title: "Erro ao criar membro", description: insertErr.message, variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+
       await supabase.from('nexus_audit_logs').insert({
         actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
         action: 'team_member_create', target_entity: form.name,
