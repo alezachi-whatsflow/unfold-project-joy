@@ -112,7 +112,7 @@ const MensageriaPage = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-4 sm:-m-6 md:-m-8" style={{ marginTop: "-3.5rem", height: "100vh" }}>
+    <div className="flex h-screen w-full">
       {/* Sidebar */}
       <aside
         className={cn(

@@ -76,6 +76,20 @@ export function DashboardLayout() {
     );
   }
 
+  // Fullscreen mode for Caixa de Entrada — no sidebar, no header
+  const isFullscreenRoute = location.pathname.includes("/mensageria");
+
+  if (isFullscreenRoute) {
+    return (
+      <div className="flex min-h-screen w-full" style={{ background: "var(--bg-base, hsl(var(--background)))" }}>
+        <main className="flex-1 overflow-hidden">
+          <Outlet />
+        </main>
+        <CommandPalette />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen w-full glass-ambient-bg">
       <AppSidebar />
