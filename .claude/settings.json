@@ -88,7 +88,8 @@
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy messenger-send --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy send-csat --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy ml-webhook --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy ml-send --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy ml-send --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy ml-oauth-callback --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
     ]
   }
 }

@@ -7,17 +7,29 @@ import { ChannelIcon } from "@/components/ui/ChannelIcon";
 import { MetaBusinessPartnerBadge } from "@/components/ui/MetaBusinessPartnerBadge";
 import UazapiInstancesTab from "@/components/mensageria/UazapiInstancesTab";
 import MetaChannelsTab from "@/components/integracoes/MetaChannelsTab";
+import { useTenantId } from "@/hooks/useTenantId";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+
+const ML_APP_ID = import.meta.env.VITE_ML_APP_ID || "";
 
 const IntegracoesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedSection, setExpandedSection] = useState<string | null>("uazapi");
+  const [mlConnecting, setMlConnecting] = useState(false);
+  const tenantId = useTenantId();
 
-  // Handle OAuth callback
+  // Handle OAuth callbacks (Meta + ML)
   useEffect(() => {
     const success = searchParams.get("success");
     const error = searchParams.get("error");
+    const mlCode = searchParams.get("code");
+
     if (success) {
-      toast.success(success.includes("instagram") ? "Instagram conectado!" : "WhatsApp conectado!");
+      toast.success(
+        success.includes("mercadolivre") ? "Mercado Livre conectado!" :
+        success.includes("instagram") ? "Instagram conectado!" : "Conectado!"
+      );
       searchParams.delete("success");
       setSearchParams(searchParams, { replace: true });
     }
@@ -26,10 +38,39 @@ const IntegracoesPage = () => {
       searchParams.delete("error");
       setSearchParams(searchParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+
+    // ML OAuth callback: exchange code for tokens
+    if (mlCode && tenantId) {
+      setMlConnecting(true);
+      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+      supabase.functions.invoke("ml-oauth-callback", {
+        body: { code: mlCode, tenant_id: tenantId, redirect_uri: redirectUri },
+      }).then(({ data, error: invokeErr }) => {
+        setMlConnecting(false);
+        searchParams.delete("code");
+        setSearchParams(searchParams, { replace: true });
+        if (invokeErr || data?.error) {
+          toast.error(`Erro ao conectar ML: ${data?.error || invokeErr?.message}`);
+        } else {
+          toast.success(`Mercado Livre conectado: ${data?.seller_name || "Vendedor"}`);
+          setExpandedSection("ml");
+        }
+      });
+    }
+  }, [searchParams, setSearchParams, tenantId]);
 
   const toggleSection = (id: string) => {
     setExpandedSection(expandedSection === id ? null : id);
+  };
+
+  const startMLOAuth = () => {
+    if (!ML_APP_ID) {
+      toast.error("VITE_ML_APP_ID não configurado");
+      return;
+    }
+    const redirectUri = encodeURIComponent(`${window.location.origin}${window.location.pathname}`);
+    const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${ML_APP_ID}&redirect_uri=${redirectUri}`;
+    window.location.href = authUrl;
   };
 
   return (
@@ -107,6 +148,63 @@ const IntegracoesPage = () => {
           {expandedSection === "meta" && (
             <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--border)" }}>
               <MetaChannelsTab />
+            </div>
+          )}
+        </Card>
+
+        {/* Mercado Livre */}
+        <Card
+          style={{
+            border: expandedSection === "ml" ? "1px solid rgba(255,230,0,0.5)" : "1px solid var(--border)",
+            background: "var(--bg-card)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("ml")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "ml" ? "rgba(255,230,0,0.06)" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <ChannelIcon channel="mercadolivre" size="lg" variant="icon" />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Mercado Livre</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Perguntas de pré-venda e mensagens de pedidos</p>
+            </div>
+            <div style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: expandedSection === "ml" ? "#FFE600" : "var(--border)",
+            }} />
+          </button>
+          {expandedSection === "ml" && (
+            <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)" }}>
+              {mlConnecting ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "24px 0" }}>
+                  <Loader2 size={20} className="animate-spin" style={{ color: "#3483FA" }} />
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Conectando ao Mercado Livre...</span>
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "12px 0" }}>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
+                    Conecte sua conta do Mercado Livre para responder perguntas e mensagens de pedidos diretamente na Caixa de Entrada.
+                  </p>
+                  <button
+                    onClick={startMLOAuth}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      padding: "10px 24px", borderRadius: 8, border: "none", cursor: "pointer",
+                      background: "#FFE600", color: "#2D3277", fontSize: 13, fontWeight: 600,
+                    }}
+                  >
+                    <ChannelIcon channel="mercadolivre" size="sm" variant="rounded" />
+                    Conectar Mercado Livre
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </Card>
