@@ -2,11 +2,12 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import {
-  Home, PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
-  Users, Package, CheckSquare, ShoppingCart, BarChart3,
-  FileBarChart, Brain, Radar, MessageSquare, Settings, CreditCard,
-  LayoutDashboard, Puzzle, Bell,
+  PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
+  Users, Package, ShoppingCart, BarChart3,
+  FileBarChart, Brain, Radar, Settings, CreditCard,
+  LayoutDashboard, Puzzle,
 } from "lucide-react";
+import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
 const NAV_ITEMS: { route: string; icon: typeof Home; label: string; group: string }[] = [
   { route: "/input",       icon: PenLine,         label: "Inserir",        group: "fin" },
@@ -47,20 +48,15 @@ export function TopNavBar() {
         flexShrink: 0,
       }}
     >
-      {/* Home button */}
+      {/* Whatsflow logo → Central de Controle */}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            onClick={() => navigate(`${basePath}/`)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 28, height: 28, borderRadius: 6, border: "none", cursor: "pointer",
-              background: "var(--acc-bg, rgba(14,138,92,0.08))",
-              color: "var(--acc, #0E8A5C)",
-              flexShrink: 0,
-            }}
+            onClick={() => navigate(`${basePath}/home`)}
+            className="nav-icon-hover"
+            style={{ width: 30, height: 30, border: "none", flexShrink: 0 }}
           >
-            <Home size={14} />
+            <img src={whatsflowLogo} alt="Whatsflow" style={{ width: 22, height: 22, borderRadius: 5 }} />
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs">Central de Controle</TooltipContent>
