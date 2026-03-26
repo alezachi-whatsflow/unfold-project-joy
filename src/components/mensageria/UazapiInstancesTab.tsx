@@ -81,17 +81,33 @@ export default function UazapiInstancesTab() {
 
   const handleCreate = async () => {
     if (!newName.trim()) {
-      toast.error("Informe o nome da instância.");
+      toast.error("Informe o nome da conexão.");
       return;
     }
     setCreating(true);
     try {
       if (!tenantId) { toast.error("Tenant não encontrado."); return; }
       await instanceService.create({ name: newName.trim(), tenantId });
-      toast.success("Instância criada! Clique em Conectar para escanear o QR Code.");
+      toast.success("Conexão criada! Abrindo QR Code...");
       setShowCreate(false);
       setNewName("");
-      fetchInstances();
+      await fetchInstances();
+
+      // Auto-open QR Code for the newly created instance
+      const { data: newInstances } = await supabase
+        .from("whatsapp_instances")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("instance_name", newName.trim())
+        .maybeSingle();
+
+      if (newInstances) {
+        setConnectInstance({
+          ...newInstances,
+          instance_name: newInstances.instance_name || newInstances.session_id,
+          instance_token: newInstances.instance_token || newInstances.token_api,
+        } as any);
+      }
     } catch (err: any) {
       toast.error("Erro ao criar: " + (err?.message || "Erro desconhecido"));
     } finally {
@@ -113,13 +129,13 @@ export default function UazapiInstancesTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Instâncias uazapi</h2>
+        <h2 className="text-xl font-semibold">API WhatsApp Web</h2>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleSync} disabled={loading} className="gap-2">
             <RefreshCw className="h-4 w-4" /> Sincronizar
           </Button>
           <Button onClick={() => setShowCreate(true)} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-            <Plus className="h-4 w-4" /> Nova Instância
+            <Plus className="h-4 w-4" /> Nova Instância API WhatsApp Web
           </Button>
         </div>
       </div>
@@ -140,8 +156,8 @@ export default function UazapiInstancesTab() {
 
       {!loading && instances.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
-          <p>Nenhuma instância uazapi configurada.</p>
-          <p className="text-xs mt-1">Clique em "Nova Instância" para criar uma.</p>
+          <p>Nenhuma instância WhatsApp Web configurada.</p>
+          <p className="text-xs mt-1">Clique em "Nova Instância API WhatsApp Web" para conectar.</p>
         </div>
       )}
 
@@ -149,19 +165,22 @@ export default function UazapiInstancesTab() {
       <Dialog open={showCreate} onOpenChange={(o) => !o && setShowCreate(false)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nova Instância uazapi</DialogTitle>
+            <DialogTitle>Nova Instância API WhatsApp Web</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Nome da instância</Label>
-              <Input placeholder="Ex: cobranca-principal" value={newName} onChange={(e) => setNewName(e.target.value)} />
-              <p className="text-[10px] text-muted-foreground">O nome será usado como identificador único no servidor.</p>
+              <Label>Nome da conexão</Label>
+              <Input placeholder="Ex: Atendimento Principal" value={newName} onChange={(e) => setNewName(e.target.value)} />
+              <p className="text-[10px] text-muted-foreground">Dê um nome para identificar esta conexão WhatsApp.</p>
+            </div>
+            <div className="rounded-lg p-3 text-xs" style={{ background: "var(--acc-bg, rgba(14,138,92,0.08))", color: "var(--acc, #0E8A5C)", border: "1px solid var(--acc-border, rgba(14,138,92,0.25))" }}>
+              Ao criar, o sistema irá configurar tudo automaticamente e exibir o QR Code para você escanear no WhatsApp do celular.
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={creating} className="bg-emerald-600 hover:bg-emerald-700">
-              {creating && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Criar Instância
+              {creating && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Criar e Conectar
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -64,8 +64,8 @@ const IntegracoesPage = () => {
               <MessageSquare size={20} color="#FFF" />
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>WhatsApp Web (uazapi)</p>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Conecte via QR Code — instâncias gerenciadas automaticamente</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>API WhatsApp Web</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Conecte via QR Code — configuração automática</p>
             </div>
             <div style={{
               width: 8, height: 8, borderRadius: "50%",
