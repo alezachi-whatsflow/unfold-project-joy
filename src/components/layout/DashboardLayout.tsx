@@ -77,9 +77,23 @@ export function DashboardLayout() {
     );
   }
 
-  // Inbox mode: main sidebar becomes horizontal icon bar at top
+  // Fullscreen routes: no sidebar, custom layout
   const isInboxRoute = location.pathname.includes("/mensageria");
+  const isHomePage = location.pathname.endsWith(`/app/${slug}`) || location.pathname.endsWith(`/app/${slug}/`);
 
+  // HomePage (Central de Controle) — fullscreen, own header
+  if (isHomePage) {
+    return (
+      <div className="flex min-h-screen w-full flex-col" style={{ background: "hsl(var(--background))" }}>
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+        <CommandPalette />
+      </div>
+    );
+  }
+
+  // Inbox mode: main sidebar becomes horizontal icon bar at top
   if (isInboxRoute) {
     return (
       <div className="flex flex-col min-h-screen w-full" style={{ background: "var(--bg-base, hsl(var(--background)))" }}>
