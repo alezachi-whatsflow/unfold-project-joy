@@ -52,7 +52,7 @@ export const instanceService = {
           tenant_id: params.tenantId,
           instance_name: instanceName,
           instance_token: instanceToken,
-          status: inst.status ?? "disconnected",
+          status: "disconnected", // Always start as disconnected until QR is scanned
           qr_code: inst.qrcode ?? null,
           pair_code: inst.paircode ?? null,
           profile_name: inst.profileName ?? null,
