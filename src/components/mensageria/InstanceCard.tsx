@@ -87,49 +87,39 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
 
   return (
     <>
-      <Card className="border-border/60 bg-card">
-        <CardContent className="p-5 space-y-4">
+      <Card style={{ border: "1px solid var(--border)", background: "var(--bg-card)", borderRadius: 10, overflow: "hidden" }}>
+        <CardContent className="p-4 space-y-3">
           {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                {instance.profile_pic_url ? (
-                  <img src={instance.profile_pic_url} alt="" className="w-8 h-8 rounded-full" />
-                ) : (
-                  <span className="text-base">{st.emoji}</span>
-                )}
-                <div>
-                  <span className="font-semibold text-sm">{instance.profile_name || instance.label || instance.instance_name}</span>
-                  {instance.is_business && <Badge variant="secondary" className="ml-1 text-[9px]">Business</Badge>}
-                </div>
-              </div>
-              {instance.phone_number && <p className="text-xs text-muted-foreground">📱 {instance.phone_number}</p>}
+          <div className="flex items-center gap-3">
+            <div style={{
+              width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+              background: instance.status === "connected" ? "rgba(14,138,92,0.1)" : "var(--border)",
+            }}>
+              {instance.profile_pic_url ? (
+                <img src={instance.profile_pic_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
+              ) : (
+                <span style={{ fontSize: 16 }}>{st.emoji}</span>
+              )}
             </div>
-            <Badge variant="outline" className={st.color}>{st.label}</Badge>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex items-center gap-1.5">
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }} className="truncate">
+                  {instance.profile_name || instance.label || instance.instance_name}
+                </span>
+                {instance.is_business && <Badge variant="secondary" className="text-[8px] px-1">Biz</Badge>}
+              </div>
+              {instance.phone_number && (
+                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>📱 {instance.phone_number}</p>
+              )}
+            </div>
+            <Badge variant="outline" className={st.color} style={{ fontSize: 10, flexShrink: 0 }}>{st.label}</Badge>
           </div>
 
-          {/* Info */}
-          <div className="space-y-1.5 text-xs text-muted-foreground">
-            <div className="flex justify-between">
-              <span>Instância</span>
-              <span className="font-mono text-[10px]">{instance.instance_name}</span>
-            </div>
-            {instance.platform && (
-              <div className="flex justify-between">
-                <span>Plataforma</span>
-                <span>{instance.platform}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span>Presença</span>
-              <span>{instance.current_presence === "available" ? "🟢 Online" : "⚪ Offline"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Chatbot</span>
-              <span>{instance.chatbot_enabled ? "✅ Ativo" : "❌ Inativo"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Último ping</span>
+          {/* Compact info row */}
+          <div style={{ display: "flex", gap: 12, fontSize: 11, color: "var(--text-secondary)" }}>
+            <span>{instance.current_presence === "available" ? "🟢 Online" : "⚪ Offline"}</span>
+            <span>{instance.chatbot_enabled ? "🤖 Bot ativo" : "🤖 Inativo"}</span>
+            <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>Último ping</span>
               <span>
                 {instance.ultimo_ping
                   ? formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })
