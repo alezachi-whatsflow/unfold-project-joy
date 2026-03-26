@@ -95,7 +95,7 @@ const IntegracoesPage = () => {
           >
             <ChannelIcon channel="whatsapp_meta" size="lg" variant="icon" />
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>WhatsApp API Cloud + Instagram</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Contas Cloud API Meta + Instagram + Facebook</p>
               <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Meta Business Platform — API oficial com templates HSM</p>
             </div>
             <div style={{
