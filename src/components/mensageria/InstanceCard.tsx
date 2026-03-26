@@ -119,13 +119,11 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
           <div style={{ display: "flex", gap: 12, fontSize: 11, color: "var(--text-secondary)" }}>
             <span>{instance.current_presence === "available" ? "🟢 Online" : "⚪ Offline"}</span>
             <span>{instance.chatbot_enabled ? "🤖 Bot ativo" : "🤖 Inativo"}</span>
-            <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>Último ping</span>
-              <span>
-                {instance.ultimo_ping
-                  ? formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })
-                  : "—"}
-              </span>
-            </div>
+            <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>
+              {instance.ultimo_ping
+                ? formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })
+                : "—"}
+            </span>
           </div>
 
           {/* Actions by status */}
