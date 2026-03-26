@@ -188,83 +188,12 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Configurações</h1>
-        <p className="text-sm text-muted-foreground">Configurações do Asaas, empresas e integrações</p>
+        <p className="text-sm text-muted-foreground">Aparência, pipeline e dados da empresa</p>
       </div>
 
-      <CheckoutIntegrationsCard />
       <SidebarAppearanceCard />
       <SalesFunnelConfigCard />
       <TenantManagementCard />
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><Shield className="h-5 w-5" /> Ambiente Asaas</CardTitle>
-            <CardDescription>Selecione Sandbox para testes ou Production para cobranças reais</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Ambiente ativo</Label>
-              <Select value={environment} onValueChange={(v) => setEnvironment(v as any)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sandbox">🧪 Sandbox (testes)</SelectItem>
-                  <SelectItem value="production">🚀 Production (real)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={testConnection} disabled={testing}>
-                {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Testar Conexão
-              </Button>
-              {apiStatus === "ok" && <Badge className="bg-green-600"><CheckCircle className="mr-1 h-3 w-3" /> Conectado</Badge>}
-              {apiStatus === "error" && <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" /> Falhou</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><RefreshCw className="h-5 w-5" /> Sincronização</CardTitle>
-            <CardDescription>Sincronize clientes e cobranças do Asaas para o banco local</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={syncAll} disabled={isSyncing} className="w-full">
-              {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              Sincronizar Tudo
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><Webhook className="h-5 w-5" /> Webhooks</CardTitle>
-            <CardDescription>Gerencie webhooks para receber eventos do Asaas em tempo real</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border border-border bg-muted/50 p-3">
-              <Label className="text-xs text-muted-foreground">URL do Webhook</Label>
-              <p className="mt-1 font-mono text-sm text-foreground break-all">{webhookUrl}</p>
-            </div>
-            <Button onClick={registerWebhook} disabled={registering}>
-              {registering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Webhook className="mr-2 h-4 w-4" />}
-              Registrar Webhook no Asaas
-            </Button>
-            {webhooks.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-sm">Webhooks registrados:</Label>
-                {webhooks.map((wh: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2 rounded border border-border p-2 text-xs">
-                    <Badge variant={wh.enabled ? "default" : "secondary"}>{wh.enabled ? "Ativo" : "Inativo"}</Badge>
-                    <span className="font-mono text-muted-foreground truncate">{wh.url}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
