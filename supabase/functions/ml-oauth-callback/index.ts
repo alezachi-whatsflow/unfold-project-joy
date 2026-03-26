@@ -33,9 +33,17 @@ Deno.serve(async (req) => {
     const { code, tenant_id, redirect_uri } = await req.json();
     if (!code || !tenant_id) return json({ error: "code and tenant_id are required" }, 400);
 
-    const mlAppId = Deno.env.get("ML_APP_ID");
-    const mlSecret = Deno.env.get("ML_APP_SECRET");
-    if (!mlAppId || !mlSecret) return json({ error: "ML_APP_ID/ML_APP_SECRET not configured" }, 500);
+    // Read credentials from DB (user configured via UI) with .env fallback
+    const { data: existingInt } = await supabase
+      .from("channel_integrations")
+      .select("ml_app_id, credentials")
+      .eq("tenant_id", tenant_id)
+      .eq("provider", "MERCADOLIVRE")
+      .maybeSingle();
+
+    const mlAppId = existingInt?.ml_app_id || Deno.env.get("ML_APP_ID");
+    const mlSecret = (existingInt?.credentials as any)?.client_secret || Deno.env.get("ML_APP_SECRET");
+    if (!mlAppId || !mlSecret) return json({ error: "Credenciais do ML não encontradas. Configure App ID e Secret na tela de Integrações." }, 400);
 
     // 1. Exchange code for tokens
     const tokenRes = await fetch(`${ML_API}/oauth/token`, {

@@ -46,14 +46,14 @@ Deno.serve(async (req) => {
     if (integration_id) {
       const { data } = await supabase
         .from("channel_integrations")
-        .select("id, tenant_id, access_token, refresh_token, token_expires_at, ml_user_id, ml_app_id")
+        .select("id, tenant_id, access_token, refresh_token, token_expires_at, ml_user_id, ml_app_id, credentials")
         .eq("id", integration_id)
         .maybeSingle();
       integration = data;
     } else if (tenant_id) {
       const { data } = await supabase
         .from("channel_integrations")
-        .select("id, tenant_id, access_token, refresh_token, token_expires_at, ml_user_id, ml_app_id")
+        .select("id, tenant_id, access_token, refresh_token, token_expires_at, ml_user_id, ml_app_id, credentials")
         .eq("tenant_id", tenant_id)
         .eq("provider", "MERCADOLIVRE")
         .eq("status", "active")
@@ -170,8 +170,8 @@ async function refreshToken(
   supabase: ReturnType<typeof createClient>,
   integration: any
 ): Promise<string | null> {
-  const mlAppId = Deno.env.get("ML_APP_ID") || integration.ml_app_id;
-  const mlSecret = Deno.env.get("ML_APP_SECRET");
+  const mlAppId = integration.ml_app_id || Deno.env.get("ML_APP_ID");
+  const mlSecret = (integration.credentials as any)?.client_secret || Deno.env.get("ML_APP_SECRET");
 
   if (!mlAppId || !mlSecret || !integration.refresh_token) return null;
 
