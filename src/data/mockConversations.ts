@@ -1,3 +1,5 @@
+import type { ChannelType } from "@/components/ui/ChannelIcon";
+
 export interface Conversation {
   id: string;
   name: string;
@@ -11,6 +13,7 @@ export interface Conversation {
   avatarInitials: string;
   avatarUrl?: string;
   instanceName: string;
+  channel?: ChannelType;
   tags: Array<{
     label: string;
     color: "ai" | "client" | "lead" | "support" | "transfer";

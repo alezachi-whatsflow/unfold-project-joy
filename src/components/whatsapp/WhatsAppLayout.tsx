@@ -7,6 +7,7 @@ import { GroupKanbanBoard } from "./groups/GroupKanbanBoard";
 import type { Conversation } from "@/data/mockConversations";
 import type { Message } from "@/data/mockMessages";
 import type { AttachmentPayload } from "./chat/ChatInput";
+import type { ChannelType } from "@/components/ui/ChannelIcon";
 
 /* ── helpers ───────────────────────────────────────── */
 function isGroupJid(jid: string) {
@@ -305,6 +306,10 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         avatarInitials: isGroup ? groupInitials(name) : phoneInitials(phone),
         avatarUrl: avatarUrl || undefined,
         instanceName: latest.instance_name,
+        channel: (latest.instance_name?.startsWith("meta:") ? "whatsapp_meta"
+          : latest.instance_name?.startsWith("messenger:") ? "facebook"
+          : latest.instance_name?.startsWith("instagram:") ? "instagram"
+          : "whatsapp_web") as ChannelType,
         tags: lead?.lead_tags?.length
           ? lead.lead_tags.map((t: string) => ({ label: t, color: "lead" as const }))
           : [],
@@ -618,10 +623,12 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
     };
   }, [selectedJid, fetchConversations, mapDbMessageToUi, resolveMessageMediaUrl, updateMessagesWithCache]);
 
-  /* ── detect if conversation uses Meta API ─────── */
+  /* ── detect conversation channel ─────── */
   const isMetaConversation = (instanceName: string) => instanceName?.startsWith("meta:");
+  const isMessengerConversation = (instanceName: string) => instanceName?.startsWith("messenger:");
+  const isInstagramConversation = (instanceName: string) => instanceName?.startsWith("instagram:");
 
-  /* ── send message (auto-routes uazapi or meta) ── */
+  /* ── send message (auto-routes uazapi, meta, messenger, instagram) ── */
   const handleSend = async (text: string) => {
     if (!selectedJid || !text.trim()) return;
 
@@ -633,9 +640,23 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
 
     const isGroup = isGroupJid(selectedJid);
 
-    if (isMetaConversation(conv.instanceName)) {
-      // Send via Meta Cloud API
-      const phoneNumberId = conv.instanceName.replace("meta:", "");
+    if (isMessengerConversation(conv.instanceName)) {
+      // Send via Facebook Messenger
+      const pageId = conv.instanceName.replace("messenger:", "");
+      const { error } = await supabase.functions.invoke("messenger-send", {
+        body: {
+          page_id: pageId,
+          recipient_psid: selectedJid.replace("@messenger", ""),
+          text,
+        },
+      });
+      if (error) {
+        console.error("Messenger send error:", error);
+        return;
+      }
+    } else if (isMetaConversation(conv.instanceName) || isInstagramConversation(conv.instanceName)) {
+      // Send via Meta Cloud API (WhatsApp or Instagram)
+      const phoneNumberId = conv.instanceName.replace("meta:", "").replace("instagram:", "");
       const { data: result, error } = await supabase.functions.invoke("meta-proxy", {
         body: {
           action: "send-text",
@@ -644,13 +665,12 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
           phone_number_id: phoneNumberId,
         },
       });
-
       if (error || !(result as any)?.ok) {
         console.error("Meta send error:", error || result);
         return;
       }
     } else {
-      // Send via uazapi
+      // Send via uazapi (WhatsApp Web)
       const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
         body: {
           instanceName: conv.instanceName,
@@ -662,12 +682,10 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
           },
         },
       });
-
       if (error) {
         console.error("Send error:", error);
         return;
       }
-
       const upstreamOk = Boolean((result as any)?.ok ?? true);
       if (!upstreamOk) {
         console.error("uazapi returned non-ok response:", result);

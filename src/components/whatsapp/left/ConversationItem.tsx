@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { Conversation } from "@/data/mockConversations";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
+import { ChannelIcon } from "@/components/ui/ChannelIcon";
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -25,7 +26,12 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
       onClick={onClick}
       className={cn("msg-conv-item w-full flex gap-3 text-left overflow-hidden", isSelected && "active")}
     >
-      <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={36} isOnline={c.isOnline} imageUrl={c.avatarUrl} />
+      <div className="relative shrink-0">
+        <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={36} isOnline={false} imageUrl={c.avatarUrl} />
+        {c.channel && (
+          <ChannelIcon channel={c.channel} size="sm" variant="badge" className="absolute -bottom-1 -right-1" />
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <span className="conv-name truncate">{c.name}</span>
