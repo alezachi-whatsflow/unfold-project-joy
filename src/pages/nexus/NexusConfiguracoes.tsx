@@ -4,7 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Settings, RefreshCw, CheckCircle2, AlertCircle, Loader2, ArrowRight, Shield, XCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Settings, RefreshCw, CheckCircle2, AlertCircle, Loader2, ArrowRight, Shield, XCircle, Calendar, Clock, Plus, Play, Pause, Trash2, CalendarClock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -213,6 +218,94 @@ export default function NexusConfiguracoes() {
     return <Badge className="bg-emerald-500/20 text-emerald-400 text-[9px]">INDIVIDUAL</Badge>;
   };
 
+  // ── Schedules ──
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [schedForm, setSchedForm] = useState({
+    name: '', description: '', schedule_type: 'once' as string,
+    scheduled_for: '', recurrence: 'weekly' as string,
+  });
+
+  const { data: schedules = [], refetch: refetchSchedules } = useQuery({
+    queryKey: ['sync-schedules'],
+    queryFn: async () => {
+      const { data } = await supabase.from('sync_schedules').select('*').order('created_at', { ascending: false });
+      return data || [];
+    },
+  });
+
+  const createSchedule = useMutation({
+    mutationFn: async () => {
+      if (!schedForm.name || selectedScopes.length === 0) throw new Error('Nome e escopos são obrigatórios');
+      const payload: any = {
+        name: schedForm.name,
+        description: schedForm.description || null,
+        scopes: selectedScopes,
+        target_tenant_ids: selectAll ? [] : selectedTargets,
+        target_all: selectAll,
+        schedule_type: schedForm.schedule_type,
+        is_active: true,
+        created_by: user?.id,
+      };
+      if (schedForm.schedule_type === 'once' && schedForm.scheduled_for) {
+        payload.scheduled_for = new Date(schedForm.scheduled_for).toISOString();
+        payload.next_run_at = payload.scheduled_for;
+      }
+      if (schedForm.schedule_type === 'recurring') {
+        payload.recurrence = schedForm.recurrence;
+        // Calculate next run based on recurrence
+        const now = new Date();
+        if (schedForm.recurrence === 'daily') now.setDate(now.getDate() + 1);
+        else if (schedForm.recurrence === 'weekly') now.setDate(now.getDate() + 7);
+        else if (schedForm.recurrence === 'monthly') now.setMonth(now.getMonth() + 1);
+        now.setHours(3, 0, 0, 0); // 3AM
+        payload.next_run_at = now.toISOString();
+      }
+      const { error } = await supabase.from('sync_schedules').insert(payload);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchSchedules();
+      setScheduleOpen(false);
+      setSchedForm({ name: '', description: '', schedule_type: 'once', scheduled_for: '', recurrence: 'weekly' });
+      toast.success('Agendamento criado');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const toggleSchedule = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      await supabase.from('sync_schedules').update({ is_active: active, updated_at: new Date().toISOString() }).eq('id', id);
+    },
+    onSuccess: () => refetchSchedules(),
+  });
+
+  const deleteSchedule = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from('sync_schedules').delete().eq('id', id);
+    },
+    onSuccess: () => { refetchSchedules(); toast.success('Agendamento removido'); },
+  });
+
+  const runScheduleNow = async (sched: any) => {
+    // Set the selected scopes and targets from the schedule, then run sync
+    setSelectedScopes(sched.scopes || []);
+    if (sched.target_all) {
+      setSelectAll(true);
+    } else {
+      setSelectedTargets(sched.target_tenant_ids || []);
+    }
+    // Wait for state update then trigger
+    setTimeout(() => syncMutation.mutate(), 100);
+    // Update last_run
+    await supabase.from('sync_schedules').update({
+      last_run_at: new Date().toISOString(),
+      last_run_status: 'running',
+      total_runs: (sched.total_runs || 0) + 1,
+    }).eq('id', sched.id);
+  };
+
+  const RECURRENCE_LABELS: Record<string, string> = { daily: 'Diário (3h)', weekly: 'Semanal (seg 3h)', monthly: 'Mensal (dia 1, 3h)' };
+
   return (
     <div className="space-y-6">
       <div>
@@ -310,7 +403,111 @@ export default function NexusConfiguracoes() {
         </Card>
       )}
 
-      {/* Sync button */}
+      {/* ═══ Agendamentos ═══ */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <CalendarClock className="h-4 w-4" /> Agendamentos
+          </p>
+          <Button variant="outline" size="sm" onClick={() => setScheduleOpen(true)} className="gap-1 text-xs">
+            <Plus size={12} /> Novo Agendamento
+          </Button>
+        </div>
+
+        {schedules.length === 0 ? (
+          <Card className="border-border/50">
+            <CardContent className="p-4 text-center text-sm text-muted-foreground">
+              Nenhum agendamento criado. Crie um para automatizar sincronizações.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {schedules.map((s: any) => (
+              <Card key={s.id} className="border-border/50">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full ${s.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">{s.name}</span>
+                      <Badge variant="outline" className="text-[9px]">
+                        {s.schedule_type === 'once' ? '📅 Única vez' : s.schedule_type === 'recurring' ? `🔄 ${RECURRENCE_LABELS[s.recurrence] || s.recurrence}` : '🖐️ Manual'}
+                      </Badge>
+                      <Badge variant="outline" className="text-[9px]">{(s.scopes || []).length} escopos</Badge>
+                      <Badge variant="outline" className="text-[9px]">{s.target_all ? 'Todas' : `${(s.target_tenant_ids || []).length} contas`}</Badge>
+                    </div>
+                    {s.description && <p className="text-[10px] text-muted-foreground">{s.description}</p>}
+                    <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground">
+                      {s.next_run_at && <span>Próxima: {new Date(s.next_run_at).toLocaleString('pt-BR')}</span>}
+                      {s.last_run_at && <span>Última: {new Date(s.last_run_at).toLocaleString('pt-BR')}</span>}
+                      {s.total_runs > 0 && <span>Execuções: {s.total_runs}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={() => runScheduleNow(s)} disabled={syncMutation.isPending}>
+                      <Play size={10} /> Executar
+                    </Button>
+                    <Switch checked={s.is_active} onCheckedChange={(v) => toggleSchedule.mutate({ id: s.id, active: v })} />
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-400" onClick={() => deleteSchedule.mutate(s.id)}>
+                      <Trash2 size={12} />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Schedule create modal */}
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Novo Agendamento de Sync</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div><Label>Nome</Label><Input value={schedForm.name} onChange={(e) => setSchedForm({ ...schedForm, name: e.target.value })} placeholder="Ex: Sync semanal pós-deploy" /></div>
+            <div><Label>Descrição (opcional)</Label><Textarea value={schedForm.description} onChange={(e) => setSchedForm({ ...schedForm, description: e.target.value })} placeholder="O que será atualizado e por quê" rows={2} /></div>
+            <div>
+              <Label>Tipo</Label>
+              <Select value={schedForm.schedule_type} onValueChange={(v) => setSchedForm({ ...schedForm, schedule_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manual (executar sob demanda)</SelectItem>
+                  <SelectItem value="once">Agendar para data específica</SelectItem>
+                  <SelectItem value="recurring">Recorrente (automático)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {schedForm.schedule_type === 'once' && (
+              <div><Label>Data e hora</Label><Input type="datetime-local" value={schedForm.scheduled_for} onChange={(e) => setSchedForm({ ...schedForm, scheduled_for: e.target.value })} /></div>
+            )}
+            {schedForm.schedule_type === 'recurring' && (
+              <div>
+                <Label>Recorrência</Label>
+                <Select value={schedForm.recurrence} onValueChange={(v) => setSchedForm({ ...schedForm, recurrence: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Diário (todos os dias às 3h)</SelectItem>
+                    <SelectItem value="weekly">Semanal (segunda às 3h)</SelectItem>
+                    <SelectItem value="monthly">Mensal (dia 1 às 3h)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="rounded-lg p-3 text-xs" style={{ background: "var(--acc-bg, rgba(14,138,92,0.08))", color: "var(--acc, #0E8A5C)", border: "1px solid var(--acc-border, rgba(14,138,92,0.25))" }}>
+              Escopos selecionados: {selectedScopes.length > 0 ? selectedScopes.length : "nenhum (selecione acima)"}
+              <br />Destinos: {selectAll ? "Todas as contas" : `${selectedTargets.length} contas selecionadas`}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleOpen(false)}>Cancelar</Button>
+            <Button onClick={() => createSchedule.mutate()} disabled={!schedForm.name || selectedScopes.length === 0 || createSchedule.isPending} className="gap-1">
+              {createSchedule.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              <Calendar size={14} /> Criar Agendamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync button (manual/immediate) */}
       <Button
         onClick={() => syncMutation.mutate()}
         disabled={syncMutation.isPending || selectedTargets.length === 0 || selectedScopes.length === 0}
