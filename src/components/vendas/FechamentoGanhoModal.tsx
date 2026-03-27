@@ -97,7 +97,7 @@ export default function FechamentoGanhoModal({ negocio, onClose }: Props) {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="rounded-lg p-4 border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+            <div className="p-4 border border-emerald-500/30 bg-emerald-500/5 space-y-3">
               <div className="flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-emerald-500" />
                 <span className="text-sm font-semibold text-emerald-500">Link de Pagamento / Contrato</span>
@@ -130,7 +130,7 @@ export default function FechamentoGanhoModal({ negocio, onClose }: Props) {
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <p className="text-sm text-muted-foreground">Deseja gerar a cobrança automaticamente para este negócio?</p>
-            <div className="rounded-lg border border-border/40 p-3 space-y-1 text-sm">
+            <div className="border border-border/40 p-3 space-y-1 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Cliente:</span><span className="text-foreground">{negocio.cliente_nome || '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Valor:</span><span className="font-bold text-foreground">{fmt(negocio.valor_liquido)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Forma:</span><span className="text-foreground">{FORMAS_PAGAMENTO.find(f => f.value === negocio.forma_pagamento)?.label || negocio.forma_pagamento}</span></div>
@@ -156,7 +156,7 @@ export default function FechamentoGanhoModal({ negocio, onClose }: Props) {
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <p className="text-sm text-muted-foreground">Deseja emitir a Nota Fiscal automaticamente?</p>
-            <div className="rounded-lg border border-border/40 p-3 space-y-1 text-sm">
+            <div className="border border-border/40 p-3 space-y-1 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Cliente:</span><span className="text-foreground">{negocio.cliente_nome || '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Valor:</span><span className="font-bold text-foreground">{fmt(negocio.valor_liquido)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Produtos:</span><span className="text-foreground">{negocio.produtos.length} item(s)</span></div>

@@ -151,7 +151,7 @@ export function ProspeccaoTab() {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
               {showSuggestions && nichoQuery && filtered.length > 0 && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover p-1 shadow-md max-h-48 overflow-auto">
+                <div className="absolute z-50 mt-1 w-full border bg-popover p-1 max-h-48 overflow-auto">
                   {filtered.map((n) => (
                     <button key={n} className="w-full text-left px-3 py-2 text-sm rounded hover:bg-accent hover:text-accent-foreground" onClick={() => { setNichoQuery(n); setShowSuggestions(false); }}>{n}</button>
                   ))}

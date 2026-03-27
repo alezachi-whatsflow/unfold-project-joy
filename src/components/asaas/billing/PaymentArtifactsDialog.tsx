@@ -42,7 +42,7 @@ export function PaymentArtifactsDialog({ open, onOpenChange, result }: Props) {
                 <QrCode className="h-3.5 w-3.5 text-primary" />
                 Pix QR Code
               </p>
-              <div className="flex justify-center rounded-lg border border-border bg-white p-4">
+              <div className="flex justify-center border border-border bg-white p-4">
                 <img
                   src={`data:image/png;base64,${result.pixQrCodeImage}`}
                   alt="QR Code Pix"
@@ -57,7 +57,7 @@ export function PaymentArtifactsDialog({ open, onOpenChange, result }: Props) {
             <div className="space-y-1.5">
               <p className="text-xs font-medium">Pix Copia e Cola</p>
               <div className="flex gap-2">
-                <div className="flex-1 rounded-md border border-border bg-muted/50 p-2 text-[10px] font-mono break-all max-h-20 overflow-y-auto">
+                <div className="flex-1 border border-border bg-muted/50 p-2 text-[10px] font-mono break-all max-h-20 overflow-y-auto">
                   {result.pixCopyPaste}
                 </div>
                 <Button

@@ -343,7 +343,7 @@ export default function SuperAdminTenants() {
               </div>
             )}
             {/* MRR Preview */}
-            <div className="rounded-lg border border-border bg-muted/30 p-3">
+            <div className="border border-border bg-muted/30 p-3">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Preview MRR</p>
               <p className="text-lg font-bold text-foreground">{planPrice}/mês</p>
               <p className="text-[10px] text-muted-foreground">

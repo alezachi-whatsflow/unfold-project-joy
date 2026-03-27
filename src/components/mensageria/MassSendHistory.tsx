@@ -156,12 +156,12 @@ export default function MassSendHistory({ onBack }: Props) {
             return (
               <Card
                 key={b.id}
-                className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                className="p-4 cursor-pointer hover:transition-shadow"
                 style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
                 onClick={() => setDetailBatch(b)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${cfg.color}15` }}>
+                  <div className="w-10 h-10 flex items-center justify-center" style={{ background: `${cfg.color}15` }}>
                     <Icon size={18} style={{ color: cfg.color }} className={b.status === "running" ? "animate-spin" : ""} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -249,7 +249,7 @@ export default function MassSendHistory({ onBack }: Props) {
 
               {/* Message preview */}
               {detailBatch.message_body && (
-                <div className="rounded-lg p-3 text-sm" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                <div className="p-3 text-sm" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
                   {detailBatch.message_body}
                 </div>
               )}
@@ -257,7 +257,7 @@ export default function MassSendHistory({ onBack }: Props) {
               {/* Results table */}
               <div>
                 <h4 className="text-sm font-semibold mb-2" style={{ color: "var(--text-primary)" }}>Detalhes por contato ({results.length})</h4>
-                <div className="max-h-64 overflow-y-auto rounded-lg border" style={{ borderColor: "var(--border)" }}>
+                <div className="max-h-64 overflow-y-auto border" style={{ borderColor: "var(--border)" }}>
                   <table className="w-full text-xs">
                     <thead className="sticky top-0" style={{ background: "var(--bg-surface)" }}>
                       <tr className="border-b" style={{ borderColor: "var(--border)" }}>

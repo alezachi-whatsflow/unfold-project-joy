@@ -316,7 +316,7 @@ export default function SuperAdminLicenses() {
             <Separator />
 
             {/* MRR Preview */}
-            <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
+            <div className="border-2 border-primary/20 bg-primary/5 p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">MRR Calculado</p>
               <p className="text-2xl font-bold text-foreground">
                 R$ {mrrPreview.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}

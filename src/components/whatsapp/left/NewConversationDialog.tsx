@@ -155,7 +155,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
   return (
     <div className="absolute inset-0 z-50 flex items-start justify-center pt-16" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
       <div
-        className="rounded-xl shadow-2xl w-[380px] flex flex-col overflow-hidden"
+        className="w-[380px] flex flex-col overflow-hidden"
         style={{ backgroundColor: "var(--wa-bg-panel)", border: "1px solid var(--wa-border)" }}
       >
         {/* Header */}
@@ -173,7 +173,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
             <select
               value={selectedInstance}
               onChange={(e) => setSelectedInstance(e.target.value)}
-              className="rounded-lg px-3 py-2 text-sm outline-none"
+              className="px-3 py-2 text-sm outline-none"
               style={{
                 backgroundColor: "var(--wa-bg-chat)",
                 color: "var(--wa-text-primary)",
@@ -197,7 +197,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
               placeholder="5511999999999"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="rounded-lg px-3 py-2 text-sm outline-none"
+              className="px-3 py-2 text-sm outline-none"
               style={{
                 backgroundColor: "var(--wa-bg-chat)",
                 color: "var(--wa-text-primary)",
@@ -215,7 +215,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
             <select
               value={selectedTemplate}
               onChange={(e) => setSelectedTemplate(Number(e.target.value))}
-              className="rounded-lg px-3 py-2 text-sm outline-none"
+              className="px-3 py-2 text-sm outline-none"
               style={{
                 backgroundColor: "var(--wa-bg-chat)",
                 color: "var(--wa-text-primary)",
@@ -235,7 +235,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
               rows={3}
-              className="rounded-lg px-3 py-2 text-sm outline-none resize-none"
+              className="px-3 py-2 text-sm outline-none resize-none"
               style={{
                 backgroundColor: "var(--wa-bg-chat)",
                 color: "var(--wa-text-primary)",
@@ -244,7 +244,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
             />
           ) : (
             <div
-              className="rounded-lg px-3 py-2 text-xs leading-relaxed"
+              className="px-3 py-2 text-xs leading-relaxed"
               style={{
                 backgroundColor: "var(--wa-bg-chat)",
                 color: "var(--wa-text-secondary)",
@@ -259,7 +259,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
           <button
             onClick={handleSend}
             disabled={sending || !selectedInstance}
-            className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-opacity disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-opacity disabled:opacity-50"
             style={{ backgroundColor: "var(--wa-green)", color: "#fff" }}
           >
             {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}

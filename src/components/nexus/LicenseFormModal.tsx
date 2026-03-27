@@ -358,7 +358,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
         <div className="space-y-6">
 
           {/* Identificação */}
-          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+          <section className="bg-muted/30 p-4 border border-border space-y-4">
             <SectionTitle>Identificação</SectionTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {!isEdit && (
@@ -454,7 +454,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           </section>
 
           {/* Dados da Empresa */}
-          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+          <section className="bg-muted/30 p-4 border border-border space-y-4">
             <SectionTitle>Dados da Empresa</SectionTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -477,7 +477,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           </section>
 
           {/* Datas */}
-          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+          <section className="bg-muted/30 p-4 border border-border space-y-4">
             <SectionTitle>Datas do Contrato</SectionTitle>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <DateField label="Ativação" value={form.starts_at} onChange={(v) => set('starts_at', v)} />
@@ -574,7 +574,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           </section>
 
           {/* Cobrança e Pagamento */}
-          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+          <section className="bg-muted/30 p-4 border border-border space-y-4">
             <SectionTitle>Cobrança e Pagamento</SectionTitle>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -625,7 +625,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           </section>
 
           {/* Split de Pagamento */}
-          <section className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+          <section className="bg-muted/30 p-4 border border-border space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <SectionTitle>Split de Pagamento</SectionTitle>
@@ -638,7 +638,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
             </div>
             {split.enabled && (
               <div className="space-y-3">
-                <div className="rounded-md border border-primary/20 bg-primary/5 p-2.5">
+                <div className="border border-primary/20 bg-primary/5 p-2.5">
                   <p className="text-[10px] text-primary font-medium flex items-center gap-1">
                     <Info className="h-3 w-3" />
                     O split é aplicado no momento da cobrança via Asaas
@@ -763,7 +763,7 @@ function SplitRow({
 }) {
   const selected = salesPeople.find(s => s.id === recipient.salespersonId);
   return (
-    <div className="rounded-lg border border-border p-3 space-y-3">
+    <div className="border border-border p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5" /> Recebedor #{index + 1}
@@ -799,7 +799,7 @@ function SplitRow({
         </Select>
       </div>
       {selected?.asaas_wallet_id && (
-        <div className="rounded-md border border-border bg-muted/30 p-2">
+        <div className="border border-border bg-muted/30 p-2">
           <p className="text-[10px] text-muted-foreground">
             Wallet ID: <span className="font-mono text-foreground">{selected.asaas_wallet_id}</span>
           </p>

@@ -99,7 +99,7 @@ export function TourOverlay() {
       {/* Highlight cutout */}
       {highlightRect && (
         <div
-          className="fixed z-[10001] rounded-lg pointer-events-none"
+          className="fixed z-[10001] pointer-events-none"
           style={{
             top: highlightRect.top - 6,
             left: highlightRect.left - 6,
@@ -116,7 +116,7 @@ export function TourOverlay() {
         style={panelStyle}
         className="pointer-events-auto w-[400px] max-w-[calc(100vw-32px)]"
       >
-        <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-card border border-border overflow-hidden">
           {/* Header */}
           <div className="bg-primary/10 border-b border-border px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">

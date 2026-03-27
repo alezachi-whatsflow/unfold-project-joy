@@ -130,7 +130,7 @@ export default function AssinaturaPage() {
 
       {/* Expiry / Trial Alert */}
       {isExpired && (
-        <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-xl flex items-start gap-4">
+        <div className="bg-rose-500/10 border border-rose-500/30 p-4 flex items-start gap-4">
           <XCircle className="h-5 w-5 text-rose-500 mt-0.5" />
           <div>
             <h3 className="text-sm font-bold text-rose-500">Sua licença expirou</h3>
@@ -141,7 +141,7 @@ export default function AssinaturaPage() {
         </div>
       )}
       {isExpiringSoon && (
-        <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex items-start gap-4">
+        <div className="bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-4">
           <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
           <div>
             <h3 className="text-sm font-bold text-amber-500">
@@ -224,7 +224,7 @@ export default function AssinaturaPage() {
       </div>
 
       {/* Contact CTA */}
-      <div className="bg-card rounded-xl border p-6 text-center space-y-4 mt-8">
+      <div className="bg-card border p-6 text-center space-y-4 mt-8">
         <h3 className="text-lg font-bold">Precisa de mais recursos?</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           Faça um upgrade no seu limite de dispositivos Meta, atendentes ou adicione novos módulos premium como IA.
@@ -293,7 +293,7 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
   const tierLabelAtt = `R$ ${unitPriceAtt}/un`;
 
   const btnClass = (active = true) =>
-    `w-full mt-4 py-2 rounded-lg text-sm font-bold text-white transition-opacity ${
+    `w-full mt-4 py-2 text-sm font-bold text-white transition-opacity ${
       active && isAdmin ? "opacity-100 hover:opacity-90 cursor-pointer" : "opacity-40 cursor-not-allowed"
     }`;
 
@@ -363,19 +363,19 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {(!limits.facilitePlan || limits.facilitePlan === "none") && (
                 <>
-                  <button onClick={() => handle("facilite_basico", "Facilite Básico", 250)} className="rounded-lg border p-2 text-xs font-bold hover:border-purple-400 transition">Básico<br />R$ 250</button>
-                  <button onClick={() => handle("facilite_inter", "Facilite Intermediário", 700)} className="rounded-lg border p-2 text-xs font-bold hover:border-purple-400 transition">Interm.<br />R$ 700</button>
-                  <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="rounded-lg border col-span-2 p-2 text-xs font-bold hover:border-purple-400 transition">Avançado — R$ 1.500</button>
+                  <button onClick={() => handle("facilite_basico", "Facilite Básico", 250)} className="border p-2 text-xs font-bold hover:border-purple-400 transition">Básico<br />R$ 250</button>
+                  <button onClick={() => handle("facilite_inter", "Facilite Intermediário", 700)} className="border p-2 text-xs font-bold hover:border-purple-400 transition">Interm.<br />R$ 700</button>
+                  <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="border col-span-2 p-2 text-xs font-bold hover:border-purple-400 transition">Avançado — R$ 1.500</button>
                 </>
               )}
               {limits.facilitePlan === "basico" && (
                 <>
-                  <button onClick={() => handle("facilite_inter", "Facilite Intermediário", 700)} className="rounded-lg border p-2 text-xs font-bold hover:border-purple-400">Interm. R$ 700</button>
-                  <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="rounded-lg border p-2 text-xs font-bold hover:border-purple-400">Avançado R$ 1.500</button>
+                  <button onClick={() => handle("facilite_inter", "Facilite Intermediário", 700)} className="border p-2 text-xs font-bold hover:border-purple-400">Interm. R$ 700</button>
+                  <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="border p-2 text-xs font-bold hover:border-purple-400">Avançado R$ 1.500</button>
                 </>
               )}
               {limits.facilitePlan === "intermediario" && (
-                <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="rounded-lg border p-2 text-xs font-bold col-span-2 hover:border-purple-400">Upgrade → Avançado R$ 1.500</button>
+                <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="border p-2 text-xs font-bold col-span-2 hover:border-purple-400">Upgrade → Avançado R$ 1.500</button>
               )}
             </div>
           </Card>
@@ -421,7 +421,7 @@ function UpsellModal({ item, onClose }: { item: any; onClose: () => void }) {
         </DialogHeader>
         {step === 1 && (
           <div className="space-y-4 py-2">
-            <div className="rounded-xl border border-border bg-secondary/20 p-4 space-y-2 text-sm">
+            <div className="border border-border bg-secondary/20 p-4 space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">{item.label}</span><span className="font-bold">+R$ {item.value.toLocaleString("pt-BR")}/mês</span></div>
               <div className="flex justify-between border-t border-border pt-2 font-bold"><span>1ª cobrança hoje</span><span className="text-primary">R$ {item.value.toLocaleString("pt-BR")}</span></div>
             </div>
@@ -433,9 +433,9 @@ function UpsellModal({ item, onClose }: { item: any; onClose: () => void }) {
         )}
         {step === 2 && (
           <div className="space-y-4 py-2">
-            <div className="flex gap-2 p-1 bg-secondary rounded-xl">
+            <div className="flex gap-2 p-1 bg-secondary">
               {(["pix", "boleto", "cartao"] as const).map(t => (
-                <button key={t} onClick={() => setPayTab(t)} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${payTab === t ? "bg-background shadow text-foreground" : "text-muted-foreground"}`}>
+                <button key={t} onClick={() => setPayTab(t)} className={`flex-1 py-2 text-sm font-bold transition-all ${payTab === t ? "bg-background shadow text-foreground" : "text-muted-foreground"}`}>
                   {t === "pix" ? "PIX" : t === "boleto" ? "Boleto" : "Cartão"}
                 </button>
               ))}
@@ -448,9 +448,9 @@ function UpsellModal({ item, onClose }: { item: any; onClose: () => void }) {
                   </Button>
                 ) : (
                   <>
-                    <div className="bg-white rounded-xl p-4 mx-auto w-32 h-32 flex items-center justify-center text-4xl">📱</div>
+                    <div className="bg-white p-4 mx-auto w-32 h-32 flex items-center justify-center text-4xl">📱</div>
                     <div className="flex gap-2">
-                      <input readOnly value={pixCode.substring(0, 40) + "..."} className="flex-1 bg-secondary px-3 py-2 rounded-lg text-xs font-mono" />
+                      <input readOnly value={pixCode.substring(0, 40) + "..."} className="flex-1 bg-secondary px-3 py-2 text-xs font-mono" />
                       <Button size="icon" variant="outline" onClick={copyPix}>{copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}</Button>
                     </div>
                     <p className="text-xs text-muted-foreground">Aguardando confirmação... O recurso será ativado automaticamente.</p>

@@ -70,14 +70,14 @@ export default function LeadKanban() {
             {STATUS_COLUMNS.map((col) => {
               const colLeads = getLeadsByStatus(col.key);
               return (
-                <div key={col.key} className={`rounded-lg p-3 ${col.color} min-h-[200px]`}>
+                <div key={col.key} className={`p-3 ${col.color} min-h-[200px]`}>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-sm">{col.label}</h3>
                     <Badge variant="secondary" className="text-[10px]">{colLeads.length}</Badge>
                   </div>
                   <div className="space-y-2">
                     {colLeads.map((lead) => (
-                      <div key={lead.id} className="bg-card rounded-lg p-3 space-y-2 border border-border/50 shadow-sm">
+                      <div key={lead.id} className="bg-card p-3 space-y-2 border border-border/50">
                         <div className="flex items-center gap-2">
                           <User className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-sm font-medium truncate">{lead.lead_name || lead.lead_full_name || lead.chat_id}</span>

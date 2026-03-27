@@ -243,7 +243,7 @@ export default function MetaChannelsTab() {
               <Input type="password" placeholder="EAAx..." value={messengerForm.pageToken} onChange={(e) => setMessengerForm({ ...messengerForm, pageToken: e.target.value })} />
               <p className="text-[10px] text-muted-foreground mt-1">Gere em: developers.facebook.com → Seu App → Messenger → Configurações</p>
             </div>
-            <div className="rounded-lg p-3 text-xs" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.25)" }}>
+            <div className="p-3 text-xs" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.25)" }}>
               Após salvar, configure o webhook da sua página apontando para:<br />
               <code className="text-[10px] font-mono">https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/meta-webhook</code>
             </div>

@@ -57,7 +57,7 @@ export default function FederalSection({ simplesData, onSimplesChange, presumido
         </TabsList>
 
         <TabsContent value="simples">
-          <div className="rounded-lg border border-border/40 overflow-auto">
+          <div className="border border-border/40 overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>

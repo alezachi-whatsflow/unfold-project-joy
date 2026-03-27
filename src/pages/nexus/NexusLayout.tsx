@@ -102,7 +102,7 @@ export default function NexusLayout() {
       {isMobile && !mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg bg-card border border-border shadow-md"
+          className="fixed top-3 left-3 z-50 flex items-center justify-center bg-card border border-border"
           style={{ width: 40, height: 40 }}
         >
           <Menu className="h-5 w-5 text-foreground" />
@@ -122,7 +122,7 @@ export default function NexusLayout() {
       >
         {/* Logo + badge */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-border relative">
-          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
+          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 shrink-0" />
           {(!collapsed || isMobile) && (
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm font-semibold text-foreground truncate">Whatsflow</span>
@@ -150,7 +150,7 @@ export default function NexusLayout() {
               end={item.end}
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 ${
+                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors mx-2 ${
                   isActive
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
@@ -261,7 +261,7 @@ export default function NexusLayout() {
               placeholder="Buscar por nome..."
               value={tenantSearch}
               onChange={(e) => setTenantSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
@@ -310,7 +310,7 @@ export default function NexusLayout() {
                         navigate('/');
                       }
                     }}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors text-left ${indent ? 'ml-6' : ''}`}
+                    className={`w-full flex items-center gap-3 p-3 border border-border hover:bg-accent/50 transition-colors text-left ${indent ? 'ml-6' : ''}`}
                   >
                     <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${avatarColor(lic.license_type)}`}>
                       {tenant.name?.[0]?.toUpperCase() || 'T'}

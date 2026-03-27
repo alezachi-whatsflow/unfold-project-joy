@@ -204,7 +204,7 @@ export function FaturaView({
       {/* Fatura content */}
       <div
         ref={printRef}
-        className="fatura bg-white text-gray-900 rounded-lg p-10 text-sm"
+        className="fatura bg-white text-gray-900 p-10 text-sm"
         style={{ fontFamily: 'Arial, sans-serif' }}
       >
         {/* Header */}

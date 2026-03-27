@@ -105,12 +105,12 @@ export default function NexusCheckouts() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar email, empresa..."
-            className="w-full bg-background border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary" />
+            className="w-full bg-background border border-border pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary" />
         </div>
         <div className="flex gap-2 flex-wrap">
           {["all", "pending", "paid", "expired", "cancelled"].map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${statusFilter === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
+              className={`px-3 py-1.5 text-xs font-bold border transition-all ${statusFilter === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
               {s === "all" ? "Todos" : STATUS_CONFIG[s]?.label}
             </button>
           ))}
@@ -407,12 +407,12 @@ function CreateCheckoutModal({
 
         {createdLink ? (
           <div className="space-y-4 py-2">
-            <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4 text-center space-y-2">
+            <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 text-center space-y-2">
               <Check className="h-8 w-8 text-emerald-400 mx-auto" />
               <p className="text-sm font-semibold text-foreground">Checkout criado com sucesso!</p>
               <p className="text-xs text-muted-foreground">Copie o link abaixo e envie ao cliente.</p>
             </div>
-            <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 bg-muted px-3 py-2">
               <p className="text-xs font-mono flex-1 truncate text-muted-foreground">{createdLink}</p>
               <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={copyLink}>
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
@@ -432,7 +432,7 @@ function CreateCheckoutModal({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[{ v: "new_account", l: "Nova Conta" }, { v: "upsell", l: "Upsell" }, { v: "renewal", l: "Renovação" }].map(t => (
                   <button key={t.v} type="button" onClick={() => set("checkout_type", t.v)}
-                    className={`px-2 py-2 rounded-lg text-xs font-semibold border transition-all ${form.checkout_type === t.v ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                    className={`px-2 py-2 text-xs font-semibold border transition-all ${form.checkout_type === t.v ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
                     {t.l}
                   </button>
                 ))}
@@ -440,7 +440,7 @@ function CreateCheckoutModal({
             </div>
 
             {/* Cliente */}
-            <div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
+            <div className="space-y-3 bg-muted/30 p-3 border border-border">
               <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Cliente</p>
               <div className="space-y-1.5">
                 <Label className="text-xs">E-mail *</Label>
@@ -463,7 +463,7 @@ function CreateCheckoutModal({
             </div>
 
             {/* Planos — dinâmicos do catálogo de Produtos */}
-            <div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
+            <div className="space-y-3 bg-muted/30 p-3 border border-border">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Plano</p>
                 <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
@@ -483,7 +483,7 @@ function CreateCheckoutModal({
                   )}
                   {basePlans.map(p => (
                     <button key={p.id} type="button" onClick={() => set("plan_product_id", p.id)}
-                      className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold border text-left transition-all ${form.plan_product_id === p.id ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                      className={`w-full px-3 py-2.5 text-xs font-semibold border text-left transition-all ${form.plan_product_id === p.id ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
                       <div className="flex items-center justify-between">
                         <span className="font-bold">{p.name}</span>
                         <span className={`text-xs font-mono ${form.plan_product_id === p.id ? "text-primary" : "text-muted-foreground"}`}>{formatBRL(p.price)}/mês</span>
@@ -497,7 +497,7 @@ function CreateCheckoutModal({
 
             {/* Add-ons (addon_technology) */}
             {addonProducts.length > 0 && (
-              <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+              <div className="space-y-2 bg-muted/30 p-3 border border-border">
                 <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Add-ons</p>
                 {addonProducts.map(p => (
                   <div key={p.id} className="flex items-center justify-between">
@@ -512,7 +512,7 @@ function CreateCheckoutModal({
             )}
 
             {/* Extras numéricos */}
-            <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+            <div className="space-y-2 bg-muted/30 p-3 border border-border">
               <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Recursos extras</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[
@@ -530,7 +530,7 @@ function CreateCheckoutModal({
 
             {/* Produtos avulsos (one_time) */}
             {oneTimeProducts.length > 0 && (
-              <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+              <div className="space-y-2 bg-muted/30 p-3 border border-border">
                 <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Serviços avulsos</p>
                 {oneTimeProducts.map(p => (
                   <div key={p.id} className="flex items-center justify-between">
@@ -545,7 +545,7 @@ function CreateCheckoutModal({
             )}
 
             {/* Gateway de pagamento */}
-            <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
+            <div className="space-y-2 bg-muted/30 p-3 border border-border">
               <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
                 <CreditCard className="h-3.5 w-3.5" /> Gateway de Pagamento
               </p>
@@ -560,7 +560,7 @@ function CreateCheckoutModal({
                   <div className="space-y-1.5">
                     {asaasConnections!.map(c => (
                       <button key={c.id} type="button" onClick={() => set("asaas_connection_id", c.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs border transition-all ${form.asaas_connection_id === c.id ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs border transition-all ${form.asaas_connection_id === c.id ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
                         <span className="font-semibold">Asaas — {c.environment === "sandbox" ? "Sandbox (Testes)" : "Produção"}</span>
                         <span className="font-mono opacity-60">****{c.api_key_hint}</span>
                       </button>
@@ -568,7 +568,7 @@ function CreateCheckoutModal({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
+                <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
                   <Check className="h-3.5 w-3.5" />
                   Asaas — {asaasConnections![0].environment === "sandbox" ? "Sandbox (Testes)" : "Produção"} ****{asaasConnections![0].api_key_hint}
                 </div>
@@ -576,7 +576,7 @@ function CreateCheckoutModal({
             </div>
 
             {/* Resumo */}
-            <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-1.5 text-xs">
+            <div className="border border-border bg-muted/20 p-3 space-y-1.5 text-xs">
               <div className="flex justify-between text-muted-foreground">
                 <span>MRR (recorrente)</span>
                 <span className="font-mono font-bold text-emerald-400">{formatBRL(monthly_value)}</span>

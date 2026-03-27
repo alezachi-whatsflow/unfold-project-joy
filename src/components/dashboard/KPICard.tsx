@@ -17,15 +17,11 @@ interface KPICardProps {
   delay?: number;
 }
 
-const accentGradients = {
-  primary:
-    "from-primary/20 to-transparent border-primary/20",
-  accent:
-    "from-accent/20 to-transparent border-accent/20",
-  warning:
-    "from-warning/20 to-transparent border-warning/20",
-  destructive:
-    "from-destructive/20 to-transparent border-destructive/20",
+const accentBorders = {
+  primary: "border-primary/20",
+  accent: "border-accent/20",
+  warning: "border-warning/20",
+  destructive: "border-destructive/20",
 };
 
 const iconBg = {
@@ -51,18 +47,18 @@ export function KPICard({
   return (
     <div
       className={cn(
-        "group relative rounded-xl border bg-card p-5 transition-all duration-300",
-        "hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5",
+        "group relative border bg-card p-5 transition-all duration-300",
+        "hover:-translate-y-1 hover:hover:shadow-primary/5",
         "opacity-0 animate-fade-in-up",
-        accentGradients[accentColor]
+        accentBorders[accentColor]
       )}
       style={{ animationDelay: `${delay}ms` }}
     >
-      {/* Gradient overlay */}
+      {/* Muted overlay */}
       <div
         className={cn(
-          "absolute inset-0 rounded-xl overflow-hidden bg-gradient-to-br opacity-30 pointer-events-none",
-          accentGradients[accentColor]
+          "absolute inset-0 overflow-hidden bg-muted opacity-30 pointer-events-none",
+          accentBorders[accentColor]
         )}
       />
 
@@ -86,7 +82,7 @@ export function KPICard({
                   side="top"
                   align="start"
                   sideOffset={8}
-                  className="z-[100] max-w-[300px] rounded-lg border border-border bg-popover px-4 py-3 text-xs leading-relaxed text-popover-foreground shadow-xl shadow-black/20"
+                  className="z-[100] max-w-[300px] border border-border bg-popover px-4 py-3 text-xs leading-relaxed text-popover-foreground"
                 >
                   <p className="font-semibold text-foreground mb-1">{title}</p>
                   <p className="text-muted-foreground">{tooltip}</p>
@@ -96,7 +92,7 @@ export function KPICard({
           </div>
           <div
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110",
+              "flex h-9 w-9 items-center justify-center transition-transform duration-300 group-hover:scale-110",
               iconBg[accentColor]
             )}
           >

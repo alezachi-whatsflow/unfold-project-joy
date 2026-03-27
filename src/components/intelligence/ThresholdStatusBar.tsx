@@ -23,10 +23,10 @@ const CHANNEL_CONFIG = [
   { key: "neuro", label: "Neuro", icon: Brain, weight: "10%", action: "Melhorar hierarquia visual e CTAs" },
 ];
 
-function getGradient(score: number): string {
-  if (score >= 7.5) return "from-emerald-500 to-teal-400";
-  if (score >= 5.0) return "from-amber-500 to-yellow-400";
-  return "from-rose-500 to-red-400";
+function getSolidColor(score: number): string {
+  if (score >= 7.5) return "bg-emerald-500";
+  if (score >= 5.0) return "bg-amber-500";
+  return "bg-rose-500";
 }
 
 function getGlowColor(score: number): string {
@@ -69,7 +69,7 @@ export function ThresholdStatusBar({ overall, website, instagram, gmn, meta, wha
   const strokeDashoffset = circumference - (overallPct / 100) * circumference;
 
   return (
-    <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-secondary/30 backdrop-blur-xl">
+    <Card className="relative overflow-hidden border-border/50 bg-card backdrop-blur-xl">
       {/* Ambient glow */}
       <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-accent/5 blur-3xl" />
@@ -145,7 +145,7 @@ export function ThresholdStatusBar({ overall, website, instagram, gmn, meta, wha
         <div className="relative">
           <div className="h-2 rounded-full bg-secondary/80 overflow-hidden backdrop-blur-sm">
             <div
-              className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-1000 ease-out", getGradient(overall.score))}
+              className={cn("h-full rounded-full transition-all duration-1000 ease-out", getSolidColor(overall.score))}
               style={{ width: `${overallPct}%` }}
             />
           </div>
@@ -177,16 +177,16 @@ export function ThresholdStatusBar({ overall, website, instagram, gmn, meta, wha
               <div
                 key={key}
                 className={cn(
-                  "group relative rounded-lg px-3 py-2.5 transition-all duration-300",
-                  "hover:bg-secondary/40 hover:shadow-lg",
-                  belowGoal && "hover:shadow-md",
+                  "group relative px-3 py-2.5 transition-all duration-300",
+                  "hover:bg-secondary/40",
+                  belowGoal && "",
                   !isNA && getGlowColor(score!)
                 )}
               >
                 <div className="flex items-center gap-2.5">
                   {/* Icon with glow */}
                   <div className={cn(
-                    "flex items-center justify-center h-7 w-7 rounded-md transition-colors",
+                    "flex items-center justify-center h-7 w-7 transition-colors",
                     "bg-secondary/60 group-hover:bg-secondary",
                   )}>
                     <Icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -203,7 +203,7 @@ export function ThresholdStatusBar({ overall, website, instagram, gmn, meta, wha
                     <div className="h-2 rounded-full bg-secondary/60 overflow-hidden">
                       {!isNA && (
                         <div
-                          className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-700 ease-out", getGradient(score!))}
+                          className={cn("h-full rounded-full transition-all duration-700 ease-out", getSolidColor(score!))}
                           style={{ width: `${pct}%` }}
                         />
                       )}
@@ -216,7 +216,7 @@ export function ThresholdStatusBar({ overall, website, instagram, gmn, meta, wha
 
                   {/* Score badge */}
                   <div className={cn(
-                    "flex items-center justify-center min-w-[40px] h-6 rounded-md text-xs font-bold tabular-nums transition-all",
+                    "flex items-center justify-center min-w-[40px] h-6 text-xs font-bold tabular-nums transition-all",
                     isNA
                       ? "text-muted-foreground bg-secondary/40"
                       : cn(getBarTextColor(score!), "bg-secondary/40 group-hover:bg-secondary/60"),

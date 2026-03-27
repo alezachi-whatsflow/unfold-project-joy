@@ -181,7 +181,7 @@ export function PaymentNotificationsCard({ paymentAsaasId, paymentId, environmen
         </div>
 
         {/* Notification History */}
-        <div className="rounded-lg border border-border">
+        <div className="border border-border">
           <div className="px-3 py-2 border-b border-border bg-muted/30">
             <p className="text-xs font-medium">Histórico de notificações</p>
           </div>

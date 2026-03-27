@@ -80,9 +80,9 @@ export default function WhitelabelLayout() {
       <aside className="flex flex-col w-64 border-r border-border bg-card">
         <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
           {config.logo_url ? (
-            <img src={config.logo_url} alt={config.display_name} className="h-8 w-8 rounded-lg" />
+            <img src={config.logo_url} alt={config.display_name} className="h-8 w-8" />
           ) : (
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold text-white" style={{ background: primaryColor }}>
+            <div className="h-8 w-8 flex items-center justify-center text-sm font-bold text-white" style={{ background: primaryColor }}>
               {config.display_name?.[0]?.toUpperCase()}
             </div>
           )}
@@ -101,7 +101,7 @@ export default function WhitelabelLayout() {
               to={item.path}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 ${
+                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors mx-2 ${
                   isActive
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'

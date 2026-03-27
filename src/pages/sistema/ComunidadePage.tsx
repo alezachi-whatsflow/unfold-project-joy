@@ -72,7 +72,7 @@ const ComunidadePage = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20">
+            <div className="flex items-center justify-center w-10 h-10 bg-primary/10 border border-primary/20">
               <Users2 className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -117,7 +117,7 @@ const ComunidadePage = () => {
               <div className="space-y-3 pr-2">
                 {loading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="bg-card border border-border rounded-xl p-5">
+                    <div key={i} className="bg-card border border-border p-5">
                       <Skeleton className="h-4 w-32 mb-3" />
                       <Skeleton className="h-16 w-full mb-3" />
                       <Skeleton className="h-3 w-24" />
@@ -131,7 +131,7 @@ const ComunidadePage = () => {
                     <Button onClick={() => setDialogOpen(true)} size="sm"><Plus className="h-4 w-4 mr-2" /> Criar Publicação</Button>
                   </div>
                 ) : posts.map(post => (
-                  <div key={post.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary/20 transition-colors">
+                  <div key={post.id} className="bg-card border border-border p-5 hover:border-primary/20 transition-colors">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
                         U
@@ -161,7 +161,7 @@ const ComunidadePage = () => {
 
           {/* Sidebar */}
           <div className="space-y-4">
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border p-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                 <TrendingUp className="h-4 w-4 text-primary" /> Membros mais ativos
               </h3>
@@ -176,14 +176,14 @@ const ComunidadePage = () => {
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border p-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                 <Calendar className="h-4 w-4 text-primary" /> Próximos eventos
               </h3>
               <p className="text-xs text-muted-foreground">Nenhum evento agendado</p>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border p-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                 <Sparkles className="h-4 w-4 text-primary" /> Novidades
               </h3>

@@ -108,7 +108,7 @@ export default function WLLayout() {
       {/* Mobile hamburger */}
       {isMobile && !mobileOpen && (
         <button onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg bg-card border border-border shadow-md"
+          className="fixed top-3 left-3 z-50 flex items-center justify-center bg-card border border-border"
           style={{ width: 40, height: 40 }}>
           <Menu className="h-5 w-5 text-white" />
         </button>
@@ -129,7 +129,7 @@ export default function WLLayout() {
       >
         <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
           <div
-            className="flex items-center justify-center shrink-0 rounded-lg text-white font-bold text-sm"
+            className="flex items-center justify-center shrink-0 text-white font-bold text-sm"
             style={{ backgroundColor: 'var(--wl-primary)', width: 32, height: 32 }}
           >
             {branding.app_name.charAt(0).toUpperCase()}
@@ -154,7 +154,7 @@ export default function WLLayout() {
                 end={item.end}
                 onClick={() => isMobile && setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm transition-all ${
+                  `flex items-center gap-3 px-4 py-2.5 mx-2 text-sm transition-all ${
                     isActive ? 'text-white font-medium' : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`
                 }

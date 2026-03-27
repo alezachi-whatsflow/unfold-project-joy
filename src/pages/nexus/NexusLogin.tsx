@@ -72,7 +72,7 @@ export default function NexusLogin() {
       <Card className="w-full max-w-md mx-4 border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <img src={whatsflowLogo} alt="Whatsflow" className="h-12 w-12 rounded-xl" />
+            <img src={whatsflowLogo} alt="Whatsflow" className="h-12 w-12" />
           </div>
           <div className="flex items-center justify-center gap-2">
             <CardTitle className="text-xl text-foreground">Whatsflow</CardTitle>

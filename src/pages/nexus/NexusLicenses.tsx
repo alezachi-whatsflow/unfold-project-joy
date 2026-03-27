@@ -339,7 +339,7 @@ export default function NexusLicenses() {
         </div>
         <div className="flex gap-2 flex-wrap">
           {/* Layout toggle */}
-          <div className="flex border border-border rounded-md overflow-hidden">
+          <div className="flex border border-border overflow-hidden">
             {([
               { id: 'analytics', icon: LayoutDashboard, label: 'Analytics' },
               { id: 'cards', icon: LayoutGrid, label: 'Cards' },
@@ -617,7 +617,7 @@ export default function NexusLicenses() {
 
           {/* Bulk action bar */}
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-accent/30 border border-border rounded-lg">
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-accent/30 border border-border">
               <span className="text-sm text-foreground font-medium">{selectedIds.size} selecionado(s)</span>
               {can(['nexus_superadmin']) && (
                 <Button
@@ -1003,7 +1003,7 @@ function KpiCard({ icon: Icon, label, value, color }: { icon: any; label: string
   return (
     <Card className="bg-card/50 border-border/50">
       <CardContent className="p-4 flex items-center gap-3">
-        <div className={`p-2.5 rounded-lg ${colorMap[color] || ''}`}>
+        <div className={`p-2.5 ${colorMap[color] || ''}`}>
           <Icon className={`h-5 w-5 ${colorMap[color]?.split(' ')[0] || ''}`} />
         </div>
         <div>

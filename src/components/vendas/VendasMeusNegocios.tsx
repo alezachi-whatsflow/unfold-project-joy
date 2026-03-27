@@ -159,7 +159,7 @@ function KPICard({ icon: Icon, label, value }: { icon: React.ElementType; label:
   return (
     <Card>
       <CardContent className="flex items-center gap-3 py-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+        <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
           <Icon className="h-4 w-4 text-primary" />
         </div>
         <div>

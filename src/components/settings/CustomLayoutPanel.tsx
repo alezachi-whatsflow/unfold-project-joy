@@ -26,7 +26,7 @@ export function CustomLayoutPanel() {
   const pinnedItems = prefs.pinnedItems || [];
 
   return (
-    <div className="space-y-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+    <div className="space-y-4 border-2 border-primary/20 bg-primary/5 p-4">
       <div className="flex items-center justify-between">
         <div>
           <Label className="text-sm font-semibold text-foreground">Personalização Avançada</Label>
@@ -45,7 +45,7 @@ export function CustomLayoutPanel() {
       </div>
 
       {/* Show Labels toggle */}
-      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+      <div className="flex items-center justify-between border border-border p-3">
         <div>
           <p className="text-sm text-foreground">Mostrar labels de categoria</p>
           <p className="text-xs text-muted-foreground">PRINCIPAL, FINANCEIRO, etc.</p>
@@ -54,7 +54,7 @@ export function CustomLayoutPanel() {
       </div>
 
       {/* Quick Actions toggle */}
-      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+      <div className="flex items-center justify-between border border-border p-3">
         <div>
           <p className="text-sm text-foreground">Ações rápidas</p>
           <p className="text-xs text-muted-foreground">Chips de atalho no topo do menu</p>
@@ -95,7 +95,7 @@ export function CustomLayoutPanel() {
             const CatIcon = cat.icon ? iconMap[cat.icon] : null;
 
             return (
-              <div key={cat.id} className="rounded-lg border border-border overflow-hidden">
+              <div key={cat.id} className="border border-border overflow-hidden">
                 {/* Category Header */}
                 <div className="flex items-center gap-2 px-3 py-2.5 bg-muted/30">
                   <button onClick={() => toggleExpand(cat.id)} className="text-muted-foreground hover:text-foreground">

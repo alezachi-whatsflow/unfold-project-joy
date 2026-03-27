@@ -45,7 +45,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Profile Header */}
-        <div className="flex items-center gap-4 rounded-lg bg-secondary p-4">
+        <div className="flex items-center gap-4 bg-secondary p-4">
           <div className="relative h-14 w-14 shrink-0">
             {profile.profile_image_url ? (
               <img
@@ -63,7 +63,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
               />
             ) : null}
             <div
-              className="h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600"
+              className="h-14 w-14 items-center justify-center rounded-full bg-pink-500"
               style={{ display: profile.profile_image_url ? "none" : "flex" }}
             >
               <Instagram className="h-6 w-6 text-white" />
@@ -91,7 +91,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
         </div>
 
         {/* Engagement Rate */}
-        <div className="space-y-2 rounded-lg bg-secondary/50 p-4">
+        <div className="space-y-2 bg-secondary/50 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Heart className="h-4 w-4 text-pink-500" />
@@ -109,7 +109,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
         </div>
 
         {/* Authority Score */}
-        <div className="space-y-2 rounded-lg bg-secondary/50 p-4">
+        <div className="space-y-2 bg-secondary/50 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -128,7 +128,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
 
         {/* Content Strategy Notes */}
         {profile.content_strategy_notes && (
-          <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <div className="border border-border bg-card p-4 space-y-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
               <span className="text-xs font-semibold text-foreground">Estratégia de Conteúdo</span>
@@ -144,7 +144,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
           href={profile.profile_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 px-4 py-2.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
+          className="flex items-center justify-center gap-2 bg-pink-500 px-4 py-2.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
         >
           <Instagram className="h-3.5 w-3.5" />
           Ver Perfil no Instagram
@@ -156,7 +156,7 @@ export function InstagramAnalysisCard({ profile }: InstagramAnalysisCardProps) {
 
 function MetricBox({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-lg bg-secondary/50 p-3">
+    <div className="flex flex-col items-center gap-1 bg-secondary/50 p-3">
       <Icon className="h-4 w-4 text-muted-foreground" />
       <span className="font-display text-lg font-bold text-foreground">{value}</span>
       <span className="text-[10px] text-muted-foreground">{label}</span>

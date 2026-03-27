@@ -134,7 +134,7 @@ export default function MetaOficialTab() {
       {/* Header info */}
       <Card className="border-blue-500/20 bg-blue-500/5">
         <CardContent className="flex items-start gap-4 pt-5 pb-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/20">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-blue-500/20">
             <ShieldCheck className="h-6 w-6 text-blue-400" />
           </div>
           <div className="flex-1">
@@ -164,9 +164,9 @@ export default function MetaOficialTab() {
             <button
               onClick={() => setStep(s.id)}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                "flex items-center gap-2 px-3 py-2 text-xs font-medium transition-all",
                 step === s.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-primary text-primary-foreground"
                   : step > s.id
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                   : "bg-muted/50 text-muted-foreground"
@@ -192,7 +192,7 @@ export default function MetaOficialTab() {
             <CardDescription>Configure seu aplicativo no Painel de Desenvolvedores da Meta.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+            <div className="border border-border bg-muted/30 p-4 space-y-3">
               <h4 className="text-sm font-medium text-foreground">Passo a Passo:</h4>
               <ol className="space-y-2.5 text-xs text-muted-foreground list-decimal list-inside">
                 <li>
@@ -208,7 +208,7 @@ export default function MetaOficialTab() {
                 <li>Anote o <strong className="text-foreground">Configuration ID</strong></li>
               </ol>
             </div>
-            <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+            <div className="flex items-start gap-2 border border-amber-500/20 bg-amber-500/5 p-3">
               <Info className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground">
                 Permissões necessárias: <code className="text-[10px] bg-muted px-1 py-0.5 rounded">whatsapp_business_management</code> e{" "}
@@ -281,7 +281,7 @@ export default function MetaOficialTab() {
             <CardDescription>Conecte contas WhatsApp Business dos seus clientes.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+            <div className="border border-border bg-muted/30 p-4 space-y-3">
               <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-blue-400" /> Fluxo de conexão
               </h4>
@@ -293,7 +293,7 @@ export default function MetaOficialTab() {
                 <li>Webhook configurado automaticamente</li>
               </ol>
             </div>
-            <div className="rounded-lg border-2 border-dashed border-border p-6 flex flex-col items-center gap-3">
+            <div className="border-2 border-dashed border-border p-6 flex flex-col items-center gap-3">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
                 <Phone className="h-7 w-7 text-emerald-400" />
               </div>
@@ -307,7 +307,7 @@ export default function MetaOficialTab() {
               )}
             </div>
             {config.wabaId && config.phoneNumberId && (
-              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
+              <div className="border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                   <span className="text-sm font-medium text-emerald-400">Conta conectada</span>
@@ -363,7 +363,7 @@ export default function MetaOficialTab() {
                   { field: "message_template_status_update", label: "Templates", desc: "Status de templates aprovados" },
                   { field: "account_update", label: "Conta", desc: "Eventos da conta WABA" },
                 ].map((f) => (
-                  <div key={f.field} className="flex items-start gap-3 rounded-lg border border-border p-3">
+                  <div key={f.field} className="flex items-start gap-3 border border-border p-3">
                     <Switch defaultChecked className="mt-0.5" />
                     <div>
                       <p className="text-xs font-medium text-foreground">{f.label}</p>
@@ -374,12 +374,12 @@ export default function MetaOficialTab() {
               </div>
             </div>
             {config.webhookConfigured && (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+              <div className="flex items-center gap-2 border border-emerald-500/20 bg-emerald-500/5 p-3">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                 <span className="text-xs text-emerald-400 font-medium">Webhook verificado e ativo</span>
               </div>
             )}
-            <div className="flex items-start gap-2 rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
+            <div className="flex items-start gap-2 border border-blue-500/20 bg-blue-500/5 p-3">
               <Info className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground">
                 Mensagens da API Oficial aparecerão na <strong className="text-foreground">Caixa de Entrada</strong> da Mensageria, nas mesmas filas do chat unificado.

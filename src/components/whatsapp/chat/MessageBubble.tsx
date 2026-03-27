@@ -45,7 +45,7 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
     return (
       <div className="message-bubble flex justify-center my-2 px-5">
         <div
-          className="max-w-[400px] w-full text-center rounded-lg px-4 py-3"
+          className="max-w-[400px] w-full text-center px-4 py-3"
           style={{
             backgroundColor: "rgba(0,168,132,0.1)",
             border: "1px solid rgba(0,168,132,0.3)",
@@ -66,7 +66,7 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
     return (
       <div className="message-bubble flex justify-center my-2">
         <span
-          className="text-xs px-3 py-1 rounded-lg"
+          className="text-xs px-3 py-1"
           style={{ backgroundColor: "var(--wa-bg-system)", color: "var(--wa-text-secondary)" }}
         >
           {m.content}
@@ -81,7 +81,7 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
   if (m.direction === "typing") {
     return (
       <div className="message-bubble flex justify-start px-5 my-1">
-        <div className="rounded-lg px-4 py-3 flex gap-1 items-center" style={{ backgroundColor: "var(--wa-bg-msg-in)" }}>
+        <div className="px-4 py-3 flex gap-1 items-center" style={{ backgroundColor: "var(--wa-bg-msg-in)" }}>
           <span className="typing-dot w-2 h-2 rounded-full" style={{ backgroundColor: "var(--wa-text-secondary)" }} />
           <span className="typing-dot w-2 h-2 rounded-full" style={{ backgroundColor: "var(--wa-text-secondary)" }} />
           <span className="typing-dot w-2 h-2 rounded-full" style={{ backgroundColor: "var(--wa-text-secondary)" }} />

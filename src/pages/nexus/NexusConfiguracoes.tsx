@@ -342,7 +342,7 @@ export default function NexusConfiguracoes() {
           {SYNC_SCOPES.map((scope) => {
             const count = sourceCounts[scope.key] || 0;
             return (
-              <label key={scope.key} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${selectedScopes.includes(scope.key) ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-border/80'}`}>
+              <label key={scope.key} className={`flex items-start gap-3 p-3 border cursor-pointer transition-all ${selectedScopes.includes(scope.key) ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-border/80'}`}>
                 <Checkbox checked={selectedScopes.includes(scope.key)} onCheckedChange={() => toggleScope(scope.key)} className="mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -374,7 +374,7 @@ export default function NexusConfiguracoes() {
         ) : (
           <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
             {targetTenants.map((t) => (
-              <label key={t.id} className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors ${selectedTargets.includes(t.id) ? 'border-primary/40 bg-primary/5' : 'border-border/50 hover:border-border'}`}>
+              <label key={t.id} className={`flex items-center gap-3 p-2 border cursor-pointer transition-colors ${selectedTargets.includes(t.id) ? 'border-primary/40 bg-primary/5' : 'border-border/50 hover:border-border'}`}>
                 <Checkbox checked={selectedTargets.includes(t.id)} onCheckedChange={() => toggleTarget(t.id)} />
                 <span className="text-sm font-medium flex-1 truncate">{t.name}</span>
                 {getBadge(t.licenseType || 'individual')}
@@ -492,7 +492,7 @@ export default function NexusConfiguracoes() {
                 </Select>
               </div>
             )}
-            <div className="rounded-lg p-3 text-xs" style={{ background: "var(--acc-bg, rgba(14,138,92,0.08))", color: "var(--acc, #0E8A5C)", border: "1px solid var(--acc-border, rgba(14,138,92,0.25))" }}>
+            <div className="p-3 text-xs" style={{ background: "var(--acc-bg, rgba(14,138,92,0.08))", color: "var(--acc, #0E8A5C)", border: "1px solid var(--acc-border, rgba(14,138,92,0.25))" }}>
               Escopos selecionados: {selectedScopes.length > 0 ? selectedScopes.length : "nenhum (selecione acima)"}
               <br />Destinos: {selectAll ? "Todas as contas" : `${selectedTargets.length} contas selecionadas`}
             </div>
@@ -526,7 +526,7 @@ export default function NexusConfiguracoes() {
           <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Histórico de Sincronizações</p>
           <div className="space-y-1.5">
             {syncLogs.map((log: any) => (
-              <div key={log.id} className="flex items-center gap-2 text-xs p-2.5 rounded-lg bg-muted/30 border border-border/50">
+              <div key={log.id} className="flex items-center gap-2 text-xs p-2.5 bg-muted/30 border border-border/50">
                 {log.status === 'completed' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                   : log.status === 'running' ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
                   : log.status === 'partial' ? <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0" />

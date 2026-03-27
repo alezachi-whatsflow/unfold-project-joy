@@ -138,7 +138,7 @@ export function CustomerSelectionCard({ customers: asaasCustomers, selectedCusto
           )}
         </div>
 
-        <div className="max-h-[320px] overflow-y-auto rounded-md border border-border">
+        <div className="max-h-[320px] overflow-y-auto border border-border">
           {filteredCustomers.length === 0 ? (
             <div className="p-6 text-center text-xs text-muted-foreground">
               {allCustomers.length === 0

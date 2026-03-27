@@ -438,7 +438,7 @@ export default function IAAuditorPage() {
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-foreground">Critérios de Avaliação</h3>
                   {(Array.isArray(selectedEval.criteria_scores) ? selectedEval.criteria_scores : []).map((c: any, i: number) => (
-                    <div key={i} className="rounded-lg border border-border p-3 space-y-1">
+                    <div key={i} className="border border-border p-3 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{c.label}</span>
                         <div className="flex items-center gap-2">
@@ -460,7 +460,7 @@ export default function IAAuditorPage() {
                         <AlertTriangle className="h-4 w-4 text-red-400" /> Erros Encontrados
                       </h3>
                       {(selectedEval.errors_found as any[]).map((err, i) => (
-                        <div key={i} className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 space-y-1">
+                        <div key={i} className="border border-red-500/20 bg-red-500/5 p-3 space-y-1">
                           <div className="flex items-center gap-2">
                             <Badge className={getSeverityBadge(err.severity || "medium")}>{err.severity || "medium"}</Badge>
                             <span className="text-sm font-medium">{err.label || err.type}</span>

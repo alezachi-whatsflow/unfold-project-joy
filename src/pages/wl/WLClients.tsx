@@ -82,7 +82,7 @@ export default function WLClients() {
         />
       </div>
 
-      <div className="rounded-xl border border-white/10 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <div className="border border-white/10 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-5 w-5 animate-spin text-white/30" />

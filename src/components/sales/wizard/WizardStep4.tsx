@@ -55,7 +55,7 @@ export default function WizardStep4({ onNext, onBack }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+        <div className="h-10 w-10 bg-blue-500/10 flex items-center justify-center">
           <GitBranch className="h-5 w-5 text-blue-500" />
         </div>
         <div>
@@ -69,7 +69,7 @@ export default function WizardStep4({ onNext, onBack }: Props) {
         {template && (
           <button
             onClick={() => setMode('suggested')}
-            className={`p-4 rounded-xl border text-left transition-all ${
+            className={`p-4 border text-left transition-all ${
               mode === 'suggested' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border/40 hover:border-primary/30'
             }`}
           >
@@ -93,7 +93,7 @@ export default function WizardStep4({ onNext, onBack }: Props) {
         {hasExistingPipeline && (
           <button
             onClick={() => setMode('existing')}
-            className={`p-4 rounded-xl border text-left transition-all ${
+            className={`p-4 border text-left transition-all ${
               mode === 'existing' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border/40 hover:border-primary/30'
             }`}
           >

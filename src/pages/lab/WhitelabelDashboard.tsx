@@ -78,7 +78,7 @@ export default function WhitelabelDashboard() {
           <CardContent>
             <div className="space-y-2">
               {subLicenses.map((l: any) => (
-                <div key={l.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                <div key={l.id} className="flex items-center justify-between p-3 border border-border">
                   <div>
                     <p className="text-sm font-medium text-foreground">{(l.tenants as any)?.name || '—'}</p>
                     <p className="text-xs text-muted-foreground">{l.plan}</p>

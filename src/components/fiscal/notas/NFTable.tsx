@@ -25,7 +25,7 @@ export default function NFTable({ notas, onView, onDownloadPDF, onResend, onCanc
   }
 
   return (
-    <div className="rounded-lg border border-border/40 overflow-hidden">
+    <div className="border border-border/40 overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/30">

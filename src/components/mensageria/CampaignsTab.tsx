@@ -229,7 +229,7 @@ export default function CampaignsTab() {
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="border border-border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>

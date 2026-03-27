@@ -236,7 +236,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
 
         {/* Payment link for ganho */}
         {isGanho && (
-          <section className="rounded-lg p-3 border border-emerald-500/30 bg-emerald-500/5">
+          <section className="p-3 border border-emerald-500/30 bg-emerald-500/5">
             <div className="flex items-center gap-2 mb-2">
               <Link2 className="h-4 w-4 text-emerald-500" />
               <span className="text-xs font-semibold text-emerald-500">Link de Pagamento / Contrato</span>
@@ -255,7 +255,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
 
         {/* Digital Intelligence Origin Banner */}
         {isDI && (
-          <section className="rounded-lg p-3 border" style={{ borderColor: "#00C89640", backgroundColor: "#0D3D2E20" }}>
+          <section className="p-3 border" style={{ borderColor: "#00C89640", backgroundColor: "#0D3D2E20" }}>
             <div className="flex items-center gap-2 mb-1">
               <Radar className="h-4 w-4" style={{ color: "#00C896" }} />
               <span className="text-xs font-semibold" style={{ color: "#00C896" }}>Digital Intelligence</span>

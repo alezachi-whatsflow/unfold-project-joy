@@ -506,7 +506,7 @@ export default function WizardLayout({ onComplete }: Props) {
             <p className={sectionLabel}>Campos do Card</p>
             <div className="grid grid-cols-2 gap-2">
               {result.card_schema.map((f: any, i: number) => (
-                <div key={i} className="flex items-center gap-2 text-sm p-2 rounded-md bg-muted/50">
+                <div key={i} className="flex items-center gap-2 text-sm p-2 bg-muted/50">
                   <span className="text-muted-foreground text-xs">
                     {f.type === 'text' ? '📝' : f.type === 'number' ? '#️⃣' : f.type === 'currency' ? '💰' : f.type === 'date' ? '📅' : f.type === 'select' ? '📋' : '📎'}
                   </span>
@@ -525,7 +525,7 @@ export default function WizardLayout({ onComplete }: Props) {
               <p className={sectionLabel}>Setores</p>
               <div className="space-y-2">
                 {editDepartments.map((d, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg border bg-muted/30">
+                  <div key={i} className="flex items-center gap-2 text-sm px-3 py-2 border bg-muted/30">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color || '#6366f1' }} />
                     <Input
                       value={d.name}
@@ -551,7 +551,7 @@ export default function WizardLayout({ onComplete }: Props) {
               <p className={sectionLabel}>Tags</p>
               <div className="flex flex-wrap gap-2">
                 {editTags.map((t, i) => (
-                  <span key={i} className="group inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border cursor-default"
+                  <span key={i} className="group inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border cursor-default"
                     style={{ backgroundColor: `${t.color || '#6366f1'}15`, borderColor: `${t.color || '#6366f1'}30`, color: t.color || '#6366f1' }}>
                     {t.name}
                     <span
@@ -572,7 +572,7 @@ export default function WizardLayout({ onComplete }: Props) {
               <p className={sectionLabel}>Respostas Rápidas (editáveis)</p>
               <div className="space-y-3">
                 {editQuickReplies.map((qr, i) => (
-                  <div key={i} className="p-3 rounded-lg border bg-muted/20 space-y-2">
+                  <div key={i} className="p-3 border bg-muted/20 space-y-2">
                     <div className="flex items-center gap-2">
                       <code className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono">{qr.shortcut}</code>
                       <Input
@@ -807,7 +807,7 @@ export default function WizardLayout({ onComplete }: Props) {
                 {channels.map((ch) => (
                   <div
                     key={ch.key}
-                    className="flex items-center gap-3 p-3 rounded-lg border"
+                    className="flex items-center gap-3 p-3 border"
                     style={{
                       borderColor: ch.connected ? 'rgba(17,188,118,0.4)' : 'hsl(var(--border))',
                       background: ch.connected ? 'rgba(17,188,118,0.04)' : 'transparent',
@@ -854,7 +854,7 @@ export default function WizardLayout({ onComplete }: Props) {
 
             {/* Info box when no integration */}
             {!hasAnyIntegration && !loadingChannels && (
-              <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-800">
+              <div className="p-3 border border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-800">
                 <p className="text-xs text-amber-700 dark:text-amber-400">
                   Conecte pelo menos um canal para continuar. Clique em "Configurar" acima ou vá até a página de Integrações.
                 </p>

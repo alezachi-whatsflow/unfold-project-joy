@@ -92,8 +92,8 @@ export default function QRCodeModal({ instance, onClose, onStatusChange }: Props
         </DialogHeader>
 
         <div className="flex flex-col items-center space-y-6 py-4">
-          <div className="w-56 h-56 rounded-xl border-2 border-dashed border-emerald-500/40 bg-muted/30 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
+          <div className="w-56 h-56 border-2 border-dashed border-emerald-500/40 bg-muted/30 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-emerald-500/5" />
             {status === "loading" && (
               <Loader2 className="h-8 w-8 animate-spin text-emerald-400/60" />
             )}

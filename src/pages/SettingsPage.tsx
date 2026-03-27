@@ -42,10 +42,10 @@ function SidebarAppearanceCard() {
             {LAYOUT_OPTIONS.map(opt => (
               <label
                 key={opt.value}
-                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 cursor-pointer transition-all ${prefs.layout === opt.value ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(74,222,128,0.15)]" : "border-border hover:border-muted-foreground/30"}`}
+                className={`flex flex-col items-center gap-2 border-2 p-4 cursor-pointer transition-all ${prefs.layout === opt.value ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(74,222,128,0.15)]" : "border-border hover:border-muted-foreground/30"}`}
               >
                 <input type="radio" name="layout" value={opt.value} checked={prefs.layout === opt.value} onChange={() => setPrefs({ layout: opt.value })} className="sr-only" />
-                <div className={`p-2 rounded-lg ${prefs.layout === opt.value ? "text-primary" : "text-muted-foreground"}`}>
+                <div className={`p-2 ${prefs.layout === opt.value ? "text-primary" : "text-muted-foreground"}`}>
                   {opt.icon}
                 </div>
                 <span className="text-sm font-medium text-foreground">{opt.label}</span>
@@ -70,7 +70,7 @@ function SidebarAppearanceCard() {
               { value: "default", label: "Padrão", desc: "Equilíbrio" },
               { value: "compact", label: "Compacto", desc: "Menos espaço" },
             ] as const).map((opt) => (
-              <label key={opt.value} className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 cursor-pointer transition-colors ${prefs.density === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}>
+              <label key={opt.value} className={`flex flex-col items-center gap-1 border-2 p-3 cursor-pointer transition-colors ${prefs.density === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}>
                 <RadioGroupItem value={opt.value} className="sr-only" />
                 <span className="text-sm font-medium text-foreground">{opt.label}</span>
                 <span className="text-[11px] text-muted-foreground">{opt.desc}</span>
@@ -88,7 +88,7 @@ function SidebarAppearanceCard() {
               { value: "default", label: "Padrão", desc: "248px" },
               { value: "wide", label: "Largo", desc: "280px" },
             ] as const).map((opt) => (
-              <label key={opt.value} className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 cursor-pointer transition-colors ${prefs.width === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}>
+              <label key={opt.value} className={`flex flex-col items-center gap-1 border-2 p-3 cursor-pointer transition-colors ${prefs.width === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}>
                 <RadioGroupItem value={opt.value} className="sr-only" />
                 <span className="text-sm font-medium text-foreground">{opt.label}</span>
                 <span className="text-[11px] text-muted-foreground">{opt.desc}</span>

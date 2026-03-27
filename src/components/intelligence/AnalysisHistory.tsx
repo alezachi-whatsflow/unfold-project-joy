@@ -38,7 +38,7 @@ export function AnalysisHistory({ webScraps, profiles, leads }: AnalysisHistoryP
           {allItems.slice(0, 10).map((item) => {
             const Icon = SOURCE_ICONS[item.source];
             return (
-              <div key={item.id} className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
+              <div key={item.id} className="flex items-center gap-2 bg-secondary/50 px-3 py-2">
                 <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <span className="text-xs text-foreground truncate flex-1">{item.label}</span>
                 <Badge

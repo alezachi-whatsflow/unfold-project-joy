@@ -93,7 +93,7 @@ const OnboardingPage = () => {
         <p className="text-xs text-muted-foreground">Sistema &gt; Onboarding Interativo</p>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20">
+          <div className="flex items-center justify-center w-10 h-10 bg-primary/10 border border-primary/20">
             <Rocket className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -103,7 +103,7 @@ const OnboardingPage = () => {
         </div>
 
         {/* Progress Header */}
-        <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+        <div className="bg-card border border-border p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">
@@ -123,7 +123,7 @@ const OnboardingPage = () => {
 
         {/* Steps Timeline */}
         {loading ? (
-          <div className="space-y-4">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>
+          <div className="space-y-4">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
         ) : (
           <div className="relative">
             <div className="absolute left-[23px] top-6 bottom-6 w-[2px] bg-border" />
@@ -132,9 +132,9 @@ const OnboardingPage = () => {
               {STEPS.map((step, index) => {
                 const status = getStepStatus(step.key, index);
                 return (
-                  <div key={step.key} className={`relative flex items-start gap-4 p-4 rounded-xl border transition-all ${
+                  <div key={step.key} className={`relative flex items-start gap-4 p-4 border transition-all ${
                     status === "current"
-                      ? "bg-primary/5 border-primary/30 shadow-sm shadow-primary/10"
+                      ? "bg-primary/5 border-primary/30 shadow-primary/10"
                       : status === "completed"
                       ? "bg-card border-border opacity-80"
                       : "bg-card border-border opacity-50"

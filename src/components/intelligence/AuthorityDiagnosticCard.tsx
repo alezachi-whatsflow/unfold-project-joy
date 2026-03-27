@@ -32,7 +32,7 @@ export function AuthorityDiagnosticCard({ diagnostic }: AuthorityDiagnosticCardP
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Overall Score */}
-        <div className="flex items-center gap-4 rounded-lg bg-secondary p-4">
+        <div className="flex items-center gap-4 bg-secondary p-4">
           <div className="flex flex-col items-center">
             <span className={cn("font-display text-3xl font-bold", getScoreColor(diagnostic.overallScore))}>
               {diagnostic.overallScore.toFixed(1)}

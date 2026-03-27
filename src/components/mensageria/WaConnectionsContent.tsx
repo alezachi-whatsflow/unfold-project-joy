@@ -134,7 +134,7 @@ export default function WaConnectionsContent() {
                 <div><Label>Telefone (Opcional visual)</Label><Input className="mt-1" value={form.phone_number} onChange={e => setForm(p => ({ ...p, phone_number: e.target.value }))} placeholder="+55 11 99999-9999" /></div>
                 
                 {limits && (
-                  <div className="text-xs p-3 bg-secondary/50 rounded-lg border flex gap-4 mt-2">
+                  <div className="text-xs p-3 bg-secondary/50 border flex gap-4 mt-2">
                     <span className="flex items-center gap-1.5"><Monitor className="h-3 w-3 text-white/50" /> Web: {limits.currentDevicesWeb}/{limits.maxDevicesWeb}</span>
                     <span className="flex items-center gap-1.5"><Smartphone className="h-3 w-3 text-white/50" /> Meta: {limits.currentDevicesMeta}/{limits.maxDevicesMeta}</span>
                   </div>
@@ -149,7 +149,7 @@ export default function WaConnectionsContent() {
             {/* STEP 2 */}
             {wizardStep === 2 && (
               <div className="space-y-4 py-4 animate-in fade-in slide-in-from-right-2">
-                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4 text-sm text-primary">
+                <div className="bg-primary/10 border border-primary/20 p-4 mb-4 text-sm text-primary">
                   {form.type === 'web' ? (
                      <p><b>Aviso Web API:</b> Conexões via QRCode podem sofrer instabilidades em atualizações do WhatsApp. Tenha seu celular próximo.</p>
                   ) : (
@@ -175,7 +175,7 @@ export default function WaConnectionsContent() {
                 </div>
                 <h3 className="font-bold">Configuração Finalizada!</h3>
                 {form.type === 'meta' ? (
-                  <div className="text-sm p-4 text-left border rounded-lg bg-black/20 space-y-3">
+                  <div className="text-sm p-4 text-left border bg-black/20 space-y-3">
                     <p className="text-muted-foreground">Configure seu Webhook no Meta for Developers com a URL abaixo:</p>
                     <div className="flex bg-black p-2 rounded items-center gap-2">
                       <code className="flex-1 text-xs text-emerald-400 break-all">{window.location.origin}/api/webhooks/{accountId}/{createdConnId}</code>
@@ -183,7 +183,7 @@ export default function WaConnectionsContent() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm p-4 border rounded-lg bg-black/20 text-muted-foreground">
+                  <div className="text-sm p-4 border bg-black/20 text-muted-foreground">
                     Na lista de conexões clique em "Conectar" para escanear o QR Code em seu WhatsApp.
                   </div>
                 )}

@@ -98,7 +98,7 @@ function CategorySection({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2 bg-secondary/60 hover:bg-secondary rounded-md transition-colors text-left">
+      <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2 bg-secondary/60 hover:bg-secondary transition-colors text-left">
         {open ? (
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         ) : (
@@ -378,7 +378,7 @@ export function CostDetailTable() {
             })}
 
           {/* Grand Total */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-md mt-2">
+          <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 mt-2">
             <div className="flex-1 text-xs font-bold text-foreground">
               TOTAL GERAL
             </div>

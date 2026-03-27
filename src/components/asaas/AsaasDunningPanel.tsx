@@ -261,7 +261,7 @@ export function AsaasDunningPanel() {
               </p>
             ) : (
               executions.map((exec) => (
-                <div key={exec.id} className="flex items-center gap-3 p-2 rounded-md border border-border bg-background">
+                <div key={exec.id} className="flex items-center gap-3 p-2 border border-border bg-background">
                   {exec.success ? (
                     <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
                   ) : (
@@ -401,7 +401,7 @@ export function AsaasDunningPanel() {
                       }`}>
                         <Icon className="h-2.5 w-2.5 text-primary-foreground" />
                       </div>
-                      <div className={`rounded-md border bg-background p-3 ml-2 ${step.days_after_due < 0 ? "border-amber-500/30" : "border-border"}`}>
+                      <div className={`border bg-background p-3 ml-2 ${step.days_after_due < 0 ? "border-amber-500/30" : "border-border"}`}>
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant="outline" className={`text-[10px] font-mono ${step.days_after_due < 0 ? "border-amber-500/50 text-amber-500" : ""}`}>
                             {step.days_after_due < 0 ? `D${step.days_after_due}` : step.days_after_due === 0 ? "D0" : `D+${step.days_after_due}`}

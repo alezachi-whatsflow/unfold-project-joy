@@ -39,7 +39,7 @@ function MetricPill({ label, value, color = 'default' }: { label: string; value:
     gray: 'bg-muted text-muted-foreground border-border',
   };
   return (
-    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold ${colors[color]}`}>
+    <div className={`flex items-center gap-2 px-4 py-2 border text-sm font-semibold ${colors[color]}`}>
       <span className="text-lg font-bold">{value}</span>
       <span className="opacity-80">{label}</span>
     </div>
@@ -259,10 +259,10 @@ export default function WhitelabelEquipe() {
                 </span>
 
                 <div className="flex items-center gap-2">
-                  <button className="w-7 h-7 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors">
+                  <button className="w-7 h-7 border border-blue-500/20 bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors">
                     <Pencil size={13} />
                   </button>
-                  <button className="w-7 h-7 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors">
+                  <button className="w-7 h-7 border border-destructive/20 bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors">
                     <Trash2 size={13} />
                   </button>
                 </div>

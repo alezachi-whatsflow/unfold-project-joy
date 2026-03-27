@@ -123,7 +123,7 @@ export default function PipelineManager({ onClose }: Props) {
               key={p.id}
               onClick={() => selectPipeline(p)}
               className={cn(
-                "w-full text-left px-3 py-2.5 rounded-lg border text-xs transition-all",
+                "w-full text-left px-3 py-2.5 border text-xs transition-all",
                 editId === p.id
                   ? "border-primary bg-primary/5 text-foreground"
                   : "border-border bg-card text-muted-foreground hover:bg-accent/50"
@@ -169,7 +169,7 @@ export default function PipelineManager({ onClose }: Props) {
                 {stages.map((stage, i) => {
                   const isProtected = stage.key === "fechado_ganho" || stage.key === "fechado_perdido";
                   return (
-                    <div key={stage.key} className="flex items-center gap-2 rounded-lg border border-border p-2">
+                    <div key={stage.key} className="flex items-center gap-2 border border-border p-2">
                       <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                       <input
                         type="color"

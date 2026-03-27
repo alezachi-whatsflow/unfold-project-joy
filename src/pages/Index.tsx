@@ -89,7 +89,7 @@ export default function Index() {
           <h1 className="text-3xl font-extrabold tracking-tight">Painel de Atendimento</h1>
           <p className="text-muted-foreground text-sm mt-1">Visão geral da sua operação de vendas e suporte.</p>
         </div>
-        <div className="flex items-center gap-2 bg-secondary/30 p-1.5 rounded-xl border">
+        <div className="flex items-center gap-2 bg-secondary/30 p-1.5 border">
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[140px] h-8 bg-transparent border-none focus:ring-0 shadow-none"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -113,7 +113,7 @@ export default function Index() {
         const Icon = isExpired ? AlertTriangle : CalendarClock;
         return (
           <Link to={`/app/${slug}/assinatura`} className="block">
-            <div className={`${bgColor} ${borderColor} border p-4 rounded-xl flex items-center justify-between hover:brightness-110 transition-all cursor-pointer`}>
+            <div className={`${bgColor} ${borderColor} border p-4 flex items-center justify-between hover:brightness-110 transition-all cursor-pointer`}>
               <div className="flex items-center gap-3">
                 <Icon className={`h-5 w-5 ${textColor}`} />
                 <div>
@@ -240,7 +240,7 @@ function KPICard({ label, value, subtitle, icon: Icon, color }: {
       <CardContent className="p-5 flex flex-col justify-between h-full">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-medium text-muted-foreground">{label}</span>
-          <div className="p-2 rounded-lg" style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`, color }}>
+          <div className="p-2" style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`, color }}>
             <Icon className="h-4 w-4" />
           </div>
         </div>

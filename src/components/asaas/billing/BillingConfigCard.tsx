@@ -129,14 +129,14 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
       <CardContent className="space-y-4">
         {/* Presets Area */}
         {showPresets && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
+          <div className="border border-primary/20 bg-primary/5 p-3 space-y-3">
             <p className="text-[10px] font-medium text-primary uppercase tracking-wider">
               Configurações Pré-definidas
             </p>
             {presets.length > 0 ? (
               <div className="space-y-1.5">
                 {presets.map((p) => (
-                  <div key={p.name} className="flex items-center justify-between rounded-md border border-border bg-background p-2">
+                  <div key={p.name} className="flex items-center justify-between border border-border bg-background p-2">
                     <div>
                       <p className="text-xs font-medium">{p.name}</p>
                       <p className="text-[10px] text-muted-foreground">
@@ -260,7 +260,7 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
         </div>
 
         {showBoletoSettings && (
-          <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
+          <div className="space-y-3 border border-border p-3 bg-muted/30">
             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
               {config.billingType === "UNDEFINED"
                 ? "Configurações do Boleto (aplicadas quando pago via boleto)"

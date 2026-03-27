@@ -101,7 +101,7 @@ export function ActivityCalendar({ activities, isLoading, onEdit, onDateChange }
                   key={key}
                   onClick={() => setSelectedDate(day)}
                   className={cn(
-                    "h-20 rounded-md border border-transparent p-1 text-left transition-colors hover:border-border",
+                    "h-20 border border-transparent p-1 text-left transition-colors hover:border-border",
                     isToday(day) && "bg-primary/5 border-primary/30",
                     isSelected && "border-primary ring-1 ring-primary/30"
                   )}
@@ -141,7 +141,7 @@ export function ActivityCalendar({ activities, isLoading, onEdit, onDateChange }
                 {selectedActivities.map((a) => (
                   <div
                     key={a.id}
-                    className="flex items-start gap-2 p-2 rounded-md border border-border hover:bg-secondary/50 cursor-pointer"
+                    className="flex items-start gap-2 p-2 border border-border hover:bg-secondary/50 cursor-pointer"
                     onClick={() => onEdit(a)}
                   >
                     <div className={cn("h-2 w-2 rounded-full mt-1.5 shrink-0", STATUS_DOT[a.status])} />

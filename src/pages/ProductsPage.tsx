@@ -100,7 +100,7 @@ function ProductDetailDialog({ product }: { product: Product }) {
 
         <section>
           <SectionLabel>Rentabilidade</SectionLabel>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-lg bg-secondary/50 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-secondary/50 p-4">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Margem de Contribuição</p>
               <p className="font-display text-lg font-bold text-card-foreground">{formatCurrency(metrics.contributionMargin)}</p>
@@ -181,7 +181,7 @@ function ProductCard({ product }: { product: Product }) {
   const health = HEALTH_CONFIG[metrics.health];
 
   return (
-    <Card className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30">
+    <Card className="group transition-all duration-300 hover:-translate-y-1 hover:hover:hover:border-primary/30">
       <CardContent className="p-5">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -203,7 +203,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Metrics grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 rounded-lg bg-secondary/50 p-2 sm:p-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 bg-secondary/50 p-2 sm:p-3 mb-4">
           <MetricItem label={product.type === "recurring" ? "Preço/mês" : "Preço"} value={formatCurrency(product.price)} />
           <MetricItem label="COGS" value={formatCurrency(product.cogs + product.laborCost + product.supportCost)} />
           <MetricItem
@@ -219,7 +219,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
 
         {product.includes && (
-          <div className="text-xs text-muted-foreground mb-3 rounded-md bg-accent/5 px-3 py-2">
+          <div className="text-xs text-muted-foreground mb-3 bg-accent/5 px-3 py-2">
             <strong>Inclui:</strong> {product.includes.devicesWeb} Web + {product.includes.devicesMeta} Meta
             {product.includes.attendants > 0 && ` + ${product.includes.attendants} Atendente${product.includes.attendants > 1 ? "s" : ""}`}
             {product.includes.aiAgents > 0 && ` + ${product.includes.aiAgents} I.A.`}
@@ -227,7 +227,7 @@ function ProductCard({ product }: { product: Product }) {
         )}
 
         {product.monthlyHours && (
-          <div className="text-xs text-muted-foreground mb-3 rounded-md bg-accent/5 px-3 py-2 flex items-center gap-2">
+          <div className="text-xs text-muted-foreground mb-3 bg-accent/5 px-3 py-2 flex items-center gap-2">
             <Clock className="h-3 w-3" />
             {product.monthlyHours}h/mês ({product.weeklyHours}h/semana) — {formatCurrency(product.hourlyRate || 0)}/hora
           </div>
@@ -508,7 +508,7 @@ function NewProductModal() {
           </section>
 
           {/* Real-time preview */}
-          <div className="rounded-xl border border-border bg-secondary/50 p-4">
+          <div className="border border-border bg-secondary/50 p-4">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
               Preview de Rentabilidade
             </h4>

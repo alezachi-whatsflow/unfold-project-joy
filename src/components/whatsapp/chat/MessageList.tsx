@@ -64,7 +64,7 @@ export default function MessageList({ messages }: MessageListProps) {
             {/* Date separator */}
             <div className="flex justify-center my-3">
               <span
-                className="text-xs px-3 py-1 rounded-lg"
+                className="text-xs px-3 py-1"
                 style={{ backgroundColor: "var(--wa-bg-panel)", color: "var(--wa-text-secondary)" }}
               >
                 {group.date}
@@ -84,7 +84,7 @@ export default function MessageList({ messages }: MessageListProps) {
       {!isAtBottom && (
         <button
           onClick={() => endRef.current?.scrollIntoView({ behavior: "smooth" })}
-          className="absolute bottom-4 right-4 rounded-full flex items-center justify-center shadow-lg"
+          className="absolute bottom-4 right-4 rounded-full flex items-center justify-center"
           style={{ backgroundColor: "var(--wa-bg-header)", width: 40, height: 40 }}
           aria-label="Ir para o final"
         >

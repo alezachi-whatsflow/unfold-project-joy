@@ -38,7 +38,7 @@ export function LegalDataCard({ analysis }: LegalDataCardProps) {
         {/* Items table */}
         <div className="space-y-2">
           {analysis.itens.map((item, i) => (
-            <div key={i} className="flex items-start gap-2 rounded-lg bg-secondary/30 p-2.5">
+            <div key={i} className="flex items-start gap-2 bg-secondary/30 p-2.5">
               <StatusIcon status={item.status} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export function LegalDataCard({ analysis }: LegalDataCardProps) {
         </div>
 
         {/* Coherence */}
-        <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-1">
+        <div className="border border-border bg-secondary/20 p-3 space-y-1">
           <p className="text-xs font-semibold text-foreground">Coerência dos Dados</p>
           <div className="flex items-center gap-2 text-[11px]">
             <span className="text-muted-foreground">Domínio vs Razão Social:</span>
@@ -78,7 +78,7 @@ export function LegalDataCard({ analysis }: LegalDataCardProps) {
         </div>
 
         {/* Footer template */}
-        <div className="rounded-lg border border-accent/20 bg-accent/5 p-3">
+        <div className="border border-accent/20 bg-accent/5 p-3">
           <p className="text-xs font-semibold text-accent mb-1">{analysis.onde_adicionar_dados.recomendacao}</p>
           <p className="text-[11px] text-foreground font-mono bg-secondary/50 p-2 rounded">{analysis.onde_adicionar_dados.modelo_rodape}</p>
           <p className="text-[10px] text-muted-foreground mt-1">{analysis.onde_adicionar_dados.importancia}</p>

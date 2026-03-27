@@ -11,7 +11,7 @@ export default function GodAdminAuditLog() {
           Histórico global de ações do sistema
         </p>
       </div>
-      <div className="rounded-md border p-4 bg-card">
+      <div className="border p-4 bg-card">
         Tabela de Audit Logs ({environment})
       </div>
     </div>

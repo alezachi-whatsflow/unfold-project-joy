@@ -27,7 +27,7 @@ export default function WizardStep6({ onFinish, onBack }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+        <div className="h-10 w-10 bg-emerald-500/10 flex items-center justify-center">
           <Rocket className="h-5 w-5 text-emerald-500" />
         </div>
         <div>
@@ -38,7 +38,7 @@ export default function WizardStep6({ onFinish, onBack }: Props) {
 
       <div className="space-y-3">
         {items.map((item, i) => (
-          <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border/40">
+          <div key={i} className="flex items-center gap-3 p-3 border border-border/40">
             <div className={`h-6 w-6 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500' : 'bg-muted'}`}>
               {item.done ? <Check className="h-3.5 w-3.5 text-white" /> : <span className="text-xs text-muted-foreground">—</span>}
             </div>

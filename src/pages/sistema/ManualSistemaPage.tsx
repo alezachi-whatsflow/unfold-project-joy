@@ -111,7 +111,7 @@ const ManualSistemaPage = () => {
         <p className="text-xs text-muted-foreground">Sistema &gt; Manual de Uso</p>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20">
+          <div className="flex items-center justify-center w-10 h-10 bg-primary/10 border border-primary/20">
             <BookOpen className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -147,7 +147,7 @@ const ManualSistemaPage = () => {
                         <button
                           key={article.id}
                           onClick={() => setSelectedArticle(article)}
-                          className={`w-full text-left text-xs px-3 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                          className={`w-full text-left text-xs px-3 py-2 flex items-center gap-2 transition-colors ${
                             selectedArticle?.id === article.id
                               ? "bg-primary/10 text-primary border border-primary/20"
                               : "text-muted-foreground hover:bg-muted/50"
@@ -168,7 +168,7 @@ const ManualSistemaPage = () => {
             </div>
 
             {/* Content */}
-            <div className="lg:col-span-3 bg-card border border-border rounded-xl p-6">
+            <div className="lg:col-span-3 bg-card border border-border p-6">
               {selectedArticle ? (
                 <ScrollArea className="h-[calc(100vh-320px)]">
                   <div className="pr-4">

@@ -80,7 +80,7 @@ const TutoriaisPage = () => {
         <p className="text-xs text-muted-foreground">Sistema &gt; Tutoriais</p>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20">
+          <div className="flex items-center justify-center w-10 h-10 bg-primary/10 border border-primary/20">
             <PlayCircle className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -122,7 +122,7 @@ const TutoriaisPage = () => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-card border border-border rounded-xl overflow-hidden">
+              <div key={i} className="bg-card border border-border overflow-hidden">
                 <Skeleton className="h-40 w-full" />
                 <div className="p-4 space-y-2">
                   <Skeleton className="h-4 w-3/4" />
@@ -141,10 +141,10 @@ const TutoriaisPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(t => (
-              <div key={t.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-primary/30 transition-all group cursor-pointer" onClick={() => setSelectedTutorial(t)}>
+              <div key={t.id} className="bg-card border border-border overflow-hidden hover:border-primary/30 transition-all group cursor-pointer" onClick={() => setSelectedTutorial(t)}>
                 {/* Thumbnail */}
                 <div className="relative h-40 bg-muted flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute inset-0 bg-black/40" />
                   <PlayCircle className="h-12 w-12 text-white/70 group-hover:text-primary group-hover:scale-110 transition-all z-10" />
                   <div className="absolute bottom-2 left-2 flex gap-1.5 z-10">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${levelColors[t.level] || levelColors.iniciante}`}>

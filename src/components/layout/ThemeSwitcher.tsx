@@ -26,7 +26,7 @@ export function ThemeSwitcher() {
       <PopoverContent
         side="bottom"
         align="end"
-        className="p-0 border-none bg-transparent shadow-lg"
+        className="p-0 border-none bg-transparent"
         style={{ boxShadow: 'var(--shadow-float, 0 8px 32px rgba(0,0,0,0.4))' }}
       >
         <ThemeSelector />

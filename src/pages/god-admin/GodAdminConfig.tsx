@@ -11,7 +11,7 @@ export default function GodAdminConfig() {
           Configurações globais do sistema
         </p>
       </div>
-      <div className="rounded-md border p-4 bg-card">
+      <div className="border p-4 bg-card">
         Painel de Configuração ({environment})
       </div>
     </div>

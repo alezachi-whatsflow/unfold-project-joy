@@ -176,7 +176,7 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
               <div key={m.id} className={cn("flex mb-1.5", m.direcao === "enviado" ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
-                    "max-w-[70%] px-3 py-2 rounded-xl text-sm relative",
+                    "max-w-[70%] px-3 py-2 text-sm relative",
                     m.direcao === "enviado"
                       ? "bg-emerald-800/60 text-foreground rounded-br-sm"
                       : "bg-card border border-border text-foreground rounded-bl-sm"
@@ -184,7 +184,7 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
                 >
                   {m.tipo === "text" && <p className="whitespace-pre-wrap break-words">{m.conteudo}</p>}
                   {m.tipo === "image" && (
-                    <div className="rounded-lg overflow-hidden">
+                    <div className="overflow-hidden">
                       <img src={m.conteudo} alt="imagem" className="max-w-full h-auto rounded" />
                     </div>
                   )}
@@ -223,7 +223,7 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
               <Paperclip className="h-4 w-4" />
             </Button>
             {showAttach && (
-              <div className="absolute bottom-11 left-0 bg-popover border border-border rounded-lg shadow-lg p-2 space-y-1 z-10 min-w-[140px]">
+              <div className="absolute bottom-11 left-0 bg-popover border border-border p-2 space-y-1 z-10 min-w-[140px]">
                 <button className="flex items-center gap-2 px-3 py-1.5 text-sm rounded hover:bg-accent w-full text-left" onClick={() => setShowAttach(false)}>
                   <Image className="h-4 w-4 text-blue-400" /> Imagem
                 </button>
@@ -253,7 +253,7 @@ export default function ChatArea({ conversation, messages, onTogglePanel, showPa
               }}
               placeholder="Digite uma mensagem..."
               rows={1}
-              className="w-full resize-none bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground max-h-[100px] overflow-y-auto"
+              className="w-full resize-none bg-muted/50 border border-border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground max-h-[100px] overflow-y-auto"
               style={{ minHeight: "36px" }}
             />
           </div>

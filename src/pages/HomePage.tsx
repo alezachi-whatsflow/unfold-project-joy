@@ -142,7 +142,7 @@ export default function HomePage() {
       {/* ── HEADER ───────────────────────────── */}
       <header className="home-header glass-header">
         <div className="flex items-center gap-3">
-          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg" />
+          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8" />
           <span className="text-sm font-semibold text-[#F0FDF8] hidden sm:inline">Whatsflow</span>
           <div className="hidden sm:block h-6 w-px bg-[rgba(0,200,150,0.2)]" />
           <span className="text-sm text-[rgba(240,253,248,0.5)] hidden sm:inline">
@@ -154,7 +154,7 @@ export default function HomePage() {
             {todayLabel()}
           </span>
           <div className="hidden md:block h-6 w-px bg-[rgba(0,200,150,0.2)]" />
-          <button className="relative p-2 rounded-xl hover:bg-[rgba(0,200,150,0.1)] transition-colors"
+          <button className="relative p-2 hover:bg-[rgba(0,200,150,0.1)] transition-colors"
             onClick={() => go("/cobrancas")}>
             <Bell size={18} className="text-[rgba(240,253,248,0.6)]" />
             {pendingCount > 0 && (
@@ -168,7 +168,7 @@ export default function HomePage() {
             {firstName[0]?.toUpperCase()}
           </button>
           {isMobile && (
-            <button className="p-2 rounded-xl hover:bg-[rgba(0,200,150,0.1)]"
+            <button className="p-2 hover:bg-[rgba(0,200,150,0.1)]"
               onClick={() => setMobileMenu(!mobileMenu)}>
               {mobileMenu ? <X size={20} className="text-[#F0FDF8]" /> : <Menu size={20} className="text-[#F0FDF8]" />}
             </button>
@@ -181,7 +181,7 @@ export default function HomePage() {
         <div className="fixed inset-0 z-40 bg-[rgba(10,15,13,0.95)] pt-20 px-4 overflow-y-auto">
           {[...finLinks, ...cpLinks, ...analyticsLinks].map((l) => (
             <button key={l.route} onClick={() => { go(l.route); setMobileMenu(false); }}
-              className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-sm text-[#F0FDF8] hover:bg-[rgba(0,200,150,0.1)] transition-colors">
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm text-[#F0FDF8] hover:bg-[rgba(0,200,150,0.1)] transition-colors">
               <l.icon size={18} className="text-[#00C896]" />
               {l.label}
             </button>
@@ -227,7 +227,7 @@ export default function HomePage() {
           <div className="space-y-1">
             {finLinks.map((l) => (
               <button key={l.route} onClick={() => go(l.route)}
-                className="flex w-full items-center gap-3 px-3 py-2 rounded-xl text-sm text-[#F0FDF8] hover:bg-[rgba(0,200,150,0.08)] transition-all group">
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#F0FDF8] hover:bg-[rgba(0,200,150,0.08)] transition-all group">
                 <l.icon size={16} className="text-[rgba(240,253,248,0.5)] group-hover:text-[#00C896] transition-colors" />
                 <span>{l.label}</span>
                 {l.badge ? (
@@ -245,7 +245,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {cpLinks.map((l) => (
               <button key={l.route} onClick={() => go(l.route)}
-                className="flex flex-col items-center gap-2 py-3 rounded-xl hover:bg-[rgba(0,200,150,0.08)] hover:scale-105 transition-all">
+                className="flex flex-col items-center gap-2 py-3 hover:bg-[rgba(0,200,150,0.08)] hover:scale-105 transition-all">
                 <l.icon size={22} className="text-[rgba(240,253,248,0.5)]" />
                 <span className="text-xs text-[rgba(240,253,248,0.6)]">{l.label}</span>
               </button>
@@ -267,7 +267,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 flex-wrap">
             {analyticsLinks.map((l, i) => (
               <button key={l.route} onClick={(e) => { e.stopPropagation(); go(l.route); }}
-                className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${i === 0 ? "bg-[rgba(0,200,150,0.15)] text-[#00C896]" : "text-[rgba(240,253,248,0.5)] hover:text-[#00C896]"}`}>
+                className={`text-xs px-3 py-1.5 transition-colors ${i === 0 ? "bg-[rgba(0,200,150,0.15)] text-[#00C896]" : "text-[rgba(240,253,248,0.5)] hover:text-[#00C896]"}`}>
                 {l.label}
               </button>
             ))}

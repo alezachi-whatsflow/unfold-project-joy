@@ -62,15 +62,15 @@ export function ExportAnalysisDialog({ analysis, open, onOpenChange }: ExportAna
         </DialogHeader>
 
         <div className="space-y-3 py-4">
-          <div className="rounded-lg bg-secondary/50 p-3">
+          <div className="bg-secondary/50 p-3">
             <p className="text-xs text-muted-foreground">Empresa</p>
             <p className="font-medium text-foreground">{analysis.company_name}</p>
           </div>
-          <div className="rounded-lg bg-secondary/50 p-3">
+          <div className="bg-secondary/50 p-3">
             <p className="text-xs text-muted-foreground">Arquivo</p>
             <p className="font-mono text-sm text-foreground">{filename}</p>
           </div>
-          <div className="rounded-lg bg-secondary/50 p-3">
+          <div className="bg-secondary/50 p-3">
             <p className="text-xs text-muted-foreground">Score Geral</p>
             <p className="font-bold text-foreground">{analysis.overall_score.toFixed(1)}/10</p>
           </div>

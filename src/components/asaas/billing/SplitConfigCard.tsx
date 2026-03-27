@@ -156,7 +156,7 @@ export function SplitConfigCard({ split, setSplit, billingValue = 0 }: Props) {
         {split.enabled && (
           <CardContent className="space-y-4">
             {/* Info box */}
-            <div className="rounded-md border border-primary/20 bg-primary/5 p-2.5 space-y-1">
+            <div className="border border-primary/20 bg-primary/5 p-2.5 space-y-1">
               <p className="text-[10px] text-primary font-medium flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Como funciona o split
@@ -171,7 +171,7 @@ export function SplitConfigCard({ split, setSplit, billingValue = 0 }: Props) {
 
             {/* Validation summary */}
             {split.recipients.some((r) => r.splitValue) && (
-              <div className={`rounded-md border p-2 ${hasValidationError ? "border-destructive/30 bg-destructive/5" : "border-border bg-muted/30"}`}>
+              <div className={`border p-2 ${hasValidationError ? "border-destructive/30 bg-destructive/5" : "border-border bg-muted/30"}`}>
                 <div className="flex items-center justify-between text-[10px]">
                   <span className="text-muted-foreground">
                     Total percentual: <strong className={totalPercent > 100 ? "text-destructive" : "text-foreground"}>{totalPercent.toFixed(2)}%</strong>
@@ -306,7 +306,7 @@ function RecipientRow({
   const selectedPerson = salesPeople.find((s) => s.id === recipient.salespersonId);
 
   return (
-    <div className="rounded-lg border border-border p-3 space-y-3">
+    <div className="border border-border p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">
           Recebedor #{index + 1}
@@ -366,7 +366,7 @@ function RecipientRow({
 
       {/* Wallet ID warning / display */}
       {selectedPerson && !selectedPerson.asaas_wallet_id && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2">
+        <div className="border border-destructive/30 bg-destructive/5 p-2">
           <p className="text-[10px] text-destructive flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             Sem Wallet ID. O split não será processado.
@@ -375,7 +375,7 @@ function RecipientRow({
       )}
 
       {selectedPerson?.asaas_wallet_id && (
-        <div className="rounded-md border border-border bg-muted/30 p-2">
+        <div className="border border-border bg-muted/30 p-2">
           <p className="text-[10px] text-muted-foreground">
             Wallet ID: <span className="font-mono text-foreground">{selectedPerson.asaas_wallet_id}</span>
           </p>

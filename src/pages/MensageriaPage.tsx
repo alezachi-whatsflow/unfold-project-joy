@@ -111,7 +111,7 @@ const MensageriaPage = () => {
       <button
         onClick={() => setActiveTab(item.id)}
         className={cn(
-          "nav-icon-hover flex items-center gap-3 w-full rounded-lg",
+          "nav-icon-hover flex items-center gap-3 w-full",
           expanded ? "px-3 py-2" : "justify-center py-2.5",
           isActive ? "active" : ""
         )}
@@ -145,7 +145,7 @@ const MensageriaPage = () => {
                   onClick={() => navigate(slug ? `/app/${slug}/home` : "/")}
                   className="flex items-center gap-2 ml-auto hover:opacity-80 transition-opacity"
                 >
-                  <img src={whatsflowLogo} alt="Whatsflow" className="h-7 w-7 rounded-lg" />
+                  <img src={whatsflowLogo} alt="Whatsflow" className="h-7 w-7" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="text-xs">Central de Controle</TooltipContent>
@@ -165,7 +165,7 @@ const MensageriaPage = () => {
                     className="nav-icon-hover"
                     style={{ width: 38, height: 38 }}
                   >
-                    <img src={whatsflowLogo} alt="Whatsflow" className="h-6 w-6 rounded-md" />
+                    <img src={whatsflowLogo} alt="Whatsflow" className="h-6 w-6" />
                     <span className="nav-icon-tooltip-right">Central de Controle</span>
                   </button>
                 </TooltipTrigger>

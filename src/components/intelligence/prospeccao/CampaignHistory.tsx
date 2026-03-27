@@ -45,7 +45,7 @@ export function CampaignHistory({ onLoadCampaign }: Props) {
       </CardHeader>
       <CardContent className="space-y-2">
         {campaigns.map((c) => (
-          <div key={c.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+          <div key={c.id} className="flex items-center justify-between p-3 border border-border hover:bg-accent/50 transition-colors">
             <div className="space-y-0.5">
               <p className="text-sm font-medium">{c.niche}</p>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">

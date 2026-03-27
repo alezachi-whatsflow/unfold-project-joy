@@ -177,7 +177,7 @@ export default function UazapiInstancesTab() {
               <Input placeholder="Ex: Atendimento Principal" value={newName} onChange={(e) => setNewName(e.target.value)} />
               <p className="text-[10px] text-muted-foreground">Dê um nome para identificar esta conexão WhatsApp.</p>
             </div>
-            <div className="rounded-lg p-3 text-xs" style={{ background: "var(--acc-bg, rgba(14,138,92,0.08))", color: "var(--acc, #0E8A5C)", border: "1px solid var(--acc-border, rgba(14,138,92,0.25))" }}>
+            <div className="p-3 text-xs" style={{ background: "var(--acc-bg, rgba(14,138,92,0.08))", color: "var(--acc, #0E8A5C)", border: "1px solid var(--acc-border, rgba(14,138,92,0.25))" }}>
               Ao criar, o sistema irá configurar tudo automaticamente e exibir o QR Code para você escanear no WhatsApp do celular.
             </div>
           </div>

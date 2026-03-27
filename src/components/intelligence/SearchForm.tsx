@@ -42,7 +42,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
               disabled={!opt.enabled}
               onClick={() => opt.enabled && setSourceType(opt.type)}
               className={cn(
-                "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+                "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors",
                 opt.type === sourceType
                   ? "bg-primary text-primary-foreground"
                   : opt.enabled

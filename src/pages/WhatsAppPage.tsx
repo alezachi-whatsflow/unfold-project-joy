@@ -51,7 +51,7 @@ export default function WhatsAppPage() {
         }`}
         onMouseLeave={() => setHovered(false)}
       >
-        <div className="flex items-center gap-1 px-4 py-2 mt-2 rounded-2xl backdrop-blur-xl border"
+        <div className="flex items-center gap-1 px-4 py-2 mt-2 backdrop-blur-xl border"
           style={{
             background: "rgba(10, 15, 13, 0.85)",
             borderColor: "rgba(0, 200, 150, 0.15)",
@@ -61,9 +61,9 @@ export default function WhatsAppPage() {
           {/* Logo + back */}
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-xl mr-2 hover:bg-[rgba(0,200,150,0.1)] transition-colors"
+            className="flex items-center gap-2 px-2 py-1.5 mr-2 hover:bg-[rgba(0,200,150,0.1)] transition-colors"
           >
-            <img src={whatsflowLogo} alt="Whatsflow" className="h-6 w-6 rounded-md" />
+            <img src={whatsflowLogo} alt="Whatsflow" className="h-6 w-6" />
             <ArrowLeft size={14} className="text-[rgba(240,253,248,0.5)]" />
           </button>
 
@@ -77,11 +77,11 @@ export default function WhatsAppPage() {
                 <div className="relative group/icon">
                   <button
                     onClick={() => navigate(item.route)}
-                    className="p-2 rounded-xl transition-all text-[rgba(240,253,248,0.5)] hover:text-[#00C896] hover:bg-[rgba(0,200,150,0.1)] hover:scale-110"
+                    className="p-2 transition-all text-[rgba(240,253,248,0.5)] hover:text-[#00C896] hover:bg-[rgba(0,200,150,0.1)] hover:scale-110"
                   >
                     <item.icon size={18} />
                   </button>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none"
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none"
                     style={{ background: "rgba(0,0,0,0.8)", color: "#F0FDF8" }}
                   >
                     {item.label}

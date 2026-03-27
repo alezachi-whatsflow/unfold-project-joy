@@ -869,7 +869,7 @@ function CreateWhitelabelModal({
                     <img
                       src={logoPreview}
                       alt="Logo preview"
-                      className="h-20 w-20 rounded-lg object-cover border border-border"
+                      className="h-20 w-20 object-cover border border-border"
                     />
                     <button
                       type="button"
@@ -889,7 +889,7 @@ function CreateWhitelabelModal({
                   </div>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg p-6 cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors">
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border p-6 cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors">
                   <ImagePlus className="h-7 w-7 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Clique para selecionar a imagem</span>
                   <span className="text-xs text-muted-foreground">Proporção quadrada · recomendado 300×300 px</span>
@@ -914,7 +914,7 @@ function CreateWhitelabelModal({
           {/* Pricing */}
           <Section title="Tabela de Preços do Contrato">
             {/* Price reference table */}
-            <div className="rounded-lg border border-border overflow-hidden text-xs">
+            <div className="border border-border overflow-hidden text-xs">
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
@@ -1177,7 +1177,7 @@ function EditWhitelabelModal({
               <Input placeholder="Ex: AcmeChat" value={form.display_name} onChange={(e) => set('display_name', e.target.value)} />
             </Field>
             <Field label="Slug (URL)">
-              <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
                 <span>/wl/</span><span className="font-mono font-medium text-foreground">{row.whitelabel_slug}</span>
               </div>
               <p className="text-xs text-muted-foreground">O slug não pode ser alterado após a criação.</p>
@@ -1196,7 +1196,7 @@ function EditWhitelabelModal({
               {logoPreview ? (
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <img src={logoPreview} alt="Logo" className="h-20 w-20 rounded-lg object-cover border border-border" />
+                    <img src={logoPreview} alt="Logo" className="h-20 w-20 object-cover border border-border" />
                     <button type="button" onClick={() => { setLogoFile(null); setLogoPreview(null); }}
                       className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-0.5 text-white">
                       <X className="h-3 w-3" />
@@ -1208,7 +1208,7 @@ function EditWhitelabelModal({
                   </label>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg p-6 cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors">
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border p-6 cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors">
                   <ImagePlus className="h-7 w-7 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Clique para selecionar a imagem</span>
                   <span className="text-xs text-muted-foreground">Proporção quadrada · recomendado 300×300 px</span>
@@ -1232,7 +1232,7 @@ function EditWhitelabelModal({
 
           {/* Pricing */}
           <Section title="Recursos Contratados">
-            <div className="rounded-lg border border-border overflow-hidden text-xs">
+            <div className="border border-border overflow-hidden text-xs">
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
@@ -1310,7 +1310,7 @@ function EditWhitelabelModal({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3 bg-muted/30 p-4 rounded-lg border border-border">
+    <div className="space-y-3 bg-muted/30 p-4 border border-border">
       <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">{title}</p>
       {children}
     </div>

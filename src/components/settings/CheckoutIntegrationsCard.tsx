@@ -160,7 +160,7 @@ function ProviderCard({
   const isAsaas = provider.id === "asaas";
 
   return (
-    <Card className={`relative overflow-hidden transition-all hover:shadow-md ${isConnected ? "ring-2 ring-primary/40" : ""}`}>
+    <Card className={`relative overflow-hidden transition-all hover:${isConnected ? "ring-2 ring-primary/40" : ""}`}>
       {isAsaas && (
         <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">
           INTEGRADO
@@ -360,12 +360,12 @@ function ConfigureProviderDialog({
             </Button>
 
             {form.status === "connected" && (
-              <div className="rounded-lg bg-primary/10 border border-primary/30 p-3 text-sm text-primary flex items-center gap-2">
+              <div className="bg-primary/10 border border-primary/30 p-3 text-sm text-primary flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" /> Conexão validada com sucesso!
               </div>
             )}
             {form.status === "error" && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive flex items-center gap-2">
+              <div className="bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive flex items-center gap-2">
                 <XCircle className="h-4 w-4" /> Falha na validação. Verifique as credenciais.
               </div>
             )}
@@ -399,7 +399,7 @@ function ConfigureProviderDialog({
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-muted/50 p-3 space-y-2">
+            <div className="border border-border bg-muted/50 p-3 space-y-2">
               <p className="text-xs font-medium text-foreground">Eventos recomendados:</p>
               <div className="flex flex-wrap gap-1">
                 {["payment.created", "payment.confirmed", "payment.failed", "payment.refunded", "subscription.created", "subscription.cancelled"].map((evt) => (
@@ -436,7 +436,7 @@ function ConfigureProviderDialog({
             </div>
 
             {/* Active toggle */}
-            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <div className="flex items-center justify-between border border-border p-3">
               <div>
                 <p className="text-sm font-medium text-foreground">Ativar provedor</p>
                 <p className="text-xs text-muted-foreground">Disponibilizar como opção de checkout para clientes</p>
@@ -519,7 +519,7 @@ export function CheckoutIntegrationsCard() {
         </CardHeader>
         <CardContent>
           {/* Architecture overview */}
-          <div className="rounded-xl border border-border bg-muted/30 p-4 mb-6">
+          <div className="border border-border bg-muted/30 p-4 mb-6">
             <p className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-primary" /> Modelos de Integração Disponíveis
             </p>
@@ -530,7 +530,7 @@ export function CheckoutIntegrationsCard() {
                 { icon: <ArrowRight className="h-4 w-4" />, label: "Redirect", desc: "Página do gateway", effort: "Baixo" },
                 { icon: <Globe className="h-4 w-4" />, label: "API Direta", desc: "Server-to-Server", effort: "Alto" },
               ].map((m) => (
-                <div key={m.label} className="flex flex-col items-center gap-1 rounded-lg border border-border p-2.5 text-center">
+                <div key={m.label} className="flex flex-col items-center gap-1 border border-border p-2.5 text-center">
                   <span className="text-muted-foreground">{m.icon}</span>
                   <span className="text-xs font-medium text-foreground">{m.label}</span>
                   <span className="text-[10px] text-muted-foreground">{m.desc}</span>

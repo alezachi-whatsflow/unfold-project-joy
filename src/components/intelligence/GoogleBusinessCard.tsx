@@ -139,7 +139,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
               <img
                 src={business.image_url}
                 alt={business.name}
-                className="h-12 w-12 rounded-lg object-cover"
+                className="h-12 w-12 object-cover"
                 referrerPolicy="no-referrer"
                 crossOrigin="anonymous"
                 onError={(e) => {
@@ -148,7 +148,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
                 }}
               />
             ) : null}
-            <div className={cn(!business.image_url ? "" : "hidden", "flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-green-500")}>
+            <div className={cn(!business.image_url ? "" : "hidden", "flex h-12 w-12 items-center justify-center bg-blue-500")}>
               <Building2 className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -178,7 +178,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
         )}
 
         {/* Profile Completeness Indicators */}
-        <div className="rounded-lg bg-secondary/50 p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="bg-secondary/50 p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
           <StatusBadge active={products.length > 0 || hasAttributes} label="Produtos/Serviços" />
           <StatusBadge active={posts.length > 0} label="Feed Atualizado" />
           <StatusBadge active={!!business.website} label="Website" />
@@ -213,7 +213,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
 
         {/* Description */}
         {business.description && (
-          <div className="rounded-lg bg-secondary/50 p-3">
+          <div className="bg-secondary/50 p-3">
             <p className="text-xs text-muted-foreground leading-relaxed line-clamp-4">{business.description}</p>
           </div>
         )}
@@ -227,7 +227,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
             </h4>
             <div className="grid gap-2">
               {attributes.map((group) => (
-                <div key={group.category} className="rounded-lg bg-muted/50 p-2.5">
+                <div key={group.category} className="bg-muted/50 p-2.5">
                   <p className="text-[10px] font-semibold text-muted-foreground mb-1">{group.category}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {group.items.map((item) => (
@@ -251,7 +251,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
               {products.map((p, i) => (
-                <div key={i} className="rounded-lg border border-border bg-muted/50 p-2">
+                <div key={i} className="border border-border bg-muted/50 p-2">
                   {p.image_url && (
                     <img
                       src={p.image_url}
@@ -279,7 +279,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
           {posts.length > 0 ? (
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {posts.map((post, i) => (
-                <div key={i} className="rounded-lg bg-muted/50 p-2.5 flex gap-2">
+                <div key={i} className="bg-muted/50 p-2.5 flex gap-2">
                   {post.image_url && (
                     <img
                       src={post.image_url}
@@ -303,7 +303,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-warning/30 bg-warning/5 p-3 text-center">
+            <div className="border border-dashed border-warning/30 bg-warning/5 p-3 text-center">
               <Rss className="h-4 w-4 text-warning mx-auto mb-1" />
               <p className="text-[11px] text-warning">Feed sem atualizações recentes</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Recomendação: Publicar atualizações semanais para melhorar o engajamento</p>
@@ -345,7 +345,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
             </h4>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {business.top_reviews.map((review, i) => (
-                <div key={i} className="rounded-lg bg-muted/50 p-2.5">
+                <div key={i} className="bg-muted/50 p-2.5">
                   <div className="flex items-center gap-1 mb-1">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star

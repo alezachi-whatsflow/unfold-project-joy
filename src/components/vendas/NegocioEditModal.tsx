@@ -31,7 +31,7 @@ interface Props {
 function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
     <div className="flex items-center gap-2 pb-2 pt-1">
-      <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary/10">
+      <div className="flex items-center justify-center h-6 w-6 bg-primary/10">
         <Icon className="h-3.5 w-3.5 text-primary" />
       </div>
       <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
@@ -183,7 +183,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Probabilidade</Label>
-              <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-input bg-background">
+              <div className="flex items-center gap-3 h-10 px-3 border border-input bg-background">
                 <Slider value={[probabilidade]} onValueChange={v => setProbabilidade(v[0])} max={100} step={5} className="flex-1" />
                 <span className="text-sm font-bold tabular-nums min-w-[40px] text-right" style={{ color: probColor }}>{probabilidade}%</span>
               </div>
@@ -251,7 +251,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
           </div>
 
           {produtos.length > 0 && (
-            <div className="rounded-lg border border-border overflow-hidden">
+            <div className="border border-border overflow-hidden">
               {/* Table header */}
               <div className="grid grid-cols-[1fr_60px_90px_55px_85px_32px] gap-px bg-muted/50 px-3 py-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                 <span>Produto</span>
@@ -278,7 +278,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
           )}
 
           {produtos.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-6 border border-dashed border-border rounded-lg">
+            <div className="flex flex-col items-center justify-center py-6 border border-dashed border-border">
               <Package className="h-8 w-8 text-muted-foreground/40 mb-2" />
               <p className="text-xs text-muted-foreground">Nenhum produto adicionado</p>
             </div>
@@ -299,7 +299,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
                 </Select>
               </div>
             </div>
-            <div className="rounded-lg bg-muted/40 p-3 space-y-1">
+            <div className="bg-muted/40 p-3 space-y-1">
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Subtotal</span>
                 <span>{fmt(subtotal)}</span>
@@ -378,7 +378,7 @@ export default function NegocioEditModal({ negocio, onClose }: Props) {
             <Textarea value={notas} onChange={e => setNotas(e.target.value)} rows={2} placeholder="Anotações sobre o negócio..." className="resize-none" />
           </div>
 
-          <div className="rounded-lg border border-border divide-y divide-border">
+          <div className="border border-border divide-y divide-border">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
                 <Receipt className="h-4 w-4 text-muted-foreground" />

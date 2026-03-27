@@ -143,7 +143,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
     <div className={cn("border-t border-black/[0.06]", isCollapsed ? "p-1" : "p-3")}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className={cn("flex items-center w-full rounded-lg transition-colors hover:bg-muted", isCollapsed ? "justify-center p-2" : "gap-3 p-2")}>
+          <button className={cn("flex items-center w-full transition-colors hover:bg-muted", isCollapsed ? "justify-center p-2" : "gap-3 p-2")}>
             <span className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0 bg-primary/10 text-primary" style={{ width: 32, height: 32 }}>
               {userName.charAt(0).toUpperCase()}
             </span>
@@ -181,7 +181,7 @@ function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { col
   return (
     <div className="flex items-center px-4 py-5 relative border-b border-black/[0.06]">
       <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && "justify-center w-full")}>
-        <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
+        <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 shrink-0" />
         {!isCollapsed && (
           <div className="min-w-0">
             <h2 className="font-display text-sm font-bold truncate text-foreground">Whatsflow</h2>
@@ -190,11 +190,11 @@ function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { col
         )}
       </div>
       {isMobile ? (
-        <button onClick={onCloseMobile} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:bg-muted" style={{ width: 28, height: 28 }}>
+        <button onClick={onCloseMobile} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center hover:bg-muted" style={{ width: 28, height: 28 }}>
           <X className="h-4 w-4 text-muted-foreground" />
         </button>
       ) : (
-        <button onClick={onCollapse} title={collapsed ? "Expandir" : "Colapsar"} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md hover:bg-muted" style={{ width: 24, height: 24 }}>
+        <button onClick={onCollapse} title={collapsed ? "Expandir" : "Colapsar"} className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center hover:bg-muted" style={{ width: 24, height: 24 }}>
           {collapsed ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />}
         </button>
       )}
@@ -225,7 +225,7 @@ function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: 
         end={item.route === '/'}
         title={isCollapsed ? item.label : undefined}
         style={{ padding: isCollapsed ? "8px 0" : padding, fontSize: isCollapsed ? 13 : fontSize }}
-        className={() => cn(menuItemBase, "rounded-lg", isCollapsed ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
+        className={() => cn(menuItemBase, isCollapsed ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
       >
         <span className="relative shrink-0 flex items-center justify-center" style={{ minWidth: '1.8rem' }}>
           {CustomIcon ? <CustomIcon size={15} /> : <LucideIcon className="h-[15px] w-[15px]" />}
@@ -338,7 +338,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
     <div className="flex h-full">
       {/* Rail */}
       <div className="flex flex-col items-center py-3 shrink-0 border-r border-border" style={{ width: 58 }}>
-        <img src={whatsflowLogo} alt="" className="h-7 w-7 rounded-lg mb-4" />
+        <img src={whatsflowLogo} alt="" className="h-7 w-7 mb-4" />
         <div className="flex-1 flex flex-col gap-1">
           {filteredGroups.filter(c => c.id !== 'sistema').map(cat => {
             const CatIcon = getIcon(cat.icon || 'LayoutDashboard');
@@ -349,7 +349,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
                 key={cat.id}
                 onClick={() => setActiveCatId(cat.id)}
                 title={cat.label}
-                className={cn("flex items-center justify-center rounded-lg transition-colors relative", isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}
+                className={cn("flex items-center justify-center transition-colors relative", isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}
                 style={{ width: 40, height: 40 }}
               >
                 <CatIcon className="h-4.5 w-4.5" />
@@ -365,7 +365,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
           const isActive = location.pathname === resolvedRoute || location.pathname.startsWith(resolvedRoute + '/');
           return (
             <RouterNavLink key={item.id} to={resolvedRoute} title={item.label}
-              className={() => cn("flex items-center justify-center rounded-lg mb-1 transition-colors", isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}
+              className={() => cn("flex items-center justify-center mb-1 transition-colors", isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}
               style={{ width: 40, height: 40 }}>
               <Icon className="h-4 w-4" />
             </RouterNavLink>
@@ -417,7 +417,7 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
       {/* Search bar placeholder */}
       {!isCollapsed && (
         <button
-          className="flex items-center gap-2 w-full rounded-lg px-3 py-2 mt-2 mb-3 text-xs transition-colors bg-muted border border-border text-muted-foreground"
+          className="flex items-center gap-2 w-full px-3 py-2 mt-2 mb-3 text-xs transition-colors bg-muted border border-border text-muted-foreground"
           onClick={() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
           }}
@@ -447,7 +447,7 @@ function SidebarSpotlight({ collapsed, isMobile }: { collapsed: boolean; isMobil
               <>
                 <button
                   onClick={() => updateCategoryCollapsed(group.id, !isGroupCollapsed)}
-                  className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg transition-colors hover:bg-muted"
+                  className="flex items-center gap-2 w-full px-2 py-1.5 transition-colors hover:bg-muted"
                 >
                   <span
                     className="transition-transform duration-200 text-[10px] text-muted-foreground"
@@ -602,7 +602,7 @@ export function AppSidebar() {
       <>
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 flex items-center justify-center rounded-lg bg-card border border-border shadow-md"
+          className="fixed top-3 left-3 z-50 flex items-center justify-center bg-card border border-border"
           style={{ width: 40, height: 40 }}
         >
           <Menu className="h-5 w-5 text-foreground" />

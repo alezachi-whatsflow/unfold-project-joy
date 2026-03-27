@@ -92,7 +92,19 @@
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy ml-oauth-callback --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy telegram-webhook --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy telegram-send --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy webchat-api --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_ef7df3106a791de25ff9c5bb5682a488895b2419 npx supabase functions deploy webchat-api --project-ref jtlrglzcsmqmapizqgzu --no-verify-jwt)",
+      "Bash(find 'f:/WFW New/src/components/fiscal' -type f -name *.tsx)",
+      "Bash(find 'f:/WFW New/src/components' -type f \\\\\\(-name *Revenue* -o -name *Billing* -o -name *Payment* -o -name *Asaas* \\\\\\))",
+      "Bash(find 'f:/WFW New/src/hooks' -type f -name *.ts)",
+      "Bash(grep -r \"asaas_expenses\\\\|asaas_revenue\" 'f:/WFW New/src' --include=*.ts --include=*.tsx -l)",
+      "Read(//mnt/f/WFW New/supabase/**)",
+      "Bash(grep -r \"useFinancial\\\\|useCostLines\" 'f:/WFW New/src' --include=*.tsx -l)",
+      "Bash(find 'f:/WFW New/src/hooks' -type f -name *.ts -o -name *.tsx)",
+      "Bash(grep -r \"from.*FinancialContext\\\\|from.*CostLinesContext\" 'f:/WFW New/src' --include=*.tsx --include=*.ts -h)",
+      "Bash(find 'f:/WFW New/src/contexts' -type f -name *.tsx -o -name *.ts)",
+      "Bash(xargs sed:*)",
+      "Bash(grep -rn \"shadow-sm\\\\|shadow-md\\\\|shadow-lg\\\\|shadow-xl\\\\|shadow-2xl\" src/ --include=*.tsx --include=*.ts)",
+      "Bash(grep -rn bg-gradient-to src/ --include=*.tsx --include=*.ts)"
     ]
   }
 }

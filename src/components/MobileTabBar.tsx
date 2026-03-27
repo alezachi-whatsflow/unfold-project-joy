@@ -101,7 +101,7 @@ export function MobileTabBar() {
               key={tab.route}
               onClick={() => navigate(tab.route)}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 relative min-w-[52px]",
+                "flex flex-col items-center gap-0.5 px-3 py-1.5 transition-all duration-200 relative min-w-[52px]",
                 active
                   ? "bg-[rgba(37,211,102,0.20)] text-[#25D366]"
                   : "text-[rgba(255,255,255,0.5)]"

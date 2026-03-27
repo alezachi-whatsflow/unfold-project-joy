@@ -80,7 +80,7 @@ export default function ConversationList({ conversations, selectedId, onSelect }
               key={t.key}
               onClick={() => setTab(t.key)}
               className={cn(
-                "px-2 py-1 text-xs rounded-md transition-colors",
+                "px-2 py-1 text-xs transition-colors",
                 tab === t.key
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted"

@@ -11,7 +11,7 @@ export default function GodAdminFeatureFlags() {
           Habilite e desabilite features progressivamente
         </p>
       </div>
-      <div className="rounded-md border p-4 bg-card">
+      <div className="border p-4 bg-card">
         Gestão de Features ({environment})
       </div>
     </div>

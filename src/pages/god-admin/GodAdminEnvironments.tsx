@@ -54,11 +54,11 @@ export default function GodAdminEnvironments() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-2">
-                   <div className="p-3 bg-background rounded-lg border border-white/5 relative overflow-hidden">
+                   <div className="p-3 bg-background border border-white/5 relative overflow-hidden">
                      <span className="text-muted-foreground mb-1 block">Status do Banco (Pg)</span>
                      <span className="text-emerald-500 font-bold flex items-center gap-2"><CheckCircle2 className="h-4 w-4"/> Operacional</span>
                    </div>
-                   <div className="p-3 bg-background rounded-lg border border-white/5 relative overflow-hidden">
+                   <div className="p-3 bg-background border border-white/5 relative overflow-hidden">
                      <span className="text-muted-foreground mb-1 block">Edge Functions (Local)</span>
                      <span className="text-emerald-500 font-bold flex items-center gap-2"><Activity className="h-4 w-4"/> Online (23ms)</span>
                    </div>

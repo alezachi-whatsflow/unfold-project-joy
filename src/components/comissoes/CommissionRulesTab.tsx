@@ -217,13 +217,13 @@ export default function CommissionRulesTab() {
         </CardHeader>
         <CardContent className="space-y-2 text-xs text-muted-foreground">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div className="rounded-md border border-border p-2">
+            <div className="border border-border p-2">
               <p className="font-medium text-foreground mb-1">Split Direto (Parcelas 1-3)</p>
               <p>1ª parcela: <span className="text-primary font-semibold">23%</span> = {formatCurrency(359 * 0.23)}</p>
               <p>2ª parcela: <span className="text-primary font-semibold">23%</span> = {formatCurrency(359 * 0.23)}</p>
               <p>3ª parcela: <span className="text-primary font-semibold">23%</span> = {formatCurrency(359 * 0.23)}</p>
             </div>
-            <div className="rounded-md border border-border p-2">
+            <div className="border border-border p-2">
               <p className="font-medium text-foreground mb-1">Recorrente (a partir da 5ª)</p>
               <p>Performance mínima: <span className="text-primary font-semibold">1,5%</span> = {formatCurrency(359 * 0.015)}</p>
               <p>Performance máxima: <span className="text-primary font-semibold">5%</span> = {formatCurrency(359 * 0.05)}</p>
@@ -281,7 +281,7 @@ export default function CommissionRulesTab() {
                   </div>
                   <div className="space-y-2">
                     {form.installment_rates.map((rate, idx) => (
-                      <div key={idx} className="flex items-center gap-2 rounded-md border border-border p-2">
+                      <div key={idx} className="flex items-center gap-2 border border-border p-2">
                         <span className="text-xs text-muted-foreground w-16">{rate.installment}ª parcela</span>
                         <Input
                           type="number"

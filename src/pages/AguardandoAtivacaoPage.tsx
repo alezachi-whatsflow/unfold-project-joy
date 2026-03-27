@@ -78,7 +78,7 @@ export default function AguardandoAtivacaoPage() {
             <p className="text-muted-foreground">
               Enviamos um email para <strong>{buyerEmail}</strong> com o link para criar sua senha e acessar o sistema.
             </p>
-            <div className="rounded-xl border border-white/10 bg-secondary/20 p-4 text-sm text-muted-foreground">
+            <div className="border border-white/10 bg-secondary/20 p-4 text-sm text-muted-foreground">
               📬 Verifique também a pasta de <strong>spam</strong> ou <strong>lixo eletrônico</strong> caso não receba em alguns minutos.
             </div>
           </>
@@ -95,7 +95,7 @@ export default function AguardandoAtivacaoPage() {
               Este link de checkout expirou ou foi cancelado. Por favor, realize um novo cadastro.
             </p>
             <Link to="/checkout"
-              className="inline-block px-6 py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/90 transition-colors">
+              className="inline-block px-6 py-3 font-bold text-white bg-primary hover:bg-primary/90 transition-colors">
               Novo Checkout →
             </Link>
           </>

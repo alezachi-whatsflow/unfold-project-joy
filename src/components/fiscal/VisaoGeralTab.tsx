@@ -109,7 +109,7 @@ export default function VisaoGeralTab() {
         {cards.map((c) => (
           <Card key={c.label} className="border-border/40" style={{ borderRadius: 12 }}>
             <CardContent className="p-4 flex items-start gap-3">
-              <div className={`rounded-lg p-2.5 ${c.bg}`}>
+              <div className={`p-2.5 ${c.bg}`}>
                 <c.icon className={`h-5 w-5 ${c.color}`} />
               </div>
               <div className="min-w-0">
@@ -192,7 +192,7 @@ export default function VisaoGeralTab() {
           ) : (
             <div className="space-y-2">
               {alerts.map((a, i) => (
-                <div key={i} className={`flex items-start gap-2 text-sm rounded-lg p-2.5 ${a.type === "error" ? "bg-red-500/10 text-red-400" : a.type === "warning" ? "bg-amber-500/10 text-amber-400" : "bg-primary/10 text-primary"}`}>
+                <div key={i} className={`flex items-start gap-2 text-sm p-2.5 ${a.type === "error" ? "bg-red-500/10 text-red-400" : a.type === "warning" ? "bg-amber-500/10 text-amber-400" : "bg-primary/10 text-primary"}`}>
                   {a.type === "error" ? <XCircle className="h-4 w-4 shrink-0 mt-0.5" /> : <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />}
                   {a.text}
                 </div>

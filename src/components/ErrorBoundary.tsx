@@ -36,7 +36,7 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-gray-950 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-8 text-center shadow-xl">
+          <div className="w-full max-w-md border border-gray-800 bg-gray-900 p-8 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-900/30">
               <svg
                 className="h-8 w-8 text-red-400"
@@ -62,7 +62,7 @@ class ErrorBoundary extends Component<Props, State> {
             </p>
 
             {this.state.error && (
-              <pre className="mb-6 max-h-32 overflow-auto rounded-lg bg-gray-800 p-3 text-left text-xs text-gray-400">
+              <pre className="mb-6 max-h-32 overflow-auto bg-gray-800 p-3 text-left text-xs text-gray-400">
                 {this.state.error.message}
               </pre>
             )}
@@ -70,13 +70,13 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 onClick={this.handleReload}
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 Tentar novamente
               </button>
               <button
                 onClick={this.handleGoHome}
-                className="rounded-lg border border-gray-700 bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                className="border border-gray-700 bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
               >
                 Voltar ao início
               </button>

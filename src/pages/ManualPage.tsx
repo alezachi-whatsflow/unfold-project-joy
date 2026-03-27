@@ -42,7 +42,7 @@ const ManualPage = () => {
           </Button>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-6 md:p-8">
+        <div className="bg-card border border-border p-6 md:p-8">
           {loading ? (
             <p className="text-muted-foreground">Carregando manual...</p>
           ) : (

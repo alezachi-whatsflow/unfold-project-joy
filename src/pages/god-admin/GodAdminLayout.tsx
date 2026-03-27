@@ -72,7 +72,7 @@ export default function GodAdminLayout() {
         {/* Logo + badge */}
         <div className="flex flex-col gap-3 px-4 py-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
+            <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 shrink-0" />
             {!collapsed && (
               <Badge className="bg-amber-600 hover:bg-amber-700 text-[10px] shrink-0">
                 <Shield className="h-2.5 w-2.5 mr-1" />
@@ -93,7 +93,7 @@ export default function GodAdminLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 ${
+                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors mx-2 ${
                   isActive
                     ? "bg-amber-500/10 text-amber-600 font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent/50"

@@ -139,7 +139,7 @@ export default function BillingRuleModal({ open, rule, onClose, onSaved }: Props
             </div>
 
             {steps.map((step, idx) => (
-              <div key={idx} className="border border-border rounded-lg p-3 space-y-2 bg-muted/20">
+              <div key={idx} className="border border-border p-3 space-y-2 bg-muted/20">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground">Etapa {idx + 1}</span>
                   {steps.length > 1 && (

@@ -51,10 +51,10 @@ export default function FilterTabs({ active, onChange, totalCount, unreadCount, 
 
       {/* Kanban toggle — only visible when "Grupos" tab is active */}
       {active === "groups" && onViewModeChange && (
-        <div className="ml-auto flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "var(--bg-card)" }}>
+        <div className="ml-auto flex items-center gap-0.5 p-0.5" style={{ background: "var(--bg-card)" }}>
           <button
             onClick={() => onViewModeChange("list")}
-            className={cn("p-1 rounded", viewMode === "list" && "shadow-sm")}
+            className={cn("p-1", viewMode === "list" && "")}
             style={{
               background: viewMode === "list" ? "var(--acc-bg)" : "transparent",
               color: viewMode === "list" ? "var(--acc)" : "var(--text-muted)",
@@ -65,7 +65,7 @@ export default function FilterTabs({ active, onChange, totalCount, unreadCount, 
           </button>
           <button
             onClick={() => onViewModeChange("kanban")}
-            className={cn("p-1 rounded", viewMode === "kanban" && "shadow-sm")}
+            className={cn("p-1", viewMode === "kanban" && "")}
             style={{
               background: viewMode === "kanban" ? "var(--acc-bg)" : "transparent",
               color: viewMode === "kanban" ? "var(--acc)" : "var(--text-muted)",

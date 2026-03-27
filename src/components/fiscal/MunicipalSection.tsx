@@ -52,7 +52,7 @@ export default function MunicipalSection({ entries, onChange }: Props) {
       {entries.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground text-sm">Nenhum município cadastrado</div>
       ) : (
-        <div className="rounded-lg border border-border/40 overflow-hidden">
+        <div className="border border-border/40 overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>

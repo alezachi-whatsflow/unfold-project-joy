@@ -25,7 +25,7 @@ export function MobileRestricted({ featureKey, children, fallback }: Props) {
   if (fallback) return <>{fallback}</>;
 
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 rounded-lg border border-dashed border-border bg-muted/30 min-h-[200px] gap-4">
+    <div className="flex flex-col items-center justify-center text-center p-8 border border-dashed border-border bg-muted/30 min-h-[200px] gap-4">
       <Monitor className="h-10 w-10 text-muted-foreground" />
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-foreground">{config.title}</h3>

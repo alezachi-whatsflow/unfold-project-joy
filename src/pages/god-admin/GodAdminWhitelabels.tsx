@@ -53,7 +53,7 @@ export default function GodAdminWhitelabels() {
             <tbody>
               <tr className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors group">
                 <td className="px-6 py-4 font-bold text-slate-100 flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">S</div>
+                  <div className="h-8 w-8 bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">S</div>
                   SendHit
                 </td>
                 <td className="px-6 py-4 text-slate-400">sendhit</td>

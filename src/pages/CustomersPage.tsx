@@ -98,7 +98,7 @@ export default function CustomersPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-10 w-10 items-center justify-center bg-primary/10">
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -109,7 +109,7 @@ export default function CustomersPage() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-10 w-10 items-center justify-center bg-primary/10">
               <UserCheck className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -120,7 +120,7 @@ export default function CustomersPage() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
+            <div className="flex h-10 w-10 items-center justify-center bg-destructive/10">
               <UserX className="h-5 w-5 text-destructive" />
             </div>
             <div>
@@ -131,7 +131,7 @@ export default function CustomersPage() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+            <div className="flex h-10 w-10 items-center justify-center bg-accent/10">
               <DollarSign className="h-5 w-5 text-accent" />
             </div>
             <div>

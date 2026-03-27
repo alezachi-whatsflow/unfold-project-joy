@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-border bg-popover p-3 shadow-xl">
+    <div className="border border-border bg-popover p-3">
       <p className="mb-1 text-sm font-medium text-foreground">{label}</p>
       {payload.map((entry: any, i: number) => (
         <p key={i} className="text-xs" style={{ color: entry.color }}>

@@ -25,7 +25,7 @@ export default function EstadualSection({ data, onChange }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">Alíquotas ICMS por estado — pré-populado com valores de referência (editáveis)</p>
-      <div className="rounded-lg border border-border/40 overflow-auto max-h-[500px]">
+      <div className="border border-border/40 overflow-auto max-h-[500px]">
         <Table>
           <TableHeader>
             <TableRow>

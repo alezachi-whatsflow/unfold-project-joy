@@ -45,7 +45,7 @@ export default function TributosTab() {
 
   return (
     <Accordion type="multiple" defaultValue={["municipal", "estadual", "federal"]} className="space-y-3">
-      <AccordionItem value="municipal" className="border border-border/40 rounded-lg px-4">
+      <AccordionItem value="municipal" className="border border-border/40 px-4">
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-primary" />
@@ -58,7 +58,7 @@ export default function TributosTab() {
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="estadual" className="border border-border/40 rounded-lg px-4">
+      <AccordionItem value="estadual" className="border border-border/40 px-4">
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" />
@@ -71,7 +71,7 @@ export default function TributosTab() {
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="federal" className="border border-border/40 rounded-lg px-4">
+      <AccordionItem value="federal" className="border border-border/40 px-4">
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-2">
             <Landmark className="h-4 w-4 text-primary" />

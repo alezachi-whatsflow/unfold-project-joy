@@ -308,7 +308,7 @@ export function AsaasBillingManagerPanel() {
           </div>
 
           {mode === "automatic" && (
-            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <div className="mt-3 border border-primary/20 bg-primary/5 p-3">
               <p className="text-xs text-primary font-medium flex items-center gap-1.5">
                 <Zap className="h-3.5 w-3.5" />
                 Modo automático ativo

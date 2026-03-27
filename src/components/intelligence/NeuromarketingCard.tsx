@@ -87,7 +87,7 @@ export function NeuromarketingCard({ analysis }: NeuromarketingCardProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 rounded-lg bg-secondary p-4">
+          <div className="flex items-center gap-4 bg-secondary p-4">
             <span className={cn("font-display text-3xl font-bold", getScoreColor(a.score_geral))}>
               {a.score_geral.toFixed(1)}
             </span>
@@ -141,7 +141,7 @@ export function NeuromarketingCard({ analysis }: NeuromarketingCardProps) {
                 <HoverCard key={key} openDelay={200} closeDelay={100}>
                   <HoverCardTrigger asChild>
                     <div className={cn(
-                      "rounded-lg border p-3 space-y-1 cursor-pointer transition-colors hover:border-primary/40",
+                      "border p-3 space-y-1 cursor-pointer transition-colors hover:border-primary/40",
                       trigger.presente ? "border-primary/20 bg-primary/5" : "border-border bg-secondary/30"
                     )}>
                       <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export function NeuromarketingCard({ analysis }: NeuromarketingCardProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {a.top5_melhorias_neuromarketing.map((imp) => (
-              <div key={imp.posicao} className="rounded-lg border border-border bg-secondary/20 p-3 space-y-1.5">
+              <div key={imp.posicao} className="border border-border bg-secondary/20 p-3 space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">{imp.posicao}</span>
                   <p className="text-xs font-medium text-foreground flex-1">{imp.melhoria}</p>

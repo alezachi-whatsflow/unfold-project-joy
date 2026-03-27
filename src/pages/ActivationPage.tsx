@@ -166,7 +166,7 @@ export default function ActivationPage() {
             </p>
             {tokenStatus !== "used" && (
               <button onClick={handleResend} disabled={resendLoading}
-                className="w-full py-3 rounded-xl font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-60"
+                className="w-full py-3 font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-60"
                 style={{ backgroundColor: primaryColor }}>
                 {resendLoading ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Solicitar novo link de ativação"}
               </button>
@@ -180,7 +180,7 @@ export default function ActivationPage() {
             <div className="text-center space-y-2">
               {activationData.wl_logo_url
                 ? <img src={activationData.wl_logo_url} alt={appName} className="h-10 mx-auto rounded" />
-                : <div className="h-10 px-4 py-2 rounded-lg font-black text-white text-sm mx-auto w-fit" style={{ backgroundColor: primaryColor }}>{appName}</div>
+                : <div className="h-10 px-4 py-2 font-black text-white text-sm mx-auto w-fit" style={{ backgroundColor: primaryColor }}>{appName}</div>
               }
               <div>
                 <h1 className="text-2xl font-extrabold mt-4">Bem-vindo(a) ao {appName}!</h1>
@@ -190,12 +190,12 @@ export default function ActivationPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
+            <div className="border border-border bg-card p-6 space-y-5">
               {/* Email (read only) */}
               <div className="space-y-1">
                 <label className="text-sm font-medium">E-mail</label>
                 <input readOnly value={activationData.buyer_email}
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground cursor-not-allowed" />
+                  className="w-full bg-secondary/50 border border-border px-4 py-3 text-sm text-muted-foreground cursor-not-allowed" />
               </div>
 
               {/* Password */}
@@ -204,7 +204,7 @@ export default function ActivationPage() {
                 <div className="relative">
                   <input type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="Mínimo 8 caracteres"
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:ring-2 transition"
+                    className="w-full bg-background border border-border px-4 py-3 pr-12 text-sm outline-none focus:ring-2 transition"
                     style={{ "--tw-ring-color": primaryColor } as React.CSSProperties} />
                   <button onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -226,14 +226,14 @@ export default function ActivationPage() {
                 <label className="text-sm font-medium">Confirmar senha *</label>
                 <input type={showPw ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="Repita a senha"
-                  className={`w-full bg-background border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 transition ${confirmPassword && confirmPassword !== password ? "border-rose-500" : "border-border"}`} />
+                  className={`w-full bg-background border px-4 py-3 text-sm outline-none focus:ring-2 transition ${confirmPassword && confirmPassword !== password ? "border-rose-500" : "border-border"}`} />
                 {confirmPassword && confirmPassword !== password && (
                   <p className="text-xs text-rose-500">As senhas não coincidem.</p>
                 )}
               </div>
 
               <button onClick={handleActivate} disabled={isActivating || password.length < 8 || password !== confirmPassword}
-                className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="w-full py-3 font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}>
                 {isActivating
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Ativando conta...</>

@@ -76,7 +76,7 @@ export function RescuePlanCard({
       {/* Alert Banner */}
       <div
         className={cn(
-          "rounded-lg border p-4 flex items-start gap-3",
+          "border p-4 flex items-start gap-3",
           urgencyColors[rescuePlan.urgencia]
         )}
       >
@@ -115,7 +115,7 @@ export function RescuePlanCard({
                 { label: "Instagram", val: rescuePlan.benchmark_mercado.instagram, current: instagramThreshold?.score },
                 { label: "GMN", val: rescuePlan.benchmark_mercado.gmn, current: gmnThreshold?.score },
               ].map((b) => (
-                <div key={b.label} className="rounded-lg bg-secondary/50 p-2">
+                <div key={b.label} className="bg-secondary/50 p-2">
                   <p className="text-[10px] text-muted-foreground">{b.label}</p>
                   <p className="font-display text-sm font-bold text-foreground">
                     Média: {b.val}
@@ -268,7 +268,7 @@ function QuickWinSection({
           <label
             key={i}
             className={cn(
-              "flex items-start gap-2.5 rounded-lg border p-3 cursor-pointer transition-colors",
+              "flex items-start gap-2.5 border p-3 cursor-pointer transition-colors",
               isChecked(channel, i)
                 ? "bg-primary/5 border-primary/20"
                 : "bg-secondary/30 border-border hover:bg-secondary/50"
@@ -332,7 +332,7 @@ function ChannelAccordion({
             </div>
           )}
           {plan.plano_imediato?.map((action) => (
-            <div key={action.ordem} className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
+            <div key={action.ordem} className="border border-border bg-secondary/30 p-3 space-y-2">
               <div className="flex items-start gap-2">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">
                   {action.ordem}

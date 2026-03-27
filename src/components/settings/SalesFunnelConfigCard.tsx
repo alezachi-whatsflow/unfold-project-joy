@@ -134,7 +134,7 @@ function PipelineCard({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="border border-border bg-card overflow-hidden">
       {/* Header - always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -218,7 +218,7 @@ function PipelineCard({
               {stages.map((stage, i) => {
                 const isProtected = stage.key === "fechado_ganho" || stage.key === "fechado_perdido";
                 return (
-                  <div key={stage.key} className="flex items-center gap-2 rounded-lg border border-border p-2">
+                  <div key={stage.key} className="flex items-center gap-2 border border-border p-2">
                     <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                     <div
                       className="h-6 w-6 rounded shrink-0 border border-border cursor-pointer relative overflow-hidden"

@@ -39,7 +39,7 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         )}
         <input
-          className="w-full bg-muted rounded-lg pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/30"
+          className="w-full bg-muted pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/30"
           placeholder="Pesquisar conversa..."
           value={local}
           onChange={(e) => handleChange(e.target.value)}

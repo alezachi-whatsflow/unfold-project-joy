@@ -108,7 +108,7 @@ export default function ConversationsPage() {
   ];
 
   return (
-    <div className="flex h-[calc(100vh-120px)] gap-0 rounded-lg border overflow-hidden bg-background">
+    <div className="flex h-[calc(100vh-120px)] gap-0 border overflow-hidden bg-background">
       {/* Column 1: Conversation List */}
       <div className="w-80 border-r flex flex-col">
         <div className="p-3 border-b space-y-2">
@@ -199,7 +199,7 @@ export default function ConversationsPage() {
                 <div className="space-y-3">
                   {messages?.map(m => (
                     <div key={m.id} className={`flex ${m.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
+                      <div className={`max-w-[70%] px-4 py-2 text-sm ${
                         m.is_internal_note
                           ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-200'
                           : m.direction === 'outbound'

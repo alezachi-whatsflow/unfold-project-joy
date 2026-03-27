@@ -124,19 +124,19 @@ export default function UsersPage() {
 
       {/* Metric Pills */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-muted text-foreground text-sm font-semibold">
+        <div className="flex items-center gap-2 px-4 py-2 border border-border bg-muted text-foreground text-sm font-semibold">
           <span className="text-lg font-bold">{counts.total}</span>
           <span className="opacity-80">Total</span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-400 text-sm font-semibold">
+        <div className="flex items-center gap-2 px-4 py-2 border border-emerald-500/25 bg-emerald-500/10 text-emerald-400 text-sm font-semibold">
           <span className="text-lg font-bold">{profiles.filter(p => p.invitation_status === 'active').length}</span>
           <span className="opacity-80">Ativos</span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-400 text-sm font-semibold">
+        <div className="flex items-center gap-2 px-4 py-2 border border-amber-500/25 bg-amber-500/10 text-amber-400 text-sm font-semibold">
           <span className="text-lg font-bold">{profiles.filter(p => p.invitation_status === 'invited' || p.invitation_status === 'accepted').length}</span>
           <span className="opacity-80">Pendentes</span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-muted text-muted-foreground text-sm font-semibold">
+        <div className="flex items-center gap-2 px-4 py-2 border border-border bg-muted text-muted-foreground text-sm font-semibold">
           <span className="text-lg font-bold">{profiles.filter(p => !p.invitation_status || p.invitation_status === 'inactive').length}</span>
           <span className="opacity-80">Inativos</span>
         </div>
@@ -218,7 +218,7 @@ export default function UsersPage() {
                   <PermissionGate module="usuarios" action="edit">
                     <button
                       onClick={() => setEditUser(p)}
-                      className="w-7 h-7 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors"
+                      className="w-7 h-7 border border-blue-500/20 bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors"
                     >
                       <Pencil size={13} />
                     </button>
@@ -226,7 +226,7 @@ export default function UsersPage() {
                   <PermissionGate module="usuarios" action="delete">
                     <button
                       onClick={() => handleDeleteUser(p)}
-                      className="w-7 h-7 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                      className="w-7 h-7 border border-destructive/20 bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -535,7 +535,7 @@ function EditUserForm({ profile, currentUserId, isAdmin, onClose }: {
                   <input
                     readOnly
                     value={manualLink}
-                    className="flex-1 bg-secondary px-3 py-2 rounded-lg text-xs font-mono truncate"
+                    className="flex-1 bg-secondary px-3 py-2 text-xs font-mono truncate"
                   />
                   <Button
                     size="icon"
@@ -563,7 +563,7 @@ function EditUserForm({ profile, currentUserId, isAdmin, onClose }: {
             </Button>
           </div>
 
-          <div className="overflow-x-auto border rounded-lg">
+          <div className="overflow-x-auto border">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">

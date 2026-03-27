@@ -153,7 +153,7 @@ export default function NFEmitirDialog({ open, onOpenChange, onEmit, nextNumero 
           {step === 2 && (
             <div className="space-y-3">
               {itens.map((item, idx) => (
-                <div key={item.id} className="border border-border/40 rounded-lg p-3 space-y-2">
+                <div key={item.id} className="border border-border/40 p-3 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-medium text-muted-foreground">Item {idx + 1}</span>
                     {itens.length > 1 && <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeItem(idx)}><Trash2 className="h-3 w-3" /></Button>}
@@ -199,7 +199,7 @@ export default function NFEmitirDialog({ open, onOpenChange, onEmit, nextNumero 
           {step === 4 && (
             <div className="space-y-3 text-sm">
               <h4 className="font-semibold">Resumo da Nota Fiscal</h4>
-              <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+              <div className="bg-muted/30 p-3 space-y-1">
                 <p><strong>Tipo:</strong> {tipo}</p>
                 <p><strong>Destinatário:</strong> {dest.nome} ({dest.cpfCnpj})</p>
                 <p><strong>E-mail:</strong> {dest.email || "—"}</p>

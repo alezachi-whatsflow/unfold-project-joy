@@ -530,7 +530,7 @@ const IntegracoesPage = () => {
                   <CardTitle className="flex items-center gap-2 text-sm"><Webhook className="h-4 w-4" /> Webhooks Asaas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="rounded-lg border p-2">
+                  <div className="border p-2">
                     <Label className="text-[10px] text-muted-foreground">URL do Webhook</Label>
                     <p className="font-mono text-[10px] text-foreground break-all mt-1">{webhookUrl}</p>
                   </div>

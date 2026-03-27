@@ -203,7 +203,7 @@ export function CommandPalette() {
                   <button
                     key={item.id}
                     onClick={() => handleSelect(item.route)}
-                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${globalIdx === selectedIdx ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50"}`}
+                    className={`flex items-center gap-3 w-full px-3 py-2 text-sm transition-colors ${globalIdx === selectedIdx ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50"}`}
                   >
                     <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="flex-1 text-left">{item.label}</span>
@@ -224,7 +224,7 @@ export function CommandPalette() {
                   <button
                     key={action.id}
                     onClick={() => handleSelect(action.route)}
-                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${globalIdx === selectedIdx ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50"}`}
+                    className={`flex items-center gap-3 w-full px-3 py-2 text-sm transition-colors ${globalIdx === selectedIdx ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50"}`}
                   >
                     <Zap className="h-4 w-4 text-primary shrink-0" />
                     <span className="flex-1 text-left">+ {action.label}</span>
@@ -245,7 +245,7 @@ export function CommandPalette() {
                   <button
                     key={recent.route + i}
                     onClick={() => handleSelect(recent.route)}
-                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${globalIdx === selectedIdx ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50"}`}
+                    className={`flex items-center gap-3 w-full px-3 py-2 text-sm transition-colors ${globalIdx === selectedIdx ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50"}`}
                   >
                     <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="flex-1 text-left">{recent.label}</span>

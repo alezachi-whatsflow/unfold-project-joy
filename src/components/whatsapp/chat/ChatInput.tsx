@@ -279,14 +279,14 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     <div style={{ backgroundColor: "var(--wa-bg-header)", borderTop: "1px solid var(--wa-border)" }}>
       {showAttach && !attachMode && (
         <div
-          className="mx-4 mt-2 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
+          className="mx-4 mt-2 p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
           style={{ backgroundColor: "#233138", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "messageIn 200ms ease-out" }}
         >
           {attachmentItems.map((item) => (
             <button
               key={item.label}
               onClick={() => handleSelectAttachment(item.mode)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm transition-colors"
               style={{ color: "var(--wa-text-primary)" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-bg-hover)")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
@@ -300,7 +300,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
       {attachMode && (
         <div
-          className="mx-4 mt-2 rounded-xl p-3 space-y-2"
+          className="mx-4 mt-2 p-3 space-y-2"
           style={{ backgroundColor: "#233138", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "messageIn 200ms ease-out" }}
         >
           <div className="flex items-center justify-between mb-1">
@@ -330,7 +330,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
               <button
                 onClick={handlePickFiles}
-                className="w-full rounded-lg py-2 text-sm flex items-center justify-center gap-2"
+                className="w-full py-2 text-sm flex items-center justify-center gap-2"
                 style={{ backgroundColor: "var(--wa-bg-input)", color: "var(--wa-text-primary)" }}
               >
                 <Plus size={16} /> Adicionar arquivo(s)
@@ -415,7 +415,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
           <div className="flex gap-2 pt-1">
             <button
               onClick={resetAttach}
-              className="flex-1 rounded-lg py-1.5 text-xs font-medium transition-colors"
+              className="flex-1 py-1.5 text-xs font-medium transition-colors"
               style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "var(--wa-text-secondary)" }}
             >
               Cancelar
@@ -423,7 +423,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
             <button
               onClick={handleSendAttachment}
               disabled={sending}
-              className="flex-1 rounded-lg py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+              className="flex-1 py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
               style={{ backgroundColor: "var(--wa-green)", color: "#fff" }}
             >
               {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

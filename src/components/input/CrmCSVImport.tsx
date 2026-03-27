@@ -163,7 +163,7 @@ export function CrmCSVImport() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border-2 border-dashed border-border p-6 text-center">
+            <div className="border-2 border-dashed border-border p-6 text-center">
               <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
               <p className="text-xs text-muted-foreground mb-3">
                 Formato: <strong>NOME;EMPRESA;FONE;EXTRA</strong> (separado por ; ou ,)

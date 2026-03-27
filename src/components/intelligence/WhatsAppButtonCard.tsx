@@ -74,7 +74,7 @@ export function WhatsAppButtonCard({ analysis }: WhatsAppButtonCardProps) {
           <div className="space-y-2">
             <p className="text-xs font-semibold text-foreground">Recomendações</p>
             {analysis.recomendacoes.map((rec, i) => (
-              <div key={i} className="rounded-lg border border-border bg-secondary/20 p-3 space-y-1">
+              <div key={i} className="border border-border bg-secondary/20 p-3 space-y-1">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-foreground">{rec.acao}</p>
                   <Badge variant={rec.impacto_conversao === "Alto" ? "default" : "secondary"} className="text-[9px]">
@@ -89,7 +89,7 @@ export function WhatsAppButtonCard({ analysis }: WhatsAppButtonCardProps) {
         )}
 
         {/* Ideal config */}
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+        <div className="border border-primary/20 bg-primary/5 p-3">
           <p className="text-xs font-semibold text-primary mb-2">Configuração Ideal</p>
           <div className="grid gap-1.5">
             {Object.entries(analysis.configuracao_ideal).map(([key, val]) => (

@@ -381,7 +381,7 @@ export default function MessageComposer({ onClose }: MessageComposerProps) {
 
             {/* Summary */}
             {includeTags.length > 0 && (
-              <div className="rounded-lg p-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+              <div className="p-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
                 <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
                   <Users size={14} style={{ color: "var(--acc)" }} />
                   <span className="font-medium">{matchedContacts.length} contatos</span>

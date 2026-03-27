@@ -77,7 +77,7 @@ export function MetaVerificationCard({ result }: MetaVerificationCardProps) {
             <ScoreGauge score={dv.score} label="Domínio" />
             <div className="space-y-2">
               {dv.checklist.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 rounded-lg bg-secondary/30 p-2.5">
+                <div key={i} className="flex items-start gap-2 bg-secondary/30 p-2.5">
                   <StatusIcon status={item.status} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground">{item.requisito}</p>

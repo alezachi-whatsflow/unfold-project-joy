@@ -207,7 +207,7 @@ export default function IASkillsPage() {
               key={skill.key}
               className={`relative transition-all duration-300 ${
                 isActive
-                  ? "border-primary/50 shadow-lg shadow-primary/10"
+                  ? "border-primary/50 shadow-primary/10"
                   : "border-border hover:border-muted-foreground/30"
               }`}
             >

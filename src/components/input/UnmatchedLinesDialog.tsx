@@ -85,7 +85,7 @@ export function UnmatchedLinesDialog({ open, lines, onConfirm, onCancel }: Unmat
           {selected.map((line) => (
             <div
               key={line.index}
-              className="flex items-start gap-3 rounded-lg border border-border p-3 bg-secondary/30"
+              className="flex items-start gap-3 border border-border p-3 bg-secondary/30"
             >
               <Checkbox
                 checked={line.selected}

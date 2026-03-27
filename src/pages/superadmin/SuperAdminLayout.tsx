@@ -47,7 +47,7 @@ export default function SuperAdminLayout() {
       >
         {/* Logo + badge */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
-          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 rounded-lg shrink-0" />
+          <img src={whatsflowLogo} alt="Whatsflow" className="h-8 w-8 shrink-0" />
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm font-semibold text-foreground truncate">Whatsflow</span>
@@ -67,7 +67,7 @@ export default function SuperAdminLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 ${
+                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors mx-2 ${
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent/50"

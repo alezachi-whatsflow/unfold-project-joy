@@ -405,7 +405,7 @@ export default function RevenuePage() {
                 </div>
 
                 {form.installments !== "À vista" && (
-                  <div className="rounded-md border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+                  <div className="border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
                     <strong>{form.installments}</strong> de{" "}
                     <strong>{form.value ? fmt(parseFloat(form.value) / parseInt(form.installments.replace("x", ""))) : "R$ 0,00"}</strong>{" "}
                     — Total: <strong>{form.value ? fmt(parseFloat(form.value)) : "R$ 0,00"}</strong>

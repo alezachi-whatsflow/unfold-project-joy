@@ -52,7 +52,7 @@ export default function GodAdminDashboard() {
 
       {/* ROW 1: CORE KPIS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="hover:border-primary/50 transition-colors bg-gradient-to-br from-card to-card/50">
+        <Card className="hover:border-primary/50 transition-colors bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">MRR Total Consolidado</CardTitle>
             <DollarSign className="h-4 w-4 text-primary" />

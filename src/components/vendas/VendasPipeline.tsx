@@ -194,9 +194,9 @@ export default function VendasPipeline() {
               <button
                 key={p.id}
                 onClick={() => selectPipeline(p.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
+                className={`px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
                   selectedPipelineId === p.id
-                    ? "bg-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted/50 text-muted-foreground hover:bg-muted"
                 }`}
               >
@@ -266,7 +266,7 @@ export default function VendasPipeline() {
         {columns.map(col => (
           <div
             key={col.status}
-            className="flex-shrink-0 w-[280px] rounded-xl border border-border/40 bg-muted/20"
+            className="flex-shrink-0 w-[280px] border border-border/40 bg-muted/20"
             onDragOver={e => e.preventDefault()}
             onDrop={() => handleDrop(col.status)}
           >
@@ -291,7 +291,7 @@ export default function VendasPipeline() {
                     onDragStart={() => { dragItem.current = neg; }}
                     onDragEnd={() => { dragItem.current = null; }}
                     onClick={() => openDrawer(neg)}
-                    className={`p-3 rounded-lg border bg-card cursor-pointer hover:border-primary/30 transition-all group ${isHighlighted ? "ring-2 ring-primary border-primary animate-pulse" : "border-border/30"}`}
+                    className={`p-3 border bg-card cursor-pointer hover:border-primary/30 transition-all group ${isHighlighted ? "ring-2 ring-primary border-primary animate-pulse" : "border-border/30"}`}
                   >
                     <div className="flex items-start justify-between gap-1">
                       <h4 className="text-xs font-semibold text-foreground leading-tight truncate">{neg.titulo}</h4>
@@ -396,7 +396,7 @@ function KPICard({ icon: Icon, label, value }: { icon: React.ElementType; label:
   return (
     <Card>
       <CardContent className="flex items-center gap-3 py-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+        <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
           <Icon className="h-4 w-4 text-primary" />
         </div>
         <div>

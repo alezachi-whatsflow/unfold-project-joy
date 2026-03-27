@@ -376,7 +376,7 @@ export default function CommissionClosingTab() {
       <div className="grid gap-4 sm:grid-cols-4">
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-4 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
               <DollarSign className="h-4 w-4 text-primary" />
             </div>
             <div>
@@ -387,7 +387,7 @@ export default function CommissionClosingTab() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-4 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
               <DollarSign className="h-4 w-4 text-primary" />
             </div>
             <div>
@@ -398,7 +398,7 @@ export default function CommissionClosingTab() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-4 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
               <Repeat className="h-4 w-4 text-primary" />
             </div>
             <div>
@@ -409,7 +409,7 @@ export default function CommissionClosingTab() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-4 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10">
+            <div className="flex h-9 w-9 items-center justify-center bg-warning/10">
               <DollarSign className="h-4 w-4 text-warning" />
             </div>
             <div>
@@ -464,7 +464,7 @@ export default function CommissionClosingTab() {
           </CardHeader>
           <CardContent className="space-y-2">
             {rules.map((rule) => (
-              <div key={rule.id} className="rounded-md border border-border p-3 text-xs">
+              <div key={rule.id} className="border border-border p-3 text-xs">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-medium text-foreground">{rule.name}</span>
                   <Badge variant="outline" className="text-[10px]">{rule.product_name} — {formatCurrency(rule.product_price)}</Badge>

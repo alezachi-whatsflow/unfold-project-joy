@@ -16,7 +16,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
-    <div className="rounded-lg border border-border bg-popover p-3 shadow-xl">
+    <div className="border border-border bg-popover p-3">
       <p className="text-xs text-muted-foreground">{name}</p>
       <p className="text-sm font-bold text-foreground">
         {formatCurrency(value)}

@@ -14,7 +14,7 @@ interface Props { onNext: () => void; }
 
 function HelpBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground leading-relaxed">
+    <div className="flex items-start gap-2.5 border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground leading-relaxed">
       <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
       <span>{children}</span>
     </div>
@@ -89,7 +89,7 @@ export default function WizardStep1({ onNext }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <div className="h-10 w-10 bg-primary/10 flex items-center justify-center">
           <Building2 className="h-5 w-5 text-primary" />
         </div>
         <div>

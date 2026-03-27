@@ -235,7 +235,7 @@ function AttachmentSection({
         />
 
         {attachmentUrl && attachmentName ? (
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+          <div className="flex items-center gap-3 p-3 border border-border bg-muted/30">
             {getFileIcon(attachmentName)}
             <span className="text-sm truncate flex-1">{attachmentName}</span>
             <div className="flex gap-1">

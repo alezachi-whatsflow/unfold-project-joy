@@ -43,7 +43,7 @@ export function PWAInstallPrompt() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 bg-card border-t border-border shadow-lg animate-fade-in"
+    <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 bg-card border-t border-border animate-fade-in"
       style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
       <div className="flex items-center gap-3 max-w-lg mx-auto">
         <Download className="h-8 w-8 text-primary shrink-0" />

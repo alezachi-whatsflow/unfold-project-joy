@@ -30,7 +30,7 @@ export default function CertificateTable({ certificates, onRevoke, onRenew }: Pr
   }
 
   return (
-    <div className="rounded-lg border border-border/40 overflow-hidden" style={{ borderRadius: 12 }}>
+    <div className="border border-border/40 overflow-hidden" style={{ borderRadius: 12 }}>
       <Table>
         <TableHeader>
           <TableRow>

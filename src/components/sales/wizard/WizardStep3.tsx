@@ -101,7 +101,7 @@ export default function WizardStep3({ onNext, onBack }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+        <div className="h-10 w-10 bg-amber-500/10 flex items-center justify-center">
           <ClipboardList className="h-5 w-5 text-amber-500" />
         </div>
         <div>
@@ -117,7 +117,7 @@ export default function WizardStep3({ onNext, onBack }: Props) {
 
       <div className="space-y-4">
         {questions.map((q, i) => (
-          <div key={q.id} className="p-4 rounded-lg border border-border/40 bg-muted/20 space-y-3">
+          <div key={q.id} className="p-4 border border-border/40 bg-muted/20 space-y-3">
             <div className="flex items-start gap-2">
               <GripVertical className="h-4 w-4 text-muted-foreground/40 mt-2 shrink-0" />
               <div className="flex-1 space-y-3">

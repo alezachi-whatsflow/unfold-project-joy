@@ -98,7 +98,7 @@ export default function CertificateUploadCard({ onCertificateValidated }: Props)
       <CardContent className="space-y-4">
         {/* Drop zone */}
         <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/50"}`}
+          className={`border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/50"}`}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={onDrop}
@@ -147,7 +147,7 @@ export default function CertificateUploadCard({ onCertificateValidated }: Props)
         )}
 
         {result && (
-          <div className={`rounded-lg p-4 border ${result.success ? "border-primary/30 bg-primary/5" : "border-destructive/30 bg-destructive/5"}`}>
+          <div className={`p-4 border ${result.success ? "border-primary/30 bg-primary/5" : "border-destructive/30 bg-destructive/5"}`}>
             {result.success && result.meta ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 mb-3">

@@ -27,10 +27,10 @@ function scoreColor(score: number | null): string {
 }
 
 function scoreGradient(score: number | null): string {
-  if (score === null) return "linear-gradient(135deg, #374151, #4b5563)";
-  if (score >= 7.5) return "linear-gradient(135deg, #11bc76, #39f7b2)";
-  if (score >= 5) return "linear-gradient(135deg, #f59e0b, #fbbf24)";
-  return "linear-gradient(135deg, #ef4444, #f87171)";
+  if (score === null) return "#4b5563";
+  if (score >= 7.5) return "#11bc76";
+  if (score >= 5) return "#f59e0b";
+  return "#ef4444";
 }
 
 function scoreLabel(score: number | null): string {
@@ -390,9 +390,7 @@ body{
 
 body::before{
   content:'';position:fixed;top:0;left:0;right:0;bottom:0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% -20%,rgba(17,188,118,0.07),transparent),
-    radial-gradient(ellipse 60% 40% at 80% 80%,rgba(79,90,227,0.04),transparent);
+  background:rgba(17,188,118,0.03);
   pointer-events:none;z-index:0;
 }
 
@@ -402,13 +400,13 @@ body::before{
 .header{
   display:flex;align-items:center;gap:36px;
   padding:40px 44px;margin-bottom:32px;
-  background:linear-gradient(135deg,var(--surface) 0%,rgba(23,28,31,0.8) 100%);
+  background:var(--surface);
   border-radius:24px;border:1px solid var(--border);
   backdrop-filter:blur(20px);position:relative;overflow:hidden;
 }
 .header::after{
   content:'';position:absolute;top:0;right:0;width:240px;height:240px;
-  background:radial-gradient(circle,${ringColor}12,transparent 70%);pointer-events:none;
+  background:${ringColor}08;pointer-events:none;
 }
 .gauge-wrap{flex-shrink:0;position:relative;width:130px;height:130px}
 .gauge-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -480,7 +478,7 @@ body::before{
 /* ===== ACTION PLAN ===== */
 .action-btn{
   width:100%;padding:18px 24px;
-  background:linear-gradient(135deg,var(--surface) 0%,var(--surface-2) 100%);
+  background:var(--surface);
   border:1px solid var(--border);border-radius:16px;
   color:var(--text);font-size:15px;font-weight:700;font-family:var(--font);
   cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;

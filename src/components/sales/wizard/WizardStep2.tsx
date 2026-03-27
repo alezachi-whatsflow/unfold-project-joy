@@ -126,7 +126,7 @@ export default function WizardStep2({ onNext, onBack }: Props) {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+          <div className="h-10 w-10 bg-emerald-500/10 flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-emerald-500" />
           </div>
           <div>
@@ -138,7 +138,7 @@ export default function WizardStep2({ onNext, onBack }: Props) {
         </div>
 
         {/* Help box */}
-        <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5">
+        <div className="flex items-start gap-3 p-4 border border-primary/20 bg-primary/5">
           <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
           <div className="text-sm text-muted-foreground space-y-1">
             <p className="font-medium text-foreground">Como funciona o ICP?</p>
@@ -180,7 +180,7 @@ export default function WizardStep2({ onNext, onBack }: Props) {
         {/* Criteria list */}
         <div className="space-y-4">
           {criteria.map((c, i) => (
-            <div key={c.id} className="rounded-xl border border-border/40 bg-muted/20 overflow-hidden">
+            <div key={c.id} className="border border-border/40 bg-muted/20 overflow-hidden">
               {/* Top bar: Label */}
               <div className="flex items-center gap-3 p-4 pb-2">
                 <div className="flex-1 min-w-0">

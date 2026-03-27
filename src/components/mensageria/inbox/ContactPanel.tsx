@@ -66,7 +66,7 @@ export default function ContactPanel({ conversation, onClose }: Props) {
 
         {/* Lead info */}
         {conversation.isLead && (
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-2">
+          <div className="border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-emerald-400">Score Digital</span>
               <span className="text-lg font-bold text-emerald-400">{conversation.digitalScore || "—"}</span>
@@ -79,7 +79,7 @@ export default function ContactPanel({ conversation, onClose }: Props) {
 
         {/* CRM info */}
         {!conversation.isLead && (
-          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 space-y-2">
+          <div className="border border-blue-500/30 bg-blue-500/10 p-3 space-y-2">
             <span className="text-xs font-semibold text-blue-400">Cliente CRM</span>
             <p className="text-xs text-muted-foreground">Etapa: Ativo</p>
             <Button variant="link" size="sm" className="text-blue-400 p-0 h-auto text-xs gap-1">

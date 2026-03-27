@@ -33,7 +33,7 @@ export default function NFDashboardCards({ notas }: Props) {
       {cards.map((c) => (
         <Card key={c.label} className="border-border/40" style={{ borderRadius: 12 }}>
           <CardContent className="p-4 flex items-start gap-3">
-            <div className={`rounded-lg p-2.5 ${c.bg}`}>
+            <div className={`p-2.5 ${c.bg}`}>
               <c.icon className={`h-5 w-5 ${c.color}`} />
             </div>
             <div className="min-w-0">

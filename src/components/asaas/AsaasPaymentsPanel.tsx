@@ -124,7 +124,7 @@ function EditPaymentDialog({
             </div>
 
             {!canEdit && (
-              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+              <div className="border border-destructive/30 bg-destructive/5 p-3">
                 <p className="text-xs text-destructive">
                   Apenas cobranças com status Pendente ou Vencida podem ser editadas.
                 </p>
@@ -241,7 +241,7 @@ export function AsaasPaymentsPanel() {
               <TooltipTrigger asChild>
                 <Card className="border-border cursor-default">
                   <CardContent className="flex items-center gap-3 pt-4 pb-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                    <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
                     </div>
                     <div>
@@ -262,7 +262,7 @@ export function AsaasPaymentsPanel() {
               <TooltipTrigger asChild>
                 <Card className="border-border cursor-default">
                   <CardContent className="flex items-center gap-3 pt-4 pb-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary">
+                    <div className="flex h-9 w-9 items-center justify-center bg-secondary">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
@@ -283,7 +283,7 @@ export function AsaasPaymentsPanel() {
               <TooltipTrigger asChild>
                 <Card className="border-border cursor-default">
                   <CardContent className="flex items-center gap-3 pt-4 pb-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10">
+                    <div className="flex h-9 w-9 items-center justify-center bg-destructive/10">
                       <AlertTriangle className="h-4 w-4 text-destructive" />
                     </div>
                     <div>
@@ -304,7 +304,7 @@ export function AsaasPaymentsPanel() {
               <TooltipTrigger asChild>
                 <Card className="border-border cursor-default">
                   <CardContent className="flex items-center gap-3 pt-4 pb-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
+                    <div className="flex h-9 w-9 items-center justify-center bg-accent/10">
                       <DollarSign className="h-4 w-4 text-accent-foreground" />
                     </div>
                     <div>

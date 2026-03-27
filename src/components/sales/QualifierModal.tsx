@@ -211,7 +211,7 @@ export default function QualifierModal({
             <Separator />
 
             {/* Recommended action */}
-            <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+            <div className="p-3 border border-primary/20 bg-primary/5">
               <p className="text-sm font-medium text-foreground">💡 Ação recomendada</p>
               <p className="text-sm text-muted-foreground mt-1">{result.recommended_action}</p>
             </div>

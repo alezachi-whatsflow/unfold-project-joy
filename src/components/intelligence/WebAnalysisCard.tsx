@@ -28,7 +28,7 @@ export function WebAnalysisCard({ scrap }: WebAnalysisCardProps) {
 
         {/* Value Proposition */}
         {scrap.value_proposition && (
-          <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
+          <div className="bg-primary/10 border border-primary/20 p-3">
             <p className="text-xs font-medium text-primary mb-1">Proposta de Valor</p>
             <p className="text-sm text-foreground">{scrap.value_proposition}</p>
           </div>

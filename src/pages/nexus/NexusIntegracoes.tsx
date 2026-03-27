@@ -294,7 +294,7 @@ export default function NexusIntegracoes() {
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">WhatsApp Web</p>
                           <div className="space-y-1.5">
                             {tenant.instances.map((inst) => (
-                              <div key={inst.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20 text-sm">
+                              <div key={inst.id} className="flex items-center gap-3 p-2 bg-muted/20 text-sm">
                                 <div className={`w-2 h-2 rounded-full ${inst.status === "connected" ? "bg-emerald-500" : "bg-red-400"}`} />
                                 <span className="font-medium flex-1">{inst.instance_name}</span>
                                 {inst.phone_number && <span className="text-[10px] text-muted-foreground">📱 {inst.phone_number}</span>}
@@ -322,7 +322,7 @@ export default function NexusIntegracoes() {
                             </p>
                             <div className="space-y-1.5">
                               {group.items.map((ch) => (
-                                <div key={ch.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20 text-sm">
+                                <div key={ch.id} className="flex items-center gap-3 p-2 bg-muted/20 text-sm">
                                   <div className={`w-2 h-2 rounded-full ${ch.is_active ? "bg-emerald-500" : "bg-gray-300"}`} />
                                   <span className="font-medium flex-1">
                                     {ch.name || ch.bot_username || ch.display_phone_number || getChannelLabel(group.channel)}

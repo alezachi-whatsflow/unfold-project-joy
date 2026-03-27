@@ -124,7 +124,7 @@ export default function LogsTab() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

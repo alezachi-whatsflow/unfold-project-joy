@@ -89,7 +89,7 @@ export default function CommissionDashboardTab() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-4 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
               <Users className="h-4 w-4 text-primary" />
             </div>
             <div>
@@ -100,7 +100,7 @@ export default function CommissionDashboardTab() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-4 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10">
+            <div className="flex h-9 w-9 items-center justify-center bg-warning/10">
               <Clock className="h-4 w-4 text-warning" />
             </div>
             <div>
@@ -111,7 +111,7 @@ export default function CommissionDashboardTab() {
         </Card>
         <Card className="border-border">
           <CardContent className="flex items-center gap-3 pt-4 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-9 w-9 items-center justify-center bg-primary/10">
               <CheckCircle2 className="h-4 w-4 text-primary" />
             </div>
             <div>

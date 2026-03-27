@@ -25,26 +25,26 @@ export default function WLBranding() {
 
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+          <div className="border border-white/10 bg-white/5 p-6">
             <h3 className="font-semibold text-white flex items-center gap-2 mb-4">
               <Paintbrush className="h-4 w-4" /> Cores Principais
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10">
                 <span className="text-sm font-medium text-white/80">Cor Primária</span>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-white/50">{branding?.primary_color}</span>
                   <div className="h-8 w-8 rounded-full shadow-inner" style={{ backgroundColor: 'var(--wl-primary)' }}></div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10">
                 <span className="text-sm font-medium text-white/80">Cor Secundária (Sidebar)</span>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-white/50">{branding?.secondary_color}</span>
                   <div className="h-8 w-8 rounded-full shadow-inner border border-white/10" style={{ backgroundColor: 'var(--wl-secondary)' }}></div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10">
                 <span className="text-sm font-medium text-white/80">Cor de Fundo</span>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-white/50">{branding?.background_color}</span>
@@ -56,10 +56,10 @@ export default function WLBranding() {
         </div>
 
         <div>
-          <div className="sticky top-6 rounded-xl border border-white/10 bg-black/40 p-6 overflow-hidden">
+          <div className="sticky top-6 border border-white/10 bg-black/40 p-6 overflow-hidden">
             <h3 className="font-semibold text-white/60 text-sm mb-4">Preview ao Vivo</h3>
             
-            <div className="rounded-lg shadow-2xl overflow-hidden border border-white/10 flex flex-col h-[300px]" style={{ backgroundColor: 'var(--wl-bg)' }}>
+            <div className="overflow-hidden border border-white/10 flex flex-col h-[300px]" style={{ backgroundColor: 'var(--wl-bg)' }}>
               <div className="h-12 border-b flex items-center px-4" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
                 <div className="h-6 w-6 rounded bg-white/10 flex items-center justify-center text-[10px] text-white font-bold" style={{ backgroundColor: 'var(--wl-primary)' }}>
                   A

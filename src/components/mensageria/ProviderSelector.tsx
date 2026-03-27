@@ -61,15 +61,15 @@ export default function ProviderSelector({ selected, onChange }: ProviderSelecto
             onClick={() => !isDisabled && onChange(p.id)}
             disabled={isDisabled}
             className={cn(
-              "relative flex items-start gap-3 rounded-lg border p-4 text-left transition-all",
+              "relative flex items-start gap-3 border p-4 text-left transition-all",
               isSelected
-                ? "border-primary bg-primary/5 ring-1 ring-primary shadow-sm"
+                ? "border-primary bg-primary/5 ring-1 ring-primary"
                 : "border-border bg-card hover:border-muted-foreground/30 hover:bg-accent/50",
               isDisabled && "opacity-50 cursor-not-allowed hover:bg-card hover:border-border"
             )}
           >
             <div className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-md",
+              "flex h-10 w-10 shrink-0 items-center justify-center",
               isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}>
               {p.icon}

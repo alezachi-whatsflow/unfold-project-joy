@@ -40,7 +40,7 @@ export function ActivityKanban({ activities, isLoading, onEdit, onDelete, onStat
         const items = activities.filter((a) => a.status === col.key);
         return (
           <div key={col.key} className="space-y-3">
-            <div className={`rounded-lg px-3 py-2 ${col.color}`}>
+            <div className={`px-3 py-2 ${col.color}`}>
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 {col.label}
                 <Badge variant="secondary" className="text-[10px] ml-auto">{items.length}</Badge>
@@ -85,7 +85,7 @@ function ActivityCard({
   const isOverdue = activity.due_date && new Date(activity.due_date) < new Date() && activity.status !== "done";
 
   return (
-    <Card className="border-border hover:shadow-md transition-shadow">
+    <Card className="border-border hover:transition-shadow">
       <CardContent className="p-3 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <h4 className="text-sm font-medium text-foreground leading-tight flex-1">{activity.title}</h4>
