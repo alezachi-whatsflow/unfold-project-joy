@@ -186,11 +186,22 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
 
   /* ── fetch conversations (distinct remote_jid) ──── */
   const fetchConversations = useCallback(async () => {
-    // Only show messages from instances the user owns
+    // Only show messages from instances the user owns + omnichannel integrations
     const { data: instances } = await supabase
       .from("whatsapp_instances")
       .select("instance_name");
     const instanceNames = (instances ?? []).map((i: any) => i.instance_name);
+
+    // Also include omnichannel instance names (telegram_, webchat_, ml_, messenger_)
+    const { data: integrations } = await supabase
+      .from("channel_integrations")
+      .select("provider, bot_username, id")
+      .eq("status", "active");
+    for (const intg of integrations ?? []) {
+      const prefix = intg.provider?.toLowerCase() || "channel";
+      const suffix = intg.bot_username || intg.id;
+      instanceNames.push(`${prefix}_${suffix}`);
+    }
 
     // Get latest message per remote_jid, filtered by user's instances
     let query = supabase
@@ -307,8 +318,11 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         avatarUrl: avatarUrl || undefined,
         instanceName: latest.instance_name,
         channel: (latest.instance_name?.startsWith("meta:") ? "whatsapp_meta"
-          : latest.instance_name?.startsWith("messenger:") ? "facebook"
-          : latest.instance_name?.startsWith("instagram:") ? "instagram"
+          : latest.instance_name?.startsWith("messenger:") || latest.instance_name?.startsWith("messenger_") ? "facebook"
+          : latest.instance_name?.startsWith("instagram:") || latest.instance_name?.startsWith("instagram_") ? "instagram"
+          : latest.instance_name?.startsWith("telegram_") ? "telegram"
+          : latest.instance_name?.startsWith("webchat_") ? "webchat"
+          : latest.instance_name?.startsWith("mercadolivre_") ? "mercadolivre"
           : "whatsapp_web") as ChannelType,
         tags: lead?.lead_tags?.length
           ? lead.lead_tags.map((t: string) => ({ label: t, color: "lead" as const }))
