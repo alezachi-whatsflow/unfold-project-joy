@@ -708,15 +708,25 @@ Deno.serve(async (req) => {
           const pushName = hasIncoming ? (msgs[0]?.senderName || msgs[0]?.pushName || null) : null;
           const contactName = leadName || pushName || null;
 
+          // Check if lead already exists with an active assignment — don't overwrite
+          const { data: existingLead } = await supabase
+            .from("whatsapp_leads")
+            .select("id, assigned_attendant_id, lead_status")
+            .eq("chat_id", chat.wa_chatid)
+            .maybeSingle();
+
+          const isActiveSession = existingLead?.assigned_attendant_id && existingLead?.lead_status !== "resolved";
+
           await supabase.from("whatsapp_leads").upsert(
             {
               instance_name: instance,
               chat_id: chat.wa_chatid,
               lead_name: chat.lead_name || (hasIncoming ? pushName : null) || undefined,
               lead_full_name: chat.lead_fullName || (hasIncoming ? pushName : null) || undefined,
-              lead_status: chat.lead_status || null,
-              is_ticket_open: chat.lead_isTicketOpen ?? false,
-              assigned_attendant_id: chat.lead_assignedAttendant_id || null,
+              // CRITICAL: preserve status + assignment if session is active
+              lead_status: isActiveSession ? existingLead.lead_status : (existingLead?.lead_status === "resolved" ? null : (chat.lead_status || null)),
+              is_ticket_open: isActiveSession ? true : (chat.lead_isTicketOpen ?? false),
+              assigned_attendant_id: isActiveSession ? existingLead.assigned_attendant_id : (chat.lead_assignedAttendant_id || null),
               kanban_order: chat.lead_kanbanOrder ?? 0,
               lead_tags: chat.lead_tags || [],
               updated_at: new Date().toISOString(),
@@ -836,15 +846,24 @@ Deno.serve(async (req) => {
         const lead = data;
         if (!lead?.wa_chatid) break;
 
+        // Check if lead has active session — don't overwrite assignment
+        const { data: existingLeadForEvent } = await supabase
+          .from("whatsapp_leads")
+          .select("id, assigned_attendant_id, lead_status")
+          .eq("chat_id", lead.wa_chatid)
+          .maybeSingle();
+
+        const isLeadActive = existingLeadForEvent?.assigned_attendant_id && existingLeadForEvent?.lead_status !== "resolved";
+
         await supabase.from("whatsapp_leads").upsert(
           {
             instance_name: instance,
             chat_id: lead.wa_chatid,
             lead_name: lead.lead_name,
             lead_full_name: lead.lead_fullName,
-            lead_status: lead.lead_status,
-            is_ticket_open: lead.lead_isTicketOpen,
-            assigned_attendant_id: lead.lead_assignedAttendant_id,
+            lead_status: isLeadActive ? existingLeadForEvent.lead_status : lead.lead_status,
+            is_ticket_open: isLeadActive ? true : lead.lead_isTicketOpen,
+            assigned_attendant_id: isLeadActive ? existingLeadForEvent.assigned_attendant_id : lead.lead_assignedAttendant_id,
             kanban_order: lead.lead_kanbanOrder,
             lead_tags: lead.lead_tags,
             updated_at: new Date().toISOString(),
