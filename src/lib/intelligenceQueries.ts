@@ -29,6 +29,7 @@ export async function fetchWebScraps(): Promise<WebScrap[]> {
 }
 
 export async function insertWebScrap(scrap: Omit<WebScrap, "id">): Promise<WebScrap> {
+  const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
   const { data, error } = await supabase
     .from("web_scraps")
     .insert({
@@ -43,6 +44,7 @@ export async function insertWebScrap(scrap: Omit<WebScrap, "id">): Promise<WebSc
       contact_phone: scrap.contact_phone,
       raw_markdown: scrap.raw_markdown,
       status: scrap.status,
+      tenant_id: tenantId,
     })
     .select()
     .single();
@@ -96,9 +98,11 @@ export async function fetchProfiles(): Promise<ProfileAnalysis[]> {
 }
 
 export async function insertProfile(profile: Omit<ProfileAnalysis, "id">): Promise<ProfileAnalysis> {
+  const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
   const { data, error } = await supabase
     .from("profiles_analysis")
     .insert({
+      tenant_id: tenantId,
       source: profile.source,
       username: profile.username,
       display_name: profile.display_name,
@@ -165,9 +169,11 @@ export async function fetchBusinessLeads(): Promise<BusinessLead[]> {
 }
 
 export async function insertBusinessLead(lead: Omit<BusinessLead, "id">): Promise<BusinessLead> {
+  const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
   const { data, error } = await supabase
     .from("business_leads")
     .insert({
+      tenant_id: tenantId,
       name: lead.name,
       address: lead.address,
       phone: lead.phone,
