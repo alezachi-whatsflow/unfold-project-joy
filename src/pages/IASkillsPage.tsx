@@ -14,6 +14,7 @@ import {
 import { Eye, Users, Zap, Bot, Settings, Loader2, Brain, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useTenantId } from "@/hooks/useTenantId";
 
 interface SkillDef {
   key: string;
@@ -108,8 +109,7 @@ export default function IASkillsPage() {
   const navigate = useNavigate();
   const [confirmDialog, setConfirmDialog] = useState<{ skill: string; action: "activate" | "deactivate" } | null>(null);
 
-  // Get tenant from localStorage
-  const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
+  const tenantId = useTenantId();
 
   // Fetch license
   const { data: license, isLoading } = useQuery({
