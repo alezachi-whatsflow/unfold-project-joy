@@ -274,8 +274,9 @@ export default function WizardLayout({ onComplete }: Props) {
         wizard_step: 1,
       } as any);
       setStep(1);
-    } catch {
-      toast.error('Erro ao salvar dados da empresa');
+    } catch (err: any) {
+      console.error('handleSaveCompany error:', err);
+      toast.error(err?.message || 'Erro ao salvar dados da empresa');
     }
   }
 

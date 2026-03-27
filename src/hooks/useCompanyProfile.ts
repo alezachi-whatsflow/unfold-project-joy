@@ -52,16 +52,27 @@ export function useCompanyProfile(tenantId?: string) {
   }, [queryClient]);
 
   const upsertProfile = useCallback(async (data: Partial<CompanyProfile>) => {
+    const payload = { tenant_id: tenantId!, ...data, updated_at: new Date().toISOString() };
     const { error } = await supabase
       .from('company_profile')
-      .upsert({
-        tenant_id: tenantId!,
-        ...data,
-        updated_at: new Date().toISOString(),
-      } as any, { onConflict: 'tenant_id' });
-    if (error) throw error;
+      .upsert(payload as any, { onConflict: 'tenant_id' });
+    if (error) {
+      // Fallback: if extra columns don't exist yet, retry with core fields only
+      const coreFields = ['tenant_id', 'company_name', 'segment', 'sub_segment', 'main_product',
+        'value_proposition', 'avg_ticket_min', 'avg_ticket_max', 'currency', 'avg_sales_cycle_days',
+        'billing_type', 'ideal_client_size', 'decision_maker', 'client_pain', 'best_clients_desc',
+        'disqualifiers', 'wizard_completed', 'wizard_step', 'updated_at'];
+      const fallback: Record<string, any> = {};
+      for (const k of coreFields) {
+        if (k in payload) fallback[k] = (payload as any)[k];
+      }
+      const { error: fallbackError } = await supabase
+        .from('company_profile')
+        .upsert(fallback as any, { onConflict: 'tenant_id' });
+      if (fallbackError) throw fallbackError;
+    }
     invalidate();
-  }, [invalidate]);
+  }, [tenantId, invalidate]);
 
   return { profile, isLoading, upsertProfile, invalidate };
 }
