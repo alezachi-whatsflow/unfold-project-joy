@@ -24,20 +24,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: { Authorization: authHeader! } } }
-    );
-
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) return json({ error: "Unauthorized" }, 401);
-
     const body = await req.json();
     const { action, bot_token: rawBotToken, url: webhookSetUrl, chat_id, text, photo, document: doc, caption, parse_mode, reply_to_message_id, tenant_id, integration_id } = body;
 
-    // ── Setup actions (getMe / setWebhook) — used by Integrações page ──
+    // ── Setup actions (getMe / setWebhook) — no auth required, used by Integrações page ──
     if (action === "getMe" && rawBotToken) {
       const res = await fetch(`https://api.telegram.org/bot${rawBotToken}/getMe`);
       const data = await res.json();
@@ -53,6 +43,17 @@ Deno.serve(async (req) => {
       const data = await res.json();
       return json({ ok: data.ok, description: data.description });
     }
+
+    // ── Auth required for message sending ──
+    const authHeader = req.headers.get("Authorization");
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { global: { headers: { Authorization: authHeader! } } }
+    );
+
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) return json({ error: "Unauthorized" }, 401);
 
     if (!chat_id) return json({ error: "chat_id is required" }, 400);
     if (!text && !photo && !doc) return json({ error: "text, photo or document is required" }, 400);
