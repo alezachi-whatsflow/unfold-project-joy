@@ -150,9 +150,10 @@ export default function NegocioCreateModal({ onClose, pipelineId: propPipelineId
   const handleCreateClient = async () => {
     if (!clienteSearch.trim()) return;
     try {
+      if (!tenantId) { toast.error("Tenant não identificado."); return; }
       const { data, error } = await supabase.from('crm_contacts').insert({
         name: clienteSearch.trim(),
-        tenant_id: localStorage.getItem("whatsflow_default_tenant_id") || "",
+        tenant_id: tenantId,
         source: 'vendas',
       }).select('id, name, company').single();
       if (error) throw error;
@@ -161,8 +162,9 @@ export default function NegocioCreateModal({ onClose, pipelineId: propPipelineId
       setClienteId(data.id);
       setClientePopoverOpen(false);
       toast.success("Cliente cadastrado no CRM!");
-    } catch {
-      toast.error("Erro ao cadastrar cliente.");
+    } catch (err: any) {
+      console.error("handleCreateClient error:", err);
+      toast.error(err?.message || "Erro ao cadastrar cliente.");
     }
   };
 
