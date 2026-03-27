@@ -228,16 +228,22 @@ const IntegracoesPage = () => {
     }
     if (!tenantId) { toast.error("Tenant não identificado"); return; }
     setMlSaving(true);
-    const { error } = await supabase.from("channel_integrations").upsert({
-      tenant_id: tenantId,
-      provider: "MERCADOLIVRE",
-      channel_id: `ml_pending_${tenantId}`,
-      name: "Mercado Livre (pendente)",
-      ml_app_id: mlForm.appId.trim(),
-      credentials: { client_secret: mlForm.clientSecret.trim() },
-      status: "pending",
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "channel_id" });
+    const { data: existingML } = await supabase.from("channel_integrations")
+      .select("id").eq("tenant_id", tenantId).eq("provider", "MERCADOLIVRE").maybeSingle();
+    let error: any = null;
+    if (existingML) {
+      ({ error } = await supabase.from("channel_integrations").update({
+        channel_id: `ml_pending_${tenantId}`, name: "Mercado Livre (pendente)",
+        ml_app_id: mlForm.appId.trim(), credentials: { client_secret: mlForm.clientSecret.trim() },
+        status: "pending", updated_at: new Date().toISOString(),
+      }).eq("id", existingML.id));
+    } else {
+      ({ error } = await supabase.from("channel_integrations").insert({
+        tenant_id: tenantId, provider: "MERCADOLIVRE", channel_id: `ml_pending_${tenantId}`,
+        name: "Mercado Livre (pendente)", ml_app_id: mlForm.appId.trim(),
+        credentials: { client_secret: mlForm.clientSecret.trim() }, status: "pending",
+      }));
+    }
     setMlSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Credenciais salvas! Agora autentique sua conta.");
