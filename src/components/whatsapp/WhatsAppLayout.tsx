@@ -839,30 +839,58 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
   /* ── assign conversation to current user (Iniciar Atendimento) ── */
   const assignConversation = useCallback(async (jid: string) => {
     if (!currentUserId) return;
-    // Upsert into whatsapp_leads — set assigned_attendant_id + status open
-    const { error } = await supabase
+    const tId = localStorage.getItem("whatsflow_default_tenant_id");
+    // Check if lead exists
+    const { data: existing } = await supabase
       .from("whatsapp_leads")
-      .upsert(
-        { chat_id: jid, assigned_attendant_id: currentUserId, lead_status: "open", is_ticket_open: true },
-        { onConflict: "chat_id" }
-      );
-    if (error) console.error("Assign error:", error);
+      .select("id")
+      .eq("chat_id", jid)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("whatsapp_leads")
+        .update({ assigned_attendant_id: currentUserId, lead_status: "open", is_ticket_open: true })
+        .eq("id", existing.id);
+      if (error) console.error("Assign update error:", error);
+    } else {
+      // Find instance_name from conversations
+      const conv = conversations.find((c) => c.id === jid);
+      const { error } = await supabase
+        .from("whatsapp_leads")
+        .insert({
+          chat_id: jid,
+          instance_name: conv?.instanceName || "",
+          lead_name: conv?.name || jid,
+          assigned_attendant_id: currentUserId,
+          lead_status: "open",
+          is_ticket_open: true,
+          tenant_id: tId,
+        });
+      if (error) console.error("Assign insert error:", error);
+    }
     // Optimistic: update local state immediately
     setConversations((prev) =>
       prev.map((c) => c.id === jid ? { ...c, assignedTo: currentUserId, status: "open" as const } : c)
     );
     fetchConversations();
-  }, [currentUserId, fetchConversations]);
+  }, [currentUserId, conversations, fetchConversations]);
 
   /* ── resolve / finalize conversation ── */
   const resolveConversation = useCallback(async (jid: string) => {
-    const { error } = await supabase
+    const { data: existing } = await supabase
       .from("whatsapp_leads")
-      .upsert(
-        { chat_id: jid, lead_status: "resolved", is_ticket_open: false },
-        { onConflict: "chat_id" }
-      );
-    if (error) console.error("Resolve error:", error);
+      .select("id")
+      .eq("chat_id", jid)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("whatsapp_leads")
+        .update({ lead_status: "resolved", is_ticket_open: false })
+        .eq("id", existing.id);
+      if (error) console.error("Resolve error:", error);
+    }
     setConversations((prev) =>
       prev.map((c) => c.id === jid ? { ...c, status: "resolved" as const } : c)
     );
