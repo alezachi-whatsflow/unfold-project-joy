@@ -56,21 +56,43 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Line 1: Name + Time */}
-        <div className="flex items-baseline justify-between gap-1">
+        {/* Line 1: Name + Time/Action */}
+        <div className="flex items-center justify-between gap-1">
           <span className="text-[13px] font-medium text-foreground truncate">{c.name}</span>
-          <span className={cn("text-[10px] flex-shrink-0", c.unreadCount > 0 ? "text-[#11bc76]" : "text-muted-foreground")}>
-            {c.lastMessageTime}
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isQueueMode && onAssign ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onAssign(); }}
+                className="flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 transition-colors whitespace-nowrap"
+                style={{
+                  background: "#0E8A5C",
+                  color: "#FFFFFF",
+                  border: "none",
+                }}
+              >
+                <Headphones size={9} />
+                Atender
+              </button>
+            ) : (
+              <span className={cn("text-[10px]", c.unreadCount > 0 ? "text-[#11bc76]" : "text-muted-foreground")}>
+                {c.lastMessageTime}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Line 2: Message preview */}
-        <span
-          className="text-[11px] text-muted-foreground truncate block mt-0.5"
-          style={{ fontStyle: c.lastMessageType === "system" ? "italic" : "normal" }}
-        >
-          {previewText}
-        </span>
+        <div className="flex items-center gap-1 mt-0.5">
+          <span
+            className="text-[11px] text-muted-foreground truncate flex-1"
+            style={{ fontStyle: c.lastMessageType === "system" ? "italic" : "normal" }}
+          >
+            {previewText}
+          </span>
+          {isQueueMode && (
+            <span className="text-[9px] text-muted-foreground shrink-0">{c.lastMessageTime}</span>
+          )}
+        </div>
 
         {/* Tags */}
         {c.tags.length > 0 && (
@@ -79,22 +101,6 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
               <TagBadge key={i} label={tag.label} color={tag.color} />
             ))}
           </div>
-        )}
-
-        {/* "Iniciar Atendimento" — queue mode only */}
-        {isQueueMode && onAssign && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onAssign(); }}
-            className="mt-1.5 flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-colors"
-            style={{
-              background: "rgba(14,138,92,0.15)",
-              color: "#0E8A5C",
-              border: "1px solid rgba(14,138,92,0.3)",
-            }}
-          >
-            <Headphones size={11} />
-            Iniciar Atendimento
-          </button>
         )}
       </div>
     </button>
