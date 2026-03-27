@@ -129,14 +129,24 @@ export default function IASkillsPage() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ skillKey, active }: { skillKey: string; active: boolean }) => {
-      if (!license?.id) throw new Error("Licença não encontrada");
-      const currentSkills = license.ai_active_skills ?? { auditor: false, copilot: false, closer: false };
+      if (!tenantId) throw new Error("Tenant não identificado");
+      const currentSkills = license?.ai_active_skills ?? activeSkills;
       const updatedSkills = { ...currentSkills, [skillKey]: active };
-      const { error } = await supabase
-        .from("licenses")
-        .update({ ai_active_skills: updatedSkills })
-        .eq("id", license.id);
-      if (error) throw error;
+
+      if (license?.id) {
+        const { error } = await supabase
+          .from("licenses")
+          .update({ ai_active_skills: updatedSkills })
+          .eq("id", license.id);
+        if (error) throw error;
+      } else {
+        // Fallback: update by tenant_id if license id not available (RLS)
+        const { error } = await supabase
+          .from("licenses")
+          .update({ ai_active_skills: updatedSkills })
+          .eq("tenant_id", tenantId);
+        if (error) throw error;
+      }
     },
     onSuccess: (_, { skillKey, active }) => {
       queryClient.invalidateQueries({ queryKey: ["license-ai"] });
