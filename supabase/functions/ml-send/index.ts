@@ -96,17 +96,16 @@ Deno.serve(async (req) => {
       }
 
       // Save outgoing message
-      await supabase.from("chat_messages").insert({
-        tenant_id: integration.tenant_id,
-        sender_id: user.id,
-        content: text,
-        content_type: "text",
-        message_type: "text",
-        channel: "mercadolivre",
+      await supabase.from("whatsapp_messages").insert({
+        instance_name: `mercadolivre_${integration.ml_user_id}`,
+        remote_jid: `ml_${buyer_id || pack_id}@mercadolivre`,
+        message_id: `ml_msg_${result.id || Date.now()}`,
         direction: "outgoing",
-        timestamp: new Date().toISOString(),
-        wa_message_id: `ml_msg_${result.id || Date.now()}`,
-        metadata: {
+        type: "text",
+        body: text,
+        status: 4,
+        tenant_id: integration.tenant_id,
+        raw_payload: {
           provider: "MERCADOLIVRE",
           integration_id: integration.id,
           pack_id,
@@ -137,17 +136,16 @@ Deno.serve(async (req) => {
       }
 
       // Save outgoing answer
-      await supabase.from("chat_messages").insert({
-        tenant_id: integration.tenant_id,
-        sender_id: user.id,
-        content: text,
-        content_type: "text",
-        message_type: "answer",
-        channel: "mercadolivre",
+      await supabase.from("whatsapp_messages").insert({
+        instance_name: `mercadolivre_${integration.ml_user_id}`,
+        remote_jid: `ml_q_${question_id}@mercadolivre`,
+        message_id: `ml_answer_${question_id}`,
         direction: "outgoing",
-        timestamp: new Date().toISOString(),
-        wa_message_id: `ml_answer_${question_id}`,
-        metadata: {
+        type: "text",
+        body: text,
+        status: 4,
+        tenant_id: integration.tenant_id,
+        raw_payload: {
           provider: "MERCADOLIVRE",
           integration_id: integration.id,
           question_id,

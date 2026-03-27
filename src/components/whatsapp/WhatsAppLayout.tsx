@@ -683,6 +683,22 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         console.error("Meta send error:", error || result);
         return;
       }
+    } else if (conv.instanceName?.startsWith("mercadolivre_")) {
+      // Send via ML
+      const { error } = await supabase.functions.invoke("ml-send", {
+        body: { type: "message", pack_id: selectedJid.replace("ml_", "").replace("@mercadolivre", ""), text },
+      });
+      if (error) { console.error("ML send error:", error); return; }
+      await supabase.from("whatsapp_messages").insert({
+        instance_name: conv.instanceName,
+        remote_jid: selectedJid,
+        message_id: `ml_out_${Date.now()}`,
+        direction: "outgoing",
+        type: "text",
+        body: text,
+        status: 4,
+        tenant_id: localStorage.getItem("whatsflow_default_tenant_id"),
+      });
     } else if (conv.instanceName?.startsWith("telegram_")) {
       // Send via Telegram Bot API
       const chatId = selectedJid.replace("tg_", "").replace("@telegram", "");

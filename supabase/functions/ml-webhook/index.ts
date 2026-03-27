@@ -15,7 +15,7 @@ const ML_API = "https://api.mercadolibre.com";
 //   questions   — new product question from a buyer
 //   orders_v2   — order status change (logged, not processed)
 //
-// Flow: ML sends notification → we fetch full resource → save to chat_messages
+// Flow: ML sends notification → we fetch full resource → save to whatsapp_messages
 // ═══════════════════════════════════════════════════════════════
 
 Deno.serve(async (req) => {
@@ -117,17 +117,18 @@ async function handleMessages(
       const senderId = msg.from?.user_id ? String(msg.from.user_id) : null;
       const text = msg.text || msg.message_text || "";
 
-      await supabase.from("chat_messages").upsert({
-        tenant_id: integration.tenant_id,
-        sender_id: senderId,
-        content: text,
-        content_type: msg.message_attachments?.length ? "attachment" : "text",
-        message_type: "text",
-        channel: "mercadolivre",
+      const buyerIdStr = msg.from?.user_id ? String(msg.from.user_id) : "unknown";
+      await supabase.from("whatsapp_messages").upsert({
+        instance_name: `mercadolivre_${integration.ml_user_id}`,
+        remote_jid: `ml_${buyerIdStr}@mercadolivre`,
+        message_id: `ml_msg_${msg.id}`,
         direction: isFromBuyer ? "incoming" : "outgoing",
-        timestamp: msg.date_created || new Date().toISOString(),
-        wa_message_id: `ml_msg_${msg.id}`,
-        metadata: {
+        type: "text",
+        body: text,
+        status: 4,
+        tenant_id: integration.tenant_id,
+        sender_name: msg.from?.nickname || msg.from?.name || null,
+        raw_payload: {
           provider: "MERCADOLIVRE",
           integration_id: integration.id,
           ml_user_id: integration.ml_user_id,
@@ -135,7 +136,7 @@ async function handleMessages(
           resource,
           raw: msg,
         },
-      }, { onConflict: "wa_message_id" }).then(({ error }) => {
+      }, { onConflict: "message_id" }).then(({ error }) => {
         if (error) console.error("[ml-webhook] Store msg error:", error.message);
       });
     }
@@ -181,17 +182,17 @@ async function handleQuestions(
 
     const content = itemTitle ? `[Pergunta sobre: ${itemTitle}]\n${text}` : text;
 
-    await supabase.from("chat_messages").upsert({
-      tenant_id: integration.tenant_id,
-      sender_id: buyerId,
-      content,
-      content_type: "text",
-      message_type: "question",
-      channel: "mercadolivre",
+    await supabase.from("whatsapp_messages").upsert({
+      instance_name: `mercadolivre_${integration.ml_user_id}`,
+      remote_jid: `ml_q_${question.id}@mercadolivre`,
+      message_id: `ml_question_${question.id}`,
       direction: "incoming",
-      timestamp: question.date_created || new Date().toISOString(),
-      wa_message_id: `ml_question_${question.id}`,
-      metadata: {
+      type: "text",
+      body: content,
+      status: 4,
+      tenant_id: integration.tenant_id,
+      sender_name: buyerId || null,
+      raw_payload: {
         provider: "MERCADOLIVRE",
         integration_id: integration.id,
         ml_user_id: integration.ml_user_id,
@@ -202,29 +203,28 @@ async function handleQuestions(
         resource,
         raw: question,
       },
-    }, { onConflict: "wa_message_id" }).then(({ error }) => {
+    }, { onConflict: "message_id" }).then(({ error }) => {
       if (error) console.error("[ml-webhook] Store question error:", error.message);
     });
 
     // If there's an answer, save it too
     if (question.answer?.text) {
-      await supabase.from("chat_messages").upsert({
-        tenant_id: integration.tenant_id,
-        sender_id: integration.ml_user_id,
-        content: question.answer.text,
-        content_type: "text",
-        message_type: "answer",
-        channel: "mercadolivre",
+      await supabase.from("whatsapp_messages").upsert({
+        instance_name: `mercadolivre_${integration.ml_user_id}`,
+        remote_jid: `ml_q_${question.id}@mercadolivre`,
+        message_id: `ml_answer_${question.id}`,
         direction: "outgoing",
-        timestamp: question.answer.date_created || new Date().toISOString(),
-        wa_message_id: `ml_answer_${question.id}`,
-        metadata: {
+        type: "text",
+        body: question.answer.text,
+        status: 4,
+        tenant_id: integration.tenant_id,
+        raw_payload: {
           provider: "MERCADOLIVRE",
           integration_id: integration.id,
           question_id: question.id,
           item_id: itemId,
         },
-      }, { onConflict: "wa_message_id" });
+      }, { onConflict: "message_id" });
     }
   } catch (err: any) {
     console.error("[ml-webhook] handleQuestions error:", err.message);
