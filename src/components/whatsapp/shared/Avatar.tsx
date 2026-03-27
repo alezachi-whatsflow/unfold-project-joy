@@ -12,7 +12,7 @@ const WaAvatar = React.memo(function WaAvatar({ initials, color, size = 49, isOn
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       {imageUrl ? (
-        <img src={imageUrl} alt={initials} className="rounded-full object-cover" style={{ width: size, height: size }} />
+        <img src={imageUrl} alt={initials} loading="lazy" className="rounded-full object-cover" style={{ width: size, height: size }} />
       ) : (
         <div
           className="rounded-full flex items-center justify-center font-semibold select-none"
