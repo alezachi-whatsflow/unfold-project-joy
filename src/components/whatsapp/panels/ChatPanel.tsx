@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus } from "lucide-react";
+import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickLeadDrawer } from "../QuickLeadDrawer";
 import type { Conversation } from "@/data/mockConversations";
@@ -17,6 +17,12 @@ interface ChatPanelProps {
   onSend: (text: string) => void;
   onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
   onNewConversation?: () => void;
+  /** Assign the conversation to the current user (Iniciar Atendimento) */
+  onAssign?: () => void;
+  /** Resolve / finalize the conversation */
+  onResolve?: () => void;
+  /** Current top-level filter tab */
+  activeFilter?: string;
 }
 
 // Quick action chips
@@ -30,7 +36,7 @@ const quickActions = [
   { id: "more", label: "Mais", icon: MoreHorizontal, bg: "rgba(100,116,139,0.1)", text: "#8696A0", border: "rgba(100,116,139,0.3)" },
 ];
 
-export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation }: ChatPanelProps) {
+export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation, onAssign, onResolve, activeFilter }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
   const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
 
@@ -91,22 +97,40 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
 
         {/* Quick Actions Bar */}
         <div className="flex items-center gap-2 px-4 py-1.5 overflow-x-auto border-t border-white/[0.04]" style={{ height: 36 }}>
-          {quickActions.map((a) => (
+          {/* "Iniciar Atendimento" — show when conversation is unassigned (queue) */}
+          {activeFilter === "queue" && !c.assignedTo && onAssign && (
             <button
-              key={a.id}
-              onClick={() => { if (a.id === "lead") setLeadDrawerOpen(true); }}
-              className={cn(
-                "msg-pill flex items-center gap-1.5 shrink-0",
-                a.id === "resolve" && "pill-green",
-                a.id === "ai" && "pill-blue",
-                a.id === "transfer" && "pill-orange",
-                a.id === "lead" && "pill-green",
-              )}
+              onClick={onAssign}
+              className="msg-pill flex items-center gap-1.5 shrink-0 pill-green"
+              style={{ fontWeight: 600 }}
             >
-              <a.icon size={13} />
-              {a.label}
+              <Headphones size={13} />
+              Iniciar Atendimento
             </button>
-          ))}
+          )}
+          {quickActions.map((a) => {
+            // Replace "Resolver" label with "Finalizar" when in atendimento
+            const label = a.id === "resolve" ? "Finalizar" : a.label;
+            return (
+              <button
+                key={a.id}
+                onClick={() => {
+                  if (a.id === "lead") setLeadDrawerOpen(true);
+                  if (a.id === "resolve" && onResolve) onResolve();
+                }}
+                className={cn(
+                  "msg-pill flex items-center gap-1.5 shrink-0",
+                  a.id === "resolve" && "pill-green",
+                  a.id === "ai" && "pill-blue",
+                  a.id === "transfer" && "pill-orange",
+                  a.id === "lead" && "pill-green",
+                )}
+              >
+                <a.icon size={13} />
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

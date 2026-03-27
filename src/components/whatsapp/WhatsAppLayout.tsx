@@ -81,6 +81,11 @@ interface WhatsAppLayoutProps {
 }
 
 export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = {}) {
+  // Get current user ID for queue assignment
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedJid, setSelectedJid] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -829,6 +834,39 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
     await fetchMessages(selectedJid);
   };
 
+  /* ── assign conversation to current user (Iniciar Atendimento) ── */
+  const assignConversation = useCallback(async (jid: string) => {
+    if (!currentUserId) return;
+    // Upsert into whatsapp_leads — set assigned_attendant_id + status open
+    const { error } = await supabase
+      .from("whatsapp_leads")
+      .upsert(
+        { chat_id: jid, assigned_attendant_id: currentUserId, lead_status: "open", is_ticket_open: true },
+        { onConflict: "chat_id" }
+      );
+    if (error) console.error("Assign error:", error);
+    // Optimistic: update local state immediately
+    setConversations((prev) =>
+      prev.map((c) => c.id === jid ? { ...c, assignedTo: currentUserId, status: "open" as const } : c)
+    );
+    fetchConversations();
+  }, [currentUserId, fetchConversations]);
+
+  /* ── resolve / finalize conversation ── */
+  const resolveConversation = useCallback(async (jid: string) => {
+    const { error } = await supabase
+      .from("whatsapp_leads")
+      .upsert(
+        { chat_id: jid, lead_status: "resolved", is_ticket_open: false },
+        { onConflict: "chat_id" }
+      );
+    if (error) console.error("Resolve error:", error);
+    setConversations((prev) =>
+      prev.map((c) => c.id === jid ? { ...c, status: "resolved" as const } : c)
+    );
+    fetchConversations();
+  }, [fetchConversations]);
+
   const selectedConv = conversations.find((c) => c.id === selectedJid) || null;
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [groupViewMode, setGroupViewMode] = useState<"list" | "kanban">("list");
@@ -855,6 +893,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
           onViewModeChange={setGroupViewMode}
           onFilterChange={setActiveFilter}
           initialFilter={initialFilter}
+          onAssignConversation={assignConversation}
         />
       </div>
 
@@ -873,6 +912,9 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
             onSend={handleSend}
             onSendAttachment={handleSendAttachment}
             onNewConversation={() => setNewConvOpen(true)}
+            onAssign={selectedConv ? () => assignConversation(selectedConv.id) : undefined}
+            onResolve={selectedConv ? () => resolveConversation(selectedConv.id) : undefined}
+            activeFilter={activeFilter}
           />
           <RightPanel
             conversation={selectedConv}

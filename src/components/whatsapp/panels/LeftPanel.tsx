@@ -20,12 +20,14 @@ interface LeftPanelProps {
   onViewModeChange?: (mode: "list" | "kanban") => void;
   onFilterChange?: (filter: string) => void;
   initialFilter?: string;
+  onAssignConversation?: (jid: string) => void;
 }
 
 export default function LeftPanel({
   conversations, selectedId, onSelect, onNewConversationStarted,
   newConvOpen: externalOpen, onNewConvOpenChange,
   viewMode, onViewModeChange, onFilterChange, initialFilter,
+  onAssignConversation,
 }: LeftPanelProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(initialFilter || "inbox");
@@ -59,15 +61,20 @@ export default function LeftPanel({
         return name.includes(q) || phone.includes(q) || msg.includes(q);
       });
     }
-    if (filter === "inbox") list = list.filter((c) => !c.isGroup && (c.status === "open" || c.status === "pending"));
-    if (filter === "queue") list = list.filter((c) => !c.isGroup && !!c.assignedTo);
+    // Queue-based flow:
+    // "inbox" (Em atendimento) → assigned to current user & not resolved & not group
+    if (filter === "inbox") list = list.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved");
+    // "queue" (Fila) → unassigned & not resolved & not group
+    if (filter === "queue") list = list.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved");
+    // "groups" (Grupos) → groups only
     if (filter === "groups") list = list.filter((c) => c.isGroup);
+    // "resolved" (Finalizados) → resolved
     if (filter === "resolved") list = list.filter((c) => c.status === "resolved");
     return list;
   }, [conversations, search, filter]);
 
-  const inboxCount = conversations.filter((c) => !c.isGroup && (c.status === "open" || c.status === "pending")).length;
-  const queueCount = conversations.filter((c) => !c.isGroup && !!c.assignedTo).length;
+  const inboxCount = conversations.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved").length;
+  const queueCount = conversations.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved").length;
   const groupCount = conversations.filter((c) => c.isGroup).length;
   const resolvedCount = conversations.filter((c) => c.status === "resolved").length;
 
@@ -117,6 +124,8 @@ export default function LeftPanel({
               conversation={c}
               isSelected={selectedId === c.id}
               onClick={() => onSelect(c.id)}
+              isQueueMode={filter === "queue"}
+              onAssign={onAssignConversation ? () => onAssignConversation(c.id) : undefined}
             />
           ))
         )}

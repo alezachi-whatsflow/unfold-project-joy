@@ -104,7 +104,20 @@
       "Bash(find 'f:/WFW New/src/contexts' -type f -name *.tsx -o -name *.ts)",
       "Bash(xargs sed:*)",
       "Bash(grep -rn \"shadow-sm\\\\|shadow-md\\\\|shadow-lg\\\\|shadow-xl\\\\|shadow-2xl\" src/ --include=*.tsx --include=*.ts)",
-      "Bash(grep -rn bg-gradient-to src/ --include=*.tsx --include=*.ts)"
+      "Bash(grep -rn bg-gradient-to src/ --include=*.tsx --include=*.ts)",
+      "Bash(curl -s -X POST \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/rpc/exec_sql\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" -H \"Content-Type: application/json\" -d '{\"\"query\"\": \"\"SELECT column_name FROM information_schema.columns WHERE table_name = ''''company_profile'''' ORDER BY ordinal_position\"\"}')",
+      "Bash(curl -s \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/company_profile?select=*&limit=1\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\")",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/company_profile?select=*&limit=1\" -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY')",
+      "Bash(curl -s -X POST \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/rpc/\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bHJnbHpjc21xbWFwaXpxZ3p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDU5NDg4NCwiZXhwIjoyMDg2MTcwODg0fQ.f7ZtkOwUnZnZdqeJRRsbcT0bvcFO7TGkR09onHN4CoY\" -H \"Content-Type: application/json\")",
+      "Bash(npx --yes pg-execute --version)",
+      "Bash(node -e \"try { require\\(''pg''\\); console.log\\(''pg available''\\); } catch\\(e\\) { console.log\\(''pg not yet available''\\); }\")",
+      "Read(//c/Users/Alessandro/AppData/Local/**)",
+      "Read(//c/Users/Alessandro/**)",
+      "Read(//f/WFW New/$APPDATA/**)",
+      "Read(//f/WFW New/$HOME/.config/supabase/**)",
+      "Read(//f/WFW New/$APPDATA/supabase/**)",
+      "Bash(export SUPABASE_ACCESS_TOKEN=\"sbp_0ece1a70493ec12445aeb3db5b2f4b9dc079b2ef\")"
     ]
   }
 }

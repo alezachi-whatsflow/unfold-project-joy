@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Headphones } from "lucide-react";
 import type { Conversation } from "@/data/mockConversations";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
@@ -9,9 +10,13 @@ interface ConversationItemProps {
   conversation: Conversation;
   isSelected: boolean;
   onClick: () => void;
+  /** When true, shows "Iniciar Atendimento" button */
+  isQueueMode?: boolean;
+  /** Called when agent clicks "Iniciar Atendimento" */
+  onAssign?: () => void;
 }
 
-const ConversationItem = React.memo(function ConversationItem({ conversation: c, isSelected, onClick }: ConversationItemProps) {
+const ConversationItem = React.memo(function ConversationItem({ conversation: c, isSelected, onClick, isQueueMode, onAssign }: ConversationItemProps) {
   const prefixMap: Record<string, string> = {
     audio: "\uD83C\uDFB5 Áudio",
     document: "\uD83D\uDCCE Documento",
@@ -74,6 +79,22 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
               <TagBadge key={i} label={tag.label} color={tag.color} />
             ))}
           </div>
+        )}
+
+        {/* "Iniciar Atendimento" — queue mode only */}
+        {isQueueMode && onAssign && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onAssign(); }}
+            className="mt-1.5 flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-colors"
+            style={{
+              background: "rgba(14,138,92,0.15)",
+              color: "#0E8A5C",
+              border: "1px solid rgba(14,138,92,0.3)",
+            }}
+          >
+            <Headphones size={11} />
+            Iniciar Atendimento
+          </button>
         )}
       </div>
     </button>
