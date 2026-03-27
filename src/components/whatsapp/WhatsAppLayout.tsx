@@ -271,9 +271,13 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
 
       // Try to get name from: lead > contact > incoming message senderName/pushName > phone
       const senderNameFromMsg = sorted.find((m: any) =>
-        m.direction === "incoming" && (m.raw_payload?.senderName || m.raw_payload?.pushName)
+        m.direction === "incoming" && (m.sender_name || m.raw_payload?.senderName || m.raw_payload?.pushName || m.raw_payload?.from_user?.first_name)
       );
-      const msgName = senderNameFromMsg?.raw_payload?.senderName || senderNameFromMsg?.raw_payload?.pushName || null;
+      const msgName = senderNameFromMsg?.sender_name
+        || senderNameFromMsg?.raw_payload?.senderName
+        || senderNameFromMsg?.raw_payload?.pushName
+        || (senderNameFromMsg?.raw_payload?.from_user ? [senderNameFromMsg.raw_payload.from_user.first_name, senderNameFromMsg.raw_payload.from_user.last_name].filter(Boolean).join(" ") : null)
+        || null;
 
       // For groups, try to get group subject from raw_payload
       let groupSubject: string | null = null;
@@ -702,8 +706,9 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
     } else if (conv.instanceName?.startsWith("telegram_")) {
       // Send via Telegram Bot API
       const chatId = selectedJid.replace("tg_", "").replace("@telegram", "");
+      const tId = localStorage.getItem("whatsflow_default_tenant_id");
       const { error } = await supabase.functions.invoke("telegram-send", {
-        body: { chat_id: chatId, text },
+        body: { chat_id: chatId, text, tenant_id: tId },
       });
       if (error) {
         console.error("Telegram send error:", error);
