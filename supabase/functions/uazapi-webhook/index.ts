@@ -413,35 +413,45 @@ Deno.serve(async (req) => {
             saved += 1;
 
             // ── n8n dispatch: forward incoming messages to tenant's n8n webhook ──
-            if (normalized.direction === "incoming" && tenantId) {
-              supabase
-                .from("channel_integrations")
-                .select("webhook_url")
-                .eq("tenant_id", tenantId)
-                .eq("provider", "N8N")
-                .eq("status", "active")
-                .maybeSingle()
-                .then(({ data: n8nInt }) => {
-                  if (n8nInt?.webhook_url) {
-                    const phone = normalized.remote_jid?.replace(/@.*$/, "") || "";
-                    fetch(n8nInt.webhook_url, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        contact_phone: phone,
-                        text: normalized.body || "",
-                        session_id: normalized.remote_jid || "",
-                        channel: "whatsapp_web",
-                        instance_name: normalized.instance_name || instance,
-                        message_id: normalized.message_id,
-                        sender_name: normalized.sender_name || normalized.raw_payload?.senderName || "",
-                        timestamp: normalized.created_at || new Date().toISOString(),
-                        type: normalized.type || "text",
-                        media_url: normalized.media_url || null,
-                      }),
-                    }).catch((e: any) => console.error("[n8n-dispatch] Error:", e.message));
-                  }
-                });
+            if (normalized.direction === "incoming") {
+              // Resolve tenant for n8n dispatch
+              const { data: instForN8n } = await supabase
+                .from("whatsapp_instances")
+                .select("tenant_id")
+                .or(`instance_name.eq.${instance},instance_token.eq.${instance}`)
+                .limit(1)
+                .maybeSingle();
+
+              if (instForN8n?.tenant_id) {
+                supabase
+                  .from("channel_integrations")
+                  .select("webhook_url")
+                  .eq("tenant_id", instForN8n.tenant_id)
+                  .eq("provider", "N8N")
+                  .eq("status", "active")
+                  .maybeSingle()
+                  .then(({ data: n8nInt }) => {
+                    if (n8nInt?.webhook_url) {
+                      const phone = normalized.remote_jid?.replace(/@.*$/, "") || "";
+                      fetch(n8nInt.webhook_url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          contact_phone: phone,
+                          text: normalized.body || "",
+                          session_id: normalized.remote_jid || "",
+                          channel: "whatsapp_web",
+                          instance_name: normalized.instance_name || instance,
+                          message_id: normalized.message_id,
+                          sender_name: normalized.sender_name || normalized.raw_payload?.senderName || "",
+                          timestamp: normalized.created_at || new Date().toISOString(),
+                          type: normalized.type || "text",
+                          media_url: normalized.media_url || null,
+                        }),
+                      }).catch((e: any) => console.error("[n8n-dispatch] Error:", e.message));
+                    }
+                  });
+              }
             }
           }
 
