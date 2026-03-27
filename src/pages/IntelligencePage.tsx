@@ -13,8 +13,10 @@ function CrmSentBadge() {
   return <UiBadge className="ml-1.5 h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground">{count}</UiBadge>;
 }
 import { supabase } from "@/integrations/supabase/client";
-import { Radar } from "lucide-react";
+import { Radar, Brain, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import IASkillsPage from "./IASkillsPage";
+import IAAuditorPage from "./IAAuditorPage";
 import { SearchForm } from "@/components/intelligence/SearchForm";
 import { WebAnalysisCard } from "@/components/intelligence/WebAnalysisCard";
 import { AuthorityDiagnosticCard } from "@/components/intelligence/AuthorityDiagnosticCard";
@@ -294,6 +296,8 @@ export default function IntelligencePage() {
   const hasInstagramResults = latestProfile && latestProfile.source === "instagram";
   const hasGoogleResults = googleBusiness !== null;
 
+  const [activeTab, setActiveTab] = useState<"analysis" | "ia" | "auditor">("analysis");
+
   return (
     <div className="space-y-6">
       <div>
@@ -302,140 +306,175 @@ export default function IntelligencePage() {
           Inteligência Digital
         </h1>
         <p className="text-sm text-muted-foreground">
-          Analise a autoridade digital de qualquer site, perfil ou negócio
+          Analise a autoridade digital, gerencie skills de IA e monitore qualidade
         </p>
       </div>
 
-      <SearchForm onSearch={handleSearch} isLoading={isLoading} />
+      {/* Top-level section tabs */}
+      <div className="border-b border-border">
+        <nav className="flex gap-6" aria-label="Seções">
+          {([
+            { key: "analysis" as const, label: "Análise Digital", icon: <Radar className="h-4 w-4" /> },
+            { key: "ia" as const, label: "Módulo de IA", icon: <Brain className="h-4 w-4" /> },
+            { key: "auditor" as const, label: "Auditor de Qualidade", icon: <Eye className="h-4 w-4" /> },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-1.5 pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/40"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-      {/* Threshold Status Bar */}
-      {overallThreshold && (
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <ThresholdStatusBar
-              overall={overallThreshold}
-              website={websiteThreshold}
-              instagram={instagramThreshold}
-              gmn={gmnThreshold}
-              meta={metaThreshold}
-              whatsapp={whatsappThreshold}
-              neuro={neuroThreshold}
-            />
-          </div>
-          <SaveAnalysisButton
-            overallThreshold={overallThreshold}
-            websiteThreshold={websiteThreshold}
-            instagramThreshold={instagramThreshold}
-            gmnThreshold={gmnThreshold}
-            metaThreshold={metaThreshold}
-            whatsappThreshold={whatsappThreshold}
-            neuroThreshold={neuroThreshold}
-            latestScrap={latestScrap}
-            latestProfile={latestProfile}
-            googleBusiness={googleBusiness}
-            metaResult={metaResult}
-            whatsappResult={whatsappResult}
-            neuroResult={neuroResult}
-          />
-        </div>
+      {/* Section: Análise Digital */}
+      {activeTab === "analysis" && (
+        <>
+          <SearchForm onSearch={handleSearch} isLoading={isLoading} />
+
+          {/* Threshold Status Bar */}
+          {overallThreshold && (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <ThresholdStatusBar
+                  overall={overallThreshold}
+                  website={websiteThreshold}
+                  instagram={instagramThreshold}
+                  gmn={gmnThreshold}
+                  meta={metaThreshold}
+                  whatsapp={whatsappThreshold}
+                  neuro={neuroThreshold}
+                />
+              </div>
+              <SaveAnalysisButton
+                overallThreshold={overallThreshold}
+                websiteThreshold={websiteThreshold}
+                instagramThreshold={instagramThreshold}
+                gmnThreshold={gmnThreshold}
+                metaThreshold={metaThreshold}
+                whatsappThreshold={whatsappThreshold}
+                neuroThreshold={neuroThreshold}
+                latestScrap={latestScrap}
+                latestProfile={latestProfile}
+                googleBusiness={googleBusiness}
+                metaResult={metaResult}
+                whatsappResult={whatsappResult}
+                neuroResult={neuroResult}
+              />
+            </div>
+          )}
+
+          {/* Analysis Sub-Tabs */}
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="w-full grid grid-cols-6">
+              <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
+              <TabsTrigger value="website" className="text-xs">Website</TabsTrigger>
+              <TabsTrigger value="instagram" className="text-xs">Instagram</TabsTrigger>
+              <TabsTrigger value="google_business" className="text-xs">Perfil da Empresa</TabsTrigger>
+              <TabsTrigger value="meta" className="text-xs">Meta & WhatsApp</TabsTrigger>
+              <TabsTrigger value="prospeccao" className="text-xs relative">
+                Prospecção
+                <CrmSentBadge />
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Tab 1: Overview */}
+            <TabsContent value="overview">
+              <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+                <div className="space-y-6">
+                  {rescuePlan?.ativado && overallThreshold && (
+                    <RescuePlanCard
+                      rescuePlan={rescuePlan} overall={overallThreshold}
+                      websiteThreshold={websiteThreshold} instagramThreshold={instagramThreshold} gmnThreshold={gmnThreshold}
+                    />
+                  )}
+                  {!hasWebsiteResults && !hasInstagramResults && !hasGoogleResults && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <SocialPlaceholderCard source="linkedin" />
+                      <SocialPlaceholderCard source="google_maps" />
+                    </div>
+                  )}
+                  {latestScrap && <WebAnalysisCard scrap={latestScrap} />}
+                  {hasInstagramResults && <InstagramAnalysisCard profile={latestProfile!} />}
+                  {hasGoogleResults && <GoogleBusinessCard business={googleBusiness!} />}
+                </div>
+                <div>
+                  <AnalysisHistory webScraps={webScraps} profiles={profiles} leads={leads} />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab 2: Website */}
+            <TabsContent value="website">
+              <div className="space-y-6">
+                {latestScrap && <WebAnalysisCard scrap={latestScrap} />}
+                {currentDiagnostic && <AuthorityDiagnosticCard diagnostic={currentDiagnostic} />}
+                {neuroResult && <NeuromarketingCard analysis={neuroResult} />}
+                {!latestScrap && !currentDiagnostic && (
+                  <p className="text-sm text-muted-foreground text-center py-12">Analise um website para ver os resultados aqui.</p>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Tab 3: Instagram */}
+            <TabsContent value="instagram">
+              <div className="space-y-6">
+                {hasInstagramResults ? (
+                  <InstagramAnalysisCard profile={latestProfile!} />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-12">Analise um perfil Instagram para ver os resultados aqui.</p>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Tab 4: Perfil da Empresa no Google */}
+            <TabsContent value="google_business">
+              <div className="space-y-6">
+                {hasGoogleResults ? (
+                  <GoogleBusinessCard business={googleBusiness!} />
+                ) : (
+                  <div className="text-center py-12">
+                    <SocialPlaceholderCard source="google_maps" />
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Tab 5: Meta & WhatsApp API */}
+            <TabsContent value="meta">
+              <div className="space-y-6">
+                {metaResult ? (
+                  <>
+                    <MetaVerificationCard result={metaResult} />
+                    {whatsappResult && <WhatsAppButtonCard analysis={whatsappResult} />}
+                    {legalResult && <LegalDataCard analysis={legalResult} />}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-12">Analise um website para ver verificação Meta e WhatsApp aqui.</p>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Tab 6: Prospecção */}
+            <TabsContent value="prospeccao">
+              <ProspeccaoTab />
+            </TabsContent>
+          </Tabs>
+        </>
       )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-6">
-          <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
-          <TabsTrigger value="website" className="text-xs">Website</TabsTrigger>
-          <TabsTrigger value="instagram" className="text-xs">Instagram</TabsTrigger>
-          <TabsTrigger value="google_business" className="text-xs">Perfil da Empresa</TabsTrigger>
-          <TabsTrigger value="meta" className="text-xs">Meta & WhatsApp</TabsTrigger>
-          <TabsTrigger value="prospeccao" className="text-xs relative">
-            Prospecção
-            <CrmSentBadge />
-          </TabsTrigger>
-        </TabsList>
+      {/* Section: Módulo de IA */}
+      {activeTab === "ia" && <IASkillsPage />}
 
-        {/* Tab 1: Overview */}
-        <TabsContent value="overview">
-          <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-            <div className="space-y-6">
-              {rescuePlan?.ativado && overallThreshold && (
-                <RescuePlanCard
-                  rescuePlan={rescuePlan} overall={overallThreshold}
-                  websiteThreshold={websiteThreshold} instagramThreshold={instagramThreshold} gmnThreshold={gmnThreshold}
-                />
-              )}
-              {!hasWebsiteResults && !hasInstagramResults && !hasGoogleResults && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <SocialPlaceholderCard source="linkedin" />
-                  <SocialPlaceholderCard source="google_maps" />
-                </div>
-              )}
-              {latestScrap && <WebAnalysisCard scrap={latestScrap} />}
-              {hasInstagramResults && <InstagramAnalysisCard profile={latestProfile!} />}
-              {hasGoogleResults && <GoogleBusinessCard business={googleBusiness!} />}
-            </div>
-            <div>
-              <AnalysisHistory webScraps={webScraps} profiles={profiles} leads={leads} />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Tab 2: Website */}
-        <TabsContent value="website">
-          <div className="space-y-6">
-            {latestScrap && <WebAnalysisCard scrap={latestScrap} />}
-            {currentDiagnostic && <AuthorityDiagnosticCard diagnostic={currentDiagnostic} />}
-            {neuroResult && <NeuromarketingCard analysis={neuroResult} />}
-            {!latestScrap && !currentDiagnostic && (
-              <p className="text-sm text-muted-foreground text-center py-12">Analise um website para ver os resultados aqui.</p>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Tab 3: Instagram */}
-        <TabsContent value="instagram">
-          <div className="space-y-6">
-            {hasInstagramResults ? (
-              <InstagramAnalysisCard profile={latestProfile!} />
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-12">Analise um perfil Instagram para ver os resultados aqui.</p>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Tab 4: Perfil da Empresa no Google */}
-        <TabsContent value="google_business">
-          <div className="space-y-6">
-            {hasGoogleResults ? (
-              <GoogleBusinessCard business={googleBusiness!} />
-            ) : (
-              <div className="text-center py-12">
-                <SocialPlaceholderCard source="google_maps" />
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Tab 5: Meta & WhatsApp API */}
-        <TabsContent value="meta">
-          <div className="space-y-6">
-            {metaResult ? (
-              <>
-                <MetaVerificationCard result={metaResult} />
-                {whatsappResult && <WhatsAppButtonCard analysis={whatsappResult} />}
-                {legalResult && <LegalDataCard analysis={legalResult} />}
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-12">Analise um website para ver verificação Meta e WhatsApp aqui.</p>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Tab 6: Prospecção */}
-        <TabsContent value="prospeccao">
-          <ProspeccaoTab />
-        </TabsContent>
-      </Tabs>
+      {/* Section: Auditor de Qualidade */}
+      {activeTab === "auditor" && <IAAuditorPage />}
     </div>
   );
 }

@@ -3,14 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, TrendingUp, AlertTriangle, Trophy, BarChart3, Loader2, ArrowLeft, ChevronRight } from "lucide-react";
+import { Eye, TrendingUp, AlertTriangle, Trophy, BarChart3, Loader2, ChevronRight } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, BarChart, Bar } from "recharts";
-import { useNavigate } from "react-router-dom";
+
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,7 +42,6 @@ function getSeverityBadge(severity: string) {
 }
 
 export default function IAAuditorPage() {
-  const navigate = useNavigate();
   const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
   const [period, setPeriod] = useState("7");
   const [selectedEval, setSelectedEval] = useState<any>(null);
@@ -172,9 +171,6 @@ export default function IAAuditorPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/ia")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
               <Eye className="h-6 w-6 text-teal-400" /> Auditor de Qualidade

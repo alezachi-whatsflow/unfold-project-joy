@@ -218,8 +218,8 @@ const AppRoutes = () => (
       <Route path="perfil" element={<ProfilePage />} />
       <Route path="mensageria" element={<ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute>} />
       <Route path="integracoes" element={<ProtectedRoute module="mensageria"><IntegracoesPage /></ProtectedRoute>} />
-      <Route path="ia" element={<IASkillsPage />} />
-      <Route path="ia/auditor" element={<IAAuditorPage />} />
+      <Route path="ia" element={<Navigate to="../intelligence" replace />} />
+      <Route path="ia/auditor" element={<Navigate to="../intelligence" replace />} />
       <Route path="conversas" element={<ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute>} />
       <Route path="assinatura" element={<AssinaturaPage />} />
       <Route path="analytics" element={<ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute>} />

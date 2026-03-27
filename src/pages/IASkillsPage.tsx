@@ -11,7 +11,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Eye, Users, Zap, Bot, Settings, Loader2, Brain } from "lucide-react";
+import { Eye, Users, Zap, Bot, Settings, Loader2, Brain, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -83,6 +83,24 @@ const SKILLS: SkillDef[] = [
     ],
     limit: "Age diretamente no WhatsApp. Requer configuração cuidadosa.",
   },
+  {
+    key: "expense_extractor",
+    label: "Extrator de Despesas",
+    tagline: "Reconhece recibos e lança despesas automaticamente",
+    description: "Recebe foto de recibo via WhatsApp, extrai dados com Vision AI e lança a despesa automaticamente no sistema.",
+    price: 79,
+    stage: "Estágio 4 — Automação financeira",
+    icon: <Receipt className="h-6 w-6" />,
+    color: "text-emerald-500",
+    features: [
+      "OCR via Vision AI (GPT-4o / Claude)",
+      "Extração: fornecedor, valor, data, categoria",
+      "Confirmação automática via WhatsApp",
+      "Anexo salvo no armazenamento (R2)",
+      "Lançamento direto na guia Despesas",
+    ],
+    limit: "Requer conexão WhatsApp ativa e bucket R2 configurado.",
+  },
 ];
 
 export default function IASkillsPage() {
@@ -146,7 +164,7 @@ export default function IASkillsPage() {
     setConfirmDialog(null);
   };
 
-  const activeSkills = license?.ai_active_skills ?? { auditor: false, copilot: false, closer: false };
+  const activeSkills = license?.ai_active_skills ?? { auditor: false, copilot: false, closer: false, expense_extractor: false };
   const totalAddOn = SKILLS.reduce((sum, s) => sum + (activeSkills[s.key] ? s.price : 0), 0);
 
   if (isLoading) {
@@ -178,7 +196,7 @@ export default function IASkillsPage() {
       {/* Maturity Stages Banner */}
       <Card className="border-dashed">
         <CardContent className="py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div className="space-y-1">
               <Zap className="h-5 w-5 mx-auto text-teal-400" />
               <p className="text-xs font-medium text-foreground">Estágio 1</p>
@@ -194,12 +212,17 @@ export default function IASkillsPage() {
               <p className="text-xs font-medium text-foreground">Estágio 3</p>
               <p className="text-[10px] text-muted-foreground">Alto volume → Closer</p>
             </div>
+            <div className="space-y-1">
+              <Zap className="h-5 w-5 mx-auto text-emerald-500" />
+              <p className="text-xs font-medium text-foreground">Estágio 4</p>
+              <p className="text-[10px] text-muted-foreground">Recibos manuais → Extrator</p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Skill Cards */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {SKILLS.map((skill) => {
           const isActive = !!activeSkills[skill.key];
           return (
