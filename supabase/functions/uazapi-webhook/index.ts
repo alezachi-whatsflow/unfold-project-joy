@@ -487,12 +487,11 @@ Deno.serve(async (req) => {
             }
           }
 
-          // ── EXPENSE DETECTION: incoming image from admin → extract & save ──
-          if (
-            normalized.direction === "incoming" &&
-            (normalized.type === "image" || normalized.type === "document") &&
-            normalized.media_url
-          ) {
+          // ── EXPENSE DETECTION: incoming image with trigger OR text trigger after image ──
+          const isImageWithUrl = (normalized.type === "image" || normalized.type === "document") && normalized.media_url;
+          const isTextTrigger = normalized.type === "text" && /despesa|gasto|nota\s*fiscal|recibo|nf[-\s]?e?|comprovante/i.test(normalized.body || "");
+
+          if (normalized.direction === "incoming" && (isImageWithUrl || isTextTrigger)) {
             try {
               // Resolve tenant_id for this instance
               const { data: instForExpense } = await supabase
@@ -515,16 +514,38 @@ Deno.serve(async (req) => {
                 const captionLower = String(normalized.body || normalized.caption || "").toLowerCase();
                 const hasExpenseTrigger = /despesa|gasto|nota\s*fiscal|recibo|nf[-\s]?e?|comprovante/i.test(captionLower);
 
-                if (isExtractorActive && hasExpenseTrigger) {
-                  console.log(`[expense-pipeline] Triggered for ${senderPhone} tenant=${instForExpense.tenant_id}`);
+                // For images with caption trigger, or images without caption (trigger checked later)
+                const isDirectImageTrigger = isImageWithUrl && hasExpenseTrigger;
+                // For text trigger: look for recent image from same sender (last 2 min)
+                let recentImageMsg: any = null;
+                if (isTextTrigger && hasExpenseTrigger && !isImageWithUrl) {
+                  const twoMinAgo = new Date(Date.now() - 120_000).toISOString();
+                  const { data: recentImg } = await supabase
+                    .from("whatsapp_messages")
+                    .select("message_id, media_url, raw_payload")
+                    .eq("remote_jid", normalized.remote_jid)
+                    .eq("direction", "incoming")
+                    .in("type", ["image", "document"])
+                    .gt("created_at", twoMinAgo)
+                    .order("created_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                  recentImageMsg = recentImg;
+                }
+
+                if (isExtractorActive && (isDirectImageTrigger || recentImageMsg)) {
+                  const mediaUrl = isDirectImageTrigger ? normalized.media_url : recentImageMsg?.media_url;
+                  const msgForMedia = isDirectImageTrigger ? msg : recentImageMsg?.raw_payload;
+                  const msgId = isDirectImageTrigger ? normalized.message_id : recentImageMsg?.message_id;
+                  console.log(`[expense-pipeline] Triggered for ${normalized.remote_jid} tenant=${instForExpense.tenant_id} via=${isDirectImageTrigger ? "image+caption" : "text-after-image"}`);
 
                   // 1. Download media
                   const UAZAPI_BASE_URL = Deno.env.get("UAZAPI_BASE_URL") || "";
                   const { normalizeMediaData, downloadMedia, uploadToExpenseBucket } = await import("../_shared/media-processor.ts");
-                  const mediaData = normalizeMediaData(msg);
+                  const mediaData = normalizeMediaData(msgForMedia || msg);
                   const { buffer, fileName } = await downloadMedia(
                     mediaData,
-                    normalized.message_id,
+                    msgId || normalized.message_id,
                     instForExpense.instance_token || "",
                     UAZAPI_BASE_URL,
                   );
