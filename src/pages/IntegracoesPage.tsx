@@ -135,6 +135,7 @@ const IntegracoesPage = () => {
         const { error } = await supabase.from("channel_integrations").insert({
           tenant_id: tenantId, provider: "TELEGRAM", channel_id: channelId, name: botName,
           bot_token: token, bot_username: botUsername, webhook_url: webhookUrl, status: "active",
+          access_token: token,
         });
         if (error) throw error;
       }
