@@ -380,14 +380,32 @@ const IntegracoesPage = () => {
               ) : mlStep === "connected" ? (
                 /* ── Step 3: Connected ── */
                 <div style={{ padding: "8px 0" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 8, background: "rgba(52,131,250,0.08)", border: "1px solid rgba(52,131,250,0.2)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, background: "rgba(52,131,250,0.08)", border: "1px solid rgba(52,131,250,0.2)" }}>
                     <ChannelIcon channel="mercadolivre" size="md" variant="rounded" />
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{mlIntegration?.name || "Mercado Livre"}</p>
-                      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>ID: {mlIntegration?.ml_user_id} · Ativo</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>ID: {mlIntegration?.ml_user_id} · {(mlIntegration?.credentials as any)?.site_id || "MLB"}</p>
                     </div>
-                    <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 999, background: "#10b98120", color: "#10b981", fontWeight: 600 }}>Conectado</span>
+                    <span style={{ fontSize: 10, padding: "3px 8px", background: "#10b98120", color: "#10b981", fontWeight: 600 }}>Conectado</span>
                   </div>
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Desconectar Mercado Livre? Você perderá o acesso às mensagens e perguntas.")) return;
+                      const { error } = await supabase.from("channel_integrations").delete().eq("id", mlIntegration?.id);
+                      if (error) { toast.error(error.message); return; }
+                      setMlIntegration(null);
+                      setMlStep("credentials");
+                      setMlForm({ appId: "", clientSecret: "" });
+                      toast.success("Mercado Livre desconectado.");
+                    }}
+                    style={{
+                      marginTop: 12, padding: "8px 16px", border: "1px solid var(--border)",
+                      background: "transparent", color: "var(--text-muted)", fontSize: 12,
+                      cursor: "pointer", width: "100%",
+                    }}
+                  >
+                    Desconectar
+                  </button>
                 </div>
 
               ) : mlStep === "auth" ? (
@@ -609,13 +627,43 @@ const IntegracoesPage = () => {
           {expandedSection === "telegram" && (
             <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)" }}>
               {tgStep === "connected" ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 8, background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.2)" }}>
-                  <ChannelIcon channel="telegram" size="md" variant="rounded" />
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{tgIntegration?.name || "Telegram Bot"}</p>
-                    <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>@{tgIntegration?.bot_username} · Webhook ativo</p>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.2)" }}>
+                    <ChannelIcon channel="telegram" size="md" variant="rounded" />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{tgIntegration?.name || "Telegram Bot"}</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>@{tgIntegration?.bot_username} · Webhook ativo</p>
+                    </div>
+                    <span style={{ fontSize: 10, padding: "3px 8px", background: "#10b98120", color: "#10b981", fontWeight: 600 }}>Conectado</span>
                   </div>
-                  <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 999, background: "#10b98120", color: "#10b981", fontWeight: 600 }}>Conectado</span>
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Desconectar Telegram Bot? O webhook será removido.")) return;
+                      // Remove webhook from Telegram
+                      if (tgIntegration?.bot_token) {
+                        const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
+                        const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                        await fetch(`${sbUrl}/functions/v1/telegram-send`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sbKey}` },
+                          body: JSON.stringify({ action: "setWebhook", bot_token: tgIntegration.bot_token, url: "" }),
+                        });
+                      }
+                      const { error } = await supabase.from("channel_integrations").delete().eq("id", tgIntegration?.id);
+                      if (error) { toast.error(error.message); return; }
+                      setTgIntegration(null);
+                      setTgStep("form");
+                      setTgToken("");
+                      toast.success("Telegram Bot desconectado.");
+                    }}
+                    style={{
+                      marginTop: 12, padding: "8px 16px", border: "1px solid var(--border)",
+                      background: "transparent", color: "var(--text-muted)", fontSize: 12,
+                      cursor: "pointer", width: "100%",
+                    }}
+                  >
+                    Desconectar
+                  </button>
                 </div>
               ) : (
                 <div style={{ maxWidth: 400, margin: "0 auto" }}>
