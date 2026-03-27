@@ -645,7 +645,7 @@ const IntegracoesPage = () => {
         <Card
           style={{
             border: expandedSection === "webchat" ? "1px solid rgba(17,188,118,0.4)" : "1px solid var(--border)",
-            background: "var(--bg-card)", borderRadius: 12, overflow: "hidden",
+            background: "#FFFFFF", borderRadius: 0, overflow: "hidden", boxShadow: "none",
           }}
         >
           <button
@@ -659,81 +659,195 @@ const IntegracoesPage = () => {
           >
             <ChannelIcon channel="webchat" size="lg" variant="icon" />
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Webchat Nativo</p>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Injete o chat ao vivo diretamente no seu website</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#000", margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>Webchat Nativo</p>
+              <p style={{ fontSize: 11, color: "#666", margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>Injete a infraestrutura Pzaafi diretamente no seu website.</p>
             </div>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: expandedSection === "webchat" ? "#11bc76" : "var(--border)" }} />
           </button>
           {expandedSection === "webchat" && (
-            <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)" }}>
-              <div style={{ maxWidth: 500, margin: "0 auto" }}>
-                {/* Instructions */}
-                <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>Instalação:</p>
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 4px" }}>
-                    1. Copie o script abaixo.
-                  </p>
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 16px" }}>
-                    2. Cole antes da tag de fechamento <code style={{ fontFamily: "monospace", background: "#f0f0f0", padding: "1px 4px" }}>&lt;/body&gt;</code> do seu site.
-                  </p>
-                </div>
+            <div style={{ padding: "20px", borderTop: "1px solid #E8E5DF" }}>
 
-                {/* Code block — terminal style */}
-                <div style={{ position: "relative" }}>
-                  <pre style={{
-                    background: "#000000",
-                    color: "#FFFFFF",
-                    padding: "16px 20px",
-                    fontSize: 12,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    lineHeight: 1.6,
-                    overflowX: "auto",
-                    border: "1px solid #333",
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-all",
+              {/* ── Two-column layout: Simulator + Instructions ── */}
+              <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+
+                {/* LEFT — Visual Simulator */}
+                <div style={{ flex: "1 1 340px", minWidth: 300 }}>
+                  <p style={{
+                    fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase",
+                    color: "#999", margin: "0 0 8px", fontFamily: "Inter, system-ui, sans-serif",
+                  }}>Simulador</p>
+                  <div style={{
+                    background: "#EDEDED", border: "1px solid #D0D0D0", borderRadius: 0,
+                    padding: 0, position: "relative", overflow: "hidden",
+                    height: 320, boxShadow: "none",
                   }}>
-                    <code>{`<script\n  data-tenant="${tenantId || "SEU_TENANT_ID"}"\n  src="https://cdn.whatsflow.com.br/webchat.js"\n></script>`}</code>
-                  </pre>
+                    {/* Fake browser chrome */}
+                    <div style={{
+                      background: "#E0E0E0", height: 28, display: "flex", alignItems: "center",
+                      padding: "0 10px", gap: 6, borderBottom: "1px solid #D0D0D0",
+                    }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
+                      <div style={{
+                        flex: 1, marginLeft: 8, height: 14, background: "#FFF",
+                        borderRadius: 0, border: "1px solid #D0D0D0",
+                        display: "flex", alignItems: "center", padding: "0 8px",
+                      }}>
+                        <span style={{ fontSize: 8, color: "#999", fontFamily: "monospace" }}>seusite.com.br</span>
+                      </div>
+                    </div>
+
+                    {/* Fake website content */}
+                    <div style={{ padding: "24px 20px", position: "relative", height: "calc(100% - 28px)" }}>
+                      <p style={{
+                        fontSize: 28, fontWeight: 900, color: "#000", margin: "0 0 8px",
+                        fontFamily: "Inter, system-ui, sans-serif", letterSpacing: -1, lineHeight: 1,
+                      }}>PZAAFI</p>
+                      <p style={{
+                        fontSize: 10, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase",
+                        color: "#999", margin: "0 0 20px", fontFamily: "Inter, system-ui, sans-serif",
+                      }}>THE PRIMORDIAL VOID</p>
+                      {/* Fake content lines */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ width: "90%", height: 6, background: "#DDD" }} />
+                        <div style={{ width: "75%", height: 6, background: "#DDD" }} />
+                        <div style={{ width: "82%", height: 6, background: "#DDD" }} />
+                        <div style={{ width: "60%", height: 6, background: "#DDD" }} />
+                      </div>
+
+                      {/* Webchat widget mockup — bottom right */}
+                      <div style={{
+                        position: "absolute", bottom: 16, right: 16,
+                        display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8,
+                      }}>
+                        {/* Mini chat panel */}
+                        <div style={{
+                          width: 180, background: "#FFF", border: "1px solid #000",
+                          borderRadius: 0, boxShadow: "none", overflow: "hidden",
+                        }}>
+                          <div style={{
+                            background: "#000", color: "#FFF", padding: "6px 10px",
+                            fontSize: 7, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase",
+                            fontFamily: "Inter, system-ui, sans-serif",
+                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                          }}>
+                            <span>CONEXÃO ATIVA</span>
+                            <span style={{ fontSize: 9, fontFamily: "monospace", opacity: 0.6 }}>✕</span>
+                          </div>
+                          <div style={{ padding: "8px", background: "#FAFAFA", minHeight: 60 }}>
+                            <div style={{
+                              background: "#E8E8E8", padding: "4px 8px", fontSize: 8,
+                              fontFamily: "Inter, system-ui, sans-serif", color: "#333",
+                              display: "inline-block", maxWidth: "85%",
+                            }}>Olá! Como posso ajudar?</div>
+                          </div>
+                          <div style={{
+                            display: "flex", borderTop: "1px solid #000",
+                          }}>
+                            <div style={{
+                              flex: 1, padding: "5px 8px", fontSize: 8, color: "#999",
+                              fontFamily: "Inter, system-ui, sans-serif",
+                            }}>Digite sua mensagem...</div>
+                            <div style={{
+                              background: "#000", color: "#FFF", padding: "5px 8px",
+                              fontSize: 7, fontWeight: 700, letterSpacing: 1,
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              display: "flex", alignItems: "center",
+                            }}>ENVIAR</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Copy button */}
-                <button
-                  onClick={() => {
-                    const code = `<script data-tenant="${tenantId || "SEU_TENANT_ID"}" src="https://cdn.whatsflow.com.br/webchat.js"></script>`;
-                    navigator.clipboard.writeText(code).then(() => {
-                      setCodeCopied(true);
-                      toast.success("Código copiado!");
-                      setTimeout(() => setCodeCopied(false), 2000);
-                    });
-                  }}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    marginTop: 0,
-                    padding: "10px",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: 2,
-                    textTransform: "uppercase" as const,
-                    fontFamily: "Inter, system-ui, sans-serif",
-                    cursor: "pointer",
-                    border: "1px solid #000",
-                    borderTop: "none",
-                    background: codeCopied ? "#000" : "#FFF",
-                    color: codeCopied ? "#FFF" : "#000",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {codeCopied ? "✓ Copiado" : "Copiar Código"}
-                </button>
+                {/* RIGHT — Instructions + Code */}
+                <div style={{ flex: "1 1 300px", minWidth: 280 }}>
+                  <p style={{
+                    fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase",
+                    color: "#999", margin: "0 0 8px", fontFamily: "Inter, system-ui, sans-serif",
+                  }}>Instalação DIY</p>
 
-                {/* Tenant ID info */}
-                <div style={{ marginTop: 16, padding: 12, background: "rgba(17,188,118,0.06)", border: "1px solid rgba(17,188,118,0.15)" }}>
-                  <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", margin: "0 0 4px" }}>Seu Tenant ID:</p>
-                  <code style={{ fontSize: 11, fontFamily: "monospace", color: "var(--text-primary)", wordBreak: "break-all" }}>
-                    {tenantId || "Carregando..."}
-                  </code>
+                  {/* Steps */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 800, color: "#000", fontFamily: "Inter, system-ui, sans-serif",
+                        minWidth: 16,
+                      }}>1.</span>
+                      <span style={{ fontSize: 12, color: "#333", fontFamily: "Inter, system-ui, sans-serif" }}>
+                        Copie o script abaixo.
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 800, color: "#000", fontFamily: "Inter, system-ui, sans-serif",
+                        minWidth: 16,
+                      }}>2.</span>
+                      <span style={{ fontSize: 12, color: "#333", fontFamily: "Inter, system-ui, sans-serif" }}>
+                        Cole antes da tag de fechamento{" "}
+                        <code style={{
+                          fontFamily: "monospace", background: "#F0F0F0", padding: "1px 4px",
+                          border: "1px solid #E0E0E0", fontSize: 11,
+                        }}>&lt;/body&gt;</code>{" "}do seu site.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Code block — black monolith */}
+                  <pre style={{
+                    background: "#000000", color: "#FFFFFF",
+                    padding: "16px 20px", fontSize: 12, lineHeight: 1.7,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    overflowX: "auto", border: "none", borderRadius: 0,
+                    margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all",
+                    boxShadow: "none",
+                  }}>
+                    <code>{`<script\n  data-tenant="${tenantId || "SEU_TENANT_ID"}"\n  src="https://cdn.pzaafi.com/webchat.js"\n></script>`}</code>
+                  </pre>
+
+                  {/* Copy button — square, white bg, black border */}
+                  <button
+                    onClick={() => {
+                      const code = `<script data-tenant="${tenantId || "SEU_TENANT_ID"}" src="https://cdn.pzaafi.com/webchat.js"></script>`;
+                      navigator.clipboard.writeText(code).then(() => {
+                        setCodeCopied(true);
+                        toast.success("Código copiado!");
+                        setTimeout(() => setCodeCopied(false), 2000);
+                      });
+                    }}
+                    style={{
+                      display: "block", width: "100%", marginTop: 0,
+                      padding: "10px", fontSize: 11, fontWeight: 700,
+                      letterSpacing: 2, textTransform: "uppercase" as const,
+                      fontFamily: "Inter, system-ui, sans-serif",
+                      cursor: "pointer", borderRadius: 0, boxShadow: "none",
+                      border: "1px solid #000", borderTop: "none",
+                      background: codeCopied ? "#000" : "#FFF",
+                      color: codeCopied ? "#FFF" : "#000",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {codeCopied ? "✓ COPIADO" : "COPIAR CÓDIGO"}
+                  </button>
+
+                  {/* Tenant ID info */}
+                  <div style={{
+                    marginTop: 16, padding: 12, background: "#FAFAFA",
+                    border: "1px solid #E8E5DF", borderRadius: 0,
+                  }}>
+                    <p style={{
+                      fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase",
+                      color: "#999", margin: "0 0 4px", fontFamily: "Inter, system-ui, sans-serif",
+                    }}>Seu Tenant ID</p>
+                    <code style={{
+                      fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
+                      color: "#000", wordBreak: "break-all",
+                    }}>
+                      {tenantId || "Carregando..."}
+                    </code>
+                  </div>
                 </div>
               </div>
             </div>
