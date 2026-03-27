@@ -96,7 +96,7 @@ function AutocompleteField({
   onChange,
   suggestions,
   placeholder,
-  minChars = 4,
+  minChars = 1,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -111,8 +111,10 @@ function AutocompleteField({
     return suggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 8);
   }, [value, suggestions, minChars]);
 
+  const showAddNew = value.length >= minChars && filtered.length === 0;
+
   return (
-    <Popover open={open && filtered.length > 0} onOpenChange={setOpen}>
+    <Popover open={open && (filtered.length > 0 || showAddNew)} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Input
           value={value}
@@ -127,14 +129,23 @@ function AutocompleteField({
       <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
         <Command>
           <CommandList>
-            <CommandEmpty>Nenhuma sugestão</CommandEmpty>
-            <CommandGroup>
-              {filtered.map((s) => (
-                <CommandItem key={s} onSelect={() => { onChange(s); setOpen(false); }}>
-                  {s}
+            {filtered.length > 0 ? (
+              <CommandGroup heading="Sugestões">
+                {filtered.map((s) => (
+                  <CommandItem key={s} onSelect={() => { onChange(s); setOpen(false); }}>
+                    {s}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : showAddNew ? (
+              <CommandGroup>
+                <CommandItem onSelect={() => { setOpen(false); }} className="text-emerald-600">
+                  + Cadastrar "{value}"
                 </CommandItem>
-              ))}
-            </CommandGroup>
+              </CommandGroup>
+            ) : (
+              <CommandEmpty>Digite para buscar</CommandEmpty>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>
@@ -445,13 +456,13 @@ export default function ExpensesPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Fornecedor</Label>
+                    <Label>Fornecedor *</Label>
                     <AutocompleteField
                       value={form.supplier}
                       onChange={(v) => setForm({ ...form, supplier: v })}
                       suggestions={supplierSuggestions}
-                      placeholder="Nome do fornecedor"
-                      minChars={4}
+                      placeholder="Digite o nome do fornecedor"
+                      minChars={1}
                     />
                   </div>
                   <DatePickerField
@@ -468,8 +479,8 @@ export default function ExpensesPage() {
                       value={form.description}
                       onChange={(v) => setForm({ ...form, description: v })}
                       suggestions={descriptionSuggestions}
-                      placeholder="Ex: Servidor AWS"
-                      minChars={3}
+                      placeholder="Digite a descrição da despesa"
+                      minChars={1}
                     />
                   </div>
                   <div className="space-y-2">
