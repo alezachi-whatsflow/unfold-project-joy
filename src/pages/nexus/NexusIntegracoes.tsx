@@ -11,9 +11,11 @@ import { Label } from "@/components/ui/label";
 import {
   Wifi, WifiOff, Search, RefreshCw, AlertTriangle, CheckCircle2,
   MessageSquare, Clock, ChevronDown, ChevronRight, Loader2, Settings2,
-  Plus, Edit2, Star, Shield,
+  Plus, Edit2, Star, Shield, Send, Globe, ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ChannelIcon, getChannelLabel } from "@/components/ui/ChannelIcon";
+import type { ChannelType } from "@/components/ui/ChannelIcon";
 
 // ── Types ──
 interface Provider {
@@ -46,8 +48,11 @@ interface InstanceRow {
 interface ChannelRow {
   id: string;
   provider: string;
+  name: string | null;
+  status: string;
+  bot_username: string | null;
+  display_phone_number: string | null;
   is_active: boolean;
-  config: any;
   tenant_id: string;
   tenant_name?: string;
 }
@@ -79,12 +84,16 @@ export default function NexusIntegracoes() {
     },
   });
 
-  // ── Fetch Meta channels ──
+  // ── Fetch ALL channel integrations (Meta, Telegram, ML, etc.) ──
   const { data: channels = [] } = useQuery({
     queryKey: ["nexus-all-channels"],
     queryFn: async () => {
-      const { data } = await supabase.from("channel_integrations").select("*, tenants(name)").order("created_at", { ascending: false });
-      return (data || []).map((d: any) => ({ ...d, tenant_name: d.tenants?.name || "—" })) as ChannelRow[];
+      const { data } = await supabase.from("channel_integrations").select("id, provider, name, status, bot_username, display_phone_number, tenant_id, tenants(name)").order("created_at", { ascending: false });
+      return (data || []).map((d: any) => ({
+        ...d,
+        is_active: d.status === "active",
+        tenant_name: d.tenants?.name || "—",
+      })) as ChannelRow[];
     },
   });
 
@@ -140,7 +149,10 @@ export default function NexusIntegracoes() {
   const connectedCount = instances.filter((i) => i.status === "connected").length;
   const disconnectedCount = instances.filter((i) => i.status !== "connected").length;
   const noWebhook = instances.filter((i) => !i.webhook_url).length;
-  const metaActive = channels.filter((c) => c.is_active).length;
+  const metaActive = channels.filter((c) => c.is_active && (c.provider === "WABA" || c.provider === "INSTAGRAM")).length;
+  const telegramActive = channels.filter((c) => c.is_active && c.provider === "TELEGRAM").length;
+  const mlActive = channels.filter((c) => c.is_active && c.provider === "MERCADOLIVRE").length;
+  const totalChannels = channels.filter((c) => c.is_active).length;
 
   const timeAgo = (d: string | null) => {
     if (!d) return "—";
@@ -225,13 +237,16 @@ export default function NexusIntegracoes() {
       </div>
 
       {/* ═══ SECTION 2: KPIs ═══ */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         {[
-          { label: "Total Instâncias", value: instances.length + channels.length, icon: Wifi, color: "#6366f1" },
-          { label: "Conectadas", value: connectedCount, icon: CheckCircle2, color: "#10b981" },
-          { label: "Desconectadas", value: disconnectedCount, icon: WifiOff, color: "#ef4444" },
+          { label: "Total Conexões", value: instances.length + totalChannels, icon: Wifi, color: "#6366f1" },
+          { label: "WA Conectadas", value: connectedCount, icon: CheckCircle2, color: "#10b981" },
+          { label: "WA Desconectadas", value: disconnectedCount, icon: WifiOff, color: "#ef4444" },
           { label: "Sem Webhook", value: noWebhook, icon: AlertTriangle, color: "#f59e0b" },
           { label: "Meta Ativas", value: metaActive, icon: MessageSquare, color: "#3b82f6" },
+          { label: "Telegram", value: telegramActive, icon: Send, color: "#229ED9" },
+          { label: "Mercado Livre", value: mlActive, icon: ShoppingBag, color: "#FFE600" },
+          { label: "Webchat", value: channels.filter((c) => c.is_active && c.provider === "WEBCHAT").length, icon: Globe, color: "#11bc76" },
         ].map((s) => (
           <Card key={s.label} className="border-border/60">
             <CardContent className="p-3 text-center">
@@ -267,8 +282,10 @@ export default function NexusIntegracoes() {
                     {isExp ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     <div className={`w-2.5 h-2.5 rounded-full ${allOk && (tenant.instances.length + tenant.channels.length) > 0 ? "bg-emerald-500" : hasBad ? "bg-red-400" : "bg-gray-300"}`} />
                     <span className="text-sm font-semibold flex-1">{tenant.name}</span>
-                    {tenant.instances.length > 0 && <Badge variant="outline" className="text-[10px] gap-1"><Wifi size={10} /> {tenant.instances.filter((i) => i.status === "connected").length}/{tenant.instances.length}</Badge>}
-                    {tenant.channels.length > 0 && <Badge variant="outline" className="text-[10px] gap-1"><MessageSquare size={10} /> {tenant.channels.filter((c) => c.is_active).length}/{tenant.channels.length} Meta</Badge>}
+                    {tenant.instances.length > 0 && <Badge variant="outline" className="text-[10px] gap-1"><Wifi size={10} /> {tenant.instances.filter((i) => i.status === "connected").length}/{tenant.instances.length} WA</Badge>}
+                    {tenant.channels.filter(c => c.provider === "WABA" || c.provider === "INSTAGRAM").length > 0 && <Badge variant="outline" className="text-[10px] gap-1"><MessageSquare size={10} /> {tenant.channels.filter(c => (c.provider === "WABA" || c.provider === "INSTAGRAM") && c.is_active).length} Meta</Badge>}
+                    {tenant.channels.filter(c => c.provider === "TELEGRAM").length > 0 && <Badge variant="outline" className="text-[10px] gap-1"><Send size={10} /> Telegram</Badge>}
+                    {tenant.channels.filter(c => c.provider === "MERCADOLIVRE").length > 0 && <Badge variant="outline" className="text-[10px] gap-1"><ShoppingBag size={10} /> ML</Badge>}
                   </button>
                   {isExp && (
                     <div className="px-4 pb-4 border-t border-border/40">
@@ -289,20 +306,36 @@ export default function NexusIntegracoes() {
                           </div>
                         </div>
                       )}
-                      {tenant.channels.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Meta Cloud API</p>
-                          <div className="space-y-1.5">
-                            {tenant.channels.map((ch) => (
-                              <div key={ch.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20 text-sm">
-                                <div className={`w-2 h-2 rounded-full ${ch.is_active ? "bg-blue-500" : "bg-gray-300"}`} />
-                                <span className="font-medium flex-1">{ch.provider === "meta_whatsapp" ? "WhatsApp Cloud" : "Instagram"}</span>
-                                <Badge variant="outline" className={`text-[9px] ${ch.is_active ? "text-blue-500 border-blue-500/30" : "text-gray-400"}`}>{ch.is_active ? "Ativo" : "Inativo"}</Badge>
-                              </div>
-                            ))}
+                      {/* Group channels by type */}
+                      {(() => {
+                        const groups: { label: string; channel: ChannelType; items: ChannelRow[] }[] = [
+                          { label: "Meta Cloud API", channel: "whatsapp_meta", items: tenant.channels.filter(c => c.provider === "WABA" || c.provider === "INSTAGRAM") },
+                          { label: "Telegram", channel: "telegram", items: tenant.channels.filter(c => c.provider === "TELEGRAM") },
+                          { label: "Mercado Livre", channel: "mercadolivre", items: tenant.channels.filter(c => c.provider === "MERCADOLIVRE") },
+                          { label: "Webchat", channel: "webchat", items: tenant.channels.filter(c => c.provider === "WEBCHAT") },
+                        ];
+                        return groups.filter(g => g.items.length > 0).map((group) => (
+                          <div key={group.label} className="mt-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                              <ChannelIcon channel={group.channel} size="sm" variant="badge" />
+                              {group.label}
+                            </p>
+                            <div className="space-y-1.5">
+                              {group.items.map((ch) => (
+                                <div key={ch.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20 text-sm">
+                                  <div className={`w-2 h-2 rounded-full ${ch.is_active ? "bg-emerald-500" : "bg-gray-300"}`} />
+                                  <span className="font-medium flex-1">
+                                    {ch.name || ch.bot_username || ch.display_phone_number || getChannelLabel(group.channel)}
+                                  </span>
+                                  <Badge variant="outline" className={`text-[9px] ${ch.is_active ? "text-emerald-500 border-emerald-500/30" : "text-gray-400"}`}>
+                                    {ch.is_active ? "Ativo" : "Inativo"}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        ));
+                      })()}
                       {tenant.instances.length + tenant.channels.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem conexões</p>}
                     </div>
                   )}
