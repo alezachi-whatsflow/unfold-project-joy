@@ -297,16 +297,17 @@ export default function ExpensesPage() {
   }, [expenses]);
 
   const loadExpenses = useCallback(async () => {
+    if (!TENANT_ID) { setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from("asaas_expenses")
       .select("*")
       .eq("tenant_id", TENANT_ID)
       .order("date", { ascending: false });
-    if (error) { toast.error("Erro ao carregar despesas"); console.error(error); }
+    if (error) { toast.error("Erro ao carregar despesas"); console.error("loadExpenses error:", error); }
     setExpenses((data || []) as Expense[]);
     setLoading(false);
-  }, []);
+  }, [TENANT_ID]);
 
   useEffect(() => { loadExpenses(); }, [loadExpenses]);
 
