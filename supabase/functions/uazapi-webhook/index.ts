@@ -496,10 +496,11 @@ Deno.serve(async (req) => {
               // Resolve tenant_id for this instance
               const { data: instForExpense } = await supabase
                 .from("whatsapp_instances")
-                .select("tenant_id, instance_token")
+                .select("tenant_id, instance_token, server_url, instance_name")
                 .or(`instance_name.eq.${instance},instance_token.eq.${instance}`)
                 .limit(1)
                 .maybeSingle();
+              console.log(`[expense-pipeline] Instance lookup: ${instance} → ${instForExpense?.instance_name || "NOT FOUND"} tenant=${instForExpense?.tenant_id || "NONE"}`);
 
               if (instForExpense?.tenant_id) {
                 // Check if expense_extractor skill is active for this tenant
@@ -540,15 +541,18 @@ Deno.serve(async (req) => {
                   console.log(`[expense-pipeline] Triggered for ${normalized.remote_jid} tenant=${instForExpense.tenant_id} via=${isDirectImageTrigger ? "image+caption" : "text-after-image"}`);
 
                   // 1. Download media
-                  const UAZAPI_BASE_URL = Deno.env.get("UAZAPI_BASE_URL") || "";
+                  const uazapiUrl = instForExpense.server_url || Deno.env.get("UAZAPI_BASE_URL") || "";
+                  const downloadUrl = `${uazapiUrl}/instance/${instForExpense.instance_name}`;
+                  console.log(`[expense-pipeline] Downloading media: msgId=${msgId} url=${downloadUrl}`);
                   const { normalizeMediaData, downloadMedia, uploadToExpenseBucket } = await import("../_shared/media-processor.ts");
                   const mediaData = normalizeMediaData(msgForMedia || msg);
-                  const { buffer, fileName } = await downloadMedia(
+                  const { buffer, fileName, error: dlError } = await downloadMedia(
                     mediaData,
                     msgId || normalized.message_id,
                     instForExpense.instance_token || "",
-                    UAZAPI_BASE_URL,
+                    downloadUrl,
                   );
+                  console.log(`[expense-pipeline] Download result: buffer=${buffer ? buffer.length + "bytes" : "NULL"} error=${dlError || "none"}`);
 
                   if (buffer) {
                     // 2. Upload to expense-attachments bucket
