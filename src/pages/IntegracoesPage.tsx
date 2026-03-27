@@ -100,22 +100,34 @@ const IntegracoesPage = () => {
     if (!tenantId) { toast.error("Tenant não identificado"); return; }
     setTgSaving(true);
     try {
-      // 1. Validate token by calling Telegram getMe
-      const meRes = await fetch(`https://api.telegram.org/bot${tgToken.trim()}/getMe`);
-      const me = await meRes.json();
-      if (!me.ok) throw new Error(me.description || "Token inválido");
+      const token = tgToken.trim();
+      const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
+      const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const botUsername = me.result?.username || "";
-      const botName = me.result?.first_name || `Bot @${botUsername}`;
-      const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co"}/functions/v1/telegram-webhook?token=${encodeURIComponent(tgToken.trim())}`;
+      // 1. Validate token via Edge Function proxy (avoids CORS)
+      const meRes = await fetch(`${sbUrl}/functions/v1/telegram-send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sbKey}` },
+        body: JSON.stringify({ action: "getMe", bot_token: token }),
+      });
+      const meData = await meRes.json();
+      if (meData.error) throw new Error(meData.error);
+      const me = meData.result || meData;
+      const botId = me.id || me.result?.id;
+      const botUsername = me.username || me.result?.username || "";
+      const botName = me.first_name || me.result?.first_name || `Bot @${botUsername}`;
+
+      if (!botId) throw new Error("Token inválido — não foi possível obter o ID do bot");
+
+      const webhookUrl = `${sbUrl}/functions/v1/telegram-webhook?token=${encodeURIComponent(token)}`;
 
       // 2. Save to DB
       const { error } = await supabase.from("channel_integrations").upsert({
         tenant_id: tenantId,
         provider: "TELEGRAM",
-        channel_id: `tg_${me.result?.id}`,
+        channel_id: `tg_${botId}`,
         name: botName,
-        bot_token: tgToken.trim(),
+        bot_token: token,
         bot_username: botUsername,
         webhook_url: webhookUrl,
         status: "active",
@@ -123,20 +135,19 @@ const IntegracoesPage = () => {
       }, { onConflict: "channel_id" });
       if (error) throw error;
 
-      // 3. Auto-register webhook on Telegram
-      const whRes = await fetch(`https://api.telegram.org/bot${tgToken.trim()}/setWebhook`, {
+      // 3. Auto-register webhook via Edge Function proxy
+      await fetch(`${sbUrl}/functions/v1/telegram-send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: webhookUrl }),
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sbKey}` },
+        body: JSON.stringify({ action: "setWebhook", bot_token: token, url: webhookUrl }),
       });
-      const whResult = await whRes.json();
-      if (!whResult.ok) console.warn("Webhook registration warning:", whResult.description);
 
       setTgIntegration({ bot_username: botUsername, name: botName, status: "active" });
       setTgStep("connected");
       setTgToken("");
       toast.success(`Bot @${botUsername} conectado! Webhook configurado automaticamente.`);
     } catch (err: any) {
+      console.error("saveTelegramBot error:", err);
       toast.error(err.message || "Erro ao salvar");
     } finally {
       setTgSaving(false);

@@ -35,7 +35,24 @@ Deno.serve(async (req) => {
     if (authErr || !user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { chat_id, text, photo, document: doc, caption, parse_mode, reply_to_message_id, tenant_id, integration_id } = body;
+    const { action, bot_token: rawBotToken, url: webhookSetUrl, chat_id, text, photo, document: doc, caption, parse_mode, reply_to_message_id, tenant_id, integration_id } = body;
+
+    // ── Setup actions (getMe / setWebhook) — used by Integrações page ──
+    if (action === "getMe" && rawBotToken) {
+      const res = await fetch(`https://api.telegram.org/bot${rawBotToken}/getMe`);
+      const data = await res.json();
+      if (!data.ok) return json({ error: data.description || "Token inválido" }, 400);
+      return json({ result: data.result });
+    }
+    if (action === "setWebhook" && rawBotToken && webhookSetUrl) {
+      const res = await fetch(`https://api.telegram.org/bot${rawBotToken}/setWebhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: webhookSetUrl }),
+      });
+      const data = await res.json();
+      return json({ ok: data.ok, description: data.description });
+    }
 
     if (!chat_id) return json({ error: "chat_id is required" }, 400);
     if (!text && !photo && !doc) return json({ error: "text, photo or document is required" }, 400);
