@@ -550,39 +550,29 @@ Deno.serve(async (req) => {
                   const msgId = isDirectImageTrigger ? normalized.message_id : recentImageMsg?.message_id;
                   console.log(`[expense-pipeline] Triggered for ${normalized.remote_jid} tenant=${instForExpense.tenant_id} via=${isDirectImageTrigger ? "image+caption" : "text-after-image"}`);
 
-                  // 1. Download media (uazapi endpoint is /message/download, NOT /instance/{name}/message/download)
+                  // 1. Get decrypted image URL from uazapi
                   const uazapiUrl = instForExpense.server_url || Deno.env.get("UAZAPI_BASE_URL") || "";
-                  console.log(`[expense-pipeline] Downloading media: msgId=${msgId} baseUrl=${uazapiUrl}`);
-                  const { normalizeMediaData, downloadMedia, uploadToExpenseBucket } = await import("../_shared/media-processor.ts");
-                  const mediaData = normalizeMediaData(msgForMedia || msg);
-                  const { buffer, fileName, error: dlError } = await downloadMedia(
-                    mediaData,
-                    msgId || normalized.message_id,
-                    instForExpense.instance_token || "",
-                    uazapiUrl,
-                  );
-                  console.log(`[expense-pipeline] Download result: buffer=${buffer ? buffer.length + "bytes" : "NULL"} error=${dlError || "none"}`);
+                  const dlRes = await fetch(`${uazapiUrl}/message/download`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", token: instForExpense.instance_token || "" },
+                    body: JSON.stringify({ id: msgId, return_link: true }),
+                  });
+                  const dlData = dlRes.ok ? await dlRes.json() : null;
+                  const imageUrl = dlData?.fileURL || dlData?.url || mediaUrl;
+                  console.log(`[expense-pipeline] Image URL: ${imageUrl}`);
 
-                  if (buffer) {
-                    // 2. Upload to expense-attachments bucket
-                    const contentType = mediaData.mimetype || "image/jpeg";
-                    const { publicUrl } = await uploadToExpenseBucket(
-                      supabase,
-                      instForExpense.tenant_id,
-                      fileName,
-                      buffer,
-                      contentType,
-                    );
-
-                    // 3. Extract expense data via Vision AI
+                  if (imageUrl) {
+                    // 2. Extract expense data via Vision AI (use decrypted URL directly)
                     const { extractExpenseData } = await import("../_shared/ai.ts");
                     const expense = await extractExpenseData(
-                      publicUrl,
+                      imageUrl,
                       captionLower || undefined,
                       instForExpense.tenant_id,
                     );
+                    console.log(`[expense-pipeline] AI extracted: ${JSON.stringify(expense)}`);
 
-                    // 4. Save to asaas_expenses
+                    // 3. Save to asaas_expenses
+                    const fileName = `receipt_${msgId || Date.now()}.jpg`;
                     const { error: expErr } = await supabase.from("asaas_expenses").insert({
                       tenant_id: instForExpense.tenant_id,
                       description: expense.description || `Despesa via WhatsApp — ${expense.supplier}`,
@@ -590,7 +580,7 @@ Deno.serve(async (req) => {
                       amount: expense.amount,
                       category: expense.category,
                       supplier: expense.supplier,
-                      attachment_url: publicUrl,
+                      attachment_url: imageUrl,
                       attachment_name: fileName,
                     });
 
