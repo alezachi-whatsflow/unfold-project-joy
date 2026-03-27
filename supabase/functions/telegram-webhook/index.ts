@@ -83,18 +83,22 @@ Deno.serve(async (req) => {
       const senderName = [fromUser?.first_name, fromUser?.last_name].filter(Boolean).join(" ") || fromUser?.username || String(chatId);
       const isGroup = message.chat?.type === "group" || message.chat?.type === "supergroup";
 
-      await supabase.from("chat_messages").insert({
-        tenant_id: integration.tenant_id,
-        sender_id: String(fromUser?.id || chatId),
-        content: text || `[${contentType}]`,
-        content_type: contentType,
-        message_type: contentType,
-        channel: "telegram",
+      // Save to whatsapp_messages (same table the inbox reads from)
+      const instanceName = `telegram_${integration.bot_username || integration.id}`;
+      const remoteJid = `tg_${chatId}@telegram`;
+
+      await supabase.from("whatsapp_messages").insert({
+        instance_name: instanceName,
+        remote_jid: remoteJid,
+        message_id: `tg_${message.message_id}_${chatId}`,
         direction: "incoming",
-        timestamp: new Date(message.date * 1000).toISOString(),
-        wa_message_id: `tg_${message.message_id}_${chatId}`,
+        type: contentType,
+        body: text || `[${contentType}]`,
         media_url: mediaUrl,
-        metadata: {
+        status: 4,
+        sender_name: senderName,
+        tenant_id: integration.tenant_id,
+        raw_payload: {
           provider: "TELEGRAM",
           integration_id: integration.id,
           chat_id: chatId,
@@ -111,11 +115,10 @@ Deno.serve(async (req) => {
           is_edited: isEdited,
           is_group: isGroup,
           reply_to: message.reply_to_message?.message_id || null,
-          raw: payload,
         },
       }).then(({ error }) => {
         if (error) console.error("[telegram-webhook] Insert error:", error.message);
-        else console.log(`[telegram-webhook] Saved msg from ${senderName} in chat ${chatId}`);
+        else console.log(`[telegram-webhook] Saved msg from ${senderName} in chat ${chatId} to whatsapp_messages`);
       });
     }
 
@@ -124,21 +127,22 @@ Deno.serve(async (req) => {
       const cb = payload.callback_query;
       console.log(`[telegram-webhook] Callback: ${cb.data} from ${cb.from?.id}`);
 
-      await supabase.from("chat_messages").insert({
-        tenant_id: integration.tenant_id,
-        sender_id: String(cb.from?.id),
-        content: `[Botão: ${cb.data}]`,
-        content_type: "callback",
-        message_type: "callback",
-        channel: "telegram",
+      const cbChatId = cb.message?.chat?.id;
+      const cbInstanceName = `telegram_${integration.bot_username || integration.id}`;
+      await supabase.from("whatsapp_messages").insert({
+        instance_name: cbInstanceName,
+        remote_jid: `tg_${cbChatId}@telegram`,
+        message_id: `tg_cb_${cb.id}`,
         direction: "incoming",
-        timestamp: new Date().toISOString(),
-        wa_message_id: `tg_cb_${cb.id}`,
-        metadata: {
+        type: "text",
+        body: `[Botão: ${cb.data}]`,
+        status: 4,
+        tenant_id: integration.tenant_id,
+        raw_payload: {
           provider: "TELEGRAM",
           integration_id: integration.id,
           callback_data: cb.data,
-          chat_id: cb.message?.chat?.id,
+          chat_id: cbChatId,
           message_id: cb.message?.message_id,
         },
       });
