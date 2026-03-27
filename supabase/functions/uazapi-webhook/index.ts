@@ -455,6 +455,126 @@ Deno.serve(async (req) => {
             }
           }
 
+          // ── EXPENSE DETECTION: incoming image from admin → extract & save ──
+          if (
+            normalized.direction === "incoming" &&
+            (normalized.type === "image" || normalized.type === "document") &&
+            normalized.media_url
+          ) {
+            try {
+              // Resolve tenant_id for this instance
+              const { data: instForExpense } = await supabase
+                .from("whatsapp_instances")
+                .select("tenant_id, instance_token")
+                .or(`instance_name.eq.${instance},instance_token.eq.${instance}`)
+                .limit(1)
+                .maybeSingle();
+
+              if (instForExpense?.tenant_id) {
+                // Check if sender is an admin/owner of this tenant
+                const senderPhone = normalized.remote_jid?.replace(/@.*$/, "") || "";
+                const { data: adminUser } = await supabase
+                  .from("user_tenants")
+                  .select("user_id, role")
+                  .eq("tenant_id", instForExpense.tenant_id)
+                  .in("role", ["owner", "admin", "super_admin"])
+                  .limit(50);
+
+                // Match sender phone against admin profiles
+                let isAdmin = false;
+                if (adminUser?.length) {
+                  for (const au of adminUser) {
+                    const { data: profile } = await supabase
+                      .from("profiles")
+                      .select("phone")
+                      .eq("id", au.user_id)
+                      .maybeSingle();
+                    if (profile?.phone && senderPhone.endsWith(profile.phone.replace(/\D/g, "").slice(-10))) {
+                      isAdmin = true;
+                      break;
+                    }
+                  }
+                }
+
+                // Check caption trigger: must contain "despesa" or "gasto" or "nota" or "recibo"
+                const captionLower = String(normalized.body || normalized.caption || "").toLowerCase();
+                const hasExpenseTrigger = /despesa|gasto|nota\s*fiscal|recibo|nf[-\s]?e?|comprovante/i.test(captionLower);
+
+                if (isAdmin && hasExpenseTrigger) {
+                  console.log(`[expense-pipeline] Triggered for ${senderPhone} tenant=${instForExpense.tenant_id}`);
+
+                  // 1. Download media
+                  const UAZAPI_BASE_URL = Deno.env.get("UAZAPI_BASE_URL") || "";
+                  const { normalizeMediaData, downloadMedia, uploadToExpenseBucket } = await import("../_shared/media-processor.ts");
+                  const mediaData = normalizeMediaData(msg);
+                  const { buffer, fileName } = await downloadMedia(
+                    mediaData,
+                    normalized.message_id,
+                    instForExpense.instance_token || "",
+                    UAZAPI_BASE_URL,
+                  );
+
+                  if (buffer) {
+                    // 2. Upload to expense-attachments bucket
+                    const contentType = mediaData.mimetype || "image/jpeg";
+                    const { publicUrl } = await uploadToExpenseBucket(
+                      supabase,
+                      instForExpense.tenant_id,
+                      fileName,
+                      buffer,
+                      contentType,
+                    );
+
+                    // 3. Extract expense data via Vision AI
+                    const { extractExpenseData } = await import("../_shared/ai.ts");
+                    const expense = await extractExpenseData(
+                      publicUrl,
+                      captionLower || undefined,
+                      instForExpense.tenant_id,
+                    );
+
+                    // 4. Save to asaas_expenses
+                    const { error: expErr } = await supabase.from("asaas_expenses").insert({
+                      tenant_id: instForExpense.tenant_id,
+                      description: expense.description || `Despesa via WhatsApp — ${expense.supplier}`,
+                      date: expense.date,
+                      amount: expense.amount,
+                      category: expense.category,
+                      supplier: expense.supplier,
+                      attachment_url: publicUrl,
+                      attachment_name: fileName,
+                    });
+
+                    if (expErr) {
+                      console.error("[expense-pipeline] Insert error:", expErr.message);
+                    } else {
+                      console.log(`[expense-pipeline] Saved: ${expense.supplier} R$${expense.amount}`);
+
+                      // 5. Send confirmation back via WhatsApp
+                      const confirmText = `[PZAAFI] Despesa registrada. Fornecedor: ${expense.supplier} | Valor: R$ ${expense.amount.toFixed(2)} | Categoria: ${expense.category}.`;
+
+                      if (UAZAPI_BASE_URL && instForExpense.instance_token) {
+                        fetch(`${UAZAPI_BASE_URL}/message/text`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", token: instForExpense.instance_token },
+                          body: JSON.stringify({
+                            to: normalized.remote_jid,
+                            text: confirmText,
+                          }),
+                        }).catch((e: any) => console.error("[expense-pipeline] Reply error:", e.message));
+                      }
+                    }
+                  } else {
+                    console.warn("[expense-pipeline] Media download failed for", normalized.message_id);
+                  }
+                }
+              }
+            } catch (expPipeErr: any) {
+              // Non-blocking: expense pipeline failure should never break message processing
+              console.error("[expense-pipeline] Error:", expPipeErr.message);
+            }
+          }
+
           // Upsert contact info from incoming messages
           if (normalized.direction === "incoming" && normalized.remote_jid) {
             const contactName = msg?.senderName || msg?.pushName || msg?.verifiedBizName || null;

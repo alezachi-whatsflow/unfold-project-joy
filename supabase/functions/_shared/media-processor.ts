@@ -313,6 +313,36 @@ export async function downloadMedia(
   return { buffer: null, fileName, error: "ERROR_ALL_DOWNLOAD_STRATEGIES_FAILED" };
 }
 
+// ── Upload to expense-attachments bucket ──
+
+export async function uploadToExpenseBucket(
+  supabase: any,
+  tenantId: string,
+  fileName: string,
+  buffer: Uint8Array,
+  contentType: string,
+): Promise<{ path: string; publicUrl: string }> {
+  const storagePath = `${tenantId}/${Date.now()}_${fileName}`;
+
+  const { error } = await supabase.storage
+    .from("expense-attachments")
+    .upload(storagePath, buffer, {
+      contentType,
+      upsert: false,
+    });
+
+  if (error) throw new Error(`Upload to expense-attachments failed: ${error.message}`);
+
+  const { data: urlData } = supabase.storage
+    .from("expense-attachments")
+    .getPublicUrl(storagePath);
+
+  return {
+    path: storagePath,
+    publicUrl: urlData?.publicUrl || "",
+  };
+}
+
 // ── Full processing pipeline ──
 
 export async function processMedia(

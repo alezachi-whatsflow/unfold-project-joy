@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Loader2, DollarSign, CalendarIcon, Paperclip, Download, Share2, FileText, Image, X } from "lucide-react";
+import { Loader2, CalendarIcon, Paperclip, Download, Share2, FileText, Image, X } from "lucide-react";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DEFAULT_COST_LINES } from "@/lib/costLineTemplates";
@@ -415,17 +414,56 @@ export default function ExpensesPage() {
 
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.value), 0);
 
+  // ── Ledger table styles (Pzaafi: no radius, no shadow, strict grid) ──
+  const ledgerTh: React.CSSProperties = {
+    padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: 2,
+    textTransform: "uppercase", textAlign: "left", fontFamily: "Inter, system-ui, sans-serif",
+    borderBottom: "none", whiteSpace: "nowrap",
+  };
+  const ledgerTd: React.CSSProperties = {
+    padding: "10px 12px", fontSize: 12, color: "#333",
+    fontFamily: "Inter, system-ui, sans-serif", whiteSpace: "nowrap",
+    verticalAlign: "middle",
+  };
+
+  // Detect AI-generated expenses (have attachment_url containing "expense-attachments" and no reference_code starting with manual prefix)
+  const isAIGenerated = (e: Expense) => !!e.attachment_url && e.attachment_url.includes("expense-attachments") && !e.reference_code?.startsWith("MAN-");
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+      {/* ── Header bar ── */}
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "16px 0", borderBottom: "2px solid #000", marginBottom: 0,
+      }}>
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Despesas</h1>
-          <p className="text-sm text-muted-foreground">Gerencie as despesas da empresa</p>
+          <h1 style={{
+            fontSize: 18, fontWeight: 900, letterSpacing: -0.5,
+            color: "#000", margin: 0, textTransform: "uppercase",
+          }}>Livro de Despesas</h1>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: 3, color: "#999", margin: "4px 0 0", textTransform: "uppercase" }}>
+            Registro Contábil — {expenses.length} lançamentos
+          </p>
         </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, color: "#999", margin: 0, textTransform: "uppercase" }}>Total Acumulado</p>
+            <p style={{
+              fontSize: 22, fontWeight: 900, color: "#000", margin: 0,
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            }}>R$ {totalExpenses.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          </div>
         <PermissionGate module="despesas" action="create">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Nova Despesa</Button>
+              <button
+                onClick={openNew}
+                style={{
+                  background: "#000", color: "#FFF", border: "none", borderRadius: 0,
+                  padding: "10px 20px", fontSize: 10, fontWeight: 700, letterSpacing: 2,
+                  textTransform: "uppercase", cursor: "pointer", fontFamily: "Inter, system-ui, sans-serif",
+                }}
+              >+ NOVA DESPESA</button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -593,71 +631,164 @@ export default function ExpensesPage() {
           </DialogContent>
           </Dialog>
         </PermissionGate>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-destructive" />
-            Total: R$ {totalExpenses.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-          ) : expenses.length === 0 ? (
-            <p className="py-8 text-center text-muted-foreground">Nenhuma despesa cadastrada</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Anexo</TableHead>
-                  <TableHead className="w-24" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenses.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell className="text-sm">{formatDateBR(e.date)}</TableCell>
-                    <TableCell>{e.description}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{e.category || "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{e.supplier || "—"}</TableCell>
-                    <TableCell className="text-right font-medium text-destructive">R$ {Number(e.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-center text-xs">
-                      {e.is_paid ? <span className="text-emerald-500">Pago</span> : e.is_scheduled ? <span className="text-yellow-500">Agendado</span> : <span className="text-muted-foreground">Pendente</span>}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {e.attachment_url ? (
-                        <Button variant="ghost" size="icon" onClick={() => window.open(e.attachment_url!, "_blank")} title={e.attachment_name || "Anexo"}>
-                          {getFileIcon(e.attachment_name || "file")}
-                        </Button>
+      {/* ── Ledger Data Table ── */}
+      <div style={{
+        background: "#FFFFFF", border: "1px solid #000", borderRadius: 0,
+        boxShadow: "none", overflow: "hidden",
+      }}>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center" }}>
+            <Loader2 className="h-6 w-6 animate-spin" style={{ margin: "0 auto", color: "#999" }} />
+            <p style={{ fontSize: 10, letterSpacing: 2, color: "#999", marginTop: 8, textTransform: "uppercase" }}>Carregando registros...</p>
+          </div>
+        ) : expenses.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "#999", fontFamily: "monospace" }}>NENHUM LANÇAMENTO REGISTRADO</p>
+            <p style={{ fontSize: 10, color: "#CCC", marginTop: 4 }}>Envie uma foto de recibo via WhatsApp ou clique em "+ NOVA DESPESA"</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{
+              width: "100%", borderCollapse: "collapse",
+              fontFamily: "Inter, system-ui, sans-serif", fontSize: 12,
+            }}>
+              <thead>
+                <tr style={{ background: "#000", color: "#FFF" }}>
+                  <th style={ledgerTh}>DATA</th>
+                  <th style={ledgerTh}>FORNECEDOR</th>
+                  <th style={ledgerTh}>DESCRIÇÃO</th>
+                  <th style={ledgerTh}>CATEGORIA</th>
+                  <th style={{ ...ledgerTh, textAlign: "right" }}>VALOR</th>
+                  <th style={{ ...ledgerTh, textAlign: "center" }}>STATUS</th>
+                  <th style={{ ...ledgerTh, textAlign: "center" }}>COMPROVANTE</th>
+                  <th style={{ ...ledgerTh, textAlign: "center" }}>ORIGEM</th>
+                  <th style={{ ...ledgerTh, width: 80 }} />
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.map((e, idx) => (
+                  <tr
+                    key={e.id}
+                    style={{
+                      background: idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA",
+                      borderBottom: "1px solid #E8E5DF",
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(ev) => (ev.currentTarget.style.background = "#F5F5F0")}
+                    onMouseLeave={(ev) => (ev.currentTarget.style.background = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA")}
+                  >
+                    <td style={ledgerTd}>
+                      <span style={{ fontFamily: "monospace", fontSize: 11, color: "#000" }}>
+                        {formatDateBR(e.date)}
+                      </span>
+                    </td>
+                    <td style={ledgerTd}>
+                      <span style={{ fontWeight: 600, color: "#000" }}>{e.supplier || "—"}</span>
+                    </td>
+                    <td style={{ ...ledgerTd, color: "#444", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {e.description}
+                    </td>
+                    <td style={ledgerTd}>
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase",
+                        color: "#666", padding: "2px 6px", border: "1px solid #DDD", background: "#FAFAFA",
+                        display: "inline-block",
+                      }}>{e.category || "—"}</span>
+                    </td>
+                    <td style={{ ...ledgerTd, textAlign: "right" }}>
+                      <span style={{
+                        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                        fontSize: 12, fontWeight: 700, color: "#000",
+                      }}>
+                        R$ {Number(e.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                    </td>
+                    <td style={{ ...ledgerTd, textAlign: "center" }}>
+                      {e.is_paid ? (
+                        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: "#000", textTransform: "uppercase" }}>PAGO</span>
+                      ) : e.is_scheduled ? (
+                        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: "#999", textTransform: "uppercase" }}>AGENDADO</span>
                       ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: "#CCC", textTransform: "uppercase" }}>PENDENTE</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
+                    </td>
+                    <td style={{ ...ledgerTd, textAlign: "center" }}>
+                      {e.attachment_url ? (
+                        <a
+                          href={e.attachment_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: 10, fontWeight: 600, color: "#000",
+                            textDecoration: "underline", textUnderlineOffset: 2,
+                            fontFamily: "monospace", letterSpacing: 0.5,
+                          }}
+                        >VER RECIBO</a>
+                      ) : (
+                        <span style={{ fontSize: 10, color: "#DDD" }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ ...ledgerTd, textAlign: "center" }}>
+                      {isAIGenerated(e) ? (
+                        <span style={{
+                          fontSize: 8, fontWeight: 800, letterSpacing: 1,
+                          color: "#FFF", background: "#000", padding: "2px 5px",
+                          fontFamily: "monospace", display: "inline-block",
+                        }}>AI</span>
+                      ) : (
+                        <span style={{ fontSize: 8, color: "#CCC", fontFamily: "monospace" }}>MANUAL</span>
+                      )}
+                    </td>
+                    <td style={{ ...ledgerTd, textAlign: "center" }}>
+                      <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
                         <PermissionGate module="despesas" action="edit">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(e)}><Pencil className="h-4 w-4" /></Button>
+                          <button
+                            onClick={() => openEdit(e)}
+                            style={{
+                              background: "none", border: "1px solid #DDD", borderRadius: 0,
+                              padding: "4px 8px", cursor: "pointer", fontSize: 10, color: "#000",
+                              fontFamily: "monospace",
+                            }}
+                            onMouseEnter={(ev) => (ev.currentTarget.style.borderColor = "#000")}
+                            onMouseLeave={(ev) => (ev.currentTarget.style.borderColor = "#DDD")}
+                          >EDIT</button>
                         </PermissionGate>
                         <PermissionGate module="despesas" action="delete">
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <button
+                            onClick={() => handleDelete(e.id)}
+                            style={{
+                              background: "none", border: "1px solid #DDD", borderRadius: 0,
+                              padding: "4px 8px", cursor: "pointer", fontSize: 10, color: "#999",
+                              fontFamily: "monospace",
+                            }}
+                            onMouseEnter={(ev) => { ev.currentTarget.style.borderColor = "#000"; ev.currentTarget.style.color = "#000"; }}
+                            onMouseLeave={(ev) => { ev.currentTarget.style.borderColor = "#DDD"; ev.currentTarget.style.color = "#999"; }}
+                          >DEL</button>
                         </PermissionGate>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              </tbody>
+              {/* Footer total row */}
+              <tfoot>
+                <tr style={{ background: "#000", color: "#FFF" }}>
+                  <td colSpan={4} style={{ ...ledgerTh, textAlign: "right", fontWeight: 700 }}>TOTAL</td>
+                  <td style={{ ...ledgerTh, textAlign: "right" }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: 13, fontWeight: 900 }}>
+                      R$ {totalExpenses.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </span>
+                  </td>
+                  <td colSpan={4} style={ledgerTh} />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
