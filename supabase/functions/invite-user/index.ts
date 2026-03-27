@@ -154,6 +154,7 @@ Deno.serve(async (req) => {
       // Update profile
       await adminClient.from("profiles").upsert({
         id: existingUser.id,
+        email,
         role: assignedRole,
         full_name,
         invitation_status: "invited",
@@ -214,6 +215,7 @@ Deno.serve(async (req) => {
     // Update profile with invitation tracking
     await adminClient.from("profiles").upsert({
       id: newUser.user.id,
+      email,
       role: assignedRole,
       full_name,
       invitation_status: "invited",
