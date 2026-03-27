@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import LeftPanel from "./panels/LeftPanel";
 import ChatPanel from "./panels/ChatPanel";
@@ -715,11 +716,12 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
       // Send via Telegram Bot API
       const chatId = selectedJid.replace("tg_", "").replace("@telegram", "");
       const tId = localStorage.getItem("whatsflow_default_tenant_id");
-      const { error } = await supabase.functions.invoke("telegram-send", {
-        body: { chat_id: chatId, text, tenant_id: tId },
+      const { data: tgResult, error: tgError } = await supabase.functions.invoke("telegram-send", {
+        body: { chat_id: Number(chatId), text, tenant_id: tId },
       });
-      if (error) {
-        console.error("Telegram send error:", error);
+      if (tgError || tgResult?.error) {
+        console.error("Telegram send error:", tgError || tgResult);
+        toast.error(`Erro ao enviar: ${tgResult?.error || tgError?.message || "Falha no envio"}`);
         return;
       }
       // Save outgoing message locally (webhook only saves incoming)
@@ -731,7 +733,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         type: "text",
         body: text,
         status: 4,
-        tenant_id: localStorage.getItem("whatsflow_default_tenant_id"),
+        tenant_id: tId,
       });
     } else {
       // Send via uazapi (WhatsApp Web)
