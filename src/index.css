@@ -307,27 +307,27 @@
   color: var(--acc, #00C896);
 }
 
-/* Tooltip that appears on hover */
+/* Tooltip that appears below on hover */
 .nav-icon-tooltip {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 4px);
   left: 50%;
-  transform: translateX(-50%) translateY(4px);
+  transform: translateX(-50%) translateY(-4px);
   opacity: 0;
   pointer-events: none;
   white-space: nowrap;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  background: var(--bg-card, rgba(8,12,10,0.9));
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--bg-card, rgba(8,12,10,0.92));
   border: 1px solid var(--border, rgba(0,200,150,0.15));
   color: var(--text-primary, #F0FDF8);
   transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 50;
+  z-index: 99999;
 }
-.nav-icon-hover:hover .nav-icon-tooltip,
-.group:hover > .nav-icon-tooltip {
+.nav-icon-hover:hover > .nav-icon-tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }

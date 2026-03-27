@@ -7,7 +7,7 @@ import {
   PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
   Users, Package, ShoppingCart, MessageSquare, LayoutDashboard, Radar,
   FileBarChart, Settings, Rocket, Bell, Menu, X, Plug,
-  BarChart3, Brain, Puzzle, CreditCard,
+  BarChart3, Puzzle, CreditCard,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
@@ -87,7 +87,6 @@ export default function HomePage() {
     { icon: BarChart3, label: "Analytics", route: "/analytics", group: 3 },
     { icon: Radar, label: "Int. Digital", route: "/intelligence", group: 3 },
     { icon: FileBarChart, label: "Relatórios", route: "/reports", group: 3 },
-    { icon: Brain, label: "IA Composable", route: "/ia", group: 3 },
     // Sistema
     { icon: Users, label: "Usuários", route: "/usuarios", group: 4 },
     { icon: Settings, label: "Configurações", route: "/settings", group: 4 },

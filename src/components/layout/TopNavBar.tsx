@@ -4,7 +4,7 @@ import { ThemeSwitcher } from "./ThemeSwitcher";
 import {
   PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
   Users, Package, ShoppingCart, BarChart3,
-  FileBarChart, Brain, Radar, Settings, CreditCard,
+  FileBarChart, Radar, Settings, CreditCard,
   LayoutDashboard, Puzzle,
 } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
@@ -22,7 +22,6 @@ const NAV_ITEMS: { route: string; icon: typeof Home; label: string; group: strin
   { route: "/dashboard",   icon: LayoutDashboard,  label: "Dashboard",      group: "crm" },
   { route: "/analytics",   icon: BarChart3,         label: "Analytics",      group: "ana" },
   { route: "/reports",     icon: FileBarChart,      label: "Relatórios",     group: "ana" },
-  { route: "/ia",          icon: Brain,             label: "IA",             group: "ana" },
   { route: "/intelligence",icon: Radar,             label: "Int. Digital",   group: "ana" },
   { route: "/usuarios",    icon: Users,             label: "Usuários",       group: "sys" },
   { route: "/integracoes", icon: Puzzle,            label: "Integrações",    group: "sys" },
@@ -46,6 +45,9 @@ export function TopNavBar() {
         alignItems: "center",
         padding: "0 12px",
         flexShrink: 0,
+        position: "relative",
+        zIndex: 40,
+        overflow: "visible",
       }}
     >
 
@@ -56,7 +58,7 @@ export function TopNavBar() {
         alignItems: "center",
         justifyContent: "center",
         gap: 2,
-        overflowX: "auto",
+        overflow: "visible",
       }}>
         {NAV_ITEMS.map((item, i) => {
           const Icon = item.icon;
@@ -68,16 +70,14 @@ export function TopNavBar() {
           return (
             <span key={item.route} style={{ display: "flex", alignItems: "center" }}>
               {showSep && <div style={{ width: 1, height: 20, background: "var(--border, #E8E5DF)", margin: "0 4px", flexShrink: 0 }} />}
-              <div className="relative group" style={{ display: "inline-flex" }}>
-                <button
-                  onClick={() => navigate(fullRoute)}
-                  className={`nav-icon-hover ${isActive ? "active" : ""}`}
-                  style={{ width: 32, height: 32, border: "none" }}
-                >
-                  <Icon size={16} />
-                </button>
-                <div className="nav-icon-tooltip">{item.label}</div>
-              </div>
+              <button
+                onClick={() => navigate(fullRoute)}
+                className={`nav-icon-hover ${isActive ? "active" : ""}`}
+                style={{ width: 32, height: 32, border: "none", position: "relative" }}
+              >
+                <Icon size={16} />
+                <span className="nav-icon-tooltip">{item.label}</span>
+              </button>
             </span>
           );
         })}
