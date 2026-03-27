@@ -193,6 +193,8 @@ const IntegracoesPage = () => {
           toast.error(`Erro ao conectar ML: ${data?.error || invokeErr?.message}`);
         } else {
           toast.success(`Mercado Livre conectado: ${data?.seller_name || "Vendedor"}`);
+          setMlIntegration({ ...mlIntegration, name: data?.seller_name, ml_user_id: data?.ml_user_id, status: "active", credentials: data?.credentials });
+          setMlStep("connected");
           setExpandedSection("ml");
         }
       });
