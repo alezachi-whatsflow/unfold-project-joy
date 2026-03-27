@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type CSSProperties, type ChangeEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type CSSProperties, type ChangeEvent } from "react";
 import {
   Smile,
   Paperclip,
@@ -15,6 +15,8 @@ import {
   Loader2,
   Plus,
   Trash2,
+  Square,
+  Circle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,13 +51,54 @@ function getAcceptByMode(mode: AttachMode) {
   return "*/*";
 }
 
+// ── Emoji picker data ──────────────────────────────────────────────
+const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
+  {
+    label: "Frequentes",
+    emojis: ["😂","❤️","👍","🔥","😍","🙏","😭","😊","🥰","✨","😅","🤣","💕","🎉","😁","💜","😢","🤗","💪","😘","👏","😎","🙌","💛","😆","💯","🥺","🤩","💗","😜","😉","💖","😋","🤔","💀"],
+  },
+  {
+    label: "Rostos",
+    emojis: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","🥲","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🫢","🤫","🤔","😐","😑","😶","🫠","😏","😒","🙄","😬","😮‍💨","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🥵","🥶","😵","🤯","🥳","🥸","😎","🤓","🧐"],
+  },
+  {
+    label: "Mãos",
+    emojis: ["👋","🤚","🖐️","✋","🖖","🫱","🫲","🫳","🫴","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏"],
+  },
+  {
+    label: "Corações",
+    emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","❤️‍🩹","❣️","💕","💞","💓","💗","💖","💘","💝","💟","♥️","🫀","💑","💏","👩‍❤️‍👨","👨‍❤️‍👨","👩‍❤️‍👩"],
+  },
+  {
+    label: "Objetos",
+    emojis: ["⌚","📱","💻","⌨️","🖥️","🖨️","🖱️","💾","💿","📷","📹","🎥","📞","☎️","📺","📻","🎙️","⏰","🔋","🔌","💡","🔦","🕯️","📦","💰","💳","📧","📬","📝","📁","📎","✂️","🔒","🔑","🔨","🧰"],
+  },
+];
+
+function formatRecordingTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelReply }: ChatInputProps) {
   const [text, setText] = useState("");
   const [showAttach, setShowAttach] = useState(false);
   const [attachMode, setAttachMode] = useState<AttachMode>(null);
   const [sending, setSending] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [sendingAudio, setSendingAudio] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Attachment form fields
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -74,6 +117,146 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + "px";
     }
   }, [text]);
+
+  // Close emoji picker on click outside
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(e.target as Node) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(e.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showEmojiPicker]);
+
+  // Cleanup recording timer on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  const insertEmoji = useCallback((emoji: string) => {
+    const ta = textareaRef.current;
+    if (ta) {
+      const start = ta.selectionStart ?? text.length;
+      const end = ta.selectionEnd ?? text.length;
+      const newText = text.slice(0, start) + emoji + text.slice(end);
+      setText(newText);
+      // Restore cursor after emoji
+      requestAnimationFrame(() => {
+        ta.focus();
+        const pos = start + emoji.length;
+        ta.setSelectionRange(pos, pos);
+      });
+    } else {
+      setText((prev) => prev + emoji);
+    }
+  }, [text]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      audioChunksRef.current = [];
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        // Handled in stopRecording
+      };
+
+      recorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        toast.error("Permissão de microfone negada. Habilite nas configurações do navegador.");
+      } else {
+        toast.error("Não foi possível acessar o microfone.");
+      }
+    }
+  };
+
+  const stopRecording = async () => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === "inactive") return;
+
+    return new Promise<Blob>((resolve) => {
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        resolve(blob);
+      };
+      recorder.stop();
+    });
+  };
+
+  const cleanupRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    setRecordingTime(0);
+    setSendingAudio(false);
+  };
+
+  const handleStopAndSend = async () => {
+    if (!onSendAttachment) return;
+    setSendingAudio(true);
+    try {
+      const blob = await stopRecording();
+      if (!blob || blob.size === 0) {
+        toast.error("Gravação vazia.");
+        cleanupRecording();
+        return;
+      }
+
+      const file = new File([blob], `audio_${Date.now()}.webm`, { type: "audio/webm" });
+      const url = await uploadFileAndGetUrl(file);
+
+      await onSendAttachment({
+        type: "media",
+        mediaType: "audio",
+        file: url,
+      });
+
+      toast.success("Áudio enviado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar áudio.");
+    } finally {
+      cleanupRecording();
+    }
+  };
+
+  const handleCancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    cleanupRecording();
+  };
 
   const handleSend = () => {
     if (!text.trim()) return;
@@ -448,47 +631,138 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         </div>
       )}
 
-      <div className="flex items-end gap-2 px-4 py-2.5">
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={() => { setShowAttach(false); setAttachMode(null); }} aria-label="Emoji" style={{ color: "var(--wa-text-secondary)" }}>
-            <Smile size={24} />
+      {/* ── Emoji Picker ── */}
+      {showEmojiPicker && (
+        <div
+          ref={emojiPickerRef}
+          className="mx-4 mb-1"
+          style={{
+            backgroundColor: "#233138",
+            border: "1px solid var(--wa-border)",
+            borderRadius: 10,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            animation: "messageIn 150ms ease-out",
+            maxHeight: 280,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          {/* Category tabs */}
+          <div className="flex gap-1 px-2 pt-2 pb-1" style={{ borderBottom: "1px solid var(--wa-border)" }}>
+            {EMOJI_CATEGORIES.map((cat, i) => (
+              <button
+                key={cat.label}
+                onClick={() => setEmojiCategory(i)}
+                className="px-2 py-1 text-[11px] rounded transition-colors whitespace-nowrap"
+                style={{
+                  backgroundColor: emojiCategory === i ? "var(--wa-green)" : "transparent",
+                  color: emojiCategory === i ? "#fff" : "var(--wa-text-secondary)",
+                }}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+          {/* Emoji grid */}
+          <div className="overflow-y-auto p-2" style={{ flex: 1 }}>
+            <div className="grid grid-cols-8 gap-0.5">
+              {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
+                <button
+                  key={`${emoji}-${i}`}
+                  onClick={() => insertEmoji(emoji)}
+                  className="text-xl hover:bg-white/10 rounded p-1 transition-colors leading-none"
+                  style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Recording UI ── */}
+      {isRecording ? (
+        <div className="flex items-center gap-3 px-4 py-2.5">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Circle size={12} fill="#EF4444" className="text-red-500 animate-pulse" />
+            <span className="text-sm font-mono" style={{ color: "var(--wa-text-primary)" }}>
+              {formatRecordingTime(recordingTime)}
+            </span>
+            <span className="text-xs" style={{ color: "var(--wa-text-secondary)" }}>Gravando...</span>
+          </div>
+          <button
+            onClick={handleCancelRecording}
+            className="shrink-0 p-2 rounded-full transition-colors hover:bg-white/10"
+            aria-label="Cancelar gravação"
+            style={{ color: "var(--wa-text-secondary)" }}
+          >
+            <Trash2 size={20} />
           </button>
-          <button onClick={() => { setShowAttach(!showAttach); setAttachMode(null); }} aria-label="Anexo" style={{ color: "var(--wa-text-secondary)" }}>
-            <Paperclip size={24} />
+          <button
+            onClick={handleStopAndSend}
+            disabled={sendingAudio}
+            className="shrink-0 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: "#EF4444", width: 40, height: 40, transition: "opacity 200ms" }}
+            aria-label="Parar e enviar"
+          >
+            {sendingAudio ? <Loader2 size={18} className="text-white animate-spin" /> : <Square size={16} className="text-white" />}
           </button>
         </div>
+      ) : (
+        <div className="flex items-end gap-2 px-4 py-2.5">
+          <div className="flex items-center gap-2 shrink-0 relative">
+            <button
+              ref={emojiButtonRef}
+              onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowAttach(false); setAttachMode(null); }}
+              aria-label="Emoji"
+              style={{ color: showEmojiPicker ? "var(--wa-green)" : "var(--wa-text-secondary)" }}
+            >
+              <Smile size={24} />
+            </button>
+            <button onClick={() => { setShowAttach(!showAttach); setAttachMode(null); setShowEmojiPicker(false); }} aria-label="Anexo" style={{ color: "var(--wa-text-secondary)" }}>
+              <Paperclip size={24} />
+            </button>
+          </div>
 
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder="Digite uma mensagem"
-          rows={1}
-          className="flex-1 min-w-0 resize-none border-none outline-none rounded-[10px] px-3 py-2"
-          style={{ backgroundColor: "var(--wa-bg-input)", color: "var(--wa-text-primary)", fontSize: 15, maxHeight: 120 }}
-        />
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Digite uma mensagem"
+            rows={1}
+            className="flex-1 min-w-0 resize-none border-none outline-none rounded-[10px] px-3 py-2"
+            style={{ backgroundColor: "var(--wa-bg-input)", color: "var(--wa-text-primary)", fontSize: 15, maxHeight: 120 }}
+          />
 
-        {text.trim() ? (
-          <button
-            onClick={handleSend}
-            className="shrink-0 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: "var(--wa-green)", width: 40, height: 40, transition: "opacity 200ms, transform 200ms" }}
-            aria-label="Enviar"
-          >
-            <Send size={18} className="text-white" />
-          </button>
-        ) : (
-          <button className="shrink-0" aria-label="Gravar áudio" style={{ color: "var(--wa-green)", transition: "opacity 200ms, transform 200ms" }}>
-            <Mic size={24} />
-          </button>
-        )}
-      </div>
+          {text.trim() ? (
+            <button
+              onClick={handleSend}
+              className="shrink-0 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "var(--wa-green)", width: 40, height: 40, transition: "opacity 200ms, transform 200ms" }}
+              aria-label="Enviar"
+            >
+              <Send size={18} className="text-white" />
+            </button>
+          ) : (
+            <button
+              onClick={startRecording}
+              className="shrink-0"
+              aria-label="Gravar áudio"
+              style={{ color: "var(--wa-green)", transition: "opacity 200ms, transform 200ms" }}
+            >
+              <Mic size={24} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
