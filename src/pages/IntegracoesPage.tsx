@@ -243,6 +243,7 @@ const IntegracoesPage = () => {
         tenant_id: tenantId, provider: "MERCADOLIVRE", channel_id: `ml_pending_${tenantId}`,
         name: "Mercado Livre (pendente)", ml_app_id: mlForm.appId.trim(),
         credentials: { client_secret: mlForm.clientSecret.trim() }, status: "pending",
+        access_token: "pending",
       }));
     }
     setMlSaving(false);
