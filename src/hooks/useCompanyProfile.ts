@@ -22,6 +22,12 @@ export interface CompanyProfile {
   disqualifiers: any[];
   wizard_completed: boolean;
   wizard_step: number;
+  cnpj: string | null;
+  phone: string | null;
+  city: string | null;
+  state: string | null;
+  address: string | null;
+  employee_count: string | null;
 }
 
 export function useCompanyProfile(tenantId?: string) {

@@ -1,17 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useTenantId } from '@/hooks/useTenantId';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, ArrowRight, ArrowLeft, Rocket, CheckCircle2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChannelIcon } from '@/components/ui/ChannelIcon';
+import { Loader2, Sparkles, ArrowRight, ArrowLeft, Rocket, CheckCircle2, Building2, Plug, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
   onComplete: () => void;
 }
 
+// ── Segments list ──
+const SEGMENTS = [
+  'Saúde / Clínica / Estética',
+  'Imobiliário',
+  'Educação / Cursos',
+  'E-commerce / Loja Virtual',
+  'Consultoria / Serviços',
+  'Agência de Marketing',
+  'Advocacia / Jurídico',
+  'Contabilidade',
+  'Tecnologia / SaaS',
+  'Alimentação / Restaurante',
+  'Fitness / Academia',
+  'Automotivo',
+  'Construção Civil',
+  'Varejo / Loja Física',
+  'Indústria / Manufatura',
+  'Seguros / Financeiro',
+  'Pet / Veterinário',
+  'Beleza / Salão',
+  'Turismo / Viagens',
+  'Outro',
+];
+
+const STATES_BR = [
+  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA',
+  'PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
+];
+
+const EMPLOYEE_RANGES = [
+  'Só eu',
+  '2-5 pessoas',
+  '6-15 pessoas',
+  '16-50 pessoas',
+  '51-200 pessoas',
+  '200+ pessoas',
+];
+
+// ── AI Questions (steps 2-4) ──
 const QUESTIONS = [
   {
     id: 1,
@@ -36,33 +79,222 @@ const QUESTIONS = [
   },
 ];
 
+// Step mapping: 0=company, 1=integrations, 2-4=questions, 5=loading, 6=success
+const TOTAL_INTERACTIVE_STEPS = 5; // 0,1,2,3,4
+
+// ── Integration channel definitions ──
+interface ChannelStatus {
+  key: string;
+  label: string;
+  channel: "whatsapp_web" | "whatsapp_meta" | "telegram" | "webchat" | "mercadolivre";
+  connected: boolean;
+  detail: string;
+}
+
 export default function WizardLayout({ onComplete }: Props) {
   const tenantId = useTenantId();
-  const { upsertProfile } = useCompanyProfile(tenantId);
+  const { slug } = useParams<{ slug?: string }>();
+  const navigate = useNavigate();
+  const { profile, upsertProfile } = useCompanyProfile(tenantId);
 
-  const [step, setStep] = useState(0); // 0-2 = questions, 3 = loading, 4 = success
+  // step: 0=company, 1=integrations, 2-4=AI questions, 5=loading, 6=success
+  const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState(['', '', '']);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState<{ pipeline_name: string; stages: any[]; card_schema: any[] } | null>(null);
+  const [result, setResult] = useState<{
+    pipeline_name: string;
+    stages: any[];
+    card_schema: any[];
+    departments?: Array<{ name: string; color: string; description: string }>;
+    tags?: Array<{ name: string; color: string; category: string }>;
+    quick_replies?: Array<{ title: string; shortcut: string; body: string }>;
+    welcome_message?: string;
+    away_message?: string;
+    business_hours?: string;
+    follow_ups?: Array<{ title: string; body: string }>;
+  } | null>(null);
 
-  const currentAnswer = answers[step] || '';
-  const canAdvance = currentAnswer.trim().length >= 10;
-  const isLastQuestion = step === 2;
+  // Company form state
+  const [company, setCompany] = useState({
+    company_name: '',
+    cnpj: '',
+    segment: '',
+    phone: '',
+    city: '',
+    state: '',
+    employee_count: '',
+  });
+
+  // Integration detection state
+  const [channels, setChannels] = useState<ChannelStatus[]>([]);
+  const [loadingChannels, setLoadingChannels] = useState(false);
+
+  // Pre-fill from existing profile
+  useEffect(() => {
+    if (profile) {
+      setCompany({
+        company_name: profile.company_name || '',
+        cnpj: profile.cnpj || '',
+        segment: profile.segment || '',
+        phone: profile.phone || '',
+        city: profile.city || '',
+        state: profile.state || '',
+        employee_count: profile.employee_count || '',
+      });
+    }
+  }, [profile]);
+
+  // ── Fetch integration status ──
+  const fetchChannels = useCallback(async () => {
+    if (!tenantId) return;
+    setLoadingChannels(true);
+    try {
+      const result: ChannelStatus[] = [];
+
+      // 1. WhatsApp Web (uazapi instances)
+      const { data: waInstances } = await supabase
+        .from('whatsapp_instances')
+        .select('id, instance_name, status')
+        .eq('tenant_id', tenantId);
+
+      const waConnected = waInstances?.some((i) => i.status === 'connected' || i.status === 'open') || false;
+      result.push({
+        key: 'whatsapp_web',
+        label: 'WhatsApp Web',
+        channel: 'whatsapp_web',
+        connected: waConnected,
+        detail: waConnected
+          ? `${waInstances?.filter((i) => i.status === 'connected' || i.status === 'open').length} conectada(s)`
+          : waInstances?.length ? 'Desconectado' : 'Não configurado',
+      });
+
+      // 2. Meta Cloud API (WABA)
+      const { data: metaInt } = await supabase
+        .from('channel_integrations')
+        .select('id, status, name')
+        .eq('tenant_id', tenantId)
+        .eq('provider', 'WABA')
+        .eq('status', 'active');
+
+      result.push({
+        key: 'whatsapp_meta',
+        label: 'Meta Cloud API',
+        channel: 'whatsapp_meta',
+        connected: (metaInt?.length || 0) > 0,
+        detail: metaInt?.length ? `${metaInt.length} canal(is) ativo(s)` : 'Não configurado',
+      });
+
+      // 3. Telegram
+      const { data: tgInt } = await supabase
+        .from('channel_integrations')
+        .select('id, status, bot_username')
+        .eq('tenant_id', tenantId)
+        .eq('provider', 'TELEGRAM')
+        .eq('status', 'active');
+
+      result.push({
+        key: 'telegram',
+        label: 'Telegram',
+        channel: 'telegram',
+        connected: (tgInt?.length || 0) > 0,
+        detail: tgInt?.length ? `@${tgInt[0].bot_username || 'bot'}` : 'Não configurado',
+      });
+
+      // 4. Webchat
+      const { data: wcConfig } = await supabase
+        .from('webchat_config')
+        .select('id, is_enabled')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+
+      result.push({
+        key: 'webchat',
+        label: 'Webchat',
+        channel: 'webchat',
+        connected: wcConfig?.is_enabled || false,
+        detail: wcConfig?.is_enabled ? 'Ativo' : 'Não configurado',
+      });
+
+      // 5. Mercado Livre
+      const { data: mlInt } = await supabase
+        .from('channel_integrations')
+        .select('id, status')
+        .eq('tenant_id', tenantId)
+        .eq('provider', 'MERCADOLIVRE')
+        .eq('status', 'active');
+
+      result.push({
+        key: 'mercadolivre',
+        label: 'Mercado Livre',
+        channel: 'mercadolivre',
+        connected: (mlInt?.length || 0) > 0,
+        detail: mlInt?.length ? 'Conectado' : 'Não configurado',
+      });
+
+      setChannels(result);
+    } catch (err) {
+      console.error('Error fetching channels:', err);
+    } finally {
+      setLoadingChannels(false);
+    }
+  }, [tenantId]);
+
+  useEffect(() => {
+    if (step === 1) fetchChannels();
+  }, [step, fetchChannels]);
+
+  const hasAnyIntegration = channels.some((c) => c.connected);
+
+  const canAdvanceCompany = company.company_name.trim().length >= 3 && company.segment.length > 0;
+
+  // Questions are steps 2-4, so question index = step - 2
+  const questionIndex = step - 2;
+  const currentAnswer = answers[questionIndex] || '';
+  const canAdvanceQuestion = currentAnswer.trim().length >= 10;
+  const isLastQuestion = step === 4;
 
   function updateAnswer(value: string) {
     setAnswers(prev => {
       const next = [...prev];
-      next[step] = value;
+      next[questionIndex] = value;
       return next;
     });
   }
 
+  async function handleSaveCompany() {
+    try {
+      await upsertProfile({
+        company_name: company.company_name,
+        cnpj: company.cnpj || null,
+        segment: company.segment,
+        phone: company.phone || null,
+        city: company.city || null,
+        state: company.state || null,
+        employee_count: company.employee_count || null,
+        wizard_step: 1,
+      } as any);
+      setStep(1);
+    } catch {
+      toast.error('Erro ao salvar dados da empresa');
+    }
+  }
+
+  function handleGoToIntegracoes() {
+    const basePath = slug ? `/app/${slug}` : '';
+    navigate(`${basePath}/integracoes`);
+  }
+
   async function handleGenerate() {
-    setStep(3); // loading state
+    setStep(5); // loading state
     setIsGenerating(true);
 
     try {
-      const combined = QUESTIONS.map((q, i) =>
+      const companyContext = `**Empresa:** ${company.company_name}\n**Segmento:** ${company.segment}\n**Cidade/Estado:** ${company.city || ''}/${company.state || ''}\n**Porte:** ${company.employee_count || 'Não informado'}`;
+
+      const connectedChannels = channels.filter(c => c.connected).map(c => c.label).join(', ');
+      const channelContext = connectedChannels ? `\n**Canais conectados:** ${connectedChannels}` : '';
+
+      const combined = companyContext + channelContext + '\n\n' + QUESTIONS.map((q, i) =>
         `**${q.title}**\n${answers[i]}`
       ).join('\n\n');
 
@@ -100,7 +332,6 @@ export default function WizardLayout({ onComplete }: Props) {
 
         if (pipelineError) {
           console.error('Pipeline insert error:', pipelineError);
-          // Try update if insert failed (maybe default already exists)
           await supabase
             .from('sales_pipelines')
             .update({
@@ -111,26 +342,97 @@ export default function WizardLayout({ onComplete }: Props) {
             .eq('tenant_id', tenantId)
             .eq('is_default', true);
         }
+
+        // Departments, tags, quick replies are saved in handleFinish after user review
       }
 
-      setStep(4); // success
+      setStep(6); // success
     } catch (err) {
       console.error('generate-crm-schema error:', err);
       toast.error(err instanceof Error ? err.message : 'Erro ao gerar CRM');
-      setStep(2); // go back to last question
+      setStep(4); // go back to last question
     } finally {
       setIsGenerating(false);
     }
   }
 
+  // Editable copies for review step
+  const [editDepartments, setEditDepartments] = useState<Array<{ name: string; color: string; description: string }>>([]);
+  const [editTags, setEditTags] = useState<Array<{ name: string; color: string; category: string }>>([]);
+  const [editQuickReplies, setEditQuickReplies] = useState<Array<{ title: string; shortcut: string; body: string }>>([]);
+  const [editWelcome, setEditWelcome] = useState('');
+  const [editAway, setEditAway] = useState('');
+  const [editHours, setEditHours] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Populate editable state when result arrives
+  useEffect(() => {
+    if (result && step === 6) {
+      setEditDepartments(result.departments || []);
+      setEditTags(result.tags || []);
+      setEditQuickReplies(result.quick_replies || []);
+      setEditWelcome(result.welcome_message || '');
+      setEditAway(result.away_message || '');
+      setEditHours(result.business_hours || '');
+    }
+  }, [result, step]);
+
   async function handleFinish() {
-    await upsertProfile({ wizard_completed: true, wizard_step: 6 } as any);
-    toast.success('CRM personalizado ativado!');
-    onComplete();
+    if (!tenantId) return;
+    setIsSaving(true);
+
+    try {
+      // Save edited departments
+      if (editDepartments.length) {
+        for (const dept of editDepartments) {
+          await supabase.from('departments').upsert({
+            tenant_id: tenantId,
+            name: dept.name,
+            color: dept.color || '#6366f1',
+            description: dept.description || '',
+          }, { onConflict: 'tenant_id,name' }).catch(() => {});
+        }
+      }
+
+      // Save edited tags
+      if (editTags.length) {
+        for (const tag of editTags) {
+          await supabase.from('tenant_tags').upsert({
+            tenant_id: tenantId,
+            name: tag.name,
+            color: tag.color || '#6366f1',
+            category: tag.category || 'general',
+          }, { onConflict: 'tenant_id,name' }).catch(() => {});
+        }
+      }
+
+      // Save edited quick replies (delete old AI-generated ones first, then insert fresh)
+      if (editQuickReplies.length) {
+        // Only insert; existing ones from handleGenerate are already there but we re-insert edited versions
+        await supabase.from('quick_replies').delete().eq('tenant_id', tenantId);
+        for (const qr of editQuickReplies) {
+          await supabase.from('quick_replies').insert({
+            tenant_id: tenantId,
+            title: qr.title,
+            shortcut: qr.shortcut,
+            body: qr.body,
+          }).catch(() => {});
+        }
+      }
+
+      await upsertProfile({ wizard_completed: true, wizard_step: 6 } as any);
+      toast.success('CRM personalizado ativado!');
+      onComplete();
+    } catch (err) {
+      console.error('handleFinish error:', err);
+      toast.error('Erro ao salvar configurações');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  // ── Loading State ──
-  if (step === 3) {
+  // ── Loading State (step 5) ──
+  if (step === 5) {
     return (
       <div className="max-w-2xl mx-auto">
         <Card>
@@ -161,82 +463,428 @@ export default function WizardLayout({ onComplete }: Props) {
     );
   }
 
-  // ── Success State ──
-  if (step === 4 && result) {
+  // ── Review & Activate (step 6) — Editable ──
+  if (step === 6 && result) {
+    const sectionLabel = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
+    const removeBtn = "ml-auto text-xs text-muted-foreground hover:text-destructive cursor-pointer transition-colors select-none";
+
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-4">
+        {/* Header */}
         <Card>
-          <CardContent className="p-8 space-y-6">
+          <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-8 w-8 text-emerald-500" />
               <div>
-                <h2 className="text-xl font-semibold">Seu CRM está pronto!</h2>
-                <p className="text-sm text-muted-foreground">Pipeline "{result.pipeline_name}" criado com sucesso</p>
+                <h2 className="text-xl font-semibold">Revise e edite antes de ativar</h2>
+                <p className="text-sm text-muted-foreground">
+                  CRM "{result.pipeline_name}" — clique nos itens para editar ou remover o que não faz sentido.
+                </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Stages preview */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Etapas do Funil</p>
-              <div className="flex flex-wrap gap-2">
-                {result.stages.map((s: any, i: number) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium border"
-                    style={{
-                      backgroundColor: `${s.color || '#60a5fa'}15`,
-                      borderColor: `${s.color || '#60a5fa'}40`,
-                      color: s.color || '#60a5fa',
-                    }}
-                  >
-                    {s.name}
+        {/* Pipeline stages (read-only — core structure) */}
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <p className={sectionLabel}>Etapas do Funil</p>
+            <div className="flex flex-wrap gap-2">
+              {result.stages.map((s: any, i: number) => (
+                <span key={i} className="px-3 py-1.5 rounded-full text-xs font-medium border"
+                  style={{ backgroundColor: `${s.color || '#60a5fa'}15`, borderColor: `${s.color || '#60a5fa'}40`, color: s.color || '#60a5fa' }}>
+                  {s.name}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card schema (read-only) */}
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <p className={sectionLabel}>Campos do Card</p>
+            <div className="grid grid-cols-2 gap-2">
+              {result.card_schema.map((f: any, i: number) => (
+                <div key={i} className="flex items-center gap-2 text-sm p-2 rounded-md bg-muted/50">
+                  <span className="text-muted-foreground text-xs">
+                    {f.type === 'text' ? '📝' : f.type === 'number' ? '#️⃣' : f.type === 'currency' ? '💰' : f.type === 'date' ? '📅' : f.type === 'select' ? '📋' : '📎'}
                   </span>
-                ))}
-              </div>
+                  <span>{f.label}</span>
+                  {f.required && <span className="text-[9px] text-red-400">*</span>}
+                </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Card schema preview */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Campos do Card</p>
-              <div className="grid grid-cols-2 gap-2">
-                {result.card_schema.map((f: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2 text-sm p-2 rounded-md bg-muted/50">
-                    <span className="text-muted-foreground text-xs">
-                      {f.type === 'text' ? '📝' : f.type === 'number' ? '#️⃣' : f.type === 'currency' ? '💰' : f.type === 'date' ? '📅' : f.type === 'select' ? '📋' : '📎'}
-                    </span>
-                    <span>{f.label}</span>
-                    {f.required && <span className="text-[9px] text-red-400">*</span>}
+        {/* Departments — removable */}
+        {editDepartments.length > 0 && (
+          <Card>
+            <CardContent className="p-6 space-y-3">
+              <p className={sectionLabel}>Setores</p>
+              <div className="space-y-2">
+                {editDepartments.map((d, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg border bg-muted/30">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color || '#6366f1' }} />
+                    <Input
+                      value={d.name}
+                      onChange={(e) => {
+                        const next = [...editDepartments];
+                        next[i] = { ...next[i], name: e.target.value };
+                        setEditDepartments(next);
+                      }}
+                      className="h-7 text-sm border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                    />
+                    <span className={removeBtn} onClick={() => setEditDepartments(editDepartments.filter((_, j) => j !== i))}>remover</span>
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tags — removable */}
+        {editTags.length > 0 && (
+          <Card>
+            <CardContent className="p-6 space-y-3">
+              <p className={sectionLabel}>Tags</p>
+              <div className="flex flex-wrap gap-2">
+                {editTags.map((t, i) => (
+                  <span key={i} className="group inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border cursor-default"
+                    style={{ backgroundColor: `${t.color || '#6366f1'}15`, borderColor: `${t.color || '#6366f1'}30`, color: t.color || '#6366f1' }}>
+                    {t.name}
+                    <span
+                      className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-destructive font-bold"
+                      onClick={() => setEditTags(editTags.filter((_, j) => j !== i))}
+                    >×</span>
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Replies — editable body */}
+        {editQuickReplies.length > 0 && (
+          <Card>
+            <CardContent className="p-6 space-y-3">
+              <p className={sectionLabel}>Respostas Rápidas (editáveis)</p>
+              <div className="space-y-3">
+                {editQuickReplies.map((qr, i) => (
+                  <div key={i} className="p-3 rounded-lg border bg-muted/20 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono">{qr.shortcut}</code>
+                      <Input
+                        value={qr.title}
+                        onChange={(e) => {
+                          const next = [...editQuickReplies];
+                          next[i] = { ...next[i], title: e.target.value };
+                          setEditQuickReplies(next);
+                        }}
+                        className="h-7 text-sm font-medium border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 flex-1"
+                      />
+                      <span className={removeBtn} onClick={() => setEditQuickReplies(editQuickReplies.filter((_, j) => j !== i))}>remover</span>
+                    </div>
+                    <Textarea
+                      value={qr.body}
+                      onChange={(e) => {
+                        const next = [...editQuickReplies];
+                        next[i] = { ...next[i], body: e.target.value };
+                        setEditQuickReplies(next);
+                      }}
+                      className="text-xs min-h-[60px] resize-none"
+                    />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Messages & Hours — editable */}
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <p className={sectionLabel}>Mensagens Automáticas & Horário</p>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">Horário de Atendimento</label>
+              <Input value={editHours} onChange={(e) => setEditHours(e.target.value)} className="text-sm" />
             </div>
 
-            <Button onClick={handleFinish} className="w-full" size="lg">
-              <Rocket className="h-4 w-4 mr-2" />
-              Ativar e começar a vender
-            </Button>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-emerald-600">Mensagem de Boas-vindas</label>
+              <Textarea value={editWelcome} onChange={(e) => setEditWelcome(e.target.value)}
+                className="text-sm min-h-[60px] resize-none border-emerald-500/20 bg-emerald-500/5" />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-amber-600">Mensagem de Ausência</label>
+              <Textarea value={editAway} onChange={(e) => setEditAway(e.target.value)}
+                className="text-sm min-h-[60px] resize-none border-amber-500/20 bg-amber-500/5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Activate button */}
+        <Button onClick={handleFinish} className="w-full" size="lg" disabled={isSaving}>
+          {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
+          {isSaving ? 'Salvando...' : 'Ativar e começar a vender'}
+        </Button>
+      </div>
+    );
+  }
+
+  // ── Progress bar ──
+  const progressDots = (
+    <div className="flex items-center justify-center gap-2 mb-6">
+      {Array.from({ length: TOTAL_INTERACTIVE_STEPS }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-2 rounded-full transition-all duration-300 ${
+            i === step ? 'w-8 bg-primary' : i < step ? 'w-2 bg-emerald-500' : 'w-2 bg-muted'
+          }`}
+        />
+      ))}
+    </div>
+  );
+
+  // ── Step 0: Company Data ──
+  if (step === 0) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        {progressDots}
+
+        <Card>
+          <CardContent className="p-8 space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <Building2 className="h-10 w-10 mx-auto text-muted-foreground" />
+              <h2 className="text-xl font-semibold leading-tight">Dados da sua empresa</h2>
+              <p className="text-sm text-muted-foreground">
+                Precisamos conhecer seu negócio antes de configurar a inteligência comercial.
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Nome da empresa *
+                  </label>
+                  <Input
+                    value={company.company_name}
+                    onChange={(e) => setCompany({ ...company, company_name: e.target.value })}
+                    placeholder="Ex: Clínica Renova"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    CNPJ / CPF
+                  </label>
+                  <Input
+                    value={company.cnpj}
+                    onChange={(e) => setCompany({ ...company, cnpj: e.target.value })}
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Segmento de atuação *
+                  </label>
+                  <Select value={company.segment} onValueChange={(v) => setCompany({ ...company, segment: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o segmento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEGMENTS.map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Tamanho da equipe
+                  </label>
+                  <Select value={company.employee_count} onValueChange={(v) => setCompany({ ...company, employee_count: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Quantas pessoas?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EMPLOYEE_RANGES.map((r) => (
+                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Telefone principal
+                  </label>
+                  <Input
+                    value={company.phone}
+                    onChange={(e) => setCompany({ ...company, phone: e.target.value })}
+                    placeholder="(11) 99999-0000"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Cidade
+                  </label>
+                  <Input
+                    value={company.city}
+                    onChange={(e) => setCompany({ ...company, city: e.target.value })}
+                    placeholder="Ex: São Paulo"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Estado
+                  </label>
+                  <Select value={company.state} onValueChange={(v) => setCompany({ ...company, state: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATES_BR.map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-2">
+              <div />
+              <Button onClick={handleSaveCompany} disabled={!canAdvanceCompany}>
+                Próxima <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // ── Question Steps (0, 1, 2) ──
-  const q = QUESTIONS[step];
+  // ── Step 1: Integrations ──
+  if (step === 1) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        {progressDots}
+
+        <Card>
+          <CardContent className="p-8 space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <Plug className="h-10 w-10 mx-auto text-muted-foreground" />
+              <h2 className="text-xl font-semibold leading-tight">Conecte pelo menos 1 canal</h2>
+              <p className="text-sm text-muted-foreground">
+                Para que o CRM funcione, você precisa ter ao menos um canal de comunicação ativo.
+              </p>
+            </div>
+
+            {/* Channel list */}
+            {loadingChannels ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {channels.map((ch) => (
+                  <div
+                    key={ch.key}
+                    className="flex items-center gap-3 p-3 rounded-lg border"
+                    style={{
+                      borderColor: ch.connected ? 'rgba(17,188,118,0.4)' : 'hsl(var(--border))',
+                      background: ch.connected ? 'rgba(17,188,118,0.04)' : 'transparent',
+                    }}
+                  >
+                    <ChannelIcon channel={ch.channel} size="md" variant="icon" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{ch.label}</p>
+                      <p className="text-xs text-muted-foreground">{ch.detail}</p>
+                    </div>
+                    {ch.connected ? (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Conectado
+                      </span>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGoToIntegracoes}
+                        className="text-xs"
+                      >
+                        Configurar
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Refresh button */}
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchChannels}
+                disabled={loadingChannels}
+                className="text-xs gap-1.5"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loadingChannels ? 'animate-spin' : ''}`} />
+                Verificar novamente
+              </Button>
+            </div>
+
+            {/* Info box when no integration */}
+            {!hasAnyIntegration && !loadingChannels && (
+              <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-800">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  Conecte pelo menos um canal para continuar. Clique em "Configurar" acima ou vá até a página de Integrações.
+                </p>
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-2">
+              <Button variant="ghost" onClick={() => setStep(0)}>
+                <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+              </Button>
+              <Button
+                onClick={() => setStep(2)}
+                disabled={!hasAnyIntegration}
+              >
+                Próxima <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── Steps 2-4: AI Questions ──
+  const q = QUESTIONS[questionIndex];
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Progress dots */}
-      <div className="flex items-center justify-center gap-2 mb-6">
-        {QUESTIONS.map((_, i) => (
-          <div
-            key={i}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              i === step ? 'w-8 bg-primary' : i < step ? 'w-2 bg-emerald-500' : 'w-2 bg-muted'
-            }`}
-          />
-        ))}
-      </div>
+      {progressDots}
 
       <Card>
         <CardContent className="p-8 space-y-6">
@@ -267,7 +915,6 @@ export default function WizardLayout({ onComplete }: Props) {
             <Button
               variant="ghost"
               onClick={() => setStep(step - 1)}
-              disabled={step === 0}
             >
               <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
             </Button>
@@ -275,7 +922,7 @@ export default function WizardLayout({ onComplete }: Props) {
             {isLastQuestion ? (
               <Button
                 onClick={handleGenerate}
-                disabled={!canAdvance || isGenerating}
+                disabled={!canAdvanceQuestion || isGenerating}
                 className="gap-2"
               >
                 <Sparkles className="h-4 w-4" />
@@ -284,7 +931,7 @@ export default function WizardLayout({ onComplete }: Props) {
             ) : (
               <Button
                 onClick={() => setStep(step + 1)}
-                disabled={!canAdvance}
+                disabled={!canAdvanceQuestion}
               >
                 Próxima <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
