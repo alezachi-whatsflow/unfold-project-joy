@@ -683,6 +683,27 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         console.error("Meta send error:", error || result);
         return;
       }
+    } else if (conv.instanceName?.startsWith("telegram_")) {
+      // Send via Telegram Bot API
+      const chatId = selectedJid.replace("tg_", "").replace("@telegram", "");
+      const { error } = await supabase.functions.invoke("telegram-send", {
+        body: { chat_id: chatId, text },
+      });
+      if (error) {
+        console.error("Telegram send error:", error);
+        return;
+      }
+      // Save outgoing message locally (webhook only saves incoming)
+      await supabase.from("whatsapp_messages").insert({
+        instance_name: conv.instanceName,
+        remote_jid: selectedJid,
+        message_id: `tg_out_${Date.now()}`,
+        direction: "outgoing",
+        type: "text",
+        body: text,
+        status: 4,
+        tenant_id: localStorage.getItem("whatsflow_default_tenant_id"),
+      });
     } else {
       // Send via uazapi (WhatsApp Web)
       const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
