@@ -21,6 +21,7 @@ import { callAsaasProxy } from "@/lib/asaasQueries";
 const IntegracoesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedSection, setExpandedSection] = useState<string | null>("uazapi");
+  const [codeCopied, setCodeCopied] = useState(false);
 
   // Telegram state
   const [tgToken, setTgToken] = useState("");
@@ -636,6 +637,105 @@ const IntegracoesPage = () => {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+        </Card>
+
+        {/* Webchat Nativo */}
+        <Card
+          style={{
+            border: expandedSection === "webchat" ? "1px solid rgba(17,188,118,0.4)" : "1px solid var(--border)",
+            background: "var(--bg-card)", borderRadius: 12, overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("webchat")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "webchat" ? "rgba(17,188,118,0.06)" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <ChannelIcon channel="webchat" size="lg" variant="icon" />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Webchat Nativo</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Injete o chat ao vivo diretamente no seu website</p>
+            </div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: expandedSection === "webchat" ? "#11bc76" : "var(--border)" }} />
+          </button>
+          {expandedSection === "webchat" && (
+            <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)" }}>
+              <div style={{ maxWidth: 500, margin: "0 auto" }}>
+                {/* Instructions */}
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>Instalação:</p>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 4px" }}>
+                    1. Copie o script abaixo.
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 16px" }}>
+                    2. Cole antes da tag de fechamento <code style={{ fontFamily: "monospace", background: "#f0f0f0", padding: "1px 4px" }}>&lt;/body&gt;</code> do seu site.
+                  </p>
+                </div>
+
+                {/* Code block — terminal style */}
+                <div style={{ position: "relative" }}>
+                  <pre style={{
+                    background: "#000000",
+                    color: "#FFFFFF",
+                    padding: "16px 20px",
+                    fontSize: 12,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    lineHeight: 1.6,
+                    overflowX: "auto",
+                    border: "1px solid #333",
+                    margin: 0,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-all",
+                  }}>
+                    <code>{`<script\n  data-tenant="${tenantId || "SEU_TENANT_ID"}"\n  src="https://cdn.whatsflow.com.br/webchat.js"\n></script>`}</code>
+                  </pre>
+                </div>
+
+                {/* Copy button */}
+                <button
+                  onClick={() => {
+                    const code = `<script data-tenant="${tenantId || "SEU_TENANT_ID"}" src="https://cdn.whatsflow.com.br/webchat.js"></script>`;
+                    navigator.clipboard.writeText(code).then(() => {
+                      setCodeCopied(true);
+                      toast.success("Código copiado!");
+                      setTimeout(() => setCodeCopied(false), 2000);
+                    });
+                  }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    marginTop: 0,
+                    padding: "10px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 2,
+                    textTransform: "uppercase" as const,
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    cursor: "pointer",
+                    border: "1px solid #000",
+                    borderTop: "none",
+                    background: codeCopied ? "#000" : "#FFF",
+                    color: codeCopied ? "#FFF" : "#000",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {codeCopied ? "✓ Copiado" : "Copiar Código"}
+                </button>
+
+                {/* Tenant ID info */}
+                <div style={{ marginTop: 16, padding: 12, background: "rgba(17,188,118,0.06)", border: "1px solid rgba(17,188,118,0.15)" }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", margin: "0 0 4px" }}>Seu Tenant ID:</p>
+                  <code style={{ fontSize: 11, fontFamily: "monospace", color: "var(--text-primary)", wordBreak: "break-all" }}>
+                    {tenantId || "Carregando..."}
+                  </code>
+                </div>
+              </div>
             </div>
           )}
         </Card>
