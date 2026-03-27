@@ -17,13 +17,17 @@ CREATE TABLE IF NOT EXISTS public.csat_ratings (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_csat_tenant ON csat_ratings(tenant_id);
-CREATE INDEX idx_csat_date ON csat_ratings(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_csat_tenant ON csat_ratings(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_csat_date ON csat_ratings(tenant_id, created_at);
 
 ALTER TABLE csat_ratings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Strict_Tenant_Isolation" ON csat_ratings FOR ALL
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
-  WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'csat_ratings' AND policyname = 'Strict_Tenant_Isolation') THEN
+    CREATE POLICY "Strict_Tenant_Isolation" ON public.csat_ratings FOR ALL
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
+      WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 GRANT SELECT, INSERT, UPDATE, DELETE ON csat_ratings TO anon, authenticated;
 
 -- 2. Ensure conversations has all tracking fields

@@ -25,11 +25,19 @@ ALTER TABLE public.licenses
 -- RLS: only nexus users can manage providers
 ALTER TABLE whatsapp_providers ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "nexus_manage_providers" ON whatsapp_providers FOR ALL
-  USING (is_nexus_user()) WITH CHECK (is_nexus_user());
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'whatsapp_providers' AND policyname = 'nexus_manage_providers') THEN
+    CREATE POLICY "nexus_manage_providers" ON public.whatsapp_providers FOR ALL
+      USING (is_nexus_user()) WITH CHECK (is_nexus_user());
+  END IF;
+END $$;
 
-CREATE POLICY "authenticated_read_providers" ON whatsapp_providers FOR SELECT
-  TO authenticated USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'whatsapp_providers' AND policyname = 'authenticated_read_providers') THEN
+    CREATE POLICY "authenticated_read_providers" ON public.whatsapp_providers FOR SELECT
+      TO authenticated USING (true);
+  END IF;
+END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON whatsapp_providers TO anon, authenticated;
 

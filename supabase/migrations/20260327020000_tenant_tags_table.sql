@@ -9,13 +9,17 @@ CREATE TABLE IF NOT EXISTS public.tenant_tags (
   UNIQUE(tenant_id, name)
 );
 
-CREATE INDEX idx_tenant_tags_tenant ON tenant_tags(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_tags_tenant ON tenant_tags(tenant_id);
 ALTER TABLE public.tenant_tags ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Tenant isolation on tenant_tags"
-  ON public.tenant_tags FOR ALL TO authenticated
-  USING (tenant_id IN (SELECT get_my_tenant_ids()))
-  WITH CHECK (tenant_id IN (SELECT get_my_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'tenant_tags' AND policyname = 'Tenant isolation on tenant_tags') THEN
+    CREATE POLICY "Tenant isolation on tenant_tags"
+      ON public.tenant_tags FOR ALL TO authenticated
+      USING (tenant_id IN (SELECT get_my_tenant_ids()))
+      WITH CHECK (tenant_id IN (SELECT get_my_tenant_ids()));
+  END IF;
+END $$;
 
 -- Add unique constraint on departments for upsert support
 DO $$ BEGIN

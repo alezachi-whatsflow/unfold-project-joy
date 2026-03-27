@@ -28,10 +28,10 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_groups (
   UNIQUE(tenant_id, jid)
 );
 
-CREATE INDEX idx_groups_tenant ON whatsapp_groups(tenant_id);
-CREATE INDEX idx_groups_kanban ON whatsapp_groups(kanban_column_id);
-CREATE INDEX idx_groups_assigned ON whatsapp_groups(assigned_to);
-CREATE INDEX idx_groups_jid ON whatsapp_groups(jid);
+CREATE INDEX IF NOT EXISTS idx_groups_tenant ON whatsapp_groups(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_groups_kanban ON whatsapp_groups(kanban_column_id);
+CREATE INDEX IF NOT EXISTS idx_groups_assigned ON whatsapp_groups(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_groups_jid ON whatsapp_groups(jid);
 
 -- 2. group_kanban_columns — customizable columns per tenant
 CREATE TABLE IF NOT EXISTS public.group_kanban_columns (
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS public.group_kanban_columns (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_kanban_cols_tenant ON group_kanban_columns(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_kanban_cols_tenant ON group_kanban_columns(tenant_id);
 
 -- 3. group_attributions — shared inbox: who handles which group
 CREATE TABLE IF NOT EXISTS public.group_attributions (
@@ -61,36 +61,59 @@ CREATE TABLE IF NOT EXISTS public.group_attributions (
   UNIQUE(group_id, user_id)
 );
 
-CREATE INDEX idx_attributions_tenant ON group_attributions(tenant_id);
-CREATE INDEX idx_attributions_group ON group_attributions(group_id);
-CREATE INDEX idx_attributions_user ON group_attributions(user_id);
+CREATE INDEX IF NOT EXISTS idx_attributions_tenant ON group_attributions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_attributions_group ON group_attributions(group_id);
+CREATE INDEX IF NOT EXISTS idx_attributions_user ON group_attributions(user_id);
 
 -- 4. FK: whatsapp_groups.kanban_column_id → group_kanban_columns
-ALTER TABLE whatsapp_groups
-  ADD CONSTRAINT fk_groups_kanban_column
-  FOREIGN KEY (kanban_column_id) REFERENCES group_kanban_columns(id)
-  ON DELETE SET NULL;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_groups_kanban_column') THEN
+    ALTER TABLE whatsapp_groups
+      ADD CONSTRAINT fk_groups_kanban_column
+      FOREIGN KEY (kanban_column_id) REFERENCES group_kanban_columns(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- 5. Enable RLS on all 3 tables
 ALTER TABLE whatsapp_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE group_kanban_columns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE group_attributions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Strict_Tenant_Isolation" ON whatsapp_groups FOR ALL
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
-  WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'whatsapp_groups' AND policyname = 'Strict_Tenant_Isolation') THEN
+    CREATE POLICY "Strict_Tenant_Isolation" ON public.whatsapp_groups FOR ALL
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
+      WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 
-CREATE POLICY "Strict_Tenant_Isolation" ON group_kanban_columns FOR ALL
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
-  WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'group_kanban_columns' AND policyname = 'Strict_Tenant_Isolation') THEN
+    CREATE POLICY "Strict_Tenant_Isolation" ON public.group_kanban_columns FOR ALL
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
+      WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 
-CREATE POLICY "Strict_Tenant_Isolation" ON group_attributions FOR ALL
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
-  WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'group_attributions' AND policyname = 'Strict_Tenant_Isolation') THEN
+    CREATE POLICY "Strict_Tenant_Isolation" ON public.group_attributions FOR ALL
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
+      WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 
 -- 6. Enable Realtime for live Kanban updates
-ALTER PUBLICATION supabase_realtime ADD TABLE whatsapp_groups;
-ALTER PUBLICATION supabase_realtime ADD TABLE group_attributions;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE whatsapp_groups;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE group_attributions;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- 7. Seed default kanban columns (will be created per-tenant on first use)
 -- Tenants will get these defaults via the frontend hook

@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS public.quick_replies (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_qr_tenant ON quick_replies(tenant_id);
-CREATE INDEX idx_qr_shortcut ON quick_replies(tenant_id, shortcut);
+CREATE INDEX IF NOT EXISTS idx_qr_tenant ON quick_replies(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qr_shortcut ON quick_replies(tenant_id, shortcut);
 
 -- 1.2 Transferência de conversa
 CREATE TABLE IF NOT EXISTS public.conversation_transfers (
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS public.conversation_transfers (
   transferred_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_transfers_tenant ON conversation_transfers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_transfers_tenant ON conversation_transfers(tenant_id);
 
 -- 1.3 Notas internas
 CREATE TABLE IF NOT EXISTS public.internal_notes (
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS public.internal_notes (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_notes_conv ON internal_notes(tenant_id, conversation_jid);
+CREATE INDEX IF NOT EXISTS idx_notes_conv ON internal_notes(tenant_id, conversation_jid);
 
 -- 1.4 Conversation timeout rules
 ALTER TABLE public.whatsapp_instances
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS public.agent_status (
   UNIQUE(tenant_id, user_id)
 );
 
-CREATE INDEX idx_agent_status_tenant ON agent_status(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_agent_status_tenant ON agent_status(tenant_id);
 
 -- 2.2 Departments / Setores
 CREATE TABLE IF NOT EXISTS public.departments (
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS public.departments (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_departments_tenant ON departments(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_departments_tenant ON departments(tenant_id);
 
 -- 2.3 Agent ↔ Department mapping
 CREATE TABLE IF NOT EXISTS public.agent_departments (
@@ -148,8 +148,8 @@ CREATE TABLE IF NOT EXISTS public.hsm_templates (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_hsm_tenant ON hsm_templates(tenant_id);
-CREATE INDEX idx_hsm_status ON hsm_templates(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_hsm_tenant ON hsm_templates(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_hsm_status ON hsm_templates(tenant_id, status);
 
 -- 3.2 Full-text search index on messages
 CREATE INDEX IF NOT EXISTS idx_wa_messages_body_fts
@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS public.sla_rules (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_sla_tenant ON sla_rules(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_sla_tenant ON sla_rules(tenant_id);
 
 -- 4.3 Keyword alerts
 CREATE TABLE IF NOT EXISTS public.keyword_alerts (
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS public.keyword_alerts (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_keyword_tenant ON keyword_alerts(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_keyword_tenant ON keyword_alerts(tenant_id);
 
 -- ╔═══════════════════════════════════════════╗
 -- ║  FASE 5 — IA Avançada                     ║
@@ -234,8 +234,8 @@ CREATE TABLE IF NOT EXISTS public.automation_triggers (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_triggers_tenant ON automation_triggers(tenant_id);
-CREATE INDEX idx_triggers_active ON automation_triggers(tenant_id, is_active, trigger_type);
+CREATE INDEX IF NOT EXISTS idx_triggers_tenant ON automation_triggers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_triggers_active ON automation_triggers(tenant_id, is_active, trigger_type);
 
 -- ╔═══════════════════════════════════════════╗
 -- ║  FASE 6 — Gestão de Grupos Completa       ║
@@ -256,8 +256,8 @@ CREATE TABLE IF NOT EXISTS public.group_members (
   UNIQUE(group_id, phone)
 );
 
-CREATE INDEX idx_gmembers_group ON group_members(group_id);
-CREATE INDEX idx_gmembers_tenant ON group_members(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_gmembers_group ON group_members(group_id);
+CREATE INDEX IF NOT EXISTS idx_gmembers_tenant ON group_members(tenant_id);
 
 -- 6.2 Group scheduled messages
 CREATE TABLE IF NOT EXISTS public.group_scheduled_messages (
@@ -275,7 +275,7 @@ CREATE TABLE IF NOT EXISTS public.group_scheduled_messages (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_gsched_tenant ON group_scheduled_messages(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_gsched_tenant ON group_scheduled_messages(tenant_id);
 
 -- 6.3 Group moderation rules
 CREATE TABLE IF NOT EXISTS public.group_moderation_rules (
@@ -289,7 +289,7 @@ CREATE TABLE IF NOT EXISTS public.group_moderation_rules (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_gmod_tenant ON group_moderation_rules(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_gmod_tenant ON group_moderation_rules(tenant_id);
 
 -- ╔═══════════════════════════════════════════╗
 -- ║  FASE 7 — Segurança + Compliance          ║
@@ -313,7 +313,7 @@ CREATE TABLE IF NOT EXISTS public.lgpd_requests (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_lgpd_tenant ON lgpd_requests(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_lgpd_tenant ON lgpd_requests(tenant_id);
 
 -- 7.3 API keys for external integrations
 CREATE TABLE IF NOT EXISTS public.api_keys (
@@ -330,8 +330,8 @@ CREATE TABLE IF NOT EXISTS public.api_keys (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_apikeys_tenant ON api_keys(tenant_id);
-CREATE UNIQUE INDEX idx_apikeys_prefix ON api_keys(key_prefix);
+CREATE INDEX IF NOT EXISTS idx_apikeys_tenant ON api_keys(tenant_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_apikeys_prefix ON api_keys(key_prefix);
 
 -- ╔═══════════════════════════════════════════╗
 -- ║  RLS + GRANTS para TODAS as tabelas       ║

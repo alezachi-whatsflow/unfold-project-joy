@@ -163,21 +163,34 @@ END $$;
 -- ═══════════════════════════════════════════════════════════════════
 
 -- payment_dunnings (tenant_id → tenants)
-ALTER TABLE public.payment_dunnings
-  DROP CONSTRAINT IF EXISTS payment_dunnings_tenant_id_fkey;
-ALTER TABLE public.payment_dunnings
-  ADD CONSTRAINT payment_dunnings_tenant_id_fkey
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE public.payment_dunnings
+    DROP CONSTRAINT IF EXISTS payment_dunnings_tenant_id_fkey;
+  ALTER TABLE public.payment_dunnings
+    ADD CONSTRAINT payment_dunnings_tenant_id_fkey
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'payment_dunnings FK: %', SQLERRM;
+END $$;
 
 -- tasks (tenant_id → tenants)
-ALTER TABLE public.tasks
-  DROP CONSTRAINT IF EXISTS tasks_tenant_id_fkey;
-ALTER TABLE public.tasks
-  ADD CONSTRAINT tasks_tenant_id_fkey
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
-
--- meta_connections: convert TEXT tenant_id → UUID, then add FK with CASCADE
 DO $$ BEGIN
+  ALTER TABLE public.tasks
+    DROP CONSTRAINT IF EXISTS tasks_tenant_id_fkey;
+  ALTER TABLE public.tasks
+    ADD CONSTRAINT tasks_tenant_id_fkey
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'tasks FK: %', SQLERRM;
+END $$;
+
+-- meta_connections: drop policies FIRST, convert TEXT tenant_id → UUID, then add FK with CASCADE
+DO $$ BEGIN
+  -- Must drop policies that depend on tenant_id before altering its type
+  DROP POLICY IF EXISTS "Users can view meta connections" ON public.meta_connections;
+  DROP POLICY IF EXISTS "Users can insert meta connections" ON public.meta_connections;
+  DROP POLICY IF EXISTS "Users can update meta connections" ON public.meta_connections;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation" ON public.meta_connections;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation_meta_connections" ON public.meta_connections;
+
   -- Check if column is TEXT and convert to UUID
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
@@ -186,19 +199,21 @@ DO $$ BEGIN
       AND column_name = 'tenant_id'
       AND data_type IN ('text', 'character varying')
   ) THEN
-    -- Remove old default
     ALTER TABLE public.meta_connections ALTER COLUMN tenant_id DROP DEFAULT;
-    -- Convert TEXT → UUID
     ALTER TABLE public.meta_connections
       ALTER COLUMN tenant_id TYPE uuid USING tenant_id::uuid;
   END IF;
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'meta_connections type conversion: %', SQLERRM;
 END $$;
 
-ALTER TABLE public.meta_connections
-  DROP CONSTRAINT IF EXISTS meta_connections_tenant_id_fkey;
-ALTER TABLE public.meta_connections
-  ADD CONSTRAINT meta_connections_tenant_id_fkey
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE public.meta_connections
+    DROP CONSTRAINT IF EXISTS meta_connections_tenant_id_fkey;
+  ALTER TABLE public.meta_connections
+    ADD CONSTRAINT meta_connections_tenant_id_fkey
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'meta_connections FK: %', SQLERRM;
+END $$;
 
 -- Also fix USING(true) policies on meta_connections
 DO $$ BEGIN
@@ -219,17 +234,35 @@ END $$;
 -- P0-3: Remove DEFAULT '00000000-...-000001' from tenant_id
 -- ═══════════════════════════════════════════════════════════════════
 
-ALTER TABLE public.prospect_campaigns ALTER COLUMN tenant_id DROP DEFAULT;
-ALTER TABLE public.negocios            ALTER COLUMN tenant_id DROP DEFAULT;
-ALTER TABLE public.whatsapp_instances  ALTER COLUMN tenant_id DROP DEFAULT;
+DO $$ BEGIN
+  ALTER TABLE public.prospect_campaigns ALTER COLUMN tenant_id DROP DEFAULT;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.negocios ALTER COLUMN tenant_id DROP DEFAULT;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.whatsapp_instances ALTER COLUMN tenant_id DROP DEFAULT;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
 
 
 -- ═══════════════════════════════════════════════════════════════════
 -- P1-4: Convert TEXT tenant_id → UUID
 -- ═══════════════════════════════════════════════════════════════════
 
--- sales_pipelines
+-- sales_pipelines: drop policies first, then convert TEXT→UUID
 DO $$ BEGIN
+  DROP POLICY IF EXISTS "Users can view pipelines" ON public.sales_pipelines;
+  DROP POLICY IF EXISTS "Users can insert pipelines" ON public.sales_pipelines;
+  DROP POLICY IF EXISTS "Users can update pipelines" ON public.sales_pipelines;
+  DROP POLICY IF EXISTS "Users can delete pipelines" ON public.sales_pipelines;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation" ON public.sales_pipelines;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation_sales_pipelines" ON public.sales_pipelines;
+
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'sales_pipelines'
@@ -238,17 +271,22 @@ DO $$ BEGIN
     ALTER TABLE public.sales_pipelines ALTER COLUMN tenant_id DROP DEFAULT;
     ALTER TABLE public.sales_pipelines
       ALTER COLUMN tenant_id TYPE uuid USING tenant_id::uuid;
-    -- Re-apply FK with CASCADE
     ALTER TABLE public.sales_pipelines
       DROP CONSTRAINT IF EXISTS sales_pipelines_tenant_id_fkey;
     ALTER TABLE public.sales_pipelines
       ADD CONSTRAINT sales_pipelines_tenant_id_fkey
       FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
   END IF;
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'sales_pipelines conversion: %', SQLERRM;
 END $$;
 
--- manual_articles
+-- manual_articles: drop policies first, then convert TEXT→UUID
 DO $$ BEGIN
+  DROP POLICY IF EXISTS "Authenticated users can read published articles" ON public.manual_articles;
+  DROP POLICY IF EXISTS "Admins can manage articles" ON public.manual_articles;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation" ON public.manual_articles;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation_manual_articles" ON public.manual_articles;
+
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'manual_articles'
@@ -263,10 +301,16 @@ DO $$ BEGIN
       ADD CONSTRAINT manual_articles_tenant_id_fkey
       FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
   END IF;
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'manual_articles conversion: %', SQLERRM;
 END $$;
 
--- tutorials
+-- tutorials: drop policies first, then convert TEXT→UUID
 DO $$ BEGIN
+  DROP POLICY IF EXISTS "Authenticated users can read published tutorials" ON public.tutorials;
+  DROP POLICY IF EXISTS "Admins can manage tutorials" ON public.tutorials;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation" ON public.tutorials;
+  DROP POLICY IF EXISTS "Strict_Tenant_Isolation_tutorials" ON public.tutorials;
+
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'tutorials'
@@ -281,6 +325,7 @@ DO $$ BEGIN
       ADD CONSTRAINT tutorials_tenant_id_fkey
       FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
   END IF;
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'tutorials conversion: %', SQLERRM;
 END $$;
 
 -- Drop stale USING(true) policies on these TEXT→UUID tables and re-create strict

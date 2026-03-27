@@ -23,9 +23,9 @@ CREATE TABLE IF NOT EXISTS public.webchat_sessions (
   UNIQUE(tenant_id, visitor_id)
 );
 
-CREATE INDEX idx_webchat_tenant ON webchat_sessions(tenant_id);
-CREATE INDEX idx_webchat_status ON webchat_sessions(tenant_id, status);
-CREATE INDEX idx_webchat_visitor ON webchat_sessions(tenant_id, visitor_id);
+CREATE INDEX IF NOT EXISTS idx_webchat_tenant ON webchat_sessions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_webchat_status ON webchat_sessions(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_webchat_visitor ON webchat_sessions(tenant_id, visitor_id);
 
 -- 2. Webchat config per tenant (widget appearance + behavior)
 CREATE TABLE IF NOT EXISTS public.webchat_config (
@@ -56,15 +56,32 @@ ALTER TABLE webchat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webchat_config ENABLE ROW LEVEL SECURITY;
 
 -- Service role bypass (Edge Function uses service_role)
-CREATE POLICY "service_role_webchat_sessions" ON webchat_sessions FOR ALL TO service_role USING (true);
-CREATE POLICY "service_role_webchat_config" ON webchat_config FOR ALL TO service_role USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'webchat_sessions' AND policyname = 'service_role_webchat_sessions') THEN
+    CREATE POLICY "service_role_webchat_sessions" ON public.webchat_sessions FOR ALL TO service_role USING (true);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'webchat_config' AND policyname = 'service_role_webchat_config') THEN
+    CREATE POLICY "service_role_webchat_config" ON public.webchat_config FOR ALL TO service_role USING (true);
+  END IF;
+END $$;
 
 -- Authenticated users can read their tenant's sessions
-CREATE POLICY "tenant_read_webchat_sessions" ON webchat_sessions FOR SELECT TO authenticated
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'webchat_sessions' AND policyname = 'tenant_read_webchat_sessions') THEN
+    CREATE POLICY "tenant_read_webchat_sessions" ON public.webchat_sessions FOR SELECT TO authenticated
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 
-CREATE POLICY "tenant_manage_webchat_config" ON webchat_config FOR ALL TO authenticated
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'webchat_config' AND policyname = 'tenant_manage_webchat_config') THEN
+    CREATE POLICY "tenant_manage_webchat_config" ON public.webchat_config FOR ALL TO authenticated
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON webchat_sessions TO anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON webchat_config TO anon, authenticated;

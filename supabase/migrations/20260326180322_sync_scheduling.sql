@@ -21,5 +21,9 @@ CREATE TABLE IF NOT EXISTS public.sync_schedules (
 );
 
 ALTER TABLE sync_schedules ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "nexus_manage_schedules" ON sync_schedules FOR ALL USING (is_nexus_user()) WITH CHECK (is_nexus_user());
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sync_schedules' AND policyname = 'nexus_manage_schedules') THEN
+    CREATE POLICY "nexus_manage_schedules" ON public.sync_schedules FOR ALL USING (is_nexus_user()) WITH CHECK (is_nexus_user());
+  END IF;
+END $$;
 GRANT SELECT, INSERT, UPDATE, DELETE ON sync_schedules TO anon, authenticated;

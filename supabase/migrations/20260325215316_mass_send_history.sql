@@ -32,22 +32,30 @@ CREATE TABLE IF NOT EXISTS public.mass_send_results (
   sent_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_msb_tenant ON mass_send_batches(tenant_id);
-CREATE INDEX idx_msb_status ON mass_send_batches(tenant_id, status);
-CREATE INDEX idx_msr_batch ON mass_send_results(batch_id);
-CREATE INDEX idx_msr_status ON mass_send_results(batch_id, status);
+CREATE INDEX IF NOT EXISTS idx_msb_tenant ON mass_send_batches(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_msb_status ON mass_send_batches(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_msr_batch ON mass_send_results(batch_id);
+CREATE INDEX IF NOT EXISTS idx_msr_status ON mass_send_results(batch_id, status);
 
 -- RLS + GRANT
 ALTER TABLE mass_send_batches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mass_send_results ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Strict_Tenant_Isolation" ON mass_send_batches FOR ALL
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
-  WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'mass_send_batches' AND policyname = 'Strict_Tenant_Isolation') THEN
+    CREATE POLICY "Strict_Tenant_Isolation" ON public.mass_send_batches FOR ALL
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
+      WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 
-CREATE POLICY "Strict_Tenant_Isolation" ON mass_send_results FOR ALL
-  USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
-  WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'mass_send_results' AND policyname = 'Strict_Tenant_Isolation') THEN
+    CREATE POLICY "Strict_Tenant_Isolation" ON public.mass_send_results FOR ALL
+      USING (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()))
+      WITH CHECK (is_nexus_user() OR tenant_id IN (SELECT get_authorized_tenant_ids()));
+  END IF;
+END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON mass_send_batches TO anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON mass_send_results TO anon, authenticated;
