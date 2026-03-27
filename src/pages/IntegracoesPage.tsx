@@ -121,19 +121,23 @@ const IntegracoesPage = () => {
 
       const webhookUrl = `${sbUrl}/functions/v1/telegram-webhook?token=${encodeURIComponent(token)}`;
 
-      // 2. Save to DB
-      const { error } = await supabase.from("channel_integrations").upsert({
-        tenant_id: tenantId,
-        provider: "TELEGRAM",
-        channel_id: `tg_${botId}`,
-        name: botName,
-        bot_token: token,
-        bot_username: botUsername,
-        webhook_url: webhookUrl,
-        status: "active",
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "channel_id" });
-      if (error) throw error;
+      // 2. Save to DB — check if exists first, then update or insert
+      const channelId = `tg_${botId}`;
+      const { data: existing } = await supabase.from("channel_integrations")
+        .select("id").eq("tenant_id", tenantId).eq("provider", "TELEGRAM").maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase.from("channel_integrations")
+          .update({ channel_id: channelId, name: botName, bot_token: token, bot_username: botUsername, webhook_url: webhookUrl, status: "active", updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("channel_integrations").insert({
+          tenant_id: tenantId, provider: "TELEGRAM", channel_id: channelId, name: botName,
+          bot_token: token, bot_username: botUsername, webhook_url: webhookUrl, status: "active",
+        });
+        if (error) throw error;
+      }
 
       // 3. Auto-register webhook via Edge Function proxy
       await fetch(`${sbUrl}/functions/v1/telegram-send`, {
