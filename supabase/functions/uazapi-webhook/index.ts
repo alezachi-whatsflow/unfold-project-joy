@@ -550,17 +550,16 @@ Deno.serve(async (req) => {
                   const msgId = isDirectImageTrigger ? normalized.message_id : recentImageMsg?.message_id;
                   console.log(`[expense-pipeline] Triggered for ${normalized.remote_jid} tenant=${instForExpense.tenant_id} via=${isDirectImageTrigger ? "image+caption" : "text-after-image"}`);
 
-                  // 1. Download media
+                  // 1. Download media (uazapi endpoint is /message/download, NOT /instance/{name}/message/download)
                   const uazapiUrl = instForExpense.server_url || Deno.env.get("UAZAPI_BASE_URL") || "";
-                  const downloadUrl = `${uazapiUrl}/instance/${instForExpense.instance_name}`;
-                  console.log(`[expense-pipeline] Downloading media: msgId=${msgId} url=${downloadUrl}`);
+                  console.log(`[expense-pipeline] Downloading media: msgId=${msgId} baseUrl=${uazapiUrl}`);
                   const { normalizeMediaData, downloadMedia, uploadToExpenseBucket } = await import("../_shared/media-processor.ts");
                   const mediaData = normalizeMediaData(msgForMedia || msg);
                   const { buffer, fileName, error: dlError } = await downloadMedia(
                     mediaData,
                     msgId || normalized.message_id,
                     instForExpense.instance_token || "",
-                    downloadUrl,
+                    uazapiUrl,
                   );
                   console.log(`[expense-pipeline] Download result: buffer=${buffer ? buffer.length + "bytes" : "NULL"} error=${dlError || "none"}`);
 
