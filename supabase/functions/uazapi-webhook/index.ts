@@ -503,36 +503,19 @@ Deno.serve(async (req) => {
                 .maybeSingle();
 
               if (instForExpense?.tenant_id) {
-                // Check if sender is an admin/owner of this tenant
-                const senderPhone = normalized.remote_jid?.replace(/@.*$/, "") || "";
-                const { data: adminUser } = await supabase
-                  .from("user_tenants")
-                  .select("user_id, role")
+                // Check if expense_extractor skill is active for this tenant
+                const { data: licenseData } = await supabase
+                  .from("licenses")
+                  .select("ai_active_skills")
                   .eq("tenant_id", instForExpense.tenant_id)
-                  .in("role", ["owner", "admin", "super_admin"])
-                  .limit(50);
-
-                // Match sender phone against admin profiles
-                let isAdmin = false;
-                if (adminUser?.length) {
-                  for (const au of adminUser) {
-                    const { data: profile } = await supabase
-                      .from("profiles")
-                      .select("phone")
-                      .eq("id", au.user_id)
-                      .maybeSingle();
-                    if (profile?.phone && senderPhone.endsWith(profile.phone.replace(/\D/g, "").slice(-10))) {
-                      isAdmin = true;
-                      break;
-                    }
-                  }
-                }
+                  .maybeSingle();
+                const isExtractorActive = licenseData?.ai_active_skills?.expense_extractor === true;
 
                 // Check caption trigger: must contain "despesa" or "gasto" or "nota" or "recibo"
                 const captionLower = String(normalized.body || normalized.caption || "").toLowerCase();
                 const hasExpenseTrigger = /despesa|gasto|nota\s*fiscal|recibo|nf[-\s]?e?|comprovante/i.test(captionLower);
 
-                if (isAdmin && hasExpenseTrigger) {
+                if (isExtractorActive && hasExpenseTrigger) {
                   console.log(`[expense-pipeline] Triggered for ${senderPhone} tenant=${instForExpense.tenant_id}`);
 
                   // 1. Download media
