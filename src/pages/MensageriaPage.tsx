@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   Inbox, Send, Megaphone, Kanban, Users, UsersRound, Receipt, ScrollText,
   UserCog, Building2, MessageSquareText, Tag, Bot, FileText, Zap,
-  BarChart3, Menu,
+  BarChart3, Menu, Clock,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ import ContactTagManager from "@/components/mensageria/agents/ContactTagManager"
 import HSMTemplateManager from "@/components/mensageria/templates/HSMTemplateManager";
 import AutomationManager from "@/components/mensageria/automation/AutomationManager";
 import AttendanceMetrics from "@/components/mensageria/metrics/AttendanceMetrics";
+import SlaConfigPanel from "@/components/mensageria/sla/SlaConfigPanel";
 
 /* ── Sidebar nav items ── */
 interface NavItem {
@@ -49,6 +50,7 @@ const NAV_ITEMS: NavItem[] = [
   // Config items
   { id: "atendentes",       label: "Atendentes",           icon: UserCog,            group: "config" },
   { id: "setores",          label: "Setores",              icon: Building2,          group: "config" },
+  { id: "sla",              label: "SLA",                  icon: Clock,              group: "config" },
   { id: "msg-predefinidas", label: "Respostas Rápidas",    icon: MessageSquareText,  group: "config" },
   { id: "tags-contato",     label: "Tags de Contato",      icon: Tag,                group: "config" },
   { id: "automacoes",       label: "Automações",           icon: Zap,                group: "config" },
@@ -79,6 +81,7 @@ const MensageriaPage = () => {
       // Config
       case "atendentes":      return <AgentDashboard />;
       case "setores":         return <DepartmentManager />;
+      case "sla":             return <SlaConfigPanel />;
       case "msg-predefinidas": return <QuickReplyManager />;
       case "tags-contato":    return <ContactTagManager />;
       case "automacoes":      return <AutomationManager />;

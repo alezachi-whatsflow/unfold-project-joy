@@ -23,6 +23,8 @@ export interface Conversation {
   status: "open" | "pending" | "resolved" | "transferred";
   isGroup?: boolean;
   participantCount?: number;
+  /** SLA breach: true if first response or resolution time exceeded */
+  slaBreach?: boolean;
 }
 
 export const mockConversations: Conversation[] = [

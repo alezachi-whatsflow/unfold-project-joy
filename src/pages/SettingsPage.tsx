@@ -14,6 +14,7 @@ import { TenantManagementCard } from "@/components/settings/TenantManagementCard
 import { CustomLayoutPanel } from "@/components/settings/CustomLayoutPanel";
 import { SalesFunnelConfigCard } from "@/components/settings/SalesFunnelConfigCard";
 import { CheckoutIntegrationsCard } from "@/components/settings/CheckoutIntegrationsCard";
+import { SignatureCard } from "@/components/settings/SignatureCard";
 import { useSidebarPrefs } from "@/contexts/SidebarPrefsContext";
 import type { SidebarLayout, SidebarDensity, SidebarWidth } from "@/types/sidebar";
 
@@ -192,6 +193,7 @@ export default function SettingsPage() {
       </div>
 
       <SidebarAppearanceCard />
+      <SignatureCard />
       <SalesFunnelConfigCard />
       <TenantManagementCard />
     </div>

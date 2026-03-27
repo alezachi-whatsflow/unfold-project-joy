@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Headphones } from "lucide-react";
+import { Headphones, AlertTriangle } from "lucide-react";
 import type { Conversation } from "@/data/mockConversations";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
@@ -83,6 +83,9 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
 
         {/* Line 2: Message preview */}
         <div className="flex items-center gap-1 mt-0.5">
+          {c.slaBreach && (
+            <AlertTriangle size={11} className="shrink-0 text-red-500" title="SLA excedido" />
+          )}
           <span
             className="text-[11px] text-muted-foreground truncate flex-1"
             style={{ fontStyle: c.lastMessageType === "system" ? "italic" : "normal" }}

@@ -249,11 +249,20 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
       grouped.get(jid)!.push(m);
     }
 
-    // Also fetch lead info and contacts
-    const [{ data: leads }, { data: contacts }] = await Promise.all([
+    // Also fetch lead info, contacts and SLA rules
+    const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
+    const [{ data: leads }, { data: contacts }, { data: slaRules }] = await Promise.all([
       supabase.from("whatsapp_leads").select("*"),
       supabase.from("whatsapp_contacts").select("*"),
+      tenantId
+        ? supabase.from("sla_rules").select("*").eq("tenant_id", tenantId).eq("is_active", true)
+        : Promise.resolve({ data: [] }),
     ]);
+    // Build SLA lookup: department_id → rule (null key = default)
+    const slaMap = new Map<string | null, any>();
+    for (const rule of slaRules ?? []) {
+      slaMap.set(rule.department_id, rule);
+    }
     const leadMap = new Map((leads ?? []).map((l: any) => [l.chat_id, l]));
     // Build contact map with multiple keys: jid, phone@s.whatsapp.net, phone
     const contactMap = new Map<string, any>();
@@ -314,6 +323,37 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
       // Avatar: prefer profile_pic_url from whatsapp_contacts
       const avatarUrl = contact?.profile_pic_url || null;
 
+      // SLA breach check
+      let slaBreach = false;
+      if (slaMap.size > 0 && !isGroup) {
+        // Find the applicable SLA rule (department-specific or default)
+        const slaRule = slaMap.get(lead?.department_id ?? null) || slaMap.get(null);
+        if (slaRule) {
+          // Find first incoming message without a subsequent outgoing reply
+          const firstIncoming = sorted.findLast((m: any) => m.direction === "incoming");
+          if (firstIncoming) {
+            const firstOutgoing = sorted.find((m: any) =>
+              m.direction === "outgoing" && new Date(m.created_at) > new Date(firstIncoming.created_at)
+            );
+            const now = Date.now();
+            const incomingTime = new Date(firstIncoming.created_at).getTime();
+            const elapsedMinutes = (now - incomingTime) / 60000;
+
+            if (!firstOutgoing && elapsedMinutes > slaRule.first_response_minutes) {
+              slaBreach = true;
+            }
+            // Also check resolution time for open conversations
+            const oldestIncoming = sorted.findLast((m: any) => m.direction === "incoming");
+            if (oldestIncoming) {
+              const totalElapsed = (now - new Date(oldestIncoming.created_at).getTime()) / 60000;
+              if (totalElapsed > slaRule.resolution_minutes && lead?.lead_status !== "resolved") {
+                slaBreach = true;
+              }
+            }
+          }
+        }
+      }
+
       convs.push({
         id: jid,
         name,
@@ -327,6 +367,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         avatarInitials: isGroup ? groupInitials(name) : phoneInitials(phone),
         avatarUrl: avatarUrl || undefined,
         instanceName: latest.instance_name,
+        slaBreach,
         channel: (latest.instance_name?.startsWith("meta:") ? "whatsapp_meta"
           : latest.instance_name?.startsWith("messenger:") || latest.instance_name?.startsWith("messenger_") ? "facebook"
           : latest.instance_name?.startsWith("instagram:") || latest.instance_name?.startsWith("instagram_") ? "instagram"
@@ -655,9 +696,37 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
   const isMessengerConversation = (instanceName: string) => instanceName?.startsWith("messenger:");
   const isInstagramConversation = (instanceName: string) => instanceName?.startsWith("instagram:");
 
+  /* ── signature cache ── */
+  const signatureCacheRef = useRef<{ enabled: boolean; text: string } | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      supabase
+        .from("profiles")
+        .select("signature_enabled, signature_text")
+        .eq("id", data.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (profile) {
+            signatureCacheRef.current = {
+              enabled: profile.signature_enabled ?? false,
+              text: profile.signature_text ?? "",
+            };
+          }
+        });
+    });
+  }, []);
+
   /* ── send message (auto-routes uazapi, meta, messenger, instagram) ── */
   const handleSend = async (text: string) => {
     if (!selectedJid || !text.trim()) return;
+
+    // Append signature if enabled
+    let finalText = text.trim();
+    const sig = signatureCacheRef.current;
+    if (sig?.enabled && sig.text.trim()) {
+      finalText = `${finalText}\n\n\u2014 ${sig.text}`;
+    }
 
     const conv = conversations.find((c) => c.id === selectedJid);
     if (!conv?.instanceName) {
@@ -674,7 +743,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         body: {
           page_id: pageId,
           recipient_psid: selectedJid.replace("@messenger", ""),
-          text,
+          text: finalText,
         },
       });
       if (error) {
@@ -688,7 +757,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         body: {
           action: "send-text",
           phone: jidToPhone(selectedJid),
-          message: text,
+          message: finalText,
           phone_number_id: phoneNumberId,
         },
       });
@@ -699,7 +768,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
     } else if (conv.instanceName?.startsWith("mercadolivre_")) {
       // Send via ML
       const { error } = await supabase.functions.invoke("ml-send", {
-        body: { type: "message", pack_id: selectedJid.replace("ml_", "").replace("@mercadolivre", ""), text },
+        body: { type: "message", pack_id: selectedJid.replace("ml_", "").replace("@mercadolivre", ""), text: finalText },
       });
       if (error) { console.error("ML send error:", error); return; }
       await supabase.from("whatsapp_messages").insert({
@@ -708,7 +777,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         message_id: `ml_out_${Date.now()}`,
         direction: "outgoing",
         type: "text",
-        body: text,
+        body: finalText,
         status: 4,
         tenant_id: localStorage.getItem("whatsflow_default_tenant_id"),
       });
@@ -717,7 +786,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
       const chatId = selectedJid.replace("tg_", "").replace("@telegram", "");
       const tId = localStorage.getItem("whatsflow_default_tenant_id");
       const { data: tgResult, error: tgError } = await supabase.functions.invoke("telegram-send", {
-        body: { chat_id: Number(chatId), text, tenant_id: tId },
+        body: { chat_id: Number(chatId), text: finalText, tenant_id: tId },
       });
       if (tgError || tgResult?.error) {
         console.error("Telegram send error:", tgError || tgResult);
@@ -731,7 +800,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         message_id: `tg_out_${Date.now()}`,
         direction: "outgoing",
         type: "text",
-        body: text,
+        body: finalText,
         status: 4,
         tenant_id: tId,
       });
@@ -744,7 +813,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
           method: "POST",
           body: {
             number: isGroup ? selectedJid : jidToPhone(selectedJid),
-            text,
+            text: finalText,
           },
         },
       });

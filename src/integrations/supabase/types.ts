@@ -2496,6 +2496,8 @@ export type Database = {
           invited_by: string | null
           license_id: string | null
           role: string | null
+          signature_enabled: boolean | null
+          signature_text: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2510,6 +2512,8 @@ export type Database = {
           invited_by?: string | null
           license_id?: string | null
           role?: string | null
+          signature_enabled?: boolean | null
+          signature_text?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2524,6 +2528,8 @@ export type Database = {
           invited_by?: string | null
           license_id?: string | null
           role?: string | null
+          signature_enabled?: boolean | null
+          signature_text?: string | null
           updated_at?: string | null
         }
         Relationships: [
