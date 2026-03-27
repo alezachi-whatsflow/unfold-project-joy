@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones, X, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickLeadDrawer } from "../QuickLeadDrawer";
 import type { Conversation } from "@/data/mockConversations";
@@ -8,6 +8,9 @@ import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
 import MessageList from "../chat/MessageList";
 import ChatInput, { type AttachmentPayload } from "../chat/ChatInput";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
+import { toast } from "sonner";
 
 interface ChatPanelProps {
   conversation: Conversation | null;
@@ -36,9 +39,316 @@ const quickActions = [
   { id: "more", label: "Mais", icon: MoreHorizontal, bg: "rgba(100,116,139,0.1)", text: "#8696A0", border: "rgba(100,116,139,0.3)" },
 ];
 
+/* ────────────────────────────────────────────────────── */
+/*  Types for quick-action state                         */
+/* ────────────────────────────────────────────────────── */
+interface Attendant {
+  user_id: string;
+  full_name: string;
+}
+
+interface TenantTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface ConversationNote {
+  id: string;
+  text: string;
+  user_id: string;
+  user_name?: string;
+  created_at: string;
+}
+
 export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation, onAssign, onResolve, activeFilter }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
   const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
+
+  const tenantId = useTenantId();
+
+  // ── Transfer state ──
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [attendants, setAttendants] = useState<Attendant[]>([]);
+  const [transferLoading, setTransferLoading] = useState(false);
+
+  // ── Tag state ──
+  const [tagOpen, setTagOpen] = useState(false);
+  const [tenantTags, setTenantTags] = useState<TenantTag[]>([]);
+  const [leadTags, setLeadTags] = useState<string[]>([]);
+  const [tagLoading, setTagLoading] = useState(false);
+
+  // ── Notes state ──
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notes, setNotes] = useState<ConversationNote[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+
+  // ── AI toggle state ──
+  const [iaEnabled, setIaEnabled] = useState(false);
+  const [iaLoading, setIaLoading] = useState(false);
+
+  // Current user ID
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
+
+  // Reset quick-action states when conversation changes
+  useEffect(() => {
+    setTransferOpen(false);
+    setTagOpen(false);
+    setNotesOpen(false);
+    setIaEnabled(false);
+  }, [conversation?.id]);
+
+  // Load AI state when conversation changes
+  useEffect(() => {
+    if (!conversation) return;
+    supabase
+      .from("whatsapp_leads")
+      .select("chatbot_disable_until")
+      .eq("chat_id", conversation.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          // chatbot_disable_until === 0 or null means AI is ON
+          // A large timestamp means AI is OFF (disabled until that time)
+          const disabledUntil = data.chatbot_disable_until ?? 0;
+          const isDisabled = disabledUntil > Date.now() / 1000;
+          setIaEnabled(!isDisabled);
+        }
+      });
+  }, [conversation?.id]);
+
+  /* ═══════════════════════════════════════════════════ */
+  /*  1. TRANSFER handler                               */
+  /* ═══════════════════════════════════════════════════ */
+  const openTransfer = useCallback(async () => {
+    if (!tenantId) { toast.error("Tenant não identificado"); return; }
+    setTransferOpen(true);
+    setTransferLoading(true);
+    try {
+      // Get all users belonging to the same tenant, joined with profiles for name
+      const { data, error } = await supabase
+        .from("user_tenants")
+        .select("user_id, profiles:user_id(full_name)")
+        .eq("tenant_id", tenantId);
+
+      if (error) throw error;
+
+      const list: Attendant[] = (data || [])
+        .map((row: any) => ({
+          user_id: row.user_id,
+          full_name: row.profiles?.full_name || "Sem nome",
+        }))
+        .filter((a: Attendant) => a.user_id !== currentUserId); // exclude self
+
+      setAttendants(list);
+    } catch (err: any) {
+      toast.error(`Erro ao carregar atendentes: ${err.message}`);
+    } finally {
+      setTransferLoading(false);
+    }
+  }, [tenantId, currentUserId]);
+
+  const doTransfer = useCallback(async (targetUserId: string, targetName: string) => {
+    if (!conversation) return;
+    const { error } = await supabase
+      .from("whatsapp_leads")
+      .update({ assigned_attendant_id: targetUserId, lead_status: "open", is_ticket_open: true })
+      .eq("chat_id", conversation.id);
+
+    if (error) {
+      toast.error(`Erro ao transferir: ${error.message}`);
+    } else {
+      toast.success(`Conversa transferida para ${targetName}`);
+    }
+    setTransferOpen(false);
+  }, [conversation]);
+
+  /* ═══════════════════════════════════════════════════ */
+  /*  2. TAG handler                                    */
+  /* ═══════════════════════════════════════════════════ */
+  const openTags = useCallback(async () => {
+    if (!tenantId || !conversation) return;
+    setTagOpen(true);
+    setTagLoading(true);
+    try {
+      // Load tenant tags
+      const { data: tags, error: tagErr } = await supabase
+        .from("tenant_tags")
+        .select("id, name, color")
+        .eq("tenant_id", tenantId)
+        .order("name");
+
+      if (tagErr) throw tagErr;
+      setTenantTags(tags || []);
+
+      // Load current lead tags
+      const { data: lead } = await supabase
+        .from("whatsapp_leads")
+        .select("lead_tags")
+        .eq("chat_id", conversation.id)
+        .maybeSingle();
+
+      setLeadTags(lead?.lead_tags || []);
+    } catch (err: any) {
+      toast.error(`Erro ao carregar tags: ${err.message}`);
+    } finally {
+      setTagLoading(false);
+    }
+  }, [tenantId, conversation]);
+
+  const toggleTag = useCallback(async (tagName: string) => {
+    if (!conversation) return;
+    const current = [...leadTags];
+    const idx = current.indexOf(tagName);
+    if (idx >= 0) {
+      current.splice(idx, 1);
+    } else {
+      current.push(tagName);
+    }
+
+    const { error } = await supabase
+      .from("whatsapp_leads")
+      .update({ lead_tags: current })
+      .eq("chat_id", conversation.id);
+
+    if (error) {
+      toast.error(`Erro ao atualizar tags: ${error.message}`);
+    } else {
+      setLeadTags(current);
+    }
+  }, [conversation, leadTags]);
+
+  /* ═══════════════════════════════════════════════════ */
+  /*  3. NOTES handler                                  */
+  /* ═══════════════════════════════════════════════════ */
+  const openNotes = useCallback(async () => {
+    if (!conversation || !tenantId) return;
+    setNotesOpen(true);
+    try {
+      const { data, error } = await supabase
+        .from("conversation_notes")
+        .select("id, text, user_id, created_at")
+        .eq("chat_id", conversation.id)
+        .eq("tenant_id", tenantId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch user names for the notes
+      const userIds = [...new Set((data || []).map((n: any) => n.user_id))];
+      let userMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", userIds);
+        (profiles || []).forEach((p: any) => { userMap[p.id] = p.full_name || "Sem nome"; });
+      }
+
+      setNotes(
+        (data || []).map((n: any) => ({
+          ...n,
+          user_name: userMap[n.user_id] || "Desconhecido",
+        }))
+      );
+    } catch (err: any) {
+      toast.error(`Erro ao carregar notas: ${err.message}`);
+    }
+  }, [conversation, tenantId]);
+
+  const saveNote = useCallback(async () => {
+    if (!conversation || !tenantId || !currentUserId || !noteText.trim()) return;
+    setNoteSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from("conversation_notes")
+        .insert({
+          chat_id: conversation.id,
+          tenant_id: tenantId,
+          user_id: currentUserId,
+          text: noteText.trim(),
+        })
+        .select("id, text, user_id, created_at")
+        .single();
+
+      if (error) throw error;
+
+      // Get the current user name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", currentUserId)
+        .maybeSingle();
+
+      setNotes((prev) => [
+        { ...data, user_name: profile?.full_name || "Eu" },
+        ...prev,
+      ]);
+      setNoteText("");
+      toast.success("Nota salva");
+    } catch (err: any) {
+      toast.error(`Erro ao salvar nota: ${err.message}`);
+    } finally {
+      setNoteSaving(false);
+    }
+  }, [conversation, tenantId, currentUserId, noteText]);
+
+  /* ═══════════════════════════════════════════════════ */
+  /*  4. AI TOGGLE handler                              */
+  /* ═══════════════════════════════════════════════════ */
+  const toggleAI = useCallback(async () => {
+    if (!conversation) return;
+    setIaLoading(true);
+    try {
+      // Toggle: if currently enabled, disable by setting a far-future timestamp
+      // If currently disabled, enable by setting 0
+      const newValue = iaEnabled ? 9999999999 : 0;
+
+      const { error } = await supabase
+        .from("whatsapp_leads")
+        .update({ chatbot_disable_until: newValue })
+        .eq("chat_id", conversation.id);
+
+      if (error) throw error;
+
+      setIaEnabled(!iaEnabled);
+      toast.success(iaEnabled ? "IA desativada" : "IA ativada");
+    } catch (err: any) {
+      toast.error(`Erro ao alternar IA: ${err.message}`);
+    } finally {
+      setIaLoading(false);
+    }
+  }, [conversation, iaEnabled]);
+
+  /* ═══════════════════════════════════════════════════ */
+  /*  Quick action click dispatcher                     */
+  /* ═══════════════════════════════════════════════════ */
+  const handleQuickAction = useCallback((actionId: string) => {
+    switch (actionId) {
+      case "lead":
+        setLeadDrawerOpen(true);
+        break;
+      case "resolve":
+        if (onResolve) onResolve();
+        break;
+      case "transfer":
+        openTransfer();
+        break;
+      case "tag":
+        openTags();
+        break;
+      case "notes":
+        openNotes();
+        break;
+      case "ai":
+        toggleAI();
+        break;
+    }
+  }, [onResolve, openTransfer, openTags, openNotes, toggleAI]);
 
   // Empty state
   if (!conversation) {
@@ -62,7 +372,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
   const c = conversation;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex-1 flex flex-col min-w-0 relative">
       {/* Chat Header */}
       <div className="msg-chat-header" style={{ flexDirection: "column", height: "auto" }}>
         <div className="flex items-center justify-between w-full" style={{ height: 56 }}>
@@ -110,18 +420,17 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
           )}
           {quickActions.map((a) => {
             // Replace "Resolver" label with "Finalizar" when in atendimento
-            const label = a.id === "resolve" ? "Finalizar" : a.label;
+            let label = a.id === "resolve" ? "Finalizar" : a.label;
+            // Dynamic AI label
+            if (a.id === "ai") label = iaEnabled ? "IA: ON" : "IA: OFF";
             return (
               <button
                 key={a.id}
-                onClick={() => {
-                  if (a.id === "lead") setLeadDrawerOpen(true);
-                  if (a.id === "resolve" && onResolve) onResolve();
-                }}
+                onClick={() => handleQuickAction(a.id)}
                 className={cn(
                   "msg-pill flex items-center gap-1.5 shrink-0",
                   a.id === "resolve" && "pill-green",
-                  a.id === "ai" && "pill-blue",
+                  a.id === "ai" && (iaEnabled ? "pill-blue" : "pill-gray"),
                   a.id === "transfer" && "pill-orange",
                   a.id === "lead" && "pill-green",
                 )}
@@ -148,6 +457,150 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
         contactPhone={c.phone}
         conversationId={c.id}
       />
+
+      {/* ══════════════════════════════════════════════ */}
+      {/*  TRANSFER MODAL                               */}
+      {/* ══════════════════════════════════════════════ */}
+      {transferOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-xl p-4 w-80 max-h-[400px] flex flex-col" style={{ background: "var(--wa-bg-deeper, #1a1d21)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold" style={{ color: "var(--wa-text-primary)" }}>Transferir conversa</h3>
+              <button onClick={() => setTransferOpen(false)} style={{ color: "var(--wa-text-secondary)" }}>
+                <X size={16} />
+              </button>
+            </div>
+            {transferLoading ? (
+              <p className="text-xs text-center py-4" style={{ color: "var(--wa-text-secondary)" }}>Carregando...</p>
+            ) : attendants.length === 0 ? (
+              <p className="text-xs text-center py-4" style={{ color: "var(--wa-text-secondary)" }}>Nenhum atendente disponível</p>
+            ) : (
+              <div className="flex flex-col gap-1 overflow-y-auto">
+                {attendants.map((att) => (
+                  <button
+                    key={att.user_id}
+                    onClick={() => doTransfer(att.user_id, att.full_name)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-colors hover:bg-white/10"
+                    style={{ color: "var(--wa-text-primary)" }}
+                  >
+                    <Headphones size={14} style={{ color: "#FBBF24" }} />
+                    {att.full_name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════ */}
+      {/*  TAG POPOVER                                  */}
+      {/* ══════════════════════════════════════════════ */}
+      {tagOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-xl p-4 w-80 max-h-[400px] flex flex-col" style={{ background: "var(--wa-bg-deeper, #1a1d21)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold" style={{ color: "var(--wa-text-primary)" }}>Tags</h3>
+              <button onClick={() => setTagOpen(false)} style={{ color: "var(--wa-text-secondary)" }}>
+                <X size={16} />
+              </button>
+            </div>
+            {tagLoading ? (
+              <p className="text-xs text-center py-4" style={{ color: "var(--wa-text-secondary)" }}>Carregando...</p>
+            ) : tenantTags.length === 0 ? (
+              <p className="text-xs text-center py-4" style={{ color: "var(--wa-text-secondary)" }}>Nenhuma tag configurada</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 overflow-y-auto">
+                {tenantTags.map((tag) => {
+                  const isSelected = leadTags.includes(tag.name);
+                  return (
+                    <button
+                      key={tag.id}
+                      onClick={() => toggleTag(tag.name)}
+                      className="px-3 py-1 rounded-full text-xs font-medium transition-all"
+                      style={{
+                        background: isSelected ? tag.color : "transparent",
+                        color: isSelected ? "#fff" : tag.color,
+                        border: `1.5px solid ${tag.color}`,
+                        opacity: isSelected ? 1 : 0.7,
+                      }}
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════ */}
+      {/*  NOTES POPOVER                                */}
+      {/* ══════════════════════════════════════════════ */}
+      {notesOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-xl p-4 w-96 max-h-[500px] flex flex-col" style={{ background: "var(--wa-bg-deeper, #1a1d21)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold" style={{ color: "var(--wa-text-primary)" }}>Notas internas</h3>
+              <button onClick={() => setNotesOpen(false)} style={{ color: "var(--wa-text-secondary)" }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Note input */}
+            <div className="flex gap-2 mb-3">
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Escreva uma nota interna..."
+                rows={2}
+                className="flex-1 rounded-lg px-3 py-2 text-sm resize-none outline-none"
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  color: "var(--wa-text-primary)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              />
+              <button
+                onClick={saveNote}
+                disabled={noteSaving || !noteText.trim()}
+                className="self-end px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
+                style={{ background: "var(--wa-green)", color: "#fff" }}
+              >
+                <Send size={14} />
+              </button>
+            </div>
+
+            {/* Notes list */}
+            <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+              {notes.length === 0 ? (
+                <p className="text-xs text-center py-4" style={{ color: "var(--wa-text-secondary)" }}>Nenhuma nota ainda</p>
+              ) : (
+                notes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="rounded-lg px-3 py-2"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium" style={{ color: "#A78BFA" }}>
+                        {note.user_name}
+                      </span>
+                      <span className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>
+                        {new Date(note.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <p className="text-xs whitespace-pre-wrap" style={{ color: "var(--wa-text-primary)" }}>
+                      {note.text}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

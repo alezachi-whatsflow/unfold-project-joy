@@ -148,6 +148,11 @@
   border-color: rgba(232, 168, 74, 0.25);
   color: #E8A84A;
 }
+.msg-pill.pill-gray {
+  background: rgba(100, 116, 139, 0.10);
+  border-color: rgba(100, 116, 139, 0.25);
+  color: #94A3B8;
+}
 
 /* ── Message bubbles ── */
 .msg-bubble {
