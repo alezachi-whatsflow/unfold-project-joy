@@ -73,7 +73,7 @@ export default function CrmPage() {
             <Button><Plus className="h-4 w-4 mr-2" /> Novo Contato</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Criar Contato</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Novo Contato</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div><Label>Nome *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

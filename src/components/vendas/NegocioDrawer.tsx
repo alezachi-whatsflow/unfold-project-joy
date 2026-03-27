@@ -389,7 +389,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
             <InfoItem label="Cliente" value={negocio.cliente_nome || '—'} />
             <InfoItem label="Consultor" value={negocio.consultor_nome || '—'} />
             {(negocio as any).phone_lead && (
-              <InfoItem label="Fone Lead" value={(negocio as any).phone_lead} />
+              <InfoItem label="Telefone Lead" value={(negocio as any).phone_lead} />
             )}
             <InfoItem label="Origem" value={NEGOCIO_ORIGEM_LABELS[negocio.origem] || negocio.origem} />
             <InfoItem label="Probabilidade" value={`${negocio.probabilidade}%`} />

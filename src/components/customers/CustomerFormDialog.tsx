@@ -233,15 +233,15 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
           {/* Telefones */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Fone Faturamento</Label>
+              <Label className="text-xs">Telefone Faturamento</Label>
               <Input value={form.phoneBilling} onChange={(e) => set("phoneBilling", e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Fone Lead</Label>
+              <Label className="text-xs">Telefone Lead</Label>
               <Input value={form.phoneLead} onChange={(e) => set("phoneLead", e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Fone Empresa</Label>
+              <Label className="text-xs">Telefone Empresa</Label>
               <Input value={form.phoneCompany} onChange={(e) => set("phoneCompany", e.target.value)} placeholder="(00) 00000-0000" />
             </div>
           </div>
@@ -268,7 +268,7 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving || !form.nome.trim() || !form.email.trim()}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editing ? "Atualizar" : "Cadastrar"}
+              {editing ? "Atualizar" : "Criar"}
             </Button>
           </div>
         </div>
