@@ -80,9 +80,8 @@ Deno.serve(async (req) => {
     // 3. Upsert channel_integrations
     const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/ml-webhook`;
 
-    const { error: upsertErr } = await supabase.from("channel_integrations").upsert({
-      tenant_id,
-      provider: "MERCADOLIVRE",
+    // Check if exists, then update or insert (no unique constraint on channel_id)
+    const integrationData = {
       channel_id: `ml_${user_id}`,
       name: sellerName,
       ml_user_id: String(user_id),
@@ -100,7 +99,19 @@ Deno.serve(async (req) => {
         seller_reputation: profile.seller_reputation?.level_id,
       },
       updated_at: new Date().toISOString(),
-    }, { onConflict: "channel_id" });
+    };
+
+    const { data: existingML } = await supabase.from("channel_integrations")
+      .select("id").eq("tenant_id", tenant_id).eq("provider", "MERCADOLIVRE").maybeSingle();
+
+    let upsertErr: any = null;
+    if (existingML) {
+      ({ error: upsertErr } = await supabase.from("channel_integrations")
+        .update(integrationData).eq("id", existingML.id));
+    } else {
+      ({ error: upsertErr } = await supabase.from("channel_integrations")
+        .insert({ tenant_id, provider: "MERCADOLIVRE", ...integrationData }));
+    }
 
     if (upsertErr) {
       return json({ error: `Failed to save: ${upsertErr.message}` }, 500);
