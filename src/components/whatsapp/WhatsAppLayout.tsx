@@ -838,25 +838,25 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
 
   /* ── assign conversation to current user (Iniciar Atendimento) ── */
   const assignConversation = useCallback(async (jid: string) => {
-    if (!currentUserId) return;
+    if (!currentUserId) { toast.error("Usuário não identificado"); return; }
     const tId = localStorage.getItem("whatsflow_default_tenant_id");
-    // Check if lead exists
-    const { data: existing } = await supabase
-      .from("whatsapp_leads")
-      .select("id")
-      .eq("chat_id", jid)
-      .maybeSingle();
+    const conv = conversations.find((c) => c.id === jid);
 
-    if (existing) {
-      const { error } = await supabase
-        .from("whatsapp_leads")
-        .update({ assigned_attendant_id: currentUserId, lead_status: "open", is_ticket_open: true })
-        .eq("id", existing.id);
-      if (error) console.error("Assign update error:", error);
-    } else {
-      // Find instance_name from conversations
-      const conv = conversations.find((c) => c.id === jid);
-      const { error } = await supabase
+    // Try update first (most leads already exist from webhook auto-creation)
+    const { data: updated, error: updateErr } = await supabase
+      .from("whatsapp_leads")
+      .update({ assigned_attendant_id: currentUserId, lead_status: "open", is_ticket_open: true, tenant_id: tId })
+      .eq("chat_id", jid)
+      .select("id");
+
+    if (updateErr) {
+      console.error("Assign update error:", updateErr);
+      toast.error(`Erro ao atender: ${updateErr.message}`);
+    }
+
+    // If no rows updated, insert new lead
+    if (!updated || updated.length === 0) {
+      const { error: insertErr } = await supabase
         .from("whatsapp_leads")
         .insert({
           chat_id: jid,
@@ -867,8 +867,14 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
           is_ticket_open: true,
           tenant_id: tId,
         });
-      if (error) console.error("Assign insert error:", error);
+      if (insertErr) {
+        console.error("Assign insert error:", insertErr);
+        toast.error(`Erro ao criar lead: ${insertErr.message}`);
+        return;
+      }
     }
+
+    toast.success(`Atendimento iniciado: ${conv?.name || jid}`);
     // Optimistic: update local state immediately
     setConversations((prev) =>
       prev.map((c) => c.id === jid ? { ...c, assignedTo: currentUserId, status: "open" as const } : c)
@@ -878,18 +884,16 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
 
   /* ── resolve / finalize conversation ── */
   const resolveConversation = useCallback(async (jid: string) => {
-    const { data: existing } = await supabase
+    const { error } = await supabase
       .from("whatsapp_leads")
-      .select("id")
-      .eq("chat_id", jid)
-      .maybeSingle();
+      .update({ lead_status: "resolved", is_ticket_open: false })
+      .eq("chat_id", jid);
 
-    if (existing) {
-      const { error } = await supabase
-        .from("whatsapp_leads")
-        .update({ lead_status: "resolved", is_ticket_open: false })
-        .eq("id", existing.id);
-      if (error) console.error("Resolve error:", error);
+    if (error) {
+      console.error("Resolve error:", error);
+      toast.error(`Erro ao finalizar: ${error.message}`);
+    } else {
+      toast.success("Atendimento finalizado");
     }
     setConversations((prev) =>
       prev.map((c) => c.id === jid ? { ...c, status: "resolved" as const } : c)
