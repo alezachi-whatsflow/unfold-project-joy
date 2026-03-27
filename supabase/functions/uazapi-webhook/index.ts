@@ -577,7 +577,7 @@ Deno.serve(async (req) => {
                       tenant_id: instForExpense.tenant_id,
                       description: expense.description || `Despesa via WhatsApp — ${expense.supplier}`,
                       date: expense.date,
-                      amount: expense.amount,
+                      value: expense.amount,
                       category: expense.category,
                       supplier: expense.supplier,
                       attachment_url: imageUrl,
@@ -592,8 +592,8 @@ Deno.serve(async (req) => {
                       // 5. Send confirmation back via WhatsApp
                       const confirmText = `[PZAAFI] Despesa registrada. Fornecedor: ${expense.supplier} | Valor: R$ ${expense.amount.toFixed(2)} | Categoria: ${expense.category}.`;
 
-                      if (UAZAPI_BASE_URL && instForExpense.instance_token) {
-                        fetch(`${UAZAPI_BASE_URL}/message/text`, {
+                      if (uazapiUrl && instForExpense.instance_token) {
+                        fetch(`${uazapiUrl}/message/text`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json", token: instForExpense.instance_token },
                           body: JSON.stringify({
