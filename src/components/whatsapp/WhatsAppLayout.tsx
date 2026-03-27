@@ -450,7 +450,10 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
   // Helper to update both state and cache when messages change
   const updateMessagesWithCache = useCallback((jid: string, updater: (prev: Message[]) => Message[]) => {
     setMessages((prev) => {
-      const next = updater(prev);
+      const raw = updater(prev);
+      // Dedup by id — prevents race condition between Realtime + polling
+      const seen = new Set<string>();
+      const next = raw.filter((m) => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
       if (next !== prev) {
         messagesCacheRef.current.set(jid, {
           messages: next,
