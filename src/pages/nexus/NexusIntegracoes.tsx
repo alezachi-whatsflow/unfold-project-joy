@@ -75,24 +75,37 @@ export default function NexusIntegracoes() {
     },
   });
 
+  // ── Fetch tenant names lookup ──
+  const { data: tenantNames = {} } = useQuery({
+    queryKey: ["nexus-tenant-names"],
+    queryFn: async () => {
+      const { data } = await supabase.from("tenants").select("id, name");
+      const map: Record<string, string> = {};
+      for (const t of data || []) map[t.id] = t.name;
+      return map;
+    },
+  });
+
   // ── Fetch ALL instances ──
   const { data: instances = [], isLoading, refetch } = useQuery({
     queryKey: ["nexus-all-instances"],
     queryFn: async () => {
-      const { data } = await supabase.from("whatsapp_instances").select("*, tenants(name)").order("status");
-      return (data || []).map((d: any) => ({ ...d, tenant_name: d.tenants?.name || "—" })) as InstanceRow[];
+      const { data } = await supabase.from("whatsapp_instances").select("*").order("status");
+      return (data || []) as InstanceRow[];
     },
   });
+
+  // Enrich instances with tenant names
+  const enrichedInstances = instances.map((d: any) => ({ ...d, tenant_name: (tenantNames as any)[d.tenant_id] || "—" }));
 
   // ── Fetch ALL channel integrations (Meta, Telegram, ML, etc.) ──
   const { data: channels = [] } = useQuery({
     queryKey: ["nexus-all-channels"],
     queryFn: async () => {
-      const { data } = await supabase.from("channel_integrations").select("id, provider, name, status, bot_username, display_phone_number, tenant_id, tenants(name)").order("created_at", { ascending: false });
+      const { data } = await supabase.from("channel_integrations").select("id, provider, name, status, bot_username, display_phone_number, tenant_id").order("created_at", { ascending: false });
       return (data || []).map((d: any) => ({
         ...d,
         is_active: d.status === "active",
-        tenant_name: d.tenants?.name || "—",
       })) as ChannelRow[];
     },
   });
@@ -132,12 +145,13 @@ export default function NexusIntegracoes() {
 
   // ── Group instances by tenant ──
   const tenantMap = new Map<string, { name: string; instances: InstanceRow[]; channels: ChannelRow[] }>();
-  for (const inst of instances) {
+  for (const inst of enrichedInstances) {
     if (!tenantMap.has(inst.tenant_id)) tenantMap.set(inst.tenant_id, { name: inst.tenant_name || "—", instances: [], channels: [] });
     tenantMap.get(inst.tenant_id)!.instances.push(inst);
   }
   for (const ch of channels) {
-    if (!tenantMap.has(ch.tenant_id)) tenantMap.set(ch.tenant_id, { name: ch.tenant_name || "—", instances: [], channels: [] });
+    const chTenantName = (tenantNames as any)[ch.tenant_id] || "—";
+    if (!tenantMap.has(ch.tenant_id)) tenantMap.set(ch.tenant_id, { name: chTenantName, instances: [], channels: [] });
     tenantMap.get(ch.tenant_id)!.channels.push(ch);
   }
 
@@ -146,9 +160,9 @@ export default function NexusIntegracoes() {
   );
 
   // ── Stats ──
-  const connectedCount = instances.filter((i) => i.status === "connected").length;
-  const disconnectedCount = instances.filter((i) => i.status !== "connected").length;
-  const noWebhook = instances.filter((i) => !i.webhook_url).length;
+  const connectedCount = enrichedInstances.filter((i: any) => i.status === "connected").length;
+  const disconnectedCount = enrichedInstances.filter((i: any) => i.status !== "connected").length;
+  const noWebhook = enrichedInstances.filter((i: any) => !i.webhook_url).length;
   const metaActive = channels.filter((c) => c.is_active && (c.provider === "WABA" || c.provider === "INSTAGRAM")).length;
   const telegramActive = channels.filter((c) => c.is_active && c.provider === "TELEGRAM").length;
   const mlActive = channels.filter((c) => c.is_active && c.provider === "MERCADOLIVRE").length;
