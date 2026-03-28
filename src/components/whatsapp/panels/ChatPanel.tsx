@@ -444,7 +444,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       </div>
 
       {/* Messages */}
-      <MessageList messages={messages} />
+      <MessageList messages={messages} conversationId={conversation?.id} />
 
       {/* Input */}
       <ChatInput onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />

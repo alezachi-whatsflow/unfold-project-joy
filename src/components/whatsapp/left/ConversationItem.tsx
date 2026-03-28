@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Headphones, AlertTriangle } from "lucide-react";
+import { Headphones, AlertTriangle, Search } from "lucide-react";
 import type { Conversation } from "@/data/mockConversations";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
@@ -14,9 +14,25 @@ interface ConversationItemProps {
   isQueueMode?: boolean;
   /** Called when agent clicks "Iniciar Atendimento" */
   onAssign?: () => void;
+  /** Active search query for snippet highlighting */
+  searchQuery?: string;
 }
 
-const ConversationItem = React.memo(function ConversationItem({ conversation: c, isSelected, onClick, isQueueMode, onAssign }: ConversationItemProps) {
+/** Highlight search term within a text string */
+function highlightMatch(text: string, query: string): React.ReactNode {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-yellow-400/40 text-foreground rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
+
+const ConversationItem = React.memo(function ConversationItem({ conversation: c, isSelected, onClick, isQueueMode, onAssign, searchQuery }: ConversationItemProps) {
   const prefixMap: Record<string, string> = {
     audio: "\uD83C\uDFB5 Áudio",
     document: "\uD83D\uDCCE Documento",
@@ -96,6 +112,19 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
             <span className="text-[9px] text-muted-foreground shrink-0">{c.lastMessageTime}</span>
           )}
         </div>
+
+        {/* Search snippet: shown when conversation was found via message content search */}
+        {c.searchSnippet && searchQuery && (
+          <div className="flex items-center gap-1 mt-0.5">
+            <Search size={9} className="shrink-0 text-muted-foreground/60" />
+            <span className="text-[10px] text-muted-foreground/80 truncate flex-1">
+              {highlightMatch(
+                c.searchSnippet.length > 80 ? c.searchSnippet.slice(0, 80) + "..." : c.searchSnippet,
+                searchQuery
+              )}
+            </span>
+          </div>
+        )}
 
         {/* Tags */}
         {c.tags.length > 0 && (

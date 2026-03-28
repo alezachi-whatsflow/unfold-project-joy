@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { MessageSquarePlus, MessageCircleX } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 import WaAvatar from "../shared/Avatar";
 import SearchBar from "../left/SearchBar";
 import ChannelLegend from "../left/ChannelLegend";
@@ -31,6 +32,9 @@ export default function LeftPanel({
 }: LeftPanelProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(initialFilter || "inbox");
+  // Deep search: message content matches from DB (jid → snippet)
+  const [deepSearchSnippets, setDeepSearchSnippets] = useState<Map<string, string>>(new Map());
+  const deepSearchAbortRef = useRef<AbortController | null>(null);
 
   const newConvOpen = externalOpen ?? false;
   const setNewConvOpen = (v: boolean) => onNewConvOpenChange?.(v);
@@ -50,16 +54,71 @@ export default function LeftPanel({
     }
   }, [filter, viewMode, onViewModeChange]);
 
+  // Deep search: query message content when search has 3+ characters
+  useEffect(() => {
+    if (search.length < 3) {
+      setDeepSearchSnippets(new Map());
+      return;
+    }
+
+    // Cancel previous request
+    deepSearchAbortRef.current?.abort();
+    const controller = new AbortController();
+    deepSearchAbortRef.current = controller;
+
+    (async () => {
+      const { data: msgMatches } = await supabase
+        .from("whatsapp_messages")
+        .select("remote_jid, body")
+        .ilike("body", `%${search}%`)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (controller.signal.aborted) return;
+
+      const snippetMap = new Map<string, string>();
+      for (const m of msgMatches ?? []) {
+        if (!snippetMap.has(m.remote_jid) && m.body) {
+          snippetMap.set(m.remote_jid, m.body);
+        }
+      }
+      setDeepSearchSnippets(snippetMap);
+    })();
+
+    return () => { controller.abort(); };
+  }, [search]);
+
   const filtered = useMemo(() => {
     let list = conversations;
     if (search && search.length >= 2) {
       const q = search.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      // Client-side filter: name, phone, lastMessage
+      const namePhoneMatches = new Set<string>();
       list = list.filter((c) => {
         const name = c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const phone = c.phone || "";
         const msg = (c.lastMessage || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return name.includes(q) || phone.includes(q) || msg.includes(q);
+        const matched = name.includes(q) || phone.includes(q) || msg.includes(q);
+        if (matched) namePhoneMatches.add(c.id);
+        return matched;
       });
+
+      // Merge deep search results (conversations found via message content)
+      if (deepSearchSnippets.size > 0) {
+        const existingIds = new Set(list.map((c) => c.id));
+        for (const [jid, snippet] of deepSearchSnippets) {
+          if (!existingIds.has(jid)) {
+            const conv = conversations.find((c) => c.id === jid);
+            if (conv) {
+              list.push({ ...conv, searchSnippet: snippet });
+              existingIds.add(jid);
+            }
+          } else if (!namePhoneMatches.has(jid)) {
+            // Found by name/phone but also has message match — add snippet
+            list = list.map((c) => c.id === jid ? { ...c, searchSnippet: snippet } : c);
+          }
+        }
+      }
     }
     // Queue-based flow:
     // "inbox" (Em atendimento) → assigned to current user & not resolved & not group
@@ -71,7 +130,7 @@ export default function LeftPanel({
     // "resolved" (Finalizados) → resolved
     if (filter === "resolved") list = list.filter((c) => c.status === "resolved");
     return list;
-  }, [conversations, search, filter]);
+  }, [conversations, search, filter, deepSearchSnippets]);
 
   const inboxCount = conversations.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved").length;
   const queueCount = conversations.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved").length;
@@ -126,6 +185,7 @@ export default function LeftPanel({
               onClick={() => onSelect(c.id)}
               isQueueMode={filter === "queue"}
               onAssign={onAssignConversation ? () => onAssignConversation(c.id) : undefined}
+              searchQuery={search.length >= 3 ? search : undefined}
             />
           ))
         )}

@@ -5,16 +5,30 @@ import { ArrowDown } from "lucide-react";
 
 interface MessageListProps {
   messages: Message[];
+  conversationId?: string;
 }
 
-export default function MessageList({ messages }: MessageListProps) {
+export default function MessageList({ messages, conversationId }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   const prevLengthRef = useRef(0);
+  const prevConversationRef = useRef<string | undefined>(undefined);
 
+  // Instant scroll when conversation changes
   useEffect(() => {
+    if (conversationId !== prevConversationRef.current) {
+      prevConversationRef.current = conversationId;
+      prevLengthRef.current = messages.length;
+      setIsAtBottom(true);
+      // Use requestAnimationFrame to ensure DOM has rendered
+      requestAnimationFrame(() => {
+        endRef.current?.scrollIntoView({ behavior: "auto" });
+      });
+      return;
+    }
+
     const newCount = messages.length;
     const wasAdded = newCount > prevLengthRef.current;
     prevLengthRef.current = newCount;
@@ -23,10 +37,10 @@ export default function MessageList({ messages }: MessageListProps) {
     const lastMsg = messages[messages.length - 1];
     const isNewOutgoing = wasAdded && lastMsg?.direction === "outgoing";
 
-    if (isNewOutgoing || isAtBottom) {
+    if (isNewOutgoing || (wasAdded && isAtBottom)) {
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isAtBottom]);
+  }, [messages, isAtBottom, conversationId]);
 
   const handleScroll = () => {
     const el = containerRef.current;
