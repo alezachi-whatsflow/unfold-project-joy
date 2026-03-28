@@ -604,14 +604,15 @@ Deno.serve(async (req) => {
                       console.log(`[expense-pipeline] Saved: ${expense.supplier} R$${expense.amount}`);
 
                       // 5. Send confirmation back via WhatsApp
-                      const confirmText = `[PZAAFI] Despesa registrada. Fornecedor: ${expense.supplier} | Valor: R$ ${expense.amount.toFixed(2)} | Categoria: ${expense.category}.`;
+                      const amt = typeof expense.amount === "number" ? expense.amount.toFixed(2) : String(expense.amount);
+                      const confirmText = `[WHATSFLOW] Despesa registrada.\nFornecedor: ${expense.supplier}\nValor: R$ ${amt}\nCategoria: ${expense.category}\nData: ${expense.date}`;
 
                       if (uazapiUrl && instForExpense.instance_token) {
-                        fetch(`${uazapiUrl}/message/text`, {
+                        fetch(`${uazapiUrl}/send/text`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json", token: instForExpense.instance_token },
                           body: JSON.stringify({
-                            to: normalized.remote_jid,
+                            number: normalized.remote_jid?.replace(/@.*$/, ""),
                             text: confirmText,
                           }),
                         }).catch((e: any) => console.error("[expense-pipeline] Reply error:", e.message));
@@ -621,11 +622,11 @@ Deno.serve(async (req) => {
                     // Download failed — send feedback to user
                     console.warn(`[expense-pipeline] Media download failed for msgId=${msgId} — sending feedback`);
                     if (uazapiUrl && instForExpense.instance_token) {
-                      fetch(`${uazapiUrl}/message/text`, {
+                      fetch(`${uazapiUrl}/send/text`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json", token: instForExpense.instance_token },
                         body: JSON.stringify({
-                          to: normalized.remote_jid,
+                          number: normalized.remote_jid?.replace(/@.*$/, ""),
                           text: "⚠️ Não foi possível processar esta imagem. Por favor, envie como uma foto normal da galeria (não use visualização única nem envio por documento compactado).",
                         }),
                       }).catch((e: any) => console.error("[expense-pipeline] Feedback error:", e.message));
