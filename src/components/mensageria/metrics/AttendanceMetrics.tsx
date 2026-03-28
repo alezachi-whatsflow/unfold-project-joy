@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Clock, Users, TrendingUp, CheckCircle2, XCircle, Timer,
   MessageSquare, UserCheck, BarChart3, AlertTriangle, Zap,
+  Layers, Hourglass, ShieldCheck, ThumbsUp, AlertOctagon,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════
@@ -251,11 +252,101 @@ export default function AttendanceMetrics() {
     staleTime: 30000,
   });
 
+  // ── Query 6: Advanced attendance metrics (whatsapp_leads) ──
+  const { data: advancedMetrics } = useQuery({
+    queryKey: ["attendance-advanced-metrics", tenantId, period],
+    queryFn: async () => {
+      if (!tenantId) return null;
+
+      // Multitarefas: average concurrent open conversations per attendant
+      const { data: openLeads } = await supabase
+        .from("whatsapp_leads")
+        .select("id, assigned_attendant_id, lead_status")
+        .eq("lead_status", "open")
+        .not("assigned_attendant_id", "is", null);
+
+      let avgConcurrent = 0;
+      if (openLeads && openLeads.length > 0) {
+        const byAttendant = new Map<string, number>();
+        for (const lead of openLeads) {
+          const aid = lead.assigned_attendant_id!;
+          byAttendant.set(aid, (byAttendant.get(aid) || 0) + 1);
+        }
+        const counts = Array.from(byAttendant.values());
+        avgConcurrent = counts.length > 0 ? counts.reduce((a, b) => a + b, 0) / counts.length : 0;
+      }
+
+      // FCR: percentage of first-contact resolutions
+      let fcrPercent: number | null = null;
+      try {
+        const { data: totalResolved } = await supabase
+          .from("whatsapp_leads")
+          .select("id", { count: "exact", head: true })
+          .not("resolved_at", "is", null);
+
+        const { data: fcrResolved } = await supabase
+          .from("whatsapp_leads")
+          .select("id", { count: "exact", head: true })
+          .eq("is_resolved_first_contact", true)
+          .not("resolved_at", "is", null);
+
+        // count comes from the response headers when using head: true
+        // Fallback: use data length if available
+        const totalCount = totalResolved?.length ?? 0;
+        const fcrCount = fcrResolved?.length ?? 0;
+        if (totalCount > 0) {
+          fcrPercent = (fcrCount / totalCount) * 100;
+        }
+      } catch {
+        fcrPercent = null;
+      }
+
+      // Tempo até primeiro 'sim': average time_to_first_yes_minutes
+      let avgFirstYesMin: number | null = null;
+      try {
+        const { data: yesData } = await supabase
+          .from("whatsapp_leads")
+          .select("time_to_first_yes_minutes")
+          .not("time_to_first_yes_minutes", "is", null)
+          .gte("created_at", since);
+
+        if (yesData && yesData.length > 0) {
+          const vals = yesData.map((r: any) => r.time_to_first_yes_minutes as number).filter((v) => v != null);
+          avgFirstYesMin = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        }
+      } catch {
+        avgFirstYesMin = null;
+      }
+
+      // Índice de Reclamações: percentage where ai_sentiment_score = 'complaint'
+      let complaintPercent: number | null = null;
+      try {
+        const { data: allAnalyzed } = await supabase
+          .from("whatsapp_leads")
+          .select("ai_sentiment_score")
+          .not("ai_sentiment_score", "is", null)
+          .gte("created_at", since);
+
+        if (allAnalyzed && allAnalyzed.length > 0) {
+          const complaints = allAnalyzed.filter((r: any) => r.ai_sentiment_score === "complaint").length;
+          complaintPercent = (complaints / allAnalyzed.length) * 100;
+        }
+      } catch {
+        complaintPercent = null;
+      }
+
+      return { avgConcurrent, fcrPercent, avgFirstYesMin, complaintPercent };
+    },
+    enabled: !!tenantId,
+    staleTime: 30000,
+  });
+
   const c = convMetrics;
   const m = msgMetrics;
   const s = salesMetrics;
   const a = agentMetrics;
   const csat = csatMetrics;
+  const adv = advancedMetrics;
 
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 gap-6">
@@ -395,18 +486,47 @@ export default function AttendanceMetrics() {
         </div>
       </div>
 
-      {/* ── SEÇÃO 6: Em desenvolvimento ── */}
-      <Card className="p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle size={14} style={{ color: "#f59e0b" }} />
-          <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Em desenvolvimento</span>
+      {/* ── SEÇÃO 6: Métricas Avançadas ── */}
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>Métricas Avançadas</p>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <MetricCard
+            icon={Layers}
+            label="Multitarefas"
+            value={adv?.avgConcurrent != null ? `${adv.avgConcurrent.toFixed(1)}` : "—"}
+            color="#8b5cf6"
+            sub="Conversas simultâneas/atendente"
+          />
+          <MetricCard
+            icon={Hourglass}
+            label="Tempo Ocioso"
+            value="Calculando..."
+            color="#f59e0b"
+            sub="Requer rastreamento de status do agente"
+          />
+          <MetricCard
+            icon={ShieldCheck}
+            label="FCR (1ª Resposta Resolutiva)"
+            value={adv?.fcrPercent != null ? formatPercent(adv.fcrPercent) : "Sem dados"}
+            color="#10b981"
+            sub="Resolvido no primeiro contato"
+          />
+          <MetricCard
+            icon={ThumbsUp}
+            label="Tempo até primeiro 'sim'"
+            value={adv?.avgFirstYesMin != null ? formatMinutes(adv.avgFirstYesMin) : "Sem dados"}
+            color="#3b82f6"
+            sub="Média de minutos até aceite"
+          />
+          <MetricCard
+            icon={AlertOctagon}
+            label="Índice de Reclamações"
+            value={adv?.complaintPercent != null ? formatPercent(adv.complaintPercent) : "Sem dados"}
+            color="#ef4444"
+            sub="Sentimento IA: reclamação"
+          />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {["Multitarefas", "Tempo ocioso", "Primeira resposta resolutiva", "Tempo até primeiro 'sim'", "Índice de reclamações (IA)"].map((m) => (
-            <Badge key={m} variant="outline" className="text-[10px]" style={{ color: "var(--text-muted)" }}>{m}</Badge>
-          ))}
-        </div>
-      </Card>
+      </div>
     </div>
   );
 }
