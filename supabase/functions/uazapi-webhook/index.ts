@@ -605,7 +605,16 @@ Deno.serve(async (req) => {
 
                       // 5. Send confirmation back via WhatsApp
                       const amt = typeof expense.amount === "number" ? expense.amount.toFixed(2) : String(expense.amount);
-                      const confirmText = `[WHATSFLOW] Despesa registrada.\nFornecedor: ${expense.supplier}\nValor: R$ ${amt}\nCategoria: ${expense.category}\nData: ${expense.date}`;
+                      const confirmText = [
+                        "*Despesa Registrada*",
+                        "",
+                        `*Fornecedor:* ${expense.supplier}`,
+                        `*Valor:* R$ ${amt}`,
+                        `*Categoria:* ${expense.category}`,
+                        `*Data:* ${expense.date}`,
+                        "",
+                        "_Whatsflow - Lancamento automatico_",
+                      ].join("\n");
 
                       if (uazapiUrl && instForExpense.instance_token) {
                         fetch(`${uazapiUrl}/send/text`, {
