@@ -318,7 +318,7 @@ export default function HomePage() {
             {[
               { icon: Users, label: "Usuários", route: "/usuarios" },
               { icon: Settings, label: "Configurações", route: "/settings" },
-              { icon: Plug, label: "Integrações", route: "/settings" },
+              { icon: Plug, label: "Integrações", route: "/integracoes" },
             ].map((l) => (
               <button key={l.label} onClick={() => go(l.route)}
                 className="flex items-center gap-2 text-xs text-[rgba(240,253,248,0.6)] hover:text-[#00C896] transition-colors">
