@@ -540,10 +540,10 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       {/* ══════════════════════════════════════════════ */}
       {notesOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="rounded-xl p-4 w-96 max-h-[500px] flex flex-col" style={{ background: "var(--wa-bg-deeper, #1a1d21)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div className="p-4 w-96 max-h-[500px] flex flex-col bg-card border border-border shadow-lg">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold" style={{ color: "var(--wa-text-primary)" }}>Notas internas</h3>
-              <button onClick={() => setNotesOpen(false)} style={{ color: "var(--wa-text-secondary)" }}>
+              <h3 className="text-sm font-semibold text-foreground">Notas internas</h3>
+              <button onClick={() => setNotesOpen(false)} className="text-muted-foreground hover:text-foreground">
                 <X size={16} />
               </button>
             </div>
@@ -555,18 +555,12 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Escreva uma nota interna..."
                 rows={2}
-                className="flex-1 rounded-lg px-3 py-2 text-sm resize-none outline-none"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  color: "var(--wa-text-primary)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
+                className="flex-1 px-3 py-2 text-sm resize-none outline-none bg-muted text-foreground border border-border"
               />
               <button
                 onClick={saveNote}
                 disabled={noteSaving || !noteText.trim()}
-                className="self-end px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
-                style={{ background: "var(--wa-green)", color: "#fff" }}
+                className="self-end px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40 bg-primary text-primary-foreground"
               >
                 <Send size={14} />
               </button>
@@ -575,23 +569,22 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
             {/* Notes list */}
             <div className="flex flex-col gap-2 overflow-y-auto flex-1">
               {notes.length === 0 ? (
-                <p className="text-xs text-center py-4" style={{ color: "var(--wa-text-secondary)" }}>Nenhuma nota ainda</p>
+                <p className="text-xs text-center py-4 text-muted-foreground">Nenhuma nota ainda</p>
               ) : (
                 notes.map((note) => (
                   <div
                     key={note.id}
-                    className="rounded-lg px-3 py-2"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                    className="px-3 py-2 bg-muted/50 border border-border"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium" style={{ color: "#A78BFA" }}>
+                      <span className="text-xs font-medium text-primary">
                         {note.user_name}
                       </span>
-                      <span className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>
+                      <span className="text-[10px] text-muted-foreground">
                         {new Date(note.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
-                    <p className="text-xs whitespace-pre-wrap" style={{ color: "var(--wa-text-primary)" }}>
+                    <p className="text-xs whitespace-pre-wrap text-foreground">
                       {note.text}
                     </p>
                   </div>
