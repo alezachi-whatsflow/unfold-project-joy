@@ -605,15 +605,25 @@ Deno.serve(async (req) => {
 
                       // 5. Send confirmation back via WhatsApp
                       const amt = typeof expense.amount === "number" ? expense.amount.toFixed(2) : String(expense.amount);
+                      // Category icon mapping
+                      const catIcons: Record<string, string> = {
+                        "Transporte": "\uD83D\uDE97", "Alimentacao": "\uD83C\uDF7D", "Hospedagem": "\uD83C\uDFE8",
+                        "Material": "\uD83D\uDCE6", "Servicos": "\uD83D\uDD27", "Marketing": "\uD83D\uDCE3",
+                        "Tecnologia": "\uD83D\uDCBB", "Fuel and Car Care": "\u26FD",
+                      };
+                      const catIcon = catIcons[expense.category] || "\uD83D\uDCCB";
                       const confirmText = [
-                        "*Despesa Registrada*",
+                        "\uD83E\uDDFE *Despesa Registrada*",
+                        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
                         "",
-                        `*Fornecedor:* ${expense.supplier}`,
-                        `*Valor:* R$ ${amt}`,
-                        `*Categoria:* ${expense.category}`,
-                        `*Data:* ${expense.date}`,
+                        `\uD83C\uDFEA *Fornecedor:* ${expense.supplier}`,
+                        `\uD83D\uDCC5 *Data:* ${expense.date}`,
+                        `${catIcon} *Categoria:* ${expense.category}`,
                         "",
-                        "_Whatsflow - Lancamento automatico_",
+                        `\uD83D\uDCB0 *Valor total:* R$ ${amt}`,
+                        "",
+                        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+                        `_\u2713 Lancamento automatico via Whatsflow_`,
                       ].join("\n");
 
                       if (uazapiUrl && instForExpense.instance_token) {
