@@ -497,8 +497,22 @@ Deno.serve(async (req) => {
             }
           }
 
+          // ── MEDIA ATTACHMENT LOG (diagnostic catcher) ──
+          if (normalized.direction === "incoming" && normalized.media_url) {
+            const rawMime = msg?.mimetype || msg?.content?.mimetype || msg?.message?.imageMessage?.mimetype || "unknown";
+            const isViewOnce = Boolean(msg?.message?.viewOnceMessage || msg?.message?.viewOnceMessageV2 || msg?.isViewOnce || msg?.viewOnce);
+            const senderPhone = normalized.remote_jid?.replace(/@.*$/, "") || "unknown";
+            console.log(`🔴 [MEDIA-CATCHER] type=${normalized.type} | mime=${rawMime} | sender=${senderPhone} | viewOnce=${isViewOnce} | url=${normalized.media_url?.substring(0, 60)}...`);
+
+            // Block viewOnce messages — they can't be downloaded
+            if (isViewOnce) {
+              console.warn(`[MEDIA-CATCHER] ViewOnce detected from ${senderPhone} — skipping expense pipeline`);
+            }
+          }
+
           // ── EXPENSE DETECTION: incoming image with trigger OR text trigger after image ──
-          const isImageWithUrl = (normalized.type === "image" || normalized.type === "document") && normalized.media_url;
+          const isViewOnceMsg = Boolean(msg?.message?.viewOnceMessage || msg?.message?.viewOnceMessageV2 || msg?.isViewOnce || msg?.viewOnce);
+          const isImageWithUrl = (normalized.type === "image" || normalized.type === "document") && normalized.media_url && !isViewOnceMsg;
           const isTextTrigger = normalized.type === "text" && /despesa|gasto|nota\s*fiscal|recibo|nf[-\s]?e?|comprovante/i.test(normalized.body || "");
 
           if (normalized.direction === "incoming" && (isImageWithUrl || isTextTrigger)) {
@@ -562,7 +576,7 @@ Deno.serve(async (req) => {
                   console.log(`[expense-pipeline] Image URL: ${imageUrl}`);
 
                   if (imageUrl) {
-                    // 2. Extract expense data via Vision AI (use decrypted URL directly)
+                    // 2. Extract expense data via Vision AI
                     const { extractExpenseData } = await import("../_shared/ai.ts");
                     const expense = await extractExpenseData(
                       imageUrl,
@@ -604,7 +618,18 @@ Deno.serve(async (req) => {
                       }
                     }
                   } else {
-                    console.warn("[expense-pipeline] Media download failed for", normalized.message_id);
+                    // Download failed — send feedback to user
+                    console.warn(`[expense-pipeline] Media download failed for msgId=${msgId} — sending feedback`);
+                    if (uazapiUrl && instForExpense.instance_token) {
+                      fetch(`${uazapiUrl}/message/text`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", token: instForExpense.instance_token },
+                        body: JSON.stringify({
+                          to: normalized.remote_jid,
+                          text: "⚠️ Não foi possível processar esta imagem. Por favor, envie como uma foto normal da galeria (não use visualização única nem envio por documento compactado).",
+                        }),
+                      }).catch((e: any) => console.error("[expense-pipeline] Feedback error:", e.message));
+                    }
                   }
                 }
               }
