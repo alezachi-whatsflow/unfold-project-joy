@@ -55,25 +55,47 @@ export default function ContactTagManager() {
     enabled: !!tenantId,
   });
 
-  // Also fetch usage counts from various tables
+  // Fetch usage counts from ALL sources + auto-import discovered tags
   const { data: usageCounts = new Map() } = useQuery({
     queryKey: ["tag-usage-counts", tenantId],
     queryFn: async () => {
       if (!tenantId) return new Map();
-      const [{ data: leads }, { data: contacts }] = await Promise.all([
+      const [{ data: leads }, { data: contacts }, { data: negocios }, { data: groups }] = await Promise.all([
         supabase.from("whatsapp_leads").select("lead_tags"),
         supabase.from("crm_contacts").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
+        supabase.from("negocios").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
+        supabase.from("whatsapp_groups").select("tags").eq("tenant_id", tenantId).not("tags", "is", null),
       ]);
       const counts = new Map<string, number>();
-      for (const row of leads || []) {
-        for (const t of (row.lead_tags as string[]) || []) {
-          counts.set(t, (counts.get(t) || 0) + 1);
+      const addTags = (rows: any[] | null, field: string) => {
+        for (const row of rows || []) {
+          for (const t of (row[field] as string[]) || []) {
+            if (t) counts.set(t, (counts.get(t) || 0) + 1);
+          }
         }
-      }
-      for (const row of contacts || []) {
-        for (const t of (row.tags as string[]) || []) {
-          counts.set(t, (counts.get(t) || 0) + 1);
-        }
+      };
+      addTags(leads, "lead_tags");
+      addTags(contacts, "tags");
+      addTags(negocios, "tags");
+      addTags(groups, "tags");
+
+      // Auto-import discovered tags into tenant_tags (if not already there)
+      const { data: existingTags } = await supabase
+        .from("tenant_tags").select("name").eq("tenant_id", tenantId);
+      const existingNames = new Set((existingTags || []).map((t: any) => t.name));
+      const TAG_COLORS = ["#6366f1","#10b981","#f59e0b","#ef4444","#3b82f6","#8b5cf6","#ec4899","#14b8a6","#f97316","#84cc16"];
+      const newTags = Array.from(counts.keys()).filter((n) => !existingNames.has(n));
+      if (newTags.length > 0) {
+        await supabase.from("tenant_tags").insert(
+          newTags.map((name, i) => ({
+            tenant_id: tenantId,
+            name,
+            color: TAG_COLORS[i % TAG_COLORS.length],
+            category: "general",
+          }))
+        ).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["tenant-tags"] });
+        });
       }
       return counts;
     },
