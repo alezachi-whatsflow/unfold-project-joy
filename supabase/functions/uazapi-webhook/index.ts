@@ -452,6 +452,25 @@ Deno.serve(async (req) => {
                     }
                   });
               }
+
+              // ── Automation Router: check triggers + Typebot sessions ──
+              if (instForN8n?.tenant_id) {
+                const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+                const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
+                fetch(`${SUPABASE_URL}/functions/v1/automation-router`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+                  body: JSON.stringify({
+                    tenant_id: instForN8n.tenant_id,
+                    instance_name: normalized.instance_name || instance,
+                    remote_jid: normalized.remote_jid,
+                    contact_phone: normalized.remote_jid?.replace(/@.*$/, "") || "",
+                    message_text: normalized.body || "",
+                    message_type: normalized.type || "text",
+                    sender_name: normalized.sender_name || "",
+                  }),
+                }).catch((e: any) => console.error("[automation-router-dispatch] Error:", e.message));
+              }
             }
           }
 
