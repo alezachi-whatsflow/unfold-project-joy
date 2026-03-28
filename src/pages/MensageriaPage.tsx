@@ -16,7 +16,7 @@ import MessageComposer from "@/components/mensageria/MessageComposer";
 import ContactChecker from "@/components/mensageria/ContactChecker";
 import LeadKanban from "@/components/mensageria/LeadKanban";
 import CampaignsTab from "@/components/mensageria/CampaignsTab";
-import { GroupKanbanBoard } from "@/components/whatsapp/groups/GroupKanbanBoard";
+import GroupDashboard from "@/components/whatsapp/groups/GroupDashboard";
 import QuickReplyManager from "@/components/mensageria/quick-replies/QuickReplyManager";
 import AgentDashboard from "@/components/mensageria/agents/AgentDashboard";
 import DepartmentManager from "@/components/mensageria/agents/DepartmentManager";
@@ -72,7 +72,7 @@ const MensageriaPage = () => {
       case "enviar":          return <MessageComposer onClose={() => setActiveTab("inbox")} />;
       case "campanhas":       return <CampaignsTab />;
       case "leads":           return <LeadKanban />;
-      case "grupos":          return <div className="h-full overflow-hidden"><GroupKanbanBoard /></div>;
+      case "grupos":          return <div className="h-full overflow-hidden"><GroupDashboard /></div>;
       case "contatos":        return <ContactChecker />;
       case "templates":       return <HSMTemplateManager />;
       case "cobranca":        return <BillingRulesTab />;

@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Headphones, ListOrdered, UsersRound, CheckCircle2, Filter, LayoutGrid, List } from "lucide-react";
+import { Headphones, ListOrdered, UsersRound, CheckCircle2, Filter } from "lucide-react";
 import WhatsAppLayout from "@/components/whatsapp/WhatsAppLayout";
-import { GroupKanbanBoard } from "@/components/whatsapp/groups/GroupKanbanBoard";
+import GroupDashboard from "@/components/whatsapp/groups/GroupDashboard";
 
 type InboxFilter = "atendimento" | "fila" | "grupos" | "finalizados";
-type ViewMode = "list" | "kanban";
 
 const INBOX_TABS: { id: InboxFilter; label: string; icon: React.ElementType; color: string }[] = [
   { id: "atendimento", label: "Em atendimento", icon: Headphones, color: "#0E8A5C" },
@@ -15,9 +14,6 @@ const INBOX_TABS: { id: InboxFilter; label: string; icon: React.ElementType; col
 
 export default function InboxTab() {
   const [activeFilter, setActiveFilter] = useState<InboxFilter>("atendimento");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
-
-  const showKanban = activeFilter === "grupos" && viewMode === "kanban";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -35,7 +31,7 @@ export default function InboxTab() {
           return (
             <button
               key={tab.id}
-              onClick={() => { setActiveFilter(tab.id); if (tab.id !== "grupos") setViewMode("list"); }}
+              onClick={() => setActiveFilter(tab.id)}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "6px 14px", borderRadius: 999,
@@ -53,61 +49,29 @@ export default function InboxTab() {
           );
         })}
 
-        {/* View mode toggle — only on Grupos */}
-        {activeFilter === "grupos" && (
-          <div style={{
-            marginLeft: "auto", display: "flex", gap: 2,
-            background: "var(--inbox-card, #FAFAF8)",
-            border: "1px solid var(--inbox-border, #E8E5DF)",
-            borderRadius: 8, padding: 2,
+        {/* Filter button — hidden on Grupos since dashboard has its own search */}
+        {activeFilter !== "grupos" && (
+          <button style={{
+            marginLeft: "auto",
+            display: "flex", alignItems: "center", gap: 4,
+            padding: "4px 10px", borderRadius: 6,
+            fontSize: 11, fontWeight: 500,
+            color: "var(--inbox-text-muted, #A09888)",
+            background: "transparent", border: "none", cursor: "pointer",
           }}>
-            <button
-              onClick={() => setViewMode("list")}
-              style={{
-                padding: 4, borderRadius: 6, border: "none", cursor: "pointer",
-                background: viewMode === "list" ? "var(--inbox-active-bg)" : "transparent",
-                color: viewMode === "list" ? "var(--inbox-active-color)" : "var(--inbox-text-muted)",
-              }}
-              title="Lista"
-            >
-              <List size={14} />
-            </button>
-            <button
-              onClick={() => setViewMode("kanban")}
-              style={{
-                padding: 4, borderRadius: 6, border: "none", cursor: "pointer",
-                background: viewMode === "kanban" ? "var(--inbox-active-bg)" : "transparent",
-                color: viewMode === "kanban" ? "var(--inbox-active-color)" : "var(--inbox-text-muted)",
-              }}
-              title="Kanban"
-            >
-              <LayoutGrid size={14} />
-            </button>
-          </div>
+            <Filter size={12} /> Filtrar
+          </button>
         )}
-
-        {/* Filter button */}
-        <button style={{
-          marginLeft: activeFilter !== "grupos" ? "auto" : 0,
-          display: "flex", alignItems: "center", gap: 4,
-          padding: "4px 10px", borderRadius: 6,
-          fontSize: 11, fontWeight: 500,
-          color: "var(--inbox-text-muted, #A09888)",
-          background: "transparent", border: "none", cursor: "pointer",
-        }}>
-          <Filter size={12} /> Filtrar
-        </button>
       </div>
 
       {/* Content */}
       <div style={{ flex: 1, overflow: "hidden" }}>
-        {showKanban ? (
-          <GroupKanbanBoard />
+        {activeFilter === "grupos" ? (
+          <GroupDashboard />
         ) : (
           <WhatsAppLayout
             initialFilter={
-              activeFilter === "grupos" ? "groups"
-              : activeFilter === "finalizados" ? "resolved"
+              activeFilter === "finalizados" ? "resolved"
               : activeFilter === "fila" ? "queue"
               : "inbox"
             }
