@@ -66,6 +66,7 @@ export default function GroupDashboard() {
   const [singleName, setSingleName] = useState("");
   const [batchPrefix, setBatchPrefix] = useState("");
   const [batchCount, setBatchCount] = useState(5);
+  const [groupCapacity, setGroupCapacity] = useState(250);
   const [selectedInstance, setSelectedInstance] = useState("");
   const [creating, setCreating] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
@@ -207,7 +208,7 @@ export default function GroupDashboard() {
       if (createTab === "individual") {
         if (!singleName.trim()) { toast.error("Digite o nome do grupo"); setCreating(false); return; }
         await supabase.functions.invoke("group-manager", {
-          body: { action: "create", tenant_id: tenantId, instance_name: selectedInstance, name: singleName.trim() },
+          body: { action: "create", tenant_id: tenantId, instance_name: selectedInstance, name: singleName.trim(), capacity: groupCapacity },
         });
         toast.success("Grupo criado!");
       } else {
@@ -221,7 +222,7 @@ export default function GroupDashboard() {
         }, 2000);
 
         const { data } = await supabase.functions.invoke("group-manager", {
-          body: { action: "create_batch", tenant_id: tenantId, instance_name: selectedInstance, prefix: batchPrefix.trim(), count: batchCount },
+          body: { action: "create_batch", tenant_id: tenantId, instance_name: selectedInstance, prefix: batchPrefix.trim(), count: batchCount, capacity: groupCapacity },
         });
 
         clearInterval(interval);
@@ -488,6 +489,35 @@ export default function GroupDashboard() {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* Capacity selector — shared by both tabs */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">
+              Limite de membros por grupo
+            </label>
+            <div className="flex gap-2">
+              {[250, 512, 1024].map((cap) => (
+                <button
+                  key={cap}
+                  onClick={() => setGroupCapacity(cap)}
+                  className={`px-3 py-1.5 text-sm border transition-colors ${groupCapacity === cap ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:bg-muted"}`}
+                >
+                  {cap}
+                </button>
+              ))}
+              <Input
+                type="number"
+                min={2}
+                max={2048}
+                value={groupCapacity}
+                onChange={(e) => setGroupCapacity(Math.min(2048, Math.max(2, Number(e.target.value))))}
+                className="w-20 bg-card border-border text-sm"
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Meta limita: 250 (padrao), 512 (comunidades) ou 1024 (grupos especiais).
+            </p>
+          </div>
 
           {creating && createTab === "batch" && (
             <div className="space-y-1">

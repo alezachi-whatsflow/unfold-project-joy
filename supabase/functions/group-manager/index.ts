@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     switch (action) {
       case "create": {
         // Create single group
-        const { name, participants } = body;
+        const { name, participants, capacity } = body;
         if (!name) return json({ error: "name required" }, 400);
 
         const res = await fetch(`${baseUrl}/group/create`, {
@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
             participant_count: (participants || []).length,
             is_admin: true,
             status: "open",
+            capacity: capacity || 250,
             created_by: user.id,
           }, { onConflict: "tenant_id,jid" });
 
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
 
       case "create_batch": {
         // Create multiple groups with prefix + numbering
-        const { prefix, count } = body;
+        const { prefix, count, capacity: batchCapacity } = body;
         if (!prefix || !count) return json({ error: "prefix and count required" }, 400);
         if (count > 50) return json({ error: "Max 50 groups per batch" }, 400);
 
@@ -118,7 +119,7 @@ Deno.serve(async (req) => {
               await supabase.from("whatsapp_groups").upsert({
                 tenant_id, instance_name, jid, name: groupName,
                 invite_link: inviteLink, is_admin: true, status: "open",
-                created_by: user.id, participant_count: 0,
+                created_by: user.id, participant_count: 0, capacity: batchCapacity || 250,
               }, { onConflict: "tenant_id,jid" });
             }
 
