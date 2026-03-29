@@ -31,8 +31,8 @@ export const coreQueue = new Queue("msg:transactional", {
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 2000 },
-    removeOnComplete: { count: 1000 },
-    removeOnFail: { count: 5000 },
+    removeOnComplete: { age: 3600, count: 1000 },   // 1h TTL + max 1000
+    removeOnFail: { age: 86400, count: 5000 },       // 24h TTL + max 5000
   },
 });
 
@@ -43,8 +43,8 @@ export const scheduleQueue = new Queue("msg:scheduled", {
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: { count: 500 },
-    removeOnFail: { count: 2000 },
+    removeOnComplete: { age: 3600, count: 500 },     // 1h TTL + max 500
+    removeOnFail: { age: 86400, count: 2000 },        // 24h TTL + max 2000
   },
 });
 
@@ -55,8 +55,8 @@ export const campaignQueue = new Queue("msg:campaign", {
   defaultJobOptions: {
     attempts: 2,
     backoff: { type: "fixed", delay: 10000 },
-    removeOnComplete: { count: 200 },
-    removeOnFail: { count: 10000 }, // Keep more failures for analytics
+    removeOnComplete: { age: 7200, count: 200 },     // 2h TTL + max 200
+    removeOnFail: { age: 259200, count: 10000 },      // 72h TTL + max 10000 (analytics)
   },
 });
 
