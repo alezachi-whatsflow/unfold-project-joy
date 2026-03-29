@@ -6,6 +6,7 @@ import { startCampaignWorker } from "./workers/campaign-worker.js";
 import { startDLQProcessor } from "./workers/dlq-processor.js";
 import { startObsAggregator } from "./workers/obs-aggregator.js";
 import { startObsAlerter } from "./workers/obs-alerter.js";
+import { startInstanceHeartbeat } from "./workers/instance-heartbeat.js";
 
 // ═══════════════════════════════════════════
 // Whatsflow Message Queue — Main Entry Point
@@ -49,8 +50,9 @@ async function main() {
   const dlqProcessor = startDLQProcessor();
   const { worker: obsWorker } = startObsAggregator();
   const { worker: alertWorker } = startObsAlerter();
+  const { worker: heartbeatWorker } = startInstanceHeartbeat();
 
-  logger.info("All workers running (5 workers + obs aggregator + alerter). Waiting for jobs...");
+  logger.info("All workers running (5 workers + obs + alerter + heartbeat). Waiting for jobs...");
 
   // Graceful shutdown
   const shutdown = async (signal: string) => {
@@ -63,6 +65,7 @@ async function main() {
       dlqProcessor.close(),
       obsWorker.close(),
       alertWorker.close(),
+      heartbeatWorker.close(),
     ]);
 
     await Promise.allSettled([

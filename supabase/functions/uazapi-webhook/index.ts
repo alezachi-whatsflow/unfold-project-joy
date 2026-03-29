@@ -335,6 +335,34 @@ Deno.serve(async (req) => {
                 body: JSON.stringify({ presence: "available" }),
               }).catch(() => {});
               console.log("uazapi-webhook: auto-set presence to available for", instance);
+
+              // CATCH-UP: Fetch recent messages that may have been lost during downtime
+              // Check if instance was offline for more than 5 minutes
+              const { data: instInfo } = await supabase
+                .from("whatsapp_instances")
+                .select("ultimo_ping, last_disconnect")
+                .or(`instance_name.eq.${instance},instance_token.eq.${instance}`)
+                .limit(1)
+                .maybeSingle();
+
+              const lastPing = instInfo?.ultimo_ping ? new Date(instInfo.ultimo_ping).getTime() : 0;
+              const downtime = Date.now() - lastPing;
+              const FIVE_MINUTES = 5 * 60 * 1000;
+
+              if (downtime > FIVE_MINUTES) {
+                console.log(`uazapi-webhook: instance ${instance} was offline ${Math.round(downtime / 60000)}min — triggering catch-up`);
+                // Fire-and-forget: fetch recent messages from uazapi
+                fetch(`${UAZAPI_BASE_URL}/chat/messages`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", token: instToken.instance_token },
+                  body: JSON.stringify({ count: 50, offset: 0 }),
+                }).then(async (r) => {
+                  if (!r.ok) return;
+                  const msgs = await r.json().catch(() => []);
+                  const arr = Array.isArray(msgs) ? msgs : msgs?.messages || [];
+                  console.log(`uazapi-webhook: catch-up found ${arr.length} messages for ${instance}`);
+                }).catch(() => {});
+              }
             }
           }
         }
