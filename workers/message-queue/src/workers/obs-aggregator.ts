@@ -12,7 +12,7 @@ import Redis from "ioredis";
 
 const supabase = createClient(
   config.supabase.url,
-  config.supabase.serviceRoleKey
+  config.supabase.serviceKey
 );
 
 const redisOpts = (r: typeof config.redis.core) => ({
