@@ -1,19 +1,22 @@
-# ═══════════════════════════════════════════
-# Whatsflow Message Queue Worker
-# Runs alongside the Redis containers
-# ═══════════════════════════════════════════
-
-# ═══════════════════════════════════════════
-# Whatsflow Message Queue Worker
-# Connects to Redis via DNS (filasXXX.whatsflow.com.br)
-# All config via .env — nenhum valor hardcoded
-# ═══════════════════════════════════════════
+version: '3.8'
 
 services:
-  wf-queue-worker:
+  bullmq-worker:
     build: .
-    restart: unless-stopped
-    container_name: wf-queue-worker
-    env_file: .env
+    container_name: whatsflow-bullmq-worker
+    restart: always
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
+    networks:
+      - whatsflow-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  whatsflow-net:
+    driver: bridge

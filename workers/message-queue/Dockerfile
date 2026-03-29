@@ -1,19 +1,15 @@
-FROM node:22-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Install deps
-COPY package.json package-lock.json* ./
-RUN npm ci --production=false
+COPY package*.json ./
+RUN npm ci --production
 
-# Copy source
-COPY . .
+COPY src/ ./src/
+COPY tsconfig.json ./
 
-# Build TypeScript
-RUN npm run build
+RUN npx tsc
 
-# Remove devDeps
-RUN npm prune --production
+EXPOSE 3100
 
-# Run worker
 CMD ["node", "dist/index.js"]
