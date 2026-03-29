@@ -1,0 +1,54 @@
+/* NEXUS DESIGN SYSTEM — SEPARATE FROM PLATFORM
+   Emerald Forest Theme | Internal Team */
+
+:root {
+  --nexus-accent: #10b981;
+  --nexus-accent-dark: #059669;
+  --nexus-accent-light: #34d399;
+  --nexus-accent-subtle: rgba(16,185,129,0.08);
+  --nexus-accent-border: rgba(16,185,129,0.2);
+
+  --nexus-bg: #050a0f;
+  --nexus-bg-sidebar: #080f14;
+  --nexus-bg-card: #0d1520;
+  --nexus-bg-elevated: #111d2c;
+  --nexus-bg-hover: rgba(255,255,255,0.04);
+
+  --nexus-text-primary: #e2e8f0;
+  --nexus-text-secondary: #94a3b8;
+  --nexus-text-muted: #64748b;
+
+  --nexus-border: rgba(255,255,255,0.07);
+  --nexus-border-accent: rgba(16,185,129,0.25);
+
+  --nexus-role-superadmin: #f59e0b;
+  --nexus-role-dev: #a78bfa;
+  --nexus-role-support-sr: #60a5fa;
+  --nexus-role-finance: #14b8a6;
+  --nexus-role-support-jr: #38bdf8;
+  --nexus-role-cs: #f472b6;
+
+  --nexus-license-active: #10b981;
+  --nexus-license-warning: #f59e0b;
+  --nexus-license-critical: #ef4444;
+  --nexus-license-blocked: #dc2626;
+  --nexus-license-expired: #6b7280;
+
+  --nexus-destructive: #ef4444;
+  --nexus-destructive-bg: rgba(239,68,68,0.08);
+  --nexus-destructive-border: rgba(239,68,68,0.25);
+
+  --nexus-checkout-new: #60a5fa;
+  --nexus-checkout-upsell: #a78bfa;
+  --nexus-checkout-renew: #2dd4bf;
+
+  --nexus-audit-login: #10b981;
+  --nexus-audit-edit: #60a5fa;
+  --nexus-audit-block: #ef4444;
+  --nexus-audit-impersonate: #f59e0b;
+  --nexus-audit-delete: #dc2626;
+  --nexus-audit-config: #a78bfa;
+
+  --nexus-transition: 200ms ease;
+  --nexus-impersonate-bar: #dc2626;
+}
