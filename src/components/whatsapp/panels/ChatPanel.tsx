@@ -26,6 +26,10 @@ interface ChatPanelProps {
   onResolve?: () => void;
   /** Current top-level filter tab */
   activeFilter?: string;
+  /** Pagination: load more older messages */
+  onLoadMore?: () => void;
+  /** Pagination: whether there are more messages to load */
+  hasMore?: boolean;
 }
 
 // Quick action chips
@@ -61,7 +65,7 @@ interface ConversationNote {
   created_at: string;
 }
 
-export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation, onAssign, onResolve, activeFilter }: ChatPanelProps) {
+export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation, onAssign, onResolve, activeFilter, onLoadMore, hasMore }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
   const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
 
@@ -444,7 +448,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       </div>
 
       {/* Messages */}
-      <MessageList messages={messages} conversationId={conversation?.id} />
+      <MessageList messages={messages} conversationId={conversation?.id} onLoadMore={onLoadMore} hasMore={hasMore} />
 
       {/* Input */}
       <ChatInput onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />

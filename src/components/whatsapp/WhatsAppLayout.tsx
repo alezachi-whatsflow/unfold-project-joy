@@ -90,6 +90,8 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedJid, setSelectedJid] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [messageLimit, setMessageLimit] = useState(50);
+  const messageLimitRef = useRef(50);
   const [rightOpen, setRightOpen] = useState(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSyncRef = useRef<string>("1970-01-01T00:00:00Z");
@@ -397,7 +399,8 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
 
   /* ── fetch messages for selected conversation ──── */
   const fetchMessages = useCallback(
-    async (jid: string, forceRefresh = false) => {
+    async (jid: string, forceRefresh = false, limit?: number) => {
+      const effectiveLimit = limit ?? messageLimitRef.current;
       // Show cached messages instantly while we refresh from DB
       const cached = messagesCacheRef.current.get(jid);
       if (cached && !forceRefresh) {
@@ -407,12 +410,15 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         // Don't return — continue to refresh from DB below
       }
 
-      const { data } = await supabase
+      // Fetch newest N messages (desc) then reverse for chronological display
+      const { data: rawData } = await supabase
         .from("whatsapp_messages")
         .select("*")
         .eq("remote_jid", jid)
-        .order("created_at", { ascending: true })
-        .limit(500);
+        .order("created_at", { ascending: false })
+        .limit(effectiveLimit);
+
+      const data = rawData ? [...rawData].reverse() : null;
 
       if (data) {
         const resolvedRows = await Promise.all(
@@ -478,6 +484,9 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
   /* ── load messages when selecting a conversation ── */
   useEffect(() => {
     if (selectedJid) {
+      // Reset limit when switching conversations
+      setMessageLimit(50);
+      messageLimitRef.current = 50;
       // Show cached messages instantly, then refresh from DB in background
       const cached = messagesCacheRef.current.get(selectedJid);
       if (cached) {
@@ -488,11 +497,20 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         setMessages([]);
         lastStatusSyncRef.current = "1970-01-01T00:00:00Z";
       }
-      fetchMessages(selectedJid, !cached);
+      fetchMessages(selectedJid, !cached, 50);
     } else {
       setMessages([]);
     }
   }, [selectedJid, fetchMessages]);
+
+  /* ── load more older messages ──── */
+  const loadMoreMessages = useCallback(() => {
+    if (!selectedJid) return;
+    const newLimit = messageLimit + 50;
+    setMessageLimit(newLimit);
+    messageLimitRef.current = newLimit;
+    fetchMessages(selectedJid, true, newLimit);
+  }, [selectedJid, messageLimit, fetchMessages]);
 
   // Helper to update both state and cache when messages change
   const updateMessagesWithCache = useCallback((jid: string, updater: (prev: Message[]) => Message[]) => {
@@ -1018,6 +1036,8 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
             onAssign={selectedConv ? () => assignConversation(selectedConv.id) : undefined}
             onResolve={selectedConv ? () => resolveConversation(selectedConv.id) : undefined}
             activeFilter={activeFilter}
+            onLoadMore={loadMoreMessages}
+            hasMore={messages.length >= messageLimit}
           />
           <RightPanel
             conversation={selectedConv}
