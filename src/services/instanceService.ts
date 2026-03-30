@@ -79,7 +79,7 @@ export const instanceService = {
       );
 
       // 2. Configure webhook automatically (addUrlEvents: false!)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br";
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
       const webhookUrl = `${supabaseUrl}/functions/v1/uazapi-webhook`;
 
       try {

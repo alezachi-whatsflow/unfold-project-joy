@@ -90,7 +90,7 @@ export default function MetaOficialTab() {
     toast.success(`${label} copiado!`);
   };
 
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br"}/functions/v1/meta-webhook`;
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co"}/functions/v1/meta-webhook`;
 
   const handleSave = async () => {
     setSaving(true);

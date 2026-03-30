@@ -48,7 +48,7 @@ const IntegracoesPage = () => {
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [loadingWebhooks, setLoadingWebhooks] = useState(false);
   const [registering, setRegistering] = useState(false);
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br"}/functions/v1/asaas-webhook`;
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co"}/functions/v1/asaas-webhook`;
 
   const testAsaasConnection = async () => {
     setTesting(true); setApiStatus(null);
@@ -167,7 +167,7 @@ const IntegracoesPage = () => {
     setTgSaving(true);
     try {
       const token = tgToken.trim();
-      const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br";
+      const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
       const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       // 1. Validate token via Edge Function proxy (avoids CORS)
@@ -707,7 +707,7 @@ const IntegracoesPage = () => {
                       if (!confirm("Desconectar Telegram Bot? O webhook será removido.")) return;
                       // Remove webhook from Telegram
                       if (tgIntegration?.bot_token) {
-                        const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br";
+                        const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
                         const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
                         await fetch(`${sbUrl}/functions/v1/telegram-send`, {
                           method: "POST",
@@ -1089,7 +1089,7 @@ const IntegracoesPage = () => {
                   <div style={{ position: "relative" }}>
                     <pre style={{ background: "#1a1a1a", color: "#e0e0e0", padding: 14, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", overflow: "auto", margin: 0, lineHeight: 1.5 }}>{`// Configure um nó "HTTP Request" no n8n:
 // Método: POST
-// URL: ${import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br"}/functions/v1/api-n8n-inbound
+// URL: ${import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co"}/functions/v1/api-n8n-inbound
 
 // Headers:
 //   Authorization: Bearer ${n8nApiKey || "<SUA_API_KEY>"}
@@ -1103,7 +1103,7 @@ const IntegracoesPage = () => {
                     <button onClick={() => copyToClipboard(JSON.stringify({
                       parameters: {
                         method: "POST",
-                        url: `${import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br"}/functions/v1/api-n8n-inbound`,
+                        url: `${import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co"}/functions/v1/api-n8n-inbound`,
                         authentication: "genericCredentialType",
                         genericAuthType: "httpHeaderAuth",
                         sendHeaders: true,
