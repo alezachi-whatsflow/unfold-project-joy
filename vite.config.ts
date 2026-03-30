@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      selfDestroying: false,
       includeAssets: ["favicon.png", "apple-touch-icon.png"],
       manifest: {
         name: "Whatsflow Finance",
@@ -35,6 +36,8 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
