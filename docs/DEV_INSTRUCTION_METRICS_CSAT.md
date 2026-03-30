@@ -197,7 +197,7 @@ curl -X POST \
   -H "apikey: ANON_KEY" \
   -H "Authorization: Bearer SERVICE_KEY" \
   -H "Content-Type: application/json" \
-  "https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/send-csat" \
+  "https://supabase.whatsflow.com.br/functions/v1/send-csat" \
   -d '{"phone":"554396443912","instance_name":"Teste Ale SP","tenant_id":"00000000-0000-0000-0000-000000000001"}'
 ```
 3. Responder com "4" no WhatsApp

@@ -7,7 +7,7 @@
 
 | Item | Projeto Lovable | Seu Projeto |
 |------|----------------|-------------|
-| **Ref** | knnwgijcrpbgqhdzmdrp | jtlrglzcsmqmapizqgzu |
+| **Ref** | knnwgijcrpbgqhdzmdrp | self-hosted |
 | **Acesso Dashboard** | NAO (pertence ao Lovable) | SIM (controle total) |
 | **Acesso Management API** | NAO | SIM |
 | **Deploy Edge Functions** | Apenas via Lovable chat | SIM (via CLI) |
@@ -63,8 +63,8 @@ Tabelas para exportar:
 No seu projeto voce tem acesso total:
 ```bash
 npx supabase login
-npx supabase functions deploy invite-user --project-ref jtlrglzcsmqmapizqgzu
-npx supabase functions deploy whatsapp-webhook-receiver --project-ref jtlrglzcsmqmapizqgzu
+npx supabase functions deploy invite-user --project-ref self-hosted
+npx supabase functions deploy whatsapp-webhook-receiver --project-ref self-hosted
 ```
 
 ### Etapa 5 — Configurar Auth no seu projeto (5 min)
@@ -82,7 +82,7 @@ const SUPABASE_ANON_KEY = "eyJ...antigo";
 
 Para:
 ```typescript
-const SUPABASE_URL = "https://jtlrglzcsmqmapizqgzu.supabase.co";
+const SUPABASE_URL = "https://supabase.whatsflow.com.br";
 const SUPABASE_ANON_KEY = "nova_anon_key_do_seu_projeto";
 ```
 

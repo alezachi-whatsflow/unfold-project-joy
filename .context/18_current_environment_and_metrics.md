@@ -15,7 +15,7 @@
 ┌─────────────────┐  ┌──────────────────────────────────┐
 │   Railway       │  │   Supabase Cloud                  │
 │                 │  │   Region: us-east-1 (AWS)         │
-│ Service:        │  │   Project: jtlrglzcsmqmapizqgzu   │
+│ Service:        │  │   Project: self-hosted              │
 │  unfold-project │  │                                    │
 │  -joy-production│  │ ┌─────────────┐ ┌──────────────┐  │
 │                 │  │ │ PostgreSQL  │ │ GoTrue Auth  │  │
@@ -48,7 +48,7 @@
 ### Supabase Cloud
 | Property | Value |
 |----------|-------|
-| Project Ref | `jtlrglzcsmqmapizqgzu` |
+| Project Ref | `self-hosted` (supabase.whatsflow.com.br) |
 | Region | AWS us-east-1 |
 | Plan | Free Tier |
 | Database | PostgreSQL 15 |

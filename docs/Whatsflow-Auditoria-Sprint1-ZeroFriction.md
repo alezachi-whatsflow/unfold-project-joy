@@ -34,9 +34,9 @@ O arquivo foi referenciado em commit anterior (28e0599) mas nao existe mais no c
 **Arquivo:** `.env` (rastreado pelo git, commitado no historico)
 
 ```
-VITE_SUPABASE_PROJECT_ID="jtlrglzcsmqmapizqgzu"
+VITE_SUPABASE_PROJECT_ID="self-hosted"
 VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_..."
-VITE_SUPABASE_URL="https://jtlrglzcsmqmapizqgzu.supabase.co"
+VITE_SUPABASE_URL="https://supabase.whatsflow.com.br"
 SUPABASE_SERVICE_ROLE_KEY="sb_secret_..."    <-- CRITICO
 ```
 
@@ -47,7 +47,7 @@ SUPABASE_SERVICE_ROLE_KEY="sb_secret_..."    <-- CRITICO
 **Arquivo:** `check_schema.js` (untracked, nao commitado)
 
 ```javascript
-const supabaseUrl = 'https://jtlrglzcsmqmapizqgzu.supabase.co';
+const supabaseUrl = 'https://supabase.whatsflow.com.br';
 const supabaseKey = 'sb_publishable_...';
 ```
 

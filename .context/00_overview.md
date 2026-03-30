@@ -47,7 +47,7 @@ Brazilian businesses juggle multiple disconnected tools for client communication
 
 | Property | Value |
 |----------|-------|
-| Supabase Project | `jtlrglzcsmqmapizqgzu` |
+| Supabase Project | `self-hosted` (supabase.whatsflow.com.br) |
 | Production URL | `unfold-project-joy-production.up.railway.app` |
 | Deploy | Auto-deploy on push to `main` |
 | Licenses | 717 imported |

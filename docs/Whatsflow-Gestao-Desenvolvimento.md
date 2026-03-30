@@ -7,7 +7,7 @@
 
 | Metrica | Valor | Status |
 |---------|-------|--------|
-| Projeto Supabase | jtlrglzcsmqmapizqgzu | Proprio |
+| Projeto Supabase | self-hosted (supabase.whatsflow.com.br) | Proprio |
 | URL Producao | unfold-project-joy-production.up.railway.app | Ativo |
 | Deploy | Railway (auto-deploy via GitHub push) | OK |
 | Branch | main | OK |

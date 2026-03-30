@@ -7,7 +7,7 @@
 
 | Metrica | Valor |
 |---------|-------|
-| Projeto Supabase | jtlrglzcsmqmapizqgzu (proprio — acesso total) |
+| Projeto Supabase | self-hosted (supabase.whatsflow.com.br) — acesso total |
 | URL Producao | https://unfold-project-joy-production.up.railway.app |
 | Deploy | Railway (auto-deploy via GitHub push) |
 | Branch | main |
@@ -82,8 +82,8 @@
 
 | Token | Projeto | Status |
 |-------|---------|--------|
-| Supabase Anon Key | jtlrglzcsmqmapizqgzu | Ativo |
-| Supabase Service Role | jtlrglzcsmqmapizqgzu | Rotacionado (novo) |
+| Supabase Anon Key | self-hosted (supabase.whatsflow.com.br) | Ativo |
+| Supabase Service Role | self-hosted (supabase.whatsflow.com.br) | Rotacionado (novo) |
 | Personal Access Token | sbp_192ed... | Ativo (para Management API) |
 | Railway | Auto-deploy via GitHub | Ativo |
 
@@ -290,7 +290,7 @@
 ```
 Usuario → Railway (SPA React)
            ↓
-         Supabase (jtlrglzcsmqmapizqgzu)
+         Supabase (supabase.whatsflow.com.br)
            ├── PostgREST (API REST)
            ├── Auth (GoTrue + JWT)
            ├── Realtime (WebSocket)
@@ -347,4 +347,4 @@ Nexus (God Admin) → /nexus
 
 *Documento gerado em 23/03/2026*
 *Whatsflow Finance — Auditoria Completa v3.0*
-*Projeto Supabase: jtlrglzcsmqmapizqgzu (proprio)*
+*Projeto Supabase: self-hosted (supabase.whatsflow.com.br)*

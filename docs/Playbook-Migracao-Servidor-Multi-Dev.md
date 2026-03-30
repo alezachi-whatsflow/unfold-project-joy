@@ -8,7 +8,7 @@
 **Situação atual:**
 - Código: GitHub (alezachi-whatsflow/unfold-project-joy)
 - Deploy frontend: Railway (auto-deploy via push no main)
-- Backend/DB: Supabase Cloud (jtlrglzcsmqmapizqgzu)
+- Backend/DB: Supabase Self-Hosted (supabase.whatsflow.com.br)
 - Dev local: 1 máquina (F:\WFW New) via Claude Code (Antigravity)
 - Edge Functions: Supabase Edge (Deno Deploy)
 
@@ -208,9 +208,9 @@ nano /home/deploy/whatsflow/.env
 
 Conteúdo (copie do seu `.env` local):
 ```env
-VITE_SUPABASE_PROJECT_ID="jtlrglzcsmqmapizqgzu"
+VITE_SUPABASE_PROJECT_ID="self-hosted"
 VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_Uu5shisvJQ9-QOjjvQ3hqw_RHG5EAbR"
-VITE_SUPABASE_URL="https://jtlrglzcsmqmapizqgzu.supabase.co"
+VITE_SUPABASE_URL="https://supabase.whatsflow.com.br"
 VITE_SUPABASE_ANON_KEY="eyJhbGci..."
 VITE_APP_URL="https://app.whatsflow.com.br"
 VITE_WHATSAPP_SUPPORT_NUMBER="5511954665605"
@@ -413,7 +413,7 @@ npx supabase login --token sbp_0384a5bef7f7e3b965a4f6b4e381b14019832d15
 
 # 9. Linkar projeto
 cd "C:\WFW"
-npx supabase link --project-ref jtlrglzcsmqmapizqgzu
+npx supabase link --project-ref self-hosted
 ```
 
 ### 3.3 Regras para trabalhar com 2 máquinas
@@ -576,7 +576,7 @@ vs Railway atual: ~R$ 30-50/mês (sem controle total)
 
 ## CONTATOS E REFERÊNCIAS
 
-- Supabase Dashboard: https://supabase.com/dashboard/project/jtlrglzcsmqmapizqgzu
+- Supabase Dashboard: https://supabase.whatsflow.com.br
 - GitHub Repo: https://github.com/alezachi-whatsflow/unfold-project-joy
 - Meta Developers: https://developers.facebook.com/apps/440046068424112
 - SMTP2GO: https://app.smtp2go.com

@@ -245,7 +245,7 @@ export default function MetaChannelsTab() {
             </div>
             <div className="p-3 text-xs" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.25)" }}>
               Após salvar, configure o webhook da sua página apontando para:<br />
-              <code className="text-[10px] font-mono">https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/meta-webhook</code>
+              <code className="text-[10px] font-mono">https://supabase.whatsflow.com.br/functions/v1/meta-webhook</code>
             </div>
           </div>
           <DialogFooter>

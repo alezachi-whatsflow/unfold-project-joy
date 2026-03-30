@@ -117,7 +117,25 @@
       "Read(//f/WFW New/$APPDATA/**)",
       "Read(//f/WFW New/$HOME/.config/supabase/**)",
       "Read(//f/WFW New/$APPDATA/supabase/**)",
-      "Bash(export SUPABASE_ACCESS_TOKEN=\"sbp_0ece1a70493ec12445aeb3db5b2f4b9dc079b2ef\")"
+      "Bash(export SUPABASE_ACCESS_TOKEN=\"sbp_0ece1a70493ec12445aeb3db5b2f4b9dc079b2ef\")",
+      "Bash(grep -h \"CREATE OR REPLACE FUNCTION.*is_nexus_user\" \"f:/WFW New/supabase/migrations\"/*.sql)",
+      "Bash(grep -A 3 \"CREATE OR REPLACE FUNCTION.*is_nexus_user\" \"f:/WFW New/supabase/migrations\"/*.sql)",
+      "Bash(grep -h \"CREATE TABLE.*public\\\\.\" \"f:/WFW New/supabase/migrations\"/*.sql)",
+      "Bash(grep -h \"raw_payload\\\\|JSONB\" \"f:/WFW New/supabase/migrations\"/*.sql)",
+      "Bash(find . -name *.sql -path */migrations/*)",
+      "Bash(find . -name index.ts -o -name health* -o -name status* -o -name ping*)",
+      "Bash(grep -r \"license_usage\\\\|licenses\" supabase/migrations/*.sql)",
+      "Bash(grep -r \"CREATE TABLE\" supabase/migrations/*.sql)",
+      "Bash(grep -r \"parent_license_id\\\\|license_type.*whitelabel\" supabase/migrations/*.sql)",
+      "Bash(grep -r \"health\\\\|status.*endpoint\\\\|/ping\" src/ supabase/functions/ --include=*.ts --include=*.tsx)",
+      "Bash(grep -A 30 \"CREATE TABLE IF NOT EXISTS public.licenses\" supabase/migrations/20260311185301_*.sql)",
+      "Bash(curl -s -X POST \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/rpc/exec_sql\" -H \"apikey: $SB_KEY\" -H \"Authorization: Bearer $SB_KEY\" -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(curl -s -X POST \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/whatsapp_messages\" -H \"apikey: $SB_KEY\" -H \"Authorization: Bearer $SB_KEY\" -H \"Content-Type: application/json\" -H \"Prefer: return=minimal\" -d '{\"\"\"\"instance_name\"\"\"\":\"\"\"\"test\"\"\"\",\"\"\"\"remote_jid\"\"\"\":\"\"\"\"test@test\"\"\"\",\"\"\"\"message_id\"\"\"\":\"\"\"\"DUPLICATE_TEST_001\"\"\"\",\"\"\"\"direction\"\"\"\":\"\"\"\"incoming\"\"\"\",\"\"\"\"body\"\"\"\":\"\"\"\"test\"\"\"\"}')",
+      "Bash(curl -s -X POST \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/whatsapp_messages\" -H \"apikey: $SB_KEY\" -H \"Authorization: Bearer $SB_KEY\" -H \"Content-Type: application/json\" -H \"Prefer: return=minimal\" -d '{\"\"\"\"instance_name\"\"\"\":\"\"\"\"test\"\"\"\",\"\"\"\"remote_jid\"\"\"\":\"\"\"\"test@test\"\"\"\",\"\"\"\"message_id\"\"\"\":\"\"\"\"DUPLICATE_TEST_001\"\"\"\",\"\"\"\"direction\"\"\"\":\"\"\"\"incoming\"\"\"\",\"\"\"\"body\"\"\"\":\"\"\"\"test duplicate\"\"\"\"}')",
+      "Bash(curl -s -X DELETE \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/whatsapp_messages?message_id=eq.DUPLICATE_TEST_001\" -H \"apikey: $SB_KEY\" -H \"Authorization: Bearer $SB_KEY\")",
+      "Bash(curl -s \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/licenses?select=id,tenant_id,pzaafi_tier,status&tenant_id=eq.00000000-0000-0000-0000-000000000001\" -H \"apikey: $SB_KEY\" -H \"Authorization: Bearer $SB_KEY\")",
+      "Bash(curl -s -X PATCH \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/licenses?tenant_id=eq.00000000-0000-0000-0000-000000000001\" -H \"apikey: $SB_KEY\" -H \"Authorization: Bearer $SB_KEY\" -H \"Content-Type: application/json\" -H \"Prefer: return=representation\" -d '{\"\"pzaafi_tier\"\":\"\"nexus\"\",\"\"pzaafi_enabled_at\"\":\"\"2026-03-30T12:00:00Z\"\"}')",
+      "Bash(curl -s -X POST \"https://jtlrglzcsmqmapizqgzu.supabase.co/rest/v1/pzaafi_organizations\" -H \"apikey: $SB_KEY\" -H \"Authorization: Bearer $SB_KEY\" -H \"Content-Type: application/json\" -H \"Prefer: return=representation\" -d '{:*)"
     ]
   }
 }

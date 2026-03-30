@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://jtlrglzcsmqmapizqgzu.supabase.co';
+const supabaseUrl = 'https://supabase.whatsflow.com.br';
 const supabaseKey = 'sb_publishable_Uu5shisvJQ9-QOjjvQ3hqw_RHG5EAbR';
 const supabase = createClient(supabaseUrl, supabaseKey);
 

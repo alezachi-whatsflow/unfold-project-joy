@@ -29,7 +29,7 @@ interface WebchatWidgetProps {
   position?: "bottom-right" | "bottom-left";
 }
 
-const API_BASE = "https://jtlrglzcsmqmapizqgzu.supabase.co/functions/v1/webchat-api";
+const API_BASE = "https://supabase.whatsflow.com.br/functions/v1/webchat-api";
 const STORAGE_KEY = "wf_webchat_visitor";
 const POLL_INTERVAL = 4000;
 

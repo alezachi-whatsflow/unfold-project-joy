@@ -9,7 +9,7 @@ import { useParams } from 'react-router-dom'
 import { supabase as publicSupabase } from '@/integrations/supabase/client'
 
 // Reuse the existing Supabase client (already has URL + anon key with fallbacks)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://jtlrglzcsmqmapizqgzu.supabase.co'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://supabase.whatsflow.com.br'
 
 interface CheckoutData {
   checkout: { id: string; name: string; slug: string; accepted_methods: string[]; max_installments: number; theme_config: Record<string,unknown> }

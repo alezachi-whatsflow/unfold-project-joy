@@ -451,7 +451,7 @@ Railway (Static Hosting)
   ├── URL: unfold-project-joy-production.up.railway.app
   └── Auto-deploy on push
 
-Supabase Cloud (jtlrglzcsmqmapizqgzu)
+Supabase Self-Hosted (supabase.whatsflow.com.br)
   ├── PostgreSQL 15 (75 tabelas, 24 funções, 56 migrations)
   ├── GoTrue Auth (Email/Password)
   ├── PostgREST (Auto REST API)

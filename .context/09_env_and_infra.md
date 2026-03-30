@@ -58,7 +58,7 @@ GitHub (alezachi-whatsflow/unfold-project-joy)
   ├── push main → GitHub Actions (migrations, optional)
   └── manual    → supabase functions deploy
 
-Supabase Cloud (jtlrglzcsmqmapizqgzu)
+Supabase Self-Hosted (supabase.whatsflow.com.br)
   ├── PostgreSQL 15 (Database + RLS)
   ├── GoTrue (Auth — JWT email/password)
   ├── PostgREST (Auto REST API)
