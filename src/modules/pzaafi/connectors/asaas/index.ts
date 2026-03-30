@@ -1,0 +1,1 @@
+// Asaas connector — implements IConnector
