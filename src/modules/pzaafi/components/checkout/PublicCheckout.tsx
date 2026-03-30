@@ -6,12 +6,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { createClient } from '@supabase/supabase-js'
+import { supabase as publicSupabase } from '@/integrations/supabase/client'
 
-// Use anon key for public access (no auth)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
-const publicSupabase = createClient(supabaseUrl, supabaseAnonKey)
+// Reuse the existing Supabase client (already has URL + anon key with fallbacks)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://jtlrglzcsmqmapizqgzu.supabase.co'
 
 interface CheckoutData {
   checkout: { id: string; name: string; slug: string; accepted_methods: string[]; max_installments: number; theme_config: Record<string,unknown> }
