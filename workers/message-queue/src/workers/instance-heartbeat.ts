@@ -1,6 +1,7 @@
 import { Worker, Queue } from "bullmq";
 import { config } from "../config.js";
 import { createClient } from "@supabase/supabase-js";
+import { performCatchUp } from "../services/catchup-service.js";
 
 // ══════════════════════════════════════════════════════════════
 // INSTANCE HEARTBEAT — Keep WhatsApp instances alive 24/7
@@ -79,10 +80,15 @@ async function pingInstance(inst: Instance): Promise<"alive" | "stale" | "dead" 
         body: JSON.stringify({ presence: "available" }),
       }).catch(() => {}); // Fire and forget
 
-      // Update ultimo_ping in DB
+      // Update ultimo_ping + last_heartbeat_at + reset failures
       await supabase
         .from("whatsapp_instances")
-        .update({ ultimo_ping: new Date().toISOString(), status: "connected" })
+        .update({
+          ultimo_ping: new Date().toISOString(),
+          last_heartbeat_at: new Date().toISOString(),
+          consecutive_failures: 0,
+          status: "connected",
+        })
         .eq("id", inst.id);
 
       return "alive";
@@ -96,6 +102,7 @@ async function pingInstance(inst: Instance): Promise<"alive" | "stale" | "dead" 
           status: "disconnected",
           last_disconnect: new Date().toISOString(),
           last_disconnect_reason: "heartbeat_detected_offline",
+          consecutive_failures: (inst as any).consecutive_failures ? (inst as any).consecutive_failures + 1 : 1,
         })
         .eq("id", inst.id);
 
@@ -126,9 +133,16 @@ async function detectStaleInstances(instances: Instance[]): Promise<Instance[]> 
   });
 }
 
-// ── CATCH-UP: Recover missed messages after reconnection ─────
+// ── CATCH-UP: Delegates to catchup-service for idempotent recovery ──
 
 async function catchUpMessages(inst: Instance): Promise<number> {
+  const result = await performCatchUp(inst, CATCHUP_WINDOW_MINUTES);
+  return result.recovered;
+}
+
+// ── LEGACY (replaced by catchup-service) ─────────────────────
+// Kept as dead code reference — remove after validation
+async function _legacyCatchUpMessages(inst: Instance): Promise<number> {
   const baseUrl = inst.server_url || config.uazapi.baseUrl;
 
   try {
