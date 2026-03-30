@@ -800,27 +800,43 @@ Deno.serve(async (req) => {
           const pushName = hasIncoming ? (msgs[0]?.senderName || msgs[0]?.pushName || null) : null;
           const contactName = leadName || pushName || null;
 
-          // Check if lead already exists with an active assignment — don't overwrite
+          // ── TRAVA DE SESSÃO: buscar lead existente pelo chat_id + instance ──
           const { data: existingLead } = await supabase
             .from("whatsapp_leads")
-            .select("id, assigned_attendant_id, lead_status")
+            .select("id, assigned_attendant_id, lead_status, is_ticket_open, tenant_id")
             .eq("chat_id", chat.wa_chatid)
+            .eq("instance_name", instance)
             .maybeSingle();
 
-          const isActiveSession = existingLead?.assigned_attendant_id && existingLead?.lead_status !== "resolved";
+          // Máquina de estados: sessão ativa = tem atendente E não está resolvida
+          const isActiveSession = existingLead?.assigned_attendant_id != null
+            && existingLead?.lead_status !== "resolved";
 
+          // Sessão resolvida que recebe nova msg = reabertura → vai pra fila
+          const isReopening = existingLead?.lead_status === "resolved";
+
+          // ── PAYLOAD BLINDADO: NUNCA sobrescrever assignment com null ──
           await supabase.from("whatsapp_leads").upsert(
             {
               instance_name: instance,
               chat_id: chat.wa_chatid,
-              lead_name: chat.lead_name || (hasIncoming ? pushName : null) || undefined,
-              lead_full_name: chat.lead_fullName || (hasIncoming ? pushName : null) || undefined,
-              // CRITICAL: preserve status + assignment if session is active
-              lead_status: isActiveSession ? existingLead.lead_status : (existingLead?.lead_status === "resolved" ? null : (chat.lead_status || null)),
-              is_ticket_open: isActiveSession ? true : (chat.lead_isTicketOpen ?? false),
-              assigned_attendant_id: isActiveSession ? existingLead.assigned_attendant_id : (chat.lead_assignedAttendant_id || null),
+              tenant_id: existingLead?.tenant_id || undefined,
+              lead_name: chat.lead_name || contactName || undefined,
+              lead_full_name: chat.lead_fullName || contactName || undefined,
+              // REGRA DE OURO: atendente no banco → MANTÉM. Sem atendente → null.
+              assigned_attendant_id: isActiveSession
+                ? existingLead.assigned_attendant_id
+                : null,
+              // Status: ativo → preserva. Reabertura → pending. Novo → pending.
+              lead_status: isActiveSession
+                ? existingLead.lead_status
+                : isReopening
+                  ? "pending"
+                  : (existingLead ? existingLead.lead_status : "pending"),
+              // Ticket: ativo → true. Reabertura → true. Novo → true (toda msg abre ticket).
+              is_ticket_open: isActiveSession ? true : (isReopening ? true : true),
               kanban_order: chat.lead_kanbanOrder ?? 0,
-              lead_tags: chat.lead_tags || [],
+              lead_tags: chat.lead_tags || existingLead?.lead_tags || [],
               updated_at: new Date().toISOString(),
             },
             { onConflict: "instance_name,chat_id" }
@@ -938,26 +954,37 @@ Deno.serve(async (req) => {
         const lead = data;
         if (!lead?.wa_chatid) break;
 
-        // Check if lead has active session — don't overwrite assignment
+        // ── TRAVA DE SESSÃO (mesmo padrão do evento messages) ──
         const { data: existingLeadForEvent } = await supabase
           .from("whatsapp_leads")
-          .select("id, assigned_attendant_id, lead_status")
+          .select("id, assigned_attendant_id, lead_status, is_ticket_open, tenant_id")
           .eq("chat_id", lead.wa_chatid)
+          .eq("instance_name", instance)
           .maybeSingle();
 
-        const isLeadActive = existingLeadForEvent?.assigned_attendant_id && existingLeadForEvent?.lead_status !== "resolved";
+        const isLeadActive = existingLeadForEvent?.assigned_attendant_id != null
+          && existingLeadForEvent?.lead_status !== "resolved";
 
+        // ── PAYLOAD BLINDADO ──
         await supabase.from("whatsapp_leads").upsert(
           {
             instance_name: instance,
             chat_id: lead.wa_chatid,
+            tenant_id: existingLeadForEvent?.tenant_id || undefined,
             lead_name: lead.lead_name,
             lead_full_name: lead.lead_fullName,
-            lead_status: isLeadActive ? existingLeadForEvent.lead_status : lead.lead_status,
-            is_ticket_open: isLeadActive ? true : lead.lead_isTicketOpen,
-            assigned_attendant_id: isLeadActive ? existingLeadForEvent.assigned_attendant_id : lead.lead_assignedAttendant_id,
+            // REGRA DE OURO: atendente no banco → MANTÉM
+            assigned_attendant_id: isLeadActive
+              ? existingLeadForEvent.assigned_attendant_id
+              : null,
+            lead_status: isLeadActive
+              ? existingLeadForEvent.lead_status
+              : (lead.lead_status || "pending"),
+            is_ticket_open: isLeadActive
+              ? true
+              : (lead.lead_isTicketOpen ?? existingLeadForEvent?.is_ticket_open ?? false),
             kanban_order: lead.lead_kanbanOrder,
-            lead_tags: lead.lead_tags,
+            lead_tags: lead.lead_tags || [],
             updated_at: new Date().toISOString(),
           },
           { onConflict: "instance_name,chat_id" }
