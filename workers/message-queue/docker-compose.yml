@@ -1,22 +1,224 @@
-version: '3.8'
+# ══════════════════════════════════════════════════════════════
+# WHATSFLOW MESSAGE QUEUE — Docker Compose (Production)
+#
+# Arquitetura: 3 Redis isolados + 1 Worker Node.js + Admin UI
+#
+# Redis Core    (16379) → Transactional: 1:1, chatbot, webhooks
+# Redis Schedule (16380) → Agendamentos, follow-ups, lembretes
+# Redis Campaign (16381) → Envio em massa (10k+ destinatários)
+#
+# Worker Node.js → 8 workers BullMQ rodando em 1 container
+# RedisInsight   → Interface web de administração (porta 5540)
+#
+# Deploy: docker compose up -d --build
+# Logs:   docker compose logs -f worker
+# ══════════════════════════════════════════════════════════════
 
 services:
-  bullmq-worker:
-    build: .
+
+  # ── REDIS CORE: Mensagens transacionais (1:1, chatbot) ─────
+  redis-core:
+    image: redis:7.4-alpine
+    container_name: whatsflow-redis-core
+    restart: always
+    command: >
+      redis-server
+      --port 6379
+      --requirepass ${REDIS_PASSWORD:-rD9!vQ2#xL7@pN4$$zT8&kM6^yF3*}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+      --appendfsync everysec
+      --tcp-keepalive 60
+      --timeout 0
+      --hz 10
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis-core-data:/data
+    networks:
+      - whatsflow-queue
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-rD9!vQ2#xL7@pN4$$zT8&kM6^yF3*}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 640M
+        reservations:
+          memory: 256M
+
+  # ── REDIS SCHEDULE: Agendamentos e follow-ups ──────────────
+  redis-schedule:
+    image: redis:7.4-alpine
+    container_name: whatsflow-redis-schedule
+    restart: always
+    command: >
+      redis-server
+      --port 6379
+      --requirepass ${REDIS_PASSWORD:-rD9!vQ2#xL7@pN4$$zT8&kM6^yF3*}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 500
+      --appendonly yes
+      --appendfsync everysec
+      --tcp-keepalive 60
+      --timeout 0
+    ports:
+      - "16380:6379"
+    volumes:
+      - redis-schedule-data:/data
+    networks:
+      - whatsflow-queue
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-rD9!vQ2#xL7@pN4$$zT8&kM6^yF3*}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 320M
+        reservations:
+          memory: 128M
+
+  # ── REDIS CAMPAIGN: Envio em massa (10k+) ──────────────────
+  redis-campaign:
+    image: redis:7.4-alpine
+    container_name: whatsflow-redis-campaign
+    restart: always
+    command: >
+      redis-server
+      --port 6379
+      --requirepass ${REDIS_PASSWORD:-rD9!vQ2#xL7@pN4$$zT8&kM6^yF3*}
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --save 300 1000
+      --appendonly yes
+      --appendfsync everysec
+      --tcp-keepalive 60
+      --timeout 0
+    ports:
+      - "16381:6379"
+    volumes:
+      - redis-campaign-data:/data
+    networks:
+      - whatsflow-queue
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-rD9!vQ2#xL7@pN4$$zT8&kM6^yF3*}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1280M
+        reservations:
+          memory: 512M
+
+  # ── WORKER: Node.js BullMQ (8 workers internos) ────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: whatsflow-bullmq-worker
     restart: always
-    env_file:
-      - .env
+    depends_on:
+      redis-core:
+        condition: service_healthy
+      redis-schedule:
+        condition: service_healthy
+      redis-campaign:
+        condition: service_healthy
     environment:
       - NODE_ENV=production
+      # Redis — apontar para containers internos (Docker DNS)
+      - REDIS_CORE_HOST=redis-core
+      - REDIS_CORE_PORT=6379
+      - REDIS_SCHEDULE_HOST=redis-schedule
+      - REDIS_SCHEDULE_PORT=6379
+      - REDIS_CAMPAIGN_HOST=redis-campaign
+      - REDIS_CAMPAIGN_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-rD9!vQ2#xL7@pN4$$zT8&kM6^yF3*}
+      # Supabase
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # uazapi
+      - UAZAPI_BASE_URL=${UAZAPI_BASE_URL:-https://whatsflow.uazapi.com}
+      - UAZAPI_ADMIN_TOKEN=${UAZAPI_ADMIN_TOKEN}
+      # Worker config
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-5}
+      - CAMPAIGN_DELAY_MIN_MS=${CAMPAIGN_DELAY_MIN_MS:-1500}
+      - CAMPAIGN_DELAY_MAX_MS=${CAMPAIGN_DELAY_MAX_MS:-4000}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      # Alerter
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+      - ALERT_WHATSAPP_NUMBER=${ALERT_WHATSAPP_NUMBER:-554388122539}
     networks:
-      - whatsflow-net
+      - whatsflow-queue
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     logging:
       driver: json-file
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
 
+  # ── REDIS INSIGHT: Interface Web de Administração ──────────
+  redis-insight:
+    image: redis/redisinsight:2.64
+    container_name: whatsflow-redis-insight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis-insight-data:/data
+    networks:
+      - whatsflow-queue
+    environment:
+      - RI_APP_PORT=5540
+    depends_on:
+      - redis-core
+      - redis-schedule
+      - redis-campaign
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+# ── VOLUMES PERSISTENTES ──────────────────────────────────────
+volumes:
+  redis-core-data:
+    driver: local
+    name: whatsflow-redis-core-data
+  redis-schedule-data:
+    driver: local
+    name: whatsflow-redis-schedule-data
+  redis-campaign-data:
+    driver: local
+    name: whatsflow-redis-campaign-data
+  redis-insight-data:
+    driver: local
+    name: whatsflow-redis-insight-data
+
+# ── NETWORK DEDICADA ──────────────────────────────────────────
 networks:
-  whatsflow-net:
+  whatsflow-queue:
     driver: bridge
+    name: whatsflow-queue-net
