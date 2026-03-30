@@ -13,15 +13,49 @@ import { MetaBusinessPartnerBadge } from "@/components/ui/MetaBusinessPartnerBad
 import UazapiInstancesTab from "@/components/mensageria/UazapiInstancesTab";
 import MetaChannelsTab from "@/components/integracoes/MetaChannelsTab";
 import { CheckoutIntegrationsCard } from "@/components/settings/CheckoutIntegrationsCard";
+import { PzaafiModule } from "@/modules/pzaafi";
 import { useTenantId } from "@/hooks/useTenantId";
 import { supabase } from "@/integrations/supabase/client";
 import { useAsaas } from "@/contexts/AsaasContext";
 import { callAsaasProxy } from "@/lib/asaasQueries";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+
+const CATEGORIES = [
+  { id: 'canais', label: 'Canais de Atendimento' },
+  { id: 'financeiro', label: 'Financeiro & Gateways' },
+  { id: 'automacao', label: 'Automação' },
+] as const;
 
 const IntegracoesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedSection, setExpandedSection] = useState<string | null>("uazapi");
   const [codeCopied, setCodeCopied] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('canais');
+
+  // Check if tenant has pzaafi_tier for Checkout card
+  const { user } = useAuth();
+  const { data: pzaafiTier } = useQuery({
+    queryKey: ["pzaafi-tier-integracoes", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data: ut } = await supabase
+        .from("user_tenants")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (!ut?.tenant_id) return null;
+      const { data: license } = await supabase
+        .from("licenses")
+        .select("pzaafi_tier")
+        .eq("tenant_id", ut.tenant_id)
+        .maybeSingle();
+      return license?.pzaafi_tier || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+  });
 
   // Telegram state
   const [tgToken, setTgToken] = useState("");
@@ -335,7 +369,43 @@ const IntegracoesPage = () => {
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>Gerencie todas as suas conexões em um só lugar.</p>
       </div>
 
+      {/* Category Tabs */}
+      <div style={{ display: "flex", gap: 0, marginBottom: 20, borderBottom: "1px solid hsl(var(--border))" }}>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            style={{
+              padding: "10px 20px",
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              background: activeCategory === cat.id ? "hsl(var(--primary)/0.1)" : "transparent",
+              color: activeCategory === cat.id ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+              borderBottom: activeCategory === cat.id ? "2px solid hsl(var(--primary))" : "2px solid transparent",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (activeCategory !== cat.id) {
+                (e.target as HTMLElement).style.color = "hsl(var(--foreground))";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeCategory !== cat.id) {
+                (e.target as HTMLElement).style.color = "hsl(var(--muted-foreground))";
+              }
+            }}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+        {/* ════════════ CANAIS DE ATENDIMENTO ════════════ */}
+        {activeCategory === 'canais' && <>
 
         {/* WhatsApp Web (uazapi) */}
         <Card
@@ -566,7 +636,275 @@ const IntegracoesPage = () => {
           )}
         </Card>
 
-        {/* Future: More integrations */}
+        {/* Telegram */}
+        <Card
+          style={{
+            border: expandedSection === "telegram" ? "1px solid rgba(34,158,217,0.4)" : "1px solid var(--border)",
+            background: "var(--bg-card)", borderRadius: 12, overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("telegram")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "telegram" ? "rgba(34,158,217,0.06)" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <ChannelIcon channel="telegram" size="lg" variant="icon" />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Telegram Bot</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Conecte seu bot via BotFather para roteamento centralizado</p>
+            </div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: expandedSection === "telegram" ? "#229ED9" : "var(--border)" }} />
+          </button>
+          {expandedSection === "telegram" && (
+            <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)" }}>
+              {tgStep === "connected" ? (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.2)" }}>
+                    <ChannelIcon channel="telegram" size="md" variant="rounded" />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{tgIntegration?.name || "Telegram Bot"}</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>@{tgIntegration?.bot_username} · Webhook ativo</p>
+                    </div>
+                    <span style={{ fontSize: 10, padding: "3px 8px", background: "#10b98120", color: "#10b981", fontWeight: 600 }}>Conectado</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Desconectar Telegram Bot? O webhook será removido.")) return;
+                      if (tgIntegration?.bot_token) {
+                        const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
+                        const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                        await fetch(`${sbUrl}/functions/v1/telegram-send`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sbKey}` },
+                          body: JSON.stringify({ action: "setWebhook", bot_token: tgIntegration.bot_token, url: "" }),
+                        });
+                      }
+                      const { error } = await supabase.from("channel_integrations").delete().eq("id", tgIntegration?.id);
+                      if (error) { toast.error(error.message); return; }
+                      setTgIntegration(null);
+                      setTgStep("form");
+                      setTgToken("");
+                      toast.success("Telegram Bot desconectado.");
+                    }}
+                    style={{
+                      marginTop: 12, padding: "8px 16px", border: "1px solid var(--border)",
+                      background: "transparent", color: "var(--text-muted)", fontSize: 12,
+                      cursor: "pointer", width: "100%",
+                    }}
+                  >
+                    Desconectar
+                  </button>
+                </div>
+              ) : (
+                <div style={{ maxWidth: 400, margin: "0 auto" }}>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, textAlign: "center" }}>
+                    Insira o token gerado pelo{" "}
+                    <a href="https://t.me/BotFather" target="_blank" rel="noopener" style={{ color: "#229ED9", textDecoration: "underline" }}>@BotFather</a>
+                    {" "}no Telegram.
+                  </p>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>Bot Token</label>
+                    <input
+                      value={tgToken}
+                      onChange={(e) => setTgToken(e.target.value)}
+                      placeholder="Ex: 123456789:AABBccDDee..."
+                      type="password"
+                      style={{
+                        width: "100%", padding: "10px 12px", borderRadius: 0, fontSize: 13, fontFamily: "monospace",
+                        border: "1px solid var(--border)", background: "var(--bg-input, var(--bg-card))",
+                        color: "var(--text-primary)", outline: "none",
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={saveTelegramBot}
+                    disabled={tgSaving || !tgToken.trim()}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      width: "100%", padding: "10px", borderRadius: 0, cursor: "pointer",
+                      border: "none",
+                      background: !tgToken.trim() ? "var(--border)" : "#000000",
+                      color: !tgToken.trim() ? "var(--text-muted)" : "#FFFFFF",
+                      fontSize: 13, fontWeight: 600,
+                      opacity: tgSaving ? 0.6 : 1,
+                    }}
+                  >
+                    {tgSaving && <Loader2 size={14} className="animate-spin" />}
+                    Salvar Token
+                  </button>
+                  <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 12, textAlign: "center" }}>
+                    O webhook será configurado automaticamente após salvar.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+
+        {/* Webchat Nativo */}
+        <Card
+          style={{
+            border: expandedSection === "webchat" ? "1px solid rgba(17,188,118,0.4)" : "1px solid var(--border)",
+            background: "#FFFFFF", borderRadius: 0, overflow: "hidden", boxShadow: "none",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("webchat")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "webchat" ? "rgba(17,188,118,0.06)" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <ChannelIcon channel="webchat" size="lg" variant="icon" />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#000", margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>Webchat Nativo</p>
+              <p style={{ fontSize: 11, color: "#666", margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>Injete a infraestrutura Pzaafi diretamente no seu website.</p>
+            </div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: expandedSection === "webchat" ? "#11bc76" : "var(--border)" }} />
+          </button>
+          {expandedSection === "webchat" && (
+            <div style={{ padding: "20px", borderTop: "1px solid #E8E5DF" }}>
+              <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 340px", minWidth: 300 }}>
+                  <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#999", margin: "0 0 8px", fontFamily: "Inter, system-ui, sans-serif" }}>Simulador</p>
+                  <div style={{ background: "#EDEDED", border: "1px solid #D0D0D0", borderRadius: 0, padding: 0, position: "relative", overflow: "hidden", height: 320, boxShadow: "none" }}>
+                    <div style={{ background: "#E0E0E0", height: 28, display: "flex", alignItems: "center", padding: "0 10px", gap: 6, borderBottom: "1px solid #D0D0D0" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
+                      <div style={{ flex: 1, marginLeft: 8, height: 14, background: "#FFF", borderRadius: 0, border: "1px solid #D0D0D0", display: "flex", alignItems: "center", padding: "0 8px" }}>
+                        <span style={{ fontSize: 8, color: "#999", fontFamily: "monospace" }}>seusite.com.br</span>
+                      </div>
+                    </div>
+                    <div style={{ padding: "24px 20px", position: "relative", height: "calc(100% - 28px)" }}>
+                      <p style={{ fontSize: 28, fontWeight: 900, color: "#000", margin: "0 0 8px", fontFamily: "Inter, system-ui, sans-serif", letterSpacing: -1, lineHeight: 1 }}>PZAAFI</p>
+                      <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase", color: "#999", margin: "0 0 20px", fontFamily: "Inter, system-ui, sans-serif" }}>THE PRIMORDIAL VOID</p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ width: "90%", height: 6, background: "#DDD" }} />
+                        <div style={{ width: "75%", height: 6, background: "#DDD" }} />
+                        <div style={{ width: "82%", height: 6, background: "#DDD" }} />
+                        <div style={{ width: "60%", height: 6, background: "#DDD" }} />
+                      </div>
+                      <div style={{ position: "absolute", bottom: 16, right: 16, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                        <div style={{ width: 180, background: "#FFF", border: "1px solid #000", borderRadius: 0, boxShadow: "none", overflow: "hidden" }}>
+                          <div style={{ background: "#000", color: "#FFF", padding: "6px 10px", fontSize: 7, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", fontFamily: "Inter, system-ui, sans-serif", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span>CONEXÃO ATIVA</span>
+                            <span style={{ fontSize: 9, fontFamily: "monospace", opacity: 0.6 }}>✕</span>
+                          </div>
+                          <div style={{ padding: "8px", background: "#FAFAFA", minHeight: 60 }}>
+                            <div style={{ background: "#E8E8E8", padding: "4px 8px", fontSize: 8, fontFamily: "Inter, system-ui, sans-serif", color: "#333", display: "inline-block", maxWidth: "85%" }}>Olá! Como posso ajudar?</div>
+                          </div>
+                          <div style={{ display: "flex", borderTop: "1px solid #000" }}>
+                            <div style={{ flex: 1, padding: "5px 8px", fontSize: 8, color: "#999", fontFamily: "Inter, system-ui, sans-serif" }}>Digite sua mensagem...</div>
+                            <div style={{ background: "#000", color: "#FFF", padding: "5px 8px", fontSize: 7, fontWeight: 700, letterSpacing: 1, fontFamily: "Inter, system-ui, sans-serif", display: "flex", alignItems: "center" }}>ENVIAR</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ flex: "1 1 300px", minWidth: 280 }}>
+                  <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#999", margin: "0 0 8px", fontFamily: "Inter, system-ui, sans-serif" }}>Instalação DIY</p>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "#000", fontFamily: "Inter, system-ui, sans-serif", minWidth: 16 }}>1.</span>
+                      <span style={{ fontSize: 12, color: "#333", fontFamily: "Inter, system-ui, sans-serif" }}>Copie o script abaixo.</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "#000", fontFamily: "Inter, system-ui, sans-serif", minWidth: 16 }}>2.</span>
+                      <span style={{ fontSize: 12, color: "#333", fontFamily: "Inter, system-ui, sans-serif" }}>
+                        Cole antes da tag de fechamento{" "}
+                        <code style={{ fontFamily: "monospace", background: "#F0F0F0", padding: "1px 4px", border: "1px solid #E0E0E0", fontSize: 11 }}>&lt;/body&gt;</code>{" "}do seu site.
+                      </span>
+                    </div>
+                  </div>
+                  <pre style={{ background: "#000000", color: "#FFFFFF", padding: "16px 20px", fontSize: 12, lineHeight: 1.7, fontFamily: "'JetBrains Mono', 'Fira Code', monospace", overflowX: "auto", border: "none", borderRadius: 0, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all", boxShadow: "none" }}>
+                    <code>{`<script\n  data-tenant="${tenantId || "SEU_TENANT_ID"}"\n  src="https://cdn.pzaafi.com/webchat.js"\n></script>`}</code>
+                  </pre>
+                  <button
+                    onClick={() => {
+                      const code = `<script data-tenant="${tenantId || "SEU_TENANT_ID"}" src="https://cdn.pzaafi.com/webchat.js"></script>`;
+                      navigator.clipboard.writeText(code).then(() => {
+                        setCodeCopied(true);
+                        toast.success("Código copiado!");
+                        setTimeout(() => setCodeCopied(false), 2000);
+                      });
+                    }}
+                    style={{ display: "block", width: "100%", marginTop: 0, padding: "10px", fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" as const, fontFamily: "Inter, system-ui, sans-serif", cursor: "pointer", borderRadius: 0, boxShadow: "none", border: "1px solid #000", borderTop: "none", background: codeCopied ? "#000" : "#FFF", color: codeCopied ? "#FFF" : "#000", transition: "all 0.15s" }}
+                  >
+                    {codeCopied ? "COPIADO" : "COPIAR CODIGO"}
+                  </button>
+                  <div style={{ marginTop: 16, padding: 12, background: "#FAFAFA", border: "1px solid #E8E5DF", borderRadius: 0 }}>
+                    <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#999", margin: "0 0 4px", fontFamily: "Inter, system-ui, sans-serif" }}>Seu Tenant ID</p>
+                    <code style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#000", wordBreak: "break-all" }}>
+                      {tenantId || "Carregando..."}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        </>}
+
+        {/* ════════════ FINANCEIRO & GATEWAYS ════════════ */}
+        {activeCategory === 'financeiro' && <>
+
+        {/* Checkout Whatsflow (Pzaafi) */}
+        <Card
+          style={{
+            border: expandedSection === "pzaafi" ? "1px solid hsl(var(--primary)/0.4)" : "1px solid var(--border)",
+            background: "var(--bg-card)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => toggleSection("pzaafi")}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "16px 20px", border: "none", cursor: "pointer",
+              background: expandedSection === "pzaafi" ? "hsl(var(--primary)/0.06)" : "transparent",
+              textAlign: "left",
+            }}
+          >
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "hsl(var(--primary)/0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CreditCard size={20} style={{ color: "hsl(var(--primary))" }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Checkout Whatsflow</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Receba pagamentos via PIX, Cartão e Boleto</p>
+            </div>
+            <span style={{
+              fontSize: 10, padding: "3px 10px", fontWeight: 600, borderRadius: 4,
+              background: pzaafiTier ? "#10b98120" : "hsl(var(--muted)/0.3)",
+              color: pzaafiTier ? "#10b981" : "hsl(var(--muted-foreground))",
+            }}>
+              {pzaafiTier ? "Ativo" : "Não configurado"}
+            </span>
+          </button>
+          {expandedSection === "pzaafi" && (
+            <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--border)" }}>
+              {pzaafiTier ? (
+                <PzaafiModule />
+              ) : (
+                <div style={{ padding: "32px 0", textAlign: "center" }}>
+                  <p style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
+                    Módulo não habilitado. Entre em contato para ativar.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+
         {/* Asaas (Pagamentos) */}
         <Card
           style={{
@@ -667,331 +1005,10 @@ const IntegracoesPage = () => {
           )}
         </Card>
 
-        {/* Telegram */}
-        <Card
-          style={{
-            border: expandedSection === "telegram" ? "1px solid rgba(34,158,217,0.4)" : "1px solid var(--border)",
-            background: "var(--bg-card)", borderRadius: 12, overflow: "hidden",
-          }}
-        >
-          <button
-            onClick={() => toggleSection("telegram")}
-            style={{
-              display: "flex", alignItems: "center", gap: 12, width: "100%",
-              padding: "16px 20px", border: "none", cursor: "pointer",
-              background: expandedSection === "telegram" ? "rgba(34,158,217,0.06)" : "transparent",
-              textAlign: "left",
-            }}
-          >
-            <ChannelIcon channel="telegram" size="lg" variant="icon" />
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Telegram Bot</p>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Conecte seu bot via BotFather para roteamento centralizado</p>
-            </div>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: expandedSection === "telegram" ? "#229ED9" : "var(--border)" }} />
-          </button>
-          {expandedSection === "telegram" && (
-            <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)" }}>
-              {tgStep === "connected" ? (
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.2)" }}>
-                    <ChannelIcon channel="telegram" size="md" variant="rounded" />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{tgIntegration?.name || "Telegram Bot"}</p>
-                      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>@{tgIntegration?.bot_username} · Webhook ativo</p>
-                    </div>
-                    <span style={{ fontSize: 10, padding: "3px 8px", background: "#10b98120", color: "#10b981", fontWeight: 600 }}>Conectado</span>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      if (!confirm("Desconectar Telegram Bot? O webhook será removido.")) return;
-                      // Remove webhook from Telegram
-                      if (tgIntegration?.bot_token) {
-                        const sbUrl = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
-                        const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-                        await fetch(`${sbUrl}/functions/v1/telegram-send`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sbKey}` },
-                          body: JSON.stringify({ action: "setWebhook", bot_token: tgIntegration.bot_token, url: "" }),
-                        });
-                      }
-                      const { error } = await supabase.from("channel_integrations").delete().eq("id", tgIntegration?.id);
-                      if (error) { toast.error(error.message); return; }
-                      setTgIntegration(null);
-                      setTgStep("form");
-                      setTgToken("");
-                      toast.success("Telegram Bot desconectado.");
-                    }}
-                    style={{
-                      marginTop: 12, padding: "8px 16px", border: "1px solid var(--border)",
-                      background: "transparent", color: "var(--text-muted)", fontSize: 12,
-                      cursor: "pointer", width: "100%",
-                    }}
-                  >
-                    Desconectar
-                  </button>
-                </div>
-              ) : (
-                <div style={{ maxWidth: 400, margin: "0 auto" }}>
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, textAlign: "center" }}>
-                    Insira o token gerado pelo{" "}
-                    <a href="https://t.me/BotFather" target="_blank" rel="noopener" style={{ color: "#229ED9", textDecoration: "underline" }}>@BotFather</a>
-                    {" "}no Telegram.
-                  </p>
+        </>}
 
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>Bot Token</label>
-                    <input
-                      value={tgToken}
-                      onChange={(e) => setTgToken(e.target.value)}
-                      placeholder="Ex: 123456789:AABBccDDee..."
-                      type="password"
-                      style={{
-                        width: "100%", padding: "10px 12px", borderRadius: 0, fontSize: 13, fontFamily: "monospace",
-                        border: "1px solid var(--border)", background: "var(--bg-input, var(--bg-card))",
-                        color: "var(--text-primary)", outline: "none",
-                      }}
-                    />
-                  </div>
-
-                  <button
-                    onClick={saveTelegramBot}
-                    disabled={tgSaving || !tgToken.trim()}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                      width: "100%", padding: "10px", borderRadius: 0, cursor: "pointer",
-                      border: "none",
-                      background: !tgToken.trim() ? "var(--border)" : "#000000",
-                      color: !tgToken.trim() ? "var(--text-muted)" : "#FFFFFF",
-                      fontSize: 13, fontWeight: 600,
-                      opacity: tgSaving ? 0.6 : 1,
-                    }}
-                  >
-                    {tgSaving && <Loader2 size={14} className="animate-spin" />}
-                    Salvar Token
-                  </button>
-
-                  <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 12, textAlign: "center" }}>
-                    O webhook será configurado automaticamente após salvar.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
-
-        {/* Webchat Nativo */}
-        <Card
-          style={{
-            border: expandedSection === "webchat" ? "1px solid rgba(17,188,118,0.4)" : "1px solid var(--border)",
-            background: "#FFFFFF", borderRadius: 0, overflow: "hidden", boxShadow: "none",
-          }}
-        >
-          <button
-            onClick={() => toggleSection("webchat")}
-            style={{
-              display: "flex", alignItems: "center", gap: 12, width: "100%",
-              padding: "16px 20px", border: "none", cursor: "pointer",
-              background: expandedSection === "webchat" ? "rgba(17,188,118,0.06)" : "transparent",
-              textAlign: "left",
-            }}
-          >
-            <ChannelIcon channel="webchat" size="lg" variant="icon" />
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#000", margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>Webchat Nativo</p>
-              <p style={{ fontSize: 11, color: "#666", margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>Injete a infraestrutura Pzaafi diretamente no seu website.</p>
-            </div>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: expandedSection === "webchat" ? "#11bc76" : "var(--border)" }} />
-          </button>
-          {expandedSection === "webchat" && (
-            <div style={{ padding: "20px", borderTop: "1px solid #E8E5DF" }}>
-
-              {/* ── Two-column layout: Simulator + Instructions ── */}
-              <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-
-                {/* LEFT — Visual Simulator */}
-                <div style={{ flex: "1 1 340px", minWidth: 300 }}>
-                  <p style={{
-                    fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase",
-                    color: "#999", margin: "0 0 8px", fontFamily: "Inter, system-ui, sans-serif",
-                  }}>Simulador</p>
-                  <div style={{
-                    background: "#EDEDED", border: "1px solid #D0D0D0", borderRadius: 0,
-                    padding: 0, position: "relative", overflow: "hidden",
-                    height: 320, boxShadow: "none",
-                  }}>
-                    {/* Fake browser chrome */}
-                    <div style={{
-                      background: "#E0E0E0", height: 28, display: "flex", alignItems: "center",
-                      padding: "0 10px", gap: 6, borderBottom: "1px solid #D0D0D0",
-                    }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCC" }} />
-                      <div style={{
-                        flex: 1, marginLeft: 8, height: 14, background: "#FFF",
-                        borderRadius: 0, border: "1px solid #D0D0D0",
-                        display: "flex", alignItems: "center", padding: "0 8px",
-                      }}>
-                        <span style={{ fontSize: 8, color: "#999", fontFamily: "monospace" }}>seusite.com.br</span>
-                      </div>
-                    </div>
-
-                    {/* Fake website content */}
-                    <div style={{ padding: "24px 20px", position: "relative", height: "calc(100% - 28px)" }}>
-                      <p style={{
-                        fontSize: 28, fontWeight: 900, color: "#000", margin: "0 0 8px",
-                        fontFamily: "Inter, system-ui, sans-serif", letterSpacing: -1, lineHeight: 1,
-                      }}>PZAAFI</p>
-                      <p style={{
-                        fontSize: 10, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase",
-                        color: "#999", margin: "0 0 20px", fontFamily: "Inter, system-ui, sans-serif",
-                      }}>THE PRIMORDIAL VOID</p>
-                      {/* Fake content lines */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                        <div style={{ width: "90%", height: 6, background: "#DDD" }} />
-                        <div style={{ width: "75%", height: 6, background: "#DDD" }} />
-                        <div style={{ width: "82%", height: 6, background: "#DDD" }} />
-                        <div style={{ width: "60%", height: 6, background: "#DDD" }} />
-                      </div>
-
-                      {/* Webchat widget mockup — bottom right */}
-                      <div style={{
-                        position: "absolute", bottom: 16, right: 16,
-                        display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8,
-                      }}>
-                        {/* Mini chat panel */}
-                        <div style={{
-                          width: 180, background: "#FFF", border: "1px solid #000",
-                          borderRadius: 0, boxShadow: "none", overflow: "hidden",
-                        }}>
-                          <div style={{
-                            background: "#000", color: "#FFF", padding: "6px 10px",
-                            fontSize: 7, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase",
-                            fontFamily: "Inter, system-ui, sans-serif",
-                            display: "flex", justifyContent: "space-between", alignItems: "center",
-                          }}>
-                            <span>CONEXÃO ATIVA</span>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", opacity: 0.6 }}>✕</span>
-                          </div>
-                          <div style={{ padding: "8px", background: "#FAFAFA", minHeight: 60 }}>
-                            <div style={{
-                              background: "#E8E8E8", padding: "4px 8px", fontSize: 8,
-                              fontFamily: "Inter, system-ui, sans-serif", color: "#333",
-                              display: "inline-block", maxWidth: "85%",
-                            }}>Olá! Como posso ajudar?</div>
-                          </div>
-                          <div style={{
-                            display: "flex", borderTop: "1px solid #000",
-                          }}>
-                            <div style={{
-                              flex: 1, padding: "5px 8px", fontSize: 8, color: "#999",
-                              fontFamily: "Inter, system-ui, sans-serif",
-                            }}>Digite sua mensagem...</div>
-                            <div style={{
-                              background: "#000", color: "#FFF", padding: "5px 8px",
-                              fontSize: 7, fontWeight: 700, letterSpacing: 1,
-                              fontFamily: "Inter, system-ui, sans-serif",
-                              display: "flex", alignItems: "center",
-                            }}>ENVIAR</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* RIGHT — Instructions + Code */}
-                <div style={{ flex: "1 1 300px", minWidth: 280 }}>
-                  <p style={{
-                    fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase",
-                    color: "#999", margin: "0 0 8px", fontFamily: "Inter, system-ui, sans-serif",
-                  }}>Instalação DIY</p>
-
-                  {/* Steps */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
-                      <span style={{
-                        fontSize: 11, fontWeight: 800, color: "#000", fontFamily: "Inter, system-ui, sans-serif",
-                        minWidth: 16,
-                      }}>1.</span>
-                      <span style={{ fontSize: 12, color: "#333", fontFamily: "Inter, system-ui, sans-serif" }}>
-                        Copie o script abaixo.
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                      <span style={{
-                        fontSize: 11, fontWeight: 800, color: "#000", fontFamily: "Inter, system-ui, sans-serif",
-                        minWidth: 16,
-                      }}>2.</span>
-                      <span style={{ fontSize: 12, color: "#333", fontFamily: "Inter, system-ui, sans-serif" }}>
-                        Cole antes da tag de fechamento{" "}
-                        <code style={{
-                          fontFamily: "monospace", background: "#F0F0F0", padding: "1px 4px",
-                          border: "1px solid #E0E0E0", fontSize: 11,
-                        }}>&lt;/body&gt;</code>{" "}do seu site.
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Code block — black monolith */}
-                  <pre style={{
-                    background: "#000000", color: "#FFFFFF",
-                    padding: "16px 20px", fontSize: 12, lineHeight: 1.7,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    overflowX: "auto", border: "none", borderRadius: 0,
-                    margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all",
-                    boxShadow: "none",
-                  }}>
-                    <code>{`<script\n  data-tenant="${tenantId || "SEU_TENANT_ID"}"\n  src="https://cdn.pzaafi.com/webchat.js"\n></script>`}</code>
-                  </pre>
-
-                  {/* Copy button — square, white bg, black border */}
-                  <button
-                    onClick={() => {
-                      const code = `<script data-tenant="${tenantId || "SEU_TENANT_ID"}" src="https://cdn.pzaafi.com/webchat.js"></script>`;
-                      navigator.clipboard.writeText(code).then(() => {
-                        setCodeCopied(true);
-                        toast.success("Código copiado!");
-                        setTimeout(() => setCodeCopied(false), 2000);
-                      });
-                    }}
-                    style={{
-                      display: "block", width: "100%", marginTop: 0,
-                      padding: "10px", fontSize: 11, fontWeight: 700,
-                      letterSpacing: 2, textTransform: "uppercase" as const,
-                      fontFamily: "Inter, system-ui, sans-serif",
-                      cursor: "pointer", borderRadius: 0, boxShadow: "none",
-                      border: "1px solid #000", borderTop: "none",
-                      background: codeCopied ? "#000" : "#FFF",
-                      color: codeCopied ? "#FFF" : "#000",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {codeCopied ? "✓ COPIADO" : "COPIAR CÓDIGO"}
-                  </button>
-
-                  {/* Tenant ID info */}
-                  <div style={{
-                    marginTop: 16, padding: 12, background: "#FAFAFA",
-                    border: "1px solid #E8E5DF", borderRadius: 0,
-                  }}>
-                    <p style={{
-                      fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase",
-                      color: "#999", margin: "0 0 4px", fontFamily: "Inter, system-ui, sans-serif",
-                    }}>Seu Tenant ID</p>
-                    <code style={{
-                      fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
-                      color: "#000", wordBreak: "break-all",
-                    }}>
-                      {tenantId || "Carregando..."}
-                    </code>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
+        {/* ════════════ AUTOMAÇÃO ════════════ */}
+        {activeCategory === 'automacao' && <>
 
         {/* n8n Automation */}
         <Card style={{ border: expandedSection === "n8n" ? "1px solid rgba(255,106,0,0.4)" : "1px solid var(--border)", background: "var(--bg-card)", borderRadius: 12, overflow: "hidden" }}>
@@ -1143,6 +1160,8 @@ const IntegracoesPage = () => {
             </div>
           </div>
         </Card>
+
+        </>}
 
       </div>
     </div>

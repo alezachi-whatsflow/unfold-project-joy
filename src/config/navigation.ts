@@ -51,7 +51,6 @@ export const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
       { id: 'tutoriais',      label: 'Tutoriais',             icon: 'PlayCircle', route: '/sistema/tutoriais',  module: 'dashboard'     },
       { id: 'manual_uso',     label: 'Manual de Uso',         icon: 'BookOpen',   route: '/sistema/manual',     module: 'dashboard'     },
       { id: 'onboarding',     label: 'Onboarding Interativo', icon: 'Rocket',     route: '/sistema/onboarding', module: 'dashboard'     },
-      { id: 'pzaafi',          label: 'Checkout & Pagamentos', icon: 'CreditCard', route: '/pzaafi',             module: 'dashboard'     },
     ],
   },
 ];
