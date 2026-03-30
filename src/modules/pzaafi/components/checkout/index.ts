@@ -1,0 +1,1 @@
+export { PzaafiPublicCheckout } from './PublicCheckout'

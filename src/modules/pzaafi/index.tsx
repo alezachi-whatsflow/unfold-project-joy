@@ -1,22 +1,69 @@
-// Pzaafi Module — Entry point
-// Routes to the correct dashboard based on pzaafi_tier
+import { useState, useEffect } from 'react'
+import { supabase } from '@/integrations/supabase/client'
+import { PzaafiNexusDashboard } from './dashboards/PzaafiNexusDashboard'
+import { PzaafiWhiteLabelDashboard } from './dashboards/PzaafiWhiteLabelDashboard'
+import { PzaafiClienteDashboard } from './dashboards/PzaafiClienteDashboard'
 
-export function PzaafiModule() {
-  // TODO: implement tier routing after dashboards are built
+function PzaafiUpgradePrompt() {
   return (
     <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-center space-y-3">
-        <div className="text-4xl">🏦</div>
+      <div className="text-center space-y-4 max-w-md mx-auto px-4">
+        <div className="text-5xl">🔒</div>
         <h2 className="text-lg font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
-          Pzaafi — Payment Orchestration
+          Pzaafi — Checkout & Pagamentos
         </h2>
         <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
-          Módulo em fase de implementação (Foundation concluída)
-        </p>
-        <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-          18 tabelas · RLS · Ledger double-entry · 3 tiers
+          Seu plano atual nao inclui o modulo de pagamentos Pzaafi.
+          Entre em contato para ativar.
         </p>
       </div>
     </div>
   )
+}
+
+export function PzaafiModule() {
+  const [tier, setTier] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function checkTier() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+
+      const { data } = await supabase
+        .from('user_tenants')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle()
+
+      if (data?.tenant_id) {
+        const { data: license } = await supabase
+          .from('licenses')
+          .select('pzaafi_tier')
+          .eq('tenant_id', data.tenant_id)
+          .maybeSingle()
+        setTier(license?.pzaafi_tier ?? null)
+      }
+      setLoading(false)
+    }
+    checkTier()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <span className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Carregando...</span>
+      </div>
+    )
+  }
+
+  if (!tier) return <PzaafiUpgradePrompt />
+
+  switch (tier) {
+    case 'nexus': return <PzaafiNexusDashboard />
+    case 'whitelabel': return <PzaafiWhiteLabelDashboard />
+    case 'cliente': return <PzaafiClienteDashboard />
+    default: return <PzaafiUpgradePrompt />
+  }
 }

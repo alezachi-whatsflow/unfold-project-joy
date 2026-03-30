@@ -50,9 +50,38 @@ function useBadges() {
 }
 
 // ──────────────────────── helpers ────────────────────────
+
+/** Check if the current tenant has pzaafi_tier set (used to show/hide sidebar item) */
+function useHasPzaafiTier() {
+  const { user } = useAuth();
+  const { data: hasTier } = useQuery({
+    queryKey: ["has-pzaafi-tier", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data: ut } = await supabase
+        .from("user_tenants")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (!ut?.tenant_id) return false;
+      const { data: license } = await supabase
+        .from("licenses")
+        .select("pzaafi_tier")
+        .eq("tenant_id", ut.tenant_id)
+        .maybeSingle();
+      return !!license?.pzaafi_tier;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+  });
+  return hasTier ?? false;
+}
+
 function useFilteredCategories() {
   const { canView } = usePermissions();
   const { prefs, categories } = useSidebarPrefs();
+  const hasPzaafi = useHasPzaafiTier();
   return useMemo(() => {
     const cats = (prefs.categoryOrganization === 'custom' && prefs.customCategories?.length)
       ? prefs.customCategories
@@ -61,10 +90,16 @@ function useFilteredCategories() {
       .filter(c => c.visible !== false)
       .map(c => ({
         ...c,
-        items: c.items.filter(item => item.visible !== false && canView(item.module)),
+        items: c.items.filter(item => {
+          if (item.visible === false) return false;
+          if (!canView(item.module)) return false;
+          // Hide Pzaafi sidebar item when tenant has no pzaafi_tier
+          if (item.id === 'pzaafi' && !hasPzaafi) return false;
+          return true;
+        }),
       }))
       .filter(c => c.items.length > 0);
-  }, [canView, prefs.categoryOrganization, prefs.customCategories, categories]);
+  }, [canView, prefs.categoryOrganization, prefs.customCategories, categories, hasPzaafi]);
 }
 
 function usePinnedItems() {
