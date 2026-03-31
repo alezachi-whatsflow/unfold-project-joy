@@ -152,7 +152,7 @@ const AppRoutes = () => (
 
     {/* Nexus Portal */}
     <Route path="/nexus/login" element={<NexusLogin />} />
-    <Route path="/nexus" element={<AuthGuard><NexusProvider><RouteErrorBoundary section="Nexus"><NexusLayout /></RouteErrorBoundary></NexusProvider></AuthGuard>}>
+    <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
       <Route index element={<NexusDashboard />} />
       <Route path="licencas" element={<NexusLicenses />} />
       <Route path="licencas/:id" element={<NexusLicenseDetail />} />
