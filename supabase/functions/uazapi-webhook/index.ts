@@ -706,20 +706,34 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Upsert contact info from incoming messages
+          // Upsert contact info from incoming messages (including profile picture)
           if (normalized.direction === "incoming" && normalized.remote_jid) {
             const contactName = msg?.senderName || msg?.pushName || msg?.verifiedBizName || null;
             if (contactName) {
               const phone = normalized.remote_jid.replace(/@.*$/, "");
+              // Extract profile picture URL from various payload locations
+              const profilePicUrl =
+                msg?.profilePicUrl ||
+                msg?.profilePictureUrl ||
+                msg?.profilePic ||
+                payload?.profilePicUrl ||
+                payload?.sender?.profilePicUrl ||
+                payload?.contact?.profilePicUrl ||
+                null;
+
+              const upsertData: Record<string, any> = {
+                instance_name: instance,
+                phone,
+                jid: normalized.remote_jid,
+                push_name: msg?.pushName || contactName,
+                name: msg?.senderName || msg?.verifiedBizName || contactName,
+                updated_at: new Date().toISOString(),
+              };
+              // Only set profile_pic_url if we have a new value (don't overwrite existing with null)
+              if (profilePicUrl) upsertData.profile_pic_url = profilePicUrl;
+
               await supabase.from("whatsapp_contacts").upsert(
-                {
-                  instance_name: instance,
-                  phone,
-                  jid: normalized.remote_jid,
-                  push_name: msg?.pushName || contactName,
-                  name: msg?.senderName || msg?.verifiedBizName || contactName,
-                  updated_at: new Date().toISOString(),
-                },
+                upsertData,
                 { onConflict: "instance_name,phone" }
               );
             }

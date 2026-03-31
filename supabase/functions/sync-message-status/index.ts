@@ -115,17 +115,17 @@ Deno.serve(async (req) => {
 
     // ── Sync profile pictures via /chat/details ──
     if (syncAvatars) {
-      // Get distinct remote_jids that don't have profile_pic_url
+      // Get contacts without profile_pic_url (increased batch from 20 to 50)
       const { data: contacts } = await supabase
         .from("whatsapp_contacts")
-        .select("id, jid, profile_pic_url")
+        .select("id, jid, phone, profile_pic_url")
         .eq("instance_name", instanceName)
         .is("profile_pic_url", null)
-        .limit(20);
+        .limit(50);
 
       for (const contact of contacts || []) {
         try {
-          const phone = contact.jid?.replace(/@.*$/, "");
+          const phone = contact.jid?.replace(/@.*$/, "") || contact.phone;
           if (!phone) continue;
 
           const res = await fetch(`${UAZAPI_BASE_URL}/chat/details`, {
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
 
           if (!res.ok) continue;
           const data = await res.json();
-          const picUrl = data.imagePreview || data.image || null;
+          const picUrl = data.imagePreview || data.image || data.profilePicUrl || null;
 
           if (picUrl) {
             await supabase
