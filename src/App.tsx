@@ -16,6 +16,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SidebarPrefsProvider } from "@/contexts/SidebarPrefsContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import Index from "./pages/Index";
 import HomePage from "./pages/HomePage";
 import DataInputPage from "./pages/DataInputPage";
@@ -151,7 +152,7 @@ const AppRoutes = () => (
 
     {/* Nexus Portal */}
     <Route path="/nexus/login" element={<NexusLogin />} />
-    <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
+    <Route path="/nexus" element={<AuthGuard><NexusProvider><RouteErrorBoundary section="Nexus"><NexusLayout /></RouteErrorBoundary></NexusProvider></AuthGuard>}>
       <Route index element={<NexusDashboard />} />
       <Route path="licencas" element={<NexusLicenses />} />
       <Route path="licencas/:id" element={<NexusLicenseDetail />} />
@@ -204,11 +205,11 @@ const AppRoutes = () => (
     <Route path="/" element={<AuthGuard><HomePage /></AuthGuard>} />
     
     {/* Phase 4: Client Portal */}
-    <Route path="/app/:slug" element={<AuthGuard><DashboardLayout /></AuthGuard>}>
+    <Route path="/app/:slug" element={<AuthGuard><RouteErrorBoundary section="App"><DashboardLayout /></RouteErrorBoundary></AuthGuard>}>
       <Route index element={<ProtectedRoute module="dashboard"><Index /></ProtectedRoute>} />
       <Route path="home" element={<ProtectedRoute module="dashboard"><HomePage /></ProtectedRoute>} />
       <Route path="dashboard" element={<ProtectedRoute module="dashboard"><Index /></ProtectedRoute>} />
-      <Route path="vendas" element={<ProtectedRoute module="vendas"><VendasPage /></ProtectedRoute>} />
+      <Route path="vendas" element={<ProtectedRoute module="vendas"><RouteErrorBoundary section="Vendas"><VendasPage /></RouteErrorBoundary></ProtectedRoute>} />
       <Route path="input" element={<ProtectedRoute module="inserir_dados"><DataInputPage /></ProtectedRoute>} />
       <Route path="cobrancas" element={<ProtectedRoute module="cobrancas"><CobrancasPage /></ProtectedRoute>} />
       <Route path="expenses" element={<ProtectedRoute module="despesas"><ExpensesPage /></ProtectedRoute>} />
@@ -223,8 +224,8 @@ const AppRoutes = () => (
       <Route path="usuarios" element={<ProtectedRoute module="usuarios"><UsersPage /></ProtectedRoute>} />
       <Route path="reports" element={<ProtectedRoute module="relatorios"><ReportsPage /></ProtectedRoute>} />
       <Route path="perfil" element={<ProfilePage />} />
-      <Route path="mensageria" element={<ProtectedRoute module="mensageria"><MensageriaPage /></ProtectedRoute>} />
-      <Route path="integracoes" element={<ProtectedRoute module="mensageria"><IntegracoesPage /></ProtectedRoute>} />
+      <Route path="mensageria" element={<ProtectedRoute module="mensageria"><RouteErrorBoundary section="Mensageria"><MensageriaPage /></RouteErrorBoundary></ProtectedRoute>} />
+      <Route path="integracoes" element={<ProtectedRoute module="mensageria"><RouteErrorBoundary section="Integracoes"><IntegracoesPage /></RouteErrorBoundary></ProtectedRoute>} />
       <Route path="ia" element={<Navigate to="../intelligence" replace />} />
       <Route path="ia/auditor" element={<Navigate to="../intelligence" replace />} />
       <Route path="conversas" element={<ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute>} />

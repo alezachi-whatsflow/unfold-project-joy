@@ -52,7 +52,6 @@ export default function UazapiInstancesTab() {
         chatbot_stop_keyword: d.chatbot_stop_keyword || "parar",
         chatbot_stop_minutes: d.chatbot_stop_minutes || 60,
         chatbot_stop_when_send: d.chatbot_stop_when_send || 0,
-        openai_apikey: d.openai_apikey,
         webhook_url: d.webhook_url || "",
         ultimo_ping: d.ultimo_ping,
         last_disconnect: d.last_disconnect,

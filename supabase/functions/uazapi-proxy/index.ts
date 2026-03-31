@@ -227,7 +227,6 @@ Deno.serve(async (req) => {
           chatbot_ignore_groups: inst.chatbot_ignoreGroups ?? true,
           chatbot_stop_keyword: inst.chatbot_stopConversation || "parar",
           chatbot_stop_minutes: inst.chatbot_stopMinutes || 60,
-          openai_apikey: inst.openai_apikey || null,
           api_created_at: inst.created || null,
           api_updated_at: inst.updated || null,
           // Campos legados para compatibilidade

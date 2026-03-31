@@ -17,7 +17,6 @@ type Props = {
     chatbot_stop_keyword?: string;
     chatbot_stop_minutes?: number;
     chatbot_stop_when_send?: number;
-    openai_apikey?: string;
   };
   onClose: () => void;
   onSaved?: () => void;
@@ -30,7 +29,7 @@ export default function ChatbotSettingsModal({ open, instanceName, initialSettin
   const [stopKeyword, setStopKeyword] = useState(initialSettings?.chatbot_stop_keyword ?? "parar");
   const [stopMinutes, setStopMinutes] = useState(initialSettings?.chatbot_stop_minutes ?? 60);
   const [stopWhenSend, setStopWhenSend] = useState(initialSettings?.chatbot_stop_when_send ?? 0);
-  const [apiKey, setApiKey] = useState(initialSettings?.openai_apikey ?? "");
+  const [apiKey, setApiKey] = useState("");
 
   const handleSave = async () => {
     setSaving(true);

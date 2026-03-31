@@ -29,7 +29,6 @@ export type UazapiInstance = {
   chatbot_stop_keyword: string;
   chatbot_stop_minutes: number;
   chatbot_stop_when_send: number;
-  openai_apikey: string | null;
   webhook_url: string;
   ultimo_ping: string | null;
   last_disconnect: string | null;
@@ -193,7 +192,6 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
           chatbot_stop_keyword: instance.chatbot_stop_keyword,
           chatbot_stop_minutes: instance.chatbot_stop_minutes,
           chatbot_stop_when_send: instance.chatbot_stop_when_send,
-          openai_apikey: instance.openai_apikey || undefined,
         }}
         onClose={() => setShowChatbot(false)}
         onSaved={onRefresh}

@@ -67,7 +67,6 @@ export const instanceService = {
           chatbot_ignore_groups: inst.chatbot_ignoreGroups ?? true,
           chatbot_stop_keyword: inst.chatbot_stopConversation ?? "parar",
           chatbot_stop_minutes: inst.chatbot_stopMinutes ?? 60,
-          openai_apikey: inst.openai_apikey ?? null,
           api_created_at: inst.created ?? null,
           api_updated_at: inst.updated ?? null,
           label: instanceName,
@@ -152,13 +151,14 @@ export const instanceService = {
       chatbot_stopWhenYouSendMsg?: number;
     }
   ) => {
+    // Send all settings to uazapi (including openai_apikey for the remote chatbot)
     const result = await callProxy("/instance/updatechatbotsettings", "POST", settings, instanceName);
+    // Only persist chatbot behavior flags locally (API key stays on uazapi side only)
     await supabase.from("whatsapp_instances").update({
       chatbot_enabled: settings.chatbot_enabled,
       chatbot_ignore_groups: settings.chatbot_ignoreGroups,
       chatbot_stop_keyword: settings.chatbot_stopConversation,
       chatbot_stop_minutes: settings.chatbot_stopMinutes,
-      openai_apikey: settings.openai_apikey,
     }).eq("instance_name", instanceName);
     return result;
   },
