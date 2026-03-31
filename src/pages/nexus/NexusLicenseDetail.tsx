@@ -69,6 +69,7 @@ export default function NexusLicenseDetail() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [faturaOpen, setFaturaOpen] = useState(false);
+  const [pzaafiTier, setPzaafiTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) loadAll();
@@ -87,6 +88,7 @@ export default function NexusLicenseDetail() {
       setLicense(licRes.data);
       setTenant(licRes.data.tenants);
       setNotes(licRes.data.internal_notes || '');
+      setPzaafiTier(licRes.data.pzaafi_tier ?? null);
 
       // Load sub-licenses if whitelabel
       if (licRes.data.license_type === 'whitelabel') {
@@ -190,6 +192,15 @@ export default function NexusLicenseDetail() {
                 <TypeIcon className="h-3 w-3 mr-1" />
                 {tc.label}
               </Badge>
+              {pzaafiTier && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{
+                  background: 'rgba(16,185,129,0.15)',
+                  color: '#10b981',
+                  border: '1px solid rgba(16,185,129,0.3)',
+                }}>
+                  Pzaafi
+                </span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">{tenant?.email} · {tenant?.slug}</p>
           </div>
@@ -343,6 +354,82 @@ export default function NexusLicenseDetail() {
             {licenseType === 'whitelabel' && (
               <Row label="Sub-Licenças" value={`${subLicenses.length} empresa(s)`} />
             )}
+            <div className="flex items-center justify-between py-2" style={{ borderTop: '1px solid hsl(var(--border)/0.3)' }}>
+              <span className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Checkout Pzaafi</span>
+              <div className="flex items-center gap-2">
+                <select
+                  value={pzaafiTier || 'off'}
+                  onChange={async (e) => {
+                    const newTier = e.target.value === 'off' ? null : e.target.value
+                    setPzaafiTier(newTier)
+
+                    const { error } = await supabase
+                      .from('licenses')
+                      .update({
+                        pzaafi_tier: newTier,
+                        pzaafi_enabled_at: newTier ? new Date().toISOString() : null
+                      })
+                      .eq('id', license.id)
+
+                    if (error) {
+                      toast({ title: 'Erro ao atualizar Pzaafi', variant: 'destructive' })
+                      return
+                    }
+
+                    if (newTier) {
+                      const { data: existingOrg } = await supabase
+                        .from('pzaafi_organizations')
+                        .select('id')
+                        .eq('tenant_id', license.tenant_id)
+                        .maybeSingle()
+
+                      if (!existingOrg) {
+                        const { data: tenantData } = await supabase
+                          .from('tenants')
+                          .select('name')
+                          .eq('id', license.tenant_id)
+                          .maybeSingle()
+
+                        await supabase
+                          .from('pzaafi_organizations')
+                          .insert({
+                            tenant_id: license.tenant_id,
+                            tier: newTier,
+                            name: tenantData?.name || 'Organização',
+                            active: true,
+                            kyc_status: 'approved',
+                          })
+                      } else {
+                        await supabase
+                          .from('pzaafi_organizations')
+                          .update({ tier: newTier })
+                          .eq('tenant_id', license.tenant_id)
+                      }
+                    }
+
+                    toast({ title: newTier ? `Pzaafi ativado como ${newTier}` : 'Pzaafi desativado' })
+                  }}
+                  className="h-8 rounded-md border px-2 text-sm bg-transparent"
+                  style={{ borderColor: 'hsl(var(--border))' }}
+                >
+                  <option value="off">Desativado</option>
+                  <option value="nexus">Nexus (Admin)</option>
+                  <option value="whitelabel">WhiteLabel (Revenda)</option>
+                  <option value="cliente">Cliente (Merchant)</option>
+                </select>
+
+                {pzaafiTier && (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{
+                    background: pzaafiTier === 'nexus' ? 'rgba(245,158,11,0.15)' :
+                                pzaafiTier === 'whitelabel' ? 'rgba(167,139,250,0.15)' : 'rgba(16,185,129,0.15)',
+                    color: pzaafiTier === 'nexus' ? '#f59e0b' :
+                           pzaafiTier === 'whitelabel' ? '#a78bfa' : '#10b981',
+                  }}>
+                    {pzaafiTier === 'nexus' ? 'Admin' : pzaafiTier === 'whitelabel' ? 'Revenda' : 'Merchant'}
+                  </span>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 

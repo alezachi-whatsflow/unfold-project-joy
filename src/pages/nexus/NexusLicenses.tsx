@@ -679,6 +679,7 @@ export default function NexusLicenses() {
                         <TableHead className="min-w-[70px] text-center">Atend.</TableHead>
                         <TableHead className="min-w-[100px]">Adicional</TableHead>
                         <TableHead className="min-w-[80px]">Checkout</TableHead>
+                        <TableHead className="min-w-[80px]">Pzaafi</TableHead>
                         <TableHead className="min-w-[100px]">Receita</TableHead>
                         <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Tipo Pgto<ColFilter col="payment_type" values={colUniqueValues('payment_type')} selected={colFilters['payment_type'] || new Set()} onChange={setColFilter} /></div></TableHead>
                         <TableHead className="min-w-[80px]"><div className="flex items-center gap-1">Condição<ColFilter col="payment_condition" values={colUniqueValues('payment_condition')} selected={colFilters['payment_condition'] || new Set()} onChange={setColFilter} /></div></TableHead>
@@ -782,6 +783,19 @@ export default function NexusLicenses() {
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             {l.checkout_url
                               ? <a href={l.checkout_url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline text-[10px]">Link</a>
+                              : <span className="text-muted-foreground">—</span>
+                            }
+                          </TableCell>
+                          {/* Pzaafi */}
+                          <TableCell>
+                            {l.pzaafi_tier
+                              ? <Badge className={`text-[8px] px-1 border-none ${
+                                  l.pzaafi_tier === 'nexus' ? 'bg-amber-500/20 text-amber-400' :
+                                  l.pzaafi_tier === 'whitelabel' ? 'bg-purple-500/20 text-purple-400' :
+                                  'bg-emerald-500/20 text-emerald-400'
+                                }`}>
+                                  {l.pzaafi_tier === 'nexus' ? 'Admin' : l.pzaafi_tier === 'whitelabel' ? 'Revenda' : 'Merchant'}
+                                </Badge>
                               : <span className="text-muted-foreground">—</span>
                             }
                           </TableCell>
