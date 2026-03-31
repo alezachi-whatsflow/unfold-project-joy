@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { Settings } from 'lucide-react'
+import { Settings, Sliders } from 'lucide-react'
 import { toast } from 'sonner'
 import { GatewayConfigModal } from '../components/shared/GatewayConfigModal'
+import { CheckoutConfigPanel } from '../components/shared/CheckoutConfigPanel'
 
 type Org = {
   id: string
@@ -37,6 +38,7 @@ export function PzaafiNexusDashboard() {
   const [saving, setSaving] = useState(false)
   const [showGatewayModal, setShowGatewayModal] = useState(false)
   const [selectedOrgForGateway, setSelectedOrgForGateway] = useState<{ id: string; name: string } | null>(null)
+  const [configOrgId, setConfigOrgId] = useState<string | null>(null)
 
   const fetchOrgs = useCallback(async () => {
     const { data } = await supabase
@@ -70,30 +72,31 @@ export function PzaafiNexusDashboard() {
   }
 
   const toggleCheckout = async (org: Org) => {
-    const newVal = !org.checkout_enabled
+    const newEnabled = !org.checkout_enabled
     // Optimistic UI
-    setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, checkout_enabled: newVal } : o))
+    setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, checkout_enabled: newEnabled, active: newEnabled } : o))
 
-    const { error } = await supabase
+    // 1. Update org active status
+    const { error: orgErr } = await supabase
       .from('pzaafi_organizations')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ active: newEnabled, updated_at: new Date().toISOString() })
       .eq('id', org.id)
 
-    // Also update the license metadata
+    // 2. Update license pzaafi_tier (enable/disable the module for this tenant)
     const { error: licErr } = await supabase
       .from('licenses')
       .update({
-        pzaafi_tier: newVal ? org.tier : null,
-        pzaafi_enabled_at: newVal ? new Date().toISOString() : null,
+        pzaafi_tier: newEnabled ? org.tier : null,
+        pzaafi_enabled_at: newEnabled ? new Date().toISOString() : null,
       })
       .eq('tenant_id', org.tenant_id)
 
-    if (error || licErr) {
+    if (orgErr || licErr) {
       // Revert optimistic
-      setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, checkout_enabled: !newVal } : o))
+      setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, checkout_enabled: !newEnabled, active: !newEnabled } : o))
       toast.error('Erro ao atualizar checkout')
     } else {
-      toast.success(newVal ? 'Checkout habilitado' : 'Checkout desabilitado')
+      toast.success(newEnabled ? 'Checkout ativado' : 'Checkout desativado')
     }
   }
 
@@ -297,13 +300,22 @@ export function PzaafiNexusDashboard() {
                         </button>
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => { setSelectedOrgForGateway({ id: org.id, name: org.name }); setShowGatewayModal(true) }}
-                          className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
-                          title="Configurar Gateway"
-                        >
-                          <Settings size={14} style={{ color: 'hsl(var(--muted-foreground))' }} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setConfigOrgId(configOrgId === org.id ? null : org.id)}
+                            className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
+                            title="Configurar Checkout"
+                          >
+                            <Sliders size={14} style={{ color: 'hsl(var(--primary))' }} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedOrgForGateway({ id: org.id, name: org.name }); setShowGatewayModal(true) }}
+                            className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
+                            title="Configurar Gateway"
+                          >
+                            <Settings size={14} style={{ color: 'hsl(var(--muted-foreground))' }} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -313,6 +325,15 @@ export function PzaafiNexusDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Checkout Config Panel */}
+      {configOrgId && (
+        <CheckoutConfigPanel
+          orgId={configOrgId}
+          orgName={orgs.find(o => o.id === configOrgId)?.name ?? ''}
+          onClose={() => setConfigOrgId(null)}
+        />
+      )}
 
       {/* Gateway Modal */}
       {selectedOrgForGateway && (

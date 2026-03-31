@@ -38,6 +38,23 @@ export default function AssinaturaPage() {
   const tenantId = userTenants?.[0]?.tenant_id;
   const { data: limits, isLoading } = useLicenseLimits(tenantId);
 
+  // Check if checkout/upgrade is enabled for this tenant via Pzaafi
+  const { data: pzaafiLicense } = useQuery({
+    queryKey: ['license-pzaafi-check', tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const { data } = await supabase
+        .from('licenses')
+        .select('pzaafi_tier')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!tenantId,
+    staleTime: 60000,
+  });
+  const checkoutEnabled = !!pzaafiLicense?.pzaafi_tier;
+
   // Fetch tenant name + whitelabel branding
   const { data: tenantInfo } = useQuery({
     queryKey: ["tenant-info", tenantId],
@@ -223,25 +240,29 @@ export default function AssinaturaPage() {
         </Card>
       </div>
 
-      {/* Contact CTA */}
-      <div className="bg-card border p-6 text-center space-y-4 mt-8">
-        <h3 className="text-lg font-bold">Precisa de mais recursos?</h3>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Faça um upgrade no seu limite de dispositivos Meta, atendentes ou adicione novos módulos premium como IA.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
-          <Button
-            className="bg-[#25D366] hover:bg-[#128C7E] text-white"
-            onClick={() => window.open(prepareContactMessage("Preciso de mais recursos"), "_blank")}
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            {getContactButtonLabel()}
-          </Button>
+      {/* Contact CTA — only shown when checkout is enabled */}
+      {checkoutEnabled && (
+        <div className="bg-card border p-6 text-center space-y-4 mt-8">
+          <h3 className="text-lg font-bold">Precisa de mais recursos?</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Faça um upgrade no seu limite de dispositivos Meta, atendentes ou adicione novos módulos premium como IA.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+            <Button
+              className="bg-[#25D366] hover:bg-[#128C7E] text-white"
+              onClick={() => window.open(prepareContactMessage("Preciso de mais recursos"), "_blank")}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              {getContactButtonLabel()}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Upsell Section */}
-      <UpsellSection limits={limits} userRole={user?.user_metadata?.role || "admin"} />
+      {/* Upsell Section — only shown when checkout is enabled */}
+      {checkoutEnabled && (
+        <UpsellSection limits={limits} userRole={user?.user_metadata?.role || "admin"} />
+      )}
 
       {/* License History */}
       <LicenseHistory tenantId={tenantId} />

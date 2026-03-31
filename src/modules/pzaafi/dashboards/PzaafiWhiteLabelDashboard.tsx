@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { Settings, CreditCard } from 'lucide-react'
+import { Settings, CreditCard, Sliders } from 'lucide-react'
 import { toast } from 'sonner'
 import { GatewayConfigModal } from '../components/shared/GatewayConfigModal'
+import { CheckoutConfigPanel } from '../components/shared/CheckoutConfigPanel'
 
 type SubAccount = {
   id: string
@@ -32,6 +33,7 @@ export function PzaafiWhiteLabelDashboard() {
   const [saving, setSaving] = useState(false)
   const [showGatewayModal, setShowGatewayModal] = useState(false)
   const [selectedOrgForGateway, setSelectedOrgForGateway] = useState<{ id: string; name: string } | null>(null)
+  const [configOrgId, setConfigOrgId] = useState<string | null>(null)
 
   // Resolve the current user's org
   useEffect(() => {
@@ -80,28 +82,30 @@ export function PzaafiWhiteLabelDashboard() {
   useEffect(() => { if (myOrgId) fetchSubaccounts() }, [myOrgId, fetchSubaccounts])
 
   const toggleCheckout = async (sub: SubAccount) => {
-    const newVal = !sub.checkout_enabled
+    const newEnabled = !sub.checkout_enabled
     // Optimistic UI
-    setSubaccounts(prev => prev.map(s => s.id === sub.id ? { ...s, checkout_enabled: newVal } : s))
+    setSubaccounts(prev => prev.map(s => s.id === sub.id ? { ...s, checkout_enabled: newEnabled, active: newEnabled } : s))
 
-    const { error } = await supabase
+    // 1. Update org active status
+    const { error: orgErr } = await supabase
       .from('pzaafi_organizations')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ active: newEnabled, updated_at: new Date().toISOString() })
       .eq('id', sub.id)
 
+    // 2. Update license pzaafi_tier
     const { error: licErr } = await supabase
       .from('licenses')
       .update({
-        pzaafi_tier: newVal ? 'cliente' : null,
-        pzaafi_enabled_at: newVal ? new Date().toISOString() : null,
+        pzaafi_tier: newEnabled ? 'cliente' : null,
+        pzaafi_enabled_at: newEnabled ? new Date().toISOString() : null,
       })
       .eq('tenant_id', sub.tenant_id)
 
-    if (error || licErr) {
-      setSubaccounts(prev => prev.map(s => s.id === sub.id ? { ...s, checkout_enabled: !newVal } : s))
+    if (orgErr || licErr) {
+      setSubaccounts(prev => prev.map(s => s.id === sub.id ? { ...s, checkout_enabled: !newEnabled, active: !newEnabled } : s))
       toast.error('Erro ao atualizar checkout')
     } else {
-      toast.success(newVal ? 'Checkout habilitado' : 'Checkout desabilitado')
+      toast.success(newEnabled ? 'Checkout ativado' : 'Checkout desativado')
     }
   }
 
@@ -317,8 +321,14 @@ export function PzaafiWhiteLabelDashboard() {
                           <Settings size={14} style={{ color: 'hsl(var(--muted-foreground))' }} />
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                        {'\u2014'}
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setConfigOrgId(configOrgId === sub.id ? null : sub.id)}
+                          className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
+                          title="Configurar Checkout"
+                        >
+                          <Sliders size={14} style={{ color: 'hsl(var(--primary))' }} />
+                        </button>
                       </td>
                     </tr>
                   )
@@ -328,6 +338,15 @@ export function PzaafiWhiteLabelDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Checkout Config Panel */}
+      {configOrgId && (
+        <CheckoutConfigPanel
+          orgId={configOrgId}
+          orgName={subaccounts.find(s => s.id === configOrgId)?.name ?? ''}
+          onClose={() => setConfigOrgId(null)}
+        />
+      )}
 
       {/* Gateway Modal */}
       {selectedOrgForGateway && (
