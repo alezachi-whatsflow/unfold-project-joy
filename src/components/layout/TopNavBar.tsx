@@ -1,6 +1,7 @@
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { NotificationBell } from "./NotificationBell";
 import {
   PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
   Users, Package, ShoppingCart, BarChart3,
@@ -88,6 +89,7 @@ export function TopNavBar() {
 
       {/* Right side */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <NotificationBell />
         <ThemeSwitcher />
       </div>
     </div>
