@@ -45,25 +45,44 @@ const WHATSFLOW_TENANT = "00000000-0000-0000-0000-000000000001";
 
 export function ProductProvider({ children }: { children: React.ReactNode }) {
   const tenantId = useTenantId();
+  const [loadedTenantId, setLoadedTenantId] = useState<string | null>(null);
 
-  // Load products per tenant: only Whatsflow EDTECH has seed data, others start empty
-  const [products, setProducts] = useState<Product[]>(() => {
-    if (!tenantId) return [];
+  const [products, setProducts] = useState<Product[]>([]);
+
+  // Load products when the current tenant is resolved.
+  useEffect(() => {
+    if (!tenantId) {
+      setProducts([]);
+      setLoadedTenantId(null);
+      return;
+    }
+
     const key = `wf_products_${tenantId}`;
     try {
       const saved = localStorage.getItem(key);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    // Only seed Whatsflow EDTECH with hardcoded products
-    return tenantId === WHATSFLOW_TENANT ? WHATSFLOW_PRODUCTS : [];
-  });
+      if (saved) {
+        setProducts(JSON.parse(saved));
+        setLoadedTenantId(tenantId);
+        return;
+      }
+    } catch {
+      // Ignore invalid localStorage payloads and fall back to defaults.
+    }
+
+    setProducts(tenantId === WHATSFLOW_TENANT ? WHATSFLOW_PRODUCTS : []);
+    setLoadedTenantId(tenantId);
+  }, [tenantId]);
 
   // Persist products to localStorage per tenant
   useEffect(() => {
-    if (!tenantId) return;
+    if (!tenantId || loadedTenantId !== tenantId) return;
     const key = `wf_products_${tenantId}`;
-    try { localStorage.setItem(key, JSON.stringify(products)); } catch {}
-  }, [products, tenantId]);
+    try {
+      localStorage.setItem(key, JSON.stringify(products));
+    } catch {
+      // Ignore storage write failures; in-memory state remains available.
+    }
+  }, [products, tenantId, loadedTenantId]);
 
   const addProduct = useCallback((product: Product) => {
     setProducts((prev) => [...prev, product]);
