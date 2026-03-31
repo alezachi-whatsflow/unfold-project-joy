@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 /* ── helpers ─────────────────────────────────── */
 function greeting() {
@@ -154,15 +155,7 @@ export default function HomePage() {
             {todayLabel()}
           </span>
           <div className="hidden md:block h-6 w-px bg-[rgba(0,200,150,0.2)]" />
-          <button className="relative p-2 hover:bg-[rgba(0,200,150,0.1)] transition-colors"
-            onClick={() => go("/cobrancas")}>
-            <Bell size={18} className="text-[rgba(240,253,248,0.6)]" />
-            {pendingCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {pendingCount > 9 ? "9+" : pendingCount}
-              </span>
-            )}
-          </button>
+          <NotificationBell />
           <button className="h-8 w-8 rounded-full bg-[rgba(0,200,150,0.2)] flex items-center justify-center text-xs font-bold text-[#00C896]"
             onClick={() => go("/perfil")}>
             {firstName[0]?.toUpperCase()}
