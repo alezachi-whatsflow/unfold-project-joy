@@ -406,25 +406,29 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
     tickets: true, sla: true, sistema: false, sound_enabled: true,
   })
   const [loaded, setLoaded] = useState(false)
+  const rowExistsRef = useRef(false)
 
   useEffect(() => {
     if (!userId) return
     ;(async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from('notification_preferences')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle()
 
+      if (error) console.error('[NotifPrefs] load error:', error)
+
       if (data) {
+        rowExistsRef.current = true
         setPrefs({
-          mensageria: data.mensageria,
-          crm: data.crm,
-          financeiro: data.financeiro,
-          tickets: data.tickets,
-          sla: data.sla,
-          sistema: data.sistema,
-          sound_enabled: data.sound_enabled,
+          mensageria: data.mensageria ?? true,
+          crm: data.crm ?? true,
+          financeiro: data.financeiro ?? true,
+          tickets: data.tickets ?? true,
+          sla: data.sla ?? true,
+          sistema: data.sistema ?? false,
+          sound_enabled: data.sound_enabled ?? true,
         })
       }
       setLoaded(true)
@@ -433,23 +437,42 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
 
   async function toggle(key: string) {
     if (!userId) return
-    const newVal = !prefs[key]
-    // Optimistic update
-    setPrefs((p) => ({ ...p, [key]: newVal }))
-
     const tenantId = localStorage.getItem('whatsflow_default_tenant_id')
-    await (supabase as any)
-      .from('notification_preferences')
-      .upsert(
-        {
-          user_id: userId,
-          tenant_id: tenantId,
-          ...prefs,
-          [key]: newVal,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id' },
-      )
+    if (!tenantId) return
+
+    // Compute new prefs from latest state via functional updater
+    let updatedPrefs: Record<string, boolean> = {}
+    setPrefs((prev) => {
+      updatedPrefs = { ...prev, [key]: !prev[key] }
+      return updatedPrefs
+    })
+
+    const payload = {
+      mensageria: updatedPrefs.mensageria,
+      crm: updatedPrefs.crm,
+      financeiro: updatedPrefs.financeiro,
+      tickets: updatedPrefs.tickets,
+      sla: updatedPrefs.sla,
+      sistema: updatedPrefs.sistema,
+      sound_enabled: updatedPrefs.sound_enabled,
+      updated_at: new Date().toISOString(),
+    }
+
+    if (rowExistsRef.current) {
+      // UPDATE existing row
+      const { error } = await (supabase as any)
+        .from('notification_preferences')
+        .update(payload)
+        .eq('user_id', userId)
+      if (error) console.error('[NotifPrefs] update error:', error)
+    } else {
+      // INSERT new row
+      const { error } = await (supabase as any)
+        .from('notification_preferences')
+        .insert({ user_id: userId, tenant_id: tenantId, ...payload })
+      if (error) console.error('[NotifPrefs] insert error:', error)
+      else rowExistsRef.current = true
+    }
   }
 
   if (!loaded) return null
