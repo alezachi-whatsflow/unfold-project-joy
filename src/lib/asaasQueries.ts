@@ -9,7 +9,7 @@ import type {
   DunningExecution,
 } from "@/types/asaas";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://jtlrglzcsmqmapizqgzu.supabase.co";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br";
 
 // ── Asaas Proxy Calls ──
 
