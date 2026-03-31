@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { Settings } from 'lucide-react'
+import { toast } from 'sonner'
+import { GatewayConfigModal } from '../components/shared/GatewayConfigModal'
 
 type Org = {
   id: string
@@ -7,8 +10,10 @@ type Org = {
   tier: string
   kyc_status: string
   active: boolean
+  checkout_enabled: boolean
   document: string | null
   created_at: string
+  tenant_id: string
 }
 
 const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -30,24 +35,66 @@ export function PzaafiNexusDashboard() {
   const [newName, setNewName] = useState('')
   const [newTier, setNewTier] = useState<string>('cliente')
   const [saving, setSaving] = useState(false)
+  const [showGatewayModal, setShowGatewayModal] = useState(false)
+  const [selectedOrgForGateway, setSelectedOrgForGateway] = useState<{ id: string; name: string } | null>(null)
 
   const fetchOrgs = useCallback(async () => {
     const { data } = await supabase
       .from('pzaafi_organizations')
-      .select('id, name, tier, kyc_status, active, document, created_at')
+      .select('id, name, tier, kyc_status, active, document, created_at, tenant_id')
       .order('created_at', { ascending: false })
-    setOrgs((data as Org[]) ?? [])
+
+    // Map checkout_enabled from active field (reuse existing)
+    const mapped = ((data as unknown as Org[]) ?? []).map(o => ({
+      ...o,
+      checkout_enabled: o.active,
+    }))
+    setOrgs(mapped)
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchOrgs() }, [fetchOrgs])
 
   const toggleActive = async (org: Org) => {
-    await supabase
+    const newVal = !org.active
+    // Optimistic UI
+    setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, active: newVal } : o))
+    const { error } = await supabase
       .from('pzaafi_organizations')
-      .update({ active: !org.active })
+      .update({ active: newVal })
       .eq('id', org.id)
-    setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, active: !o.active } : o))
+    if (error) {
+      setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, active: !newVal } : o))
+      toast.error('Erro ao atualizar status')
+    }
+  }
+
+  const toggleCheckout = async (org: Org) => {
+    const newVal = !org.checkout_enabled
+    // Optimistic UI
+    setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, checkout_enabled: newVal } : o))
+
+    const { error } = await supabase
+      .from('pzaafi_organizations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', org.id)
+
+    // Also update the license metadata
+    const { error: licErr } = await supabase
+      .from('licenses')
+      .update({
+        pzaafi_tier: newVal ? org.tier : null,
+        pzaafi_enabled_at: newVal ? new Date().toISOString() : null,
+      })
+      .eq('tenant_id', org.tenant_id)
+
+    if (error || licErr) {
+      // Revert optimistic
+      setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, checkout_enabled: !newVal } : o))
+      toast.error('Erro ao atualizar checkout')
+    } else {
+      toast.success(newVal ? 'Checkout habilitado' : 'Checkout desabilitado')
+    }
   }
 
   const handleCreate = async () => {
@@ -76,6 +123,7 @@ export function PzaafiNexusDashboard() {
 
   const totalOrgs = orgs.length
   const activeCount = orgs.filter(o => o.active).length
+  const checkoutCount = orgs.filter(o => o.checkout_enabled).length
   const pendingKyc = orgs.filter(o => o.kyc_status === 'pending').length
 
   return (
@@ -91,12 +139,13 @@ export function PzaafiNexusDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: 'Total Orgs', value: totalOrgs },
           { label: 'Ativas', value: activeCount },
+          { label: 'Checkout Ativos', value: checkoutCount },
           { label: 'Pendente KYC', value: pendingKyc },
-          { label: 'MRR Pzaafi', value: '—' },
+          { label: 'MRR Pzaafi', value: '\u2014' },
         ].map(kpi => (
           <div
             key={kpi.label}
@@ -167,7 +216,7 @@ export function PzaafiNexusDashboard() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: 'hsl(var(--muted))' }}>
-                {['Nome', 'Tier', 'KYC', 'Status', 'Acoes'].map(h => (
+                {['Nome', 'Tier', 'KYC', 'Status', 'Checkout', 'Acoes'].map(h => (
                   <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                 ))}
               </tr>
@@ -175,13 +224,13 @@ export function PzaafiNexusDashboard() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     Carregando...
                   </td>
                 </tr>
               ) : orgs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     Nenhuma organizacao encontrada
                   </td>
                 </tr>
@@ -231,10 +280,30 @@ export function PzaafiNexusDashboard() {
                           />
                         </button>
                       </td>
+                      <td className="py-3 px-3">
+                        <button
+                          onClick={() => toggleCheckout(org)}
+                          className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                          style={{ background: org.checkout_enabled ? 'hsl(var(--primary))' : 'hsl(var(--muted))' }}
+                          role="switch"
+                          aria-checked={org.checkout_enabled}
+                        >
+                          <span
+                            className="inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform"
+                            style={{
+                              transform: org.checkout_enabled ? 'translateX(18px)' : 'translateX(2px)',
+                            }}
+                          />
+                        </button>
+                      </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                          {org.document || '—'}
-                        </span>
+                        <button
+                          onClick={() => { setSelectedOrgForGateway({ id: org.id, name: org.name }); setShowGatewayModal(true) }}
+                          className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
+                          title="Configurar Gateway"
+                        >
+                          <Settings size={14} style={{ color: 'hsl(var(--muted-foreground))' }} />
+                        </button>
                       </td>
                     </tr>
                   )
@@ -244,6 +313,16 @@ export function PzaafiNexusDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Gateway Modal */}
+      {selectedOrgForGateway && (
+        <GatewayConfigModal
+          orgId={selectedOrgForGateway.id}
+          orgName={selectedOrgForGateway.name}
+          isOpen={showGatewayModal}
+          onClose={() => { setShowGatewayModal(false); setSelectedOrgForGateway(null) }}
+        />
+      )}
     </div>
   )
 }

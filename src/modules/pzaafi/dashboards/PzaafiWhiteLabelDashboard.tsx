@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { Settings, CreditCard } from 'lucide-react'
+import { toast } from 'sonner'
+import { GatewayConfigModal } from '../components/shared/GatewayConfigModal'
 
 type SubAccount = {
   id: string
@@ -7,7 +10,9 @@ type SubAccount = {
   document: string | null
   kyc_status: string
   active: boolean
+  checkout_enabled: boolean
   created_at: string
+  tenant_id: string
 }
 
 const KYC_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -18,12 +23,15 @@ const KYC_STYLES: Record<string, { bg: string; text: string; label: string }> = 
 
 export function PzaafiWhiteLabelDashboard() {
   const [myOrgId, setMyOrgId] = useState<string | null>(null)
+  const [myOrgName, setMyOrgName] = useState<string>('')
   const [subaccounts, setSubaccounts] = useState<SubAccount[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDoc, setNewDoc] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showGatewayModal, setShowGatewayModal] = useState(false)
+  const [selectedOrgForGateway, setSelectedOrgForGateway] = useState<{ id: string; name: string } | null>(null)
 
   // Resolve the current user's org
   useEffect(() => {
@@ -41,11 +49,14 @@ export function PzaafiWhiteLabelDashboard() {
 
       const { data: org } = await supabase
         .from('pzaafi_organizations')
-        .select('id')
+        .select('id, name')
         .eq('tenant_id', ut.tenant_id)
         .limit(1)
         .maybeSingle()
-      if (org?.id) setMyOrgId(org.id)
+      if (org?.id) {
+        setMyOrgId(org.id)
+        setMyOrgName(org.name ?? '')
+      }
       setLoading(false)
     }
     resolveOrg()
@@ -55,13 +66,44 @@ export function PzaafiWhiteLabelDashboard() {
     if (!myOrgId) return
     const { data } = await supabase
       .from('pzaafi_organizations')
-      .select('id, name, document, kyc_status, active, created_at')
+      .select('id, name, document, kyc_status, active, created_at, tenant_id')
       .eq('parent_org_id', myOrgId)
       .order('created_at', { ascending: false })
-    setSubaccounts((data as SubAccount[]) ?? [])
+
+    const mapped = ((data as unknown as SubAccount[]) ?? []).map(s => ({
+      ...s,
+      checkout_enabled: s.active,
+    }))
+    setSubaccounts(mapped)
   }, [myOrgId])
 
   useEffect(() => { if (myOrgId) fetchSubaccounts() }, [myOrgId, fetchSubaccounts])
+
+  const toggleCheckout = async (sub: SubAccount) => {
+    const newVal = !sub.checkout_enabled
+    // Optimistic UI
+    setSubaccounts(prev => prev.map(s => s.id === sub.id ? { ...s, checkout_enabled: newVal } : s))
+
+    const { error } = await supabase
+      .from('pzaafi_organizations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', sub.id)
+
+    const { error: licErr } = await supabase
+      .from('licenses')
+      .update({
+        pzaafi_tier: newVal ? 'cliente' : null,
+        pzaafi_enabled_at: newVal ? new Date().toISOString() : null,
+      })
+      .eq('tenant_id', sub.tenant_id)
+
+    if (error || licErr) {
+      setSubaccounts(prev => prev.map(s => s.id === sub.id ? { ...s, checkout_enabled: !newVal } : s))
+      toast.error('Erro ao atualizar checkout')
+    } else {
+      toast.success(newVal ? 'Checkout habilitado' : 'Checkout desabilitado')
+    }
+  }
 
   const handleCreate = async () => {
     if (!newName.trim() || !myOrgId) return
@@ -95,27 +137,41 @@ export function PzaafiWhiteLabelDashboard() {
 
   const totalSub = subaccounts.length
   const activeSub = subaccounts.filter(s => s.active).length
+  const checkoutCount = subaccounts.filter(s => s.checkout_enabled).length
   const pendingKyc = subaccounts.filter(s => s.kyc_status === 'pending').length
 
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
-          Pzaafi — Minha Carteira
-        </h1>
-        <p className="text-sm mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
-          Gerencie suas subcontas e comissoes
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+            Pzaafi — Minha Carteira
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            Gerencie suas subcontas e comissoes
+          </p>
+        </div>
+        {myOrgId && (
+          <button
+            onClick={() => { setSelectedOrgForGateway({ id: myOrgId, name: myOrgName || 'Minha Org' }); setShowGatewayModal(true) }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors"
+            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+          >
+            <CreditCard size={16} style={{ color: 'hsl(var(--primary))' }} />
+            Configurar Gateway
+          </button>
+        )}
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: 'Total Subcontas', value: totalSub },
           { label: 'Ativas', value: activeSub },
+          { label: 'Checkout Ativos', value: checkoutCount },
           { label: 'Pendente KYC', value: pendingKyc },
-          { label: 'Comissao do Mes', value: '—' },
+          { label: 'Comissao do Mes', value: '\u2014' },
         ].map(kpi => (
           <div
             key={kpi.label}
@@ -184,7 +240,7 @@ export function PzaafiWhiteLabelDashboard() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: 'hsl(var(--muted))' }}>
-                {['Nome', 'CNPJ', 'KYC', 'Status', 'Comissao Config', 'Acoes'].map(h => (
+                {['Nome', 'CNPJ', 'KYC', 'Status', 'Checkout', 'Gateway', 'Acoes'].map(h => (
                   <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                 ))}
               </tr>
@@ -192,13 +248,13 @@ export function PzaafiWhiteLabelDashboard() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <td colSpan={7} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     Carregando...
                   </td>
                 </tr>
               ) : subaccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <td colSpan={7} className="px-4 py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     Nenhuma subconta encontrada
                   </td>
                 </tr>
@@ -215,7 +271,7 @@ export function PzaafiWhiteLabelDashboard() {
                         {sub.name}
                       </td>
                       <td className="px-4 py-3" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                        {sub.document || '—'}
+                        {sub.document || '\u2014'}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -236,11 +292,33 @@ export function PzaafiWhiteLabelDashboard() {
                           {sub.active ? 'Ativa' : 'Inativa'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                        —
+                      <td className="py-3 px-3">
+                        <button
+                          onClick={() => toggleCheckout(sub)}
+                          className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                          style={{ background: sub.checkout_enabled ? 'hsl(var(--primary))' : 'hsl(var(--muted))' }}
+                          role="switch"
+                          aria-checked={sub.checkout_enabled}
+                        >
+                          <span
+                            className="inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform"
+                            style={{
+                              transform: sub.checkout_enabled ? 'translateX(18px)' : 'translateX(2px)',
+                            }}
+                          />
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => { setSelectedOrgForGateway({ id: sub.id, name: sub.name }); setShowGatewayModal(true) }}
+                          className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
+                          title="Configurar Gateway"
+                        >
+                          <Settings size={14} style={{ color: 'hsl(var(--muted-foreground))' }} />
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                        —
+                        {'\u2014'}
                       </td>
                     </tr>
                   )
@@ -250,6 +328,16 @@ export function PzaafiWhiteLabelDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Gateway Modal */}
+      {selectedOrgForGateway && (
+        <GatewayConfigModal
+          orgId={selectedOrgForGateway.id}
+          orgName={selectedOrgForGateway.name}
+          isOpen={showGatewayModal}
+          onClose={() => { setShowGatewayModal(false); setSelectedOrgForGateway(null) }}
+        />
+      )}
     </div>
   )
 }
