@@ -6,7 +6,7 @@ import { ptBR } from 'date-fns/locale/pt-BR'
 import {
   MessageSquare, Clock, FileText, Phone, Mail,
   ArrowRight, Tag, UserPlus, Star, Send, Calendar,
-  Loader2,
+  Loader2, LifeBuoy,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -46,6 +46,7 @@ const ACTIVITY_META: Record<string, { icon: React.ElementType; color: string; la
   lead_created:       { icon: Star,          color: '#6366F1', label: 'Lead criado' },
   file_attached:      { icon: FileText,      color: '#3B82F6', label: 'Arquivo anexado' },
   meeting:            { icon: Calendar,      color: '#F59E0B', label: 'Reunião agendada' },
+  ticket_opened:      { icon: LifeBuoy,      color: '#8B5CF6', label: 'Ticket aberto' },
 }
 
 const DEFAULT_META = { icon: FileText, color: '#6B7280', label: 'Atividade' }
@@ -100,6 +101,19 @@ function renderContent(activity: Activity): React.ReactNode {
   }
   if (type === 'file_attached') {
     return <span className="text-sm text-muted-foreground">{c.filename || 'arquivo'}</span>
+  }
+  if (type === 'ticket_opened') {
+    return (
+      <div>
+        <p className="text-xs" style={{ color: 'hsl(var(--foreground))' }}>
+          {(activity.content as any)?.title}
+        </p>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full mt-1 inline-block"
+          style={{ background: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }}>
+          Aberto
+        </span>
+      </div>
+    )
   }
 
   // fallback: show raw JSON keys

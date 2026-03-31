@@ -17,7 +17,7 @@ export type ActivityType =
   | 'whatsapp_msg' | 'whatsapp_scheduled' | 'whatsapp_received'
   | 'note' | 'call' | 'email'
   | 'stage_change' | 'tag_added' | 'file_attached' | 'meeting'
-  | 'lead_created' | 'assigned'
+  | 'lead_created' | 'assigned' | 'ticket_opened'
 
 interface LogActivityInput {
   cardId?: string | null
@@ -113,5 +113,28 @@ export function logAssigned(cardId: string, assigneeName: string) {
     cardId,
     activityType: 'assigned',
     content: { assignee: assigneeName },
+  })
+}
+
+export function logTicketOpened(params: {
+  cardId?: string
+  contactJid?: string
+  ticketId: string
+  title: string
+  priority: string
+  source: string
+  performedByName?: string
+}) {
+  logCrmActivity({
+    cardId: params.cardId,
+    contactJid: params.contactJid,
+    activityType: 'ticket_opened' as ActivityType,
+    content: {
+      ticket_id: params.ticketId,
+      title: params.title,
+      priority: params.priority,
+      source: params.source,
+    },
+    performedByName: params.performedByName,
   })
 }
