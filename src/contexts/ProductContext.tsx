@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import { Product, ProductMetrics, ProductHealth } from "@/types/products";
 import { WHATSFLOW_PRODUCTS } from "@/lib/productData";
 import { useTenantId } from "@/hooks/useTenantId";
+import { supabase } from "@/integrations/supabase/client";
 
 export function calculateProductMetrics(product: Product): ProductMetrics {
   const totalCosts =
@@ -23,8 +24,73 @@ export function calculateProductMetrics(product: Product): ProductMetrics {
   return { contributionMargin, contributionMarginPercent, health };
 }
 
+/* ── Map DB row to Product type ── */
+function dbToProduct(row: any): Product {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category || "plan_base",
+    type: row.type || "recurring",
+    status: row.is_active ? "active" : "inactive",
+    price: Number(row.price) || 0,
+    billingCycle: row.billing_cycle || "monthly",
+    cogs: Number(row.cogs) || 0,
+    laborCost: Number(row.labor_cost) || 0,
+    salesCommission: Number(row.sales_commission_pct) || 0,
+    supportCost: Number(row.support_cost) || 0,
+    description: row.description || undefined,
+    activeCustomers: row.active_customers || 0,
+    mrr: Number(row.mrr) || 0,
+    totalRevenue: Number(row.total_revenue) || 0,
+    includes: row.metadata?.includes || undefined,
+    features: row.metadata?.features || undefined,
+    limitations: row.metadata?.limitations || undefined,
+    hourlyRate: row.metadata?.hourlyRate || undefined,
+    monthlyHours: row.metadata?.monthlyHours || undefined,
+    weeklyHours: row.metadata?.weeklyHours || undefined,
+    deliveryTime: row.metadata?.deliveryTime || undefined,
+    churnRate: row.metadata?.churnRate || undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+/* ── Map Product to DB row ── */
+function productToDb(p: Product, tenantId: string): Record<string, any> {
+  return {
+    id: p.id,
+    tenant_id: tenantId,
+    name: p.name,
+    category: p.category,
+    type: p.type,
+    price: p.price,
+    billing_cycle: p.billingCycle,
+    cogs: p.cogs,
+    labor_cost: p.laborCost,
+    sales_commission_pct: p.salesCommission,
+    support_cost: p.supportCost,
+    description: p.description || null,
+    active_customers: p.activeCustomers,
+    mrr: p.mrr,
+    total_revenue: p.totalRevenue,
+    is_active: p.status === "active",
+    metadata: {
+      includes: p.includes,
+      features: p.features,
+      limitations: p.limitations,
+      hourlyRate: p.hourlyRate,
+      monthlyHours: p.monthlyHours,
+      weeklyHours: p.weeklyHours,
+      deliveryTime: p.deliveryTime,
+      churnRate: p.churnRate,
+    },
+    updated_at: new Date().toISOString(),
+  };
+}
+
 interface ProductContextType {
   products: Product[];
+  loading: boolean;
   addProduct: (product: Product) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
@@ -45,57 +111,129 @@ const WHATSFLOW_TENANT = "00000000-0000-0000-0000-000000000001";
 
 export function ProductProvider({ children }: { children: React.ReactNode }) {
   const tenantId = useTenantId();
-  const [loadedTenantId, setLoadedTenantId] = useState<string | null>(null);
-
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load products when the current tenant is resolved.
+  // Load products from database
   useEffect(() => {
     if (!tenantId) {
       setProducts([]);
-      setLoadedTenantId(null);
+      setLoading(false);
       return;
     }
 
-    const key = `wf_products_${tenantId}`;
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        setProducts(JSON.parse(saved));
-        setLoadedTenantId(tenantId);
-        return;
-      }
-    } catch {
-      // Ignore invalid localStorage payloads and fall back to defaults.
-    }
+    let cancelled = false;
 
-    setProducts(tenantId === WHATSFLOW_TENANT ? WHATSFLOW_PRODUCTS : []);
-    setLoadedTenantId(tenantId);
+    (async () => {
+      setLoading(true);
+
+      const { data, error } = await (supabase as any)
+        .from("products")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("created_at", { ascending: true });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("[ProductContext] Error loading products:", error);
+        // Fallback: try localStorage migration
+        const localKey = `wf_products_${tenantId}`;
+        try {
+          const saved = localStorage.getItem(localKey);
+          if (saved) {
+            const localProducts: Product[] = JSON.parse(saved);
+            setProducts(localProducts);
+            // Migrate to DB in background
+            migrateLocalToDb(localProducts, tenantId);
+            return;
+          }
+        } catch { /* ignore */ }
+
+        // Final fallback for Whatsflow tenant
+        if (tenantId === WHATSFLOW_TENANT) setProducts(WHATSFLOW_PRODUCTS);
+        else setProducts([]);
+      } else if (data && data.length > 0) {
+        setProducts(data.map(dbToProduct));
+      } else {
+        // No data in DB — try localStorage migration
+        const localKey = `wf_products_${tenantId}`;
+        try {
+          const saved = localStorage.getItem(localKey);
+          if (saved) {
+            const localProducts: Product[] = JSON.parse(saved);
+            setProducts(localProducts);
+            migrateLocalToDb(localProducts, tenantId);
+            return;
+          }
+        } catch { /* ignore */ }
+
+        // Seed with defaults for Whatsflow tenant
+        if (tenantId === WHATSFLOW_TENANT) {
+          setProducts(WHATSFLOW_PRODUCTS);
+          migrateLocalToDb(WHATSFLOW_PRODUCTS, tenantId);
+        } else {
+          setProducts([]);
+        }
+      }
+
+      setLoading(false);
+    })();
+
+    return () => { cancelled = true; };
   }, [tenantId]);
 
-  // Persist products to localStorage per tenant
-  useEffect(() => {
-    if (!tenantId || loadedTenantId !== tenantId) return;
-    const key = `wf_products_${tenantId}`;
-    try {
-      localStorage.setItem(key, JSON.stringify(products));
-    } catch {
-      // Ignore storage write failures; in-memory state remains available.
+  // One-time migration from localStorage to DB
+  async function migrateLocalToDb(localProducts: Product[], tid: string) {
+    for (const p of localProducts) {
+      const row = productToDb(p, tid);
+      await (supabase as any)
+        .from("products")
+        .upsert(row, { onConflict: "id" })
+        .then(({ error }: any) => {
+          if (error) console.warn("[ProductContext] Migration upsert error:", error);
+        });
     }
-  }, [products, tenantId, loadedTenantId]);
+    // Clear localStorage after successful migration
+    localStorage.removeItem(`wf_products_${tid}`);
+    console.log(`[ProductContext] Migrated ${localProducts.length} products from localStorage to DB`);
+    setLoading(false);
+  }
 
   const addProduct = useCallback((product: Product) => {
     setProducts((prev) => [...prev, product]);
-  }, []);
+    if (tenantId) {
+      const row = productToDb(product, tenantId);
+      (supabase as any).from("products").insert(row).then(({ error }: any) => {
+        if (error) console.error("[ProductContext] Insert error:", error);
+      });
+    }
+  }, [tenantId]);
 
   const updateProduct = useCallback((id: string, updates: Partial<Product>) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p))
     );
-  }, []);
+    if (tenantId) {
+      // Re-build the full row from the updated product
+      setProducts((prev) => {
+        const updated = prev.find((p) => p.id === id);
+        if (updated) {
+          const row = productToDb(updated, tenantId);
+          (supabase as any).from("products").update(row).eq("id", id).then(({ error }: any) => {
+            if (error) console.error("[ProductContext] Update error:", error);
+          });
+        }
+        return prev;
+      });
+    }
+  }, [tenantId]);
 
   const deleteProduct = useCallback((id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
+    (supabase as any).from("products").delete().eq("id", id).then(({ error }: any) => {
+      if (error) console.error("[ProductContext] Delete error:", error);
+    });
   }, []);
 
   const getMetrics = useCallback((product: Product) => {
@@ -139,7 +277,7 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ProductContext.Provider
-      value={{ products, addProduct, updateProduct, deleteProduct, getMetrics, portfolioKPIs }}
+      value={{ products, loading, addProduct, updateProduct, deleteProduct, getMetrics, portfolioKPIs }}
     >
       {children}
     </ProductContext.Provider>
