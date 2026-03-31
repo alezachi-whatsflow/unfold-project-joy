@@ -53,24 +53,35 @@ interface BillingPreset {
   config: Omit<BillingConfig, "dueDate">;
 }
 
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
+
 const STORAGE_KEY = "billing_presets";
 
-function loadPresets(): BillingPreset[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function savePresetsToStorage(presets: BillingPreset[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
-}
-
 export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
+  const tenantId = useTenantId();
   const showBoletoSettings = config.billingType === "BOLETO" || config.billingType === "UNDEFINED";
-  const [presets, setPresets] = useState<BillingPreset[]>(loadPresets);
+  const [presets, setPresets] = useState<BillingPreset[]>([]);
+
+  // Load presets from DB
+  useEffect(() => {
+    if (!tenantId) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("billing_presets")
+        .select("*")
+        .eq("tenant_id", tenantId);
+      if (data && data.length > 0) {
+        setPresets(data.map((r: any) => ({ id: r.id, name: r.name, billingType: r.billing_type, value: Number(r.value), fineValue: Number(r.fine_value), interestValue: Number(r.interest_value), dueDays: r.due_days, ...(r.metadata || {}) })));
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) setPresets(JSON.parse(raw));
+        } catch {}
+      }
+    })();
+  }, [tenantId]);
   const [presetName, setPresetName] = useState("");
   const [showPresets, setShowPresets] = useState(false);
 
@@ -82,7 +93,10 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
     const { dueDate, ...rest } = config;
     const updated = [...presets.filter((p) => p.name !== presetName.trim()), { name: presetName.trim(), config: rest }];
     setPresets(updated);
-    savePresetsToStorage(updated);
+    if (tenantId) {
+      (supabase as any).from("billing_presets").upsert({ tenant_id: tenantId, name: presetName.trim(), billing_type: rest.billingType, value: rest.value, fine_value: rest.fineValue, interest_value: rest.interestValue, metadata: rest, updated_at: new Date().toISOString() }, { onConflict: "id" });
+      localStorage.removeItem(STORAGE_KEY);
+    }
     setPresetName("");
     toast.success(`Preset "${presetName.trim()}" salvo`);
   };
@@ -96,7 +110,10 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
   const handleDeletePreset = (name: string) => {
     const updated = presets.filter((p) => p.name !== name);
     setPresets(updated);
-    savePresetsToStorage(updated);
+    if (tenantId) {
+      (supabase as any).from("billing_presets").delete().eq("tenant_id", tenantId).eq("name", name);
+      localStorage.removeItem(STORAGE_KEY);
+    }
     toast.info(`Preset "${name}" removido`);
   };
 

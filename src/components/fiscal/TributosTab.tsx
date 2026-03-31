@@ -7,6 +7,8 @@ import EstadualSection from "./EstadualSection";
 import FederalSection from "./FederalSection";
 import { UF_LIST, SIMPLES_NACIONAL_DEFAULT, FEDERAL_DEFAULTS, type MunicipalISS, type UFData, type SimplesNacionalFaixa, type FederalConfig } from "@/lib/taxData";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
 
 const STORAGE_KEY = "fiscal_tributos";
 
@@ -18,21 +20,68 @@ function loadState() {
   return null;
 }
 
-function saveState(state: any) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
 export default function TributosTab() {
+  const tenantId = useTenantId();
   const saved = loadState();
   const [municipal, setMunicipal] = useState<MunicipalISS[]>(saved?.municipal ?? []);
   const [estadual, setEstadual] = useState<UFData[]>(saved?.estadual ?? [...UF_LIST]);
   const [simples, setSimples] = useState<SimplesNacionalFaixa[]>(saved?.simples ?? [...SIMPLES_NACIONAL_DEFAULT]);
   const [presumido, setPresumido] = useState<FederalConfig>(saved?.presumido ?? { ...FEDERAL_DEFAULTS.presumido });
+
+  // Load from DB on mount
+  useEffect(() => {
+    if (!tenantId) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("tax_configurations")
+        .select("*")
+        .eq("tenant_id", tenantId);
+      if (data && data.length > 0) {
+        // Group by scope and reconstruct state
+        const byScope: Record<string, any[]> = {};
+        for (const row of data) {
+          if (!byScope[row.scope]) byScope[row.scope] = [];
+          byScope[row.scope].push(row);
+        }
+        if (byScope.municipal) setMunicipal(byScope.municipal.map((r: any) => r.metadata));
+        if (byScope.estadual) setEstadual(byScope.estadual.map((r: any) => r.metadata));
+        if (byScope.federal) {
+          const simplesRows = byScope.federal.filter((r: any) => r.tax_type === "simples");
+          const presumidoRow = byScope.federal.find((r: any) => r.tax_type === "presumido");
+          if (simplesRows.length) setSimples(simplesRows.map((r: any) => r.metadata));
+          if (presumidoRow) setPresumido(presumidoRow.metadata);
+        }
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    })();
+  }, [tenantId]);
   const [real, setReal] = useState<FederalConfig>(saved?.real ?? { ...FEDERAL_DEFAULTS.real });
 
+  // Persist to DB (debounced via effect)
   useEffect(() => {
-    saveState({ municipal, estadual, simples, presumido, real });
-  }, [municipal, estadual, simples, presumido, real]);
+    if (!tenantId) {
+      // Fallback to localStorage if no tenant
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ municipal, estadual, simples, presumido, real })); } catch {}
+      return;
+    }
+    // Save all tax configs to DB as individual rows
+    const saveToDb = async () => {
+      const rows: any[] = [];
+      municipal.forEach((m, i) => rows.push({ tenant_id: tenantId, scope: "municipal", name: m.nome || `ISS-${i}`, tax_type: "ISS", rate: m.aliquota, metadata: m }));
+      estadual.forEach((e) => rows.push({ tenant_id: tenantId, scope: "estadual", name: e.uf, tax_type: "ICMS", rate: e.aliquota, uf: e.uf, metadata: e }));
+      simples.forEach((s, i) => rows.push({ tenant_id: tenantId, scope: "federal", name: `Faixa-${i + 1}`, tax_type: "simples", rate: s.aliquota, faixa_min: s.faturamentoMin, faixa_max: s.faturamentoMax, metadata: s }));
+      rows.push({ tenant_id: tenantId, scope: "federal", name: "Presumido", tax_type: "presumido", rate: 0, metadata: presumido });
+      rows.push({ tenant_id: tenantId, scope: "federal", name: "Real", tax_type: "real", rate: 0, metadata: real });
+
+      // Delete old and insert new (simplest approach for this structure)
+      await (supabase as any).from("tax_configurations").delete().eq("tenant_id", tenantId);
+      const { error } = await (supabase as any).from("tax_configurations").insert(rows);
+      if (error) console.error("[TributosTab] Save error:", error);
+      else localStorage.removeItem(STORAGE_KEY);
+    };
+    const t = setTimeout(saveToDb, 1000); // debounce 1s
+    return () => clearTimeout(t);
+  }, [municipal, estadual, simples, presumido, real, tenantId]);
 
   const handleMunicipalChange = (entries: MunicipalISS[]) => {
     setMunicipal(entries);

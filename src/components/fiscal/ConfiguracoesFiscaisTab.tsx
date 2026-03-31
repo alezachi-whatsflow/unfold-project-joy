@@ -18,6 +18,8 @@ import {
   maskCEP,
   maskPhone,
 } from "@/types/fiscalConfig";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
 
 const STORAGE_KEY = "fiscal_configuracoes";
 
@@ -36,17 +38,35 @@ const NATUREZAS = [
 ];
 
 export default function ConfiguracoesFiscaisTab() {
-  const [config, setConfig] = useState<FiscalConfig>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? { ...defaultFiscalConfig, ...JSON.parse(saved) } : defaultFiscalConfig;
-    } catch {
-      return defaultFiscalConfig;
-    }
-  });
+  const tenantId = useTenantId();
+  const [config, setConfig] = useState<FiscalConfig>(defaultFiscalConfig);
   const [saving, setSaving] = useState(false);
   const [cnpjValid, setCnpjValid] = useState<boolean | null>(null);
   const [loadingCep, setLoadingCep] = useState(false);
+
+  // Load from DB (with localStorage fallback/migration)
+  useEffect(() => {
+    if (!tenantId) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("fiscal_configurations")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (data) {
+        setConfig({ ...defaultFiscalConfig, ...data.metadata, cnpj: data.cnpj || "", razaoSocial: data.razao_social || "", nomeFantasia: data.nome_fantasia || "", inscricaoEstadual: data.inscricao_estadual || "", inscricaoMunicipal: data.inscricao_municipal || "", cep: data.cep || "", logradouro: data.logradouro || "", bairro: data.bairro || "", cidade: data.cidade || "", uf: data.uf || "", codigoIbge: data.codigo_ibge || "", regimeTributario: data.regime_tributario || "simples_nacional", ...((data.metadata as any) || {}) });
+      } else {
+        // Try localStorage migration
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setConfig({ ...defaultFiscalConfig, ...parsed });
+          }
+        } catch {}
+      }
+    })();
+  }, [tenantId]);
 
   const update = useCallback(<K extends keyof FiscalConfig>(key: K, value: FiscalConfig[K]) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -90,10 +110,35 @@ export default function ConfiguracoesFiscaisTab() {
       return;
     }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    if (tenantId) {
+      const { error } = await (supabase as any)
+        .from("fiscal_configurations")
+        .upsert({
+          tenant_id: tenantId,
+          cnpj: config.cnpj,
+          razao_social: config.razaoSocial,
+          nome_fantasia: config.nomeFantasia,
+          inscricao_estadual: config.inscricaoEstadual,
+          inscricao_municipal: config.inscricaoMunicipal,
+          cep: config.cep,
+          logradouro: config.logradouro,
+          bairro: config.bairro,
+          cidade: config.cidade,
+          uf: config.uf,
+          codigo_ibge: config.codigoIbge,
+          regime_tributario: config.regimeTributario,
+          metadata: config,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "tenant_id" });
+      if (error) {
+        toast.error("Erro ao salvar: " + error.message);
+        setSaving(false);
+        return;
+      }
+      localStorage.removeItem(STORAGE_KEY); // Clear localStorage after DB save
+    }
     setSaving(false);
-    toast.success("✅ Configurações fiscais salvas com sucesso");
+    toast.success("Configurações fiscais salvas com sucesso");
   };
 
   return (
