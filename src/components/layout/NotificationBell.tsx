@@ -69,6 +69,7 @@ export function NotificationBell() {
   const navigate = useNavigate()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const bellRef = useRef<HTMLButtonElement>(null)
+  const prefsRef = useRef<HTMLDivElement>(null)
 
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -154,7 +155,8 @@ export function NotificationBell() {
     function handleClick(e: MouseEvent) {
       if (
         dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-        bellRef.current && !bellRef.current.contains(e.target as Node)
+        bellRef.current && !bellRef.current.contains(e.target as Node) &&
+        (!prefsRef.current || !prefsRef.current.contains(e.target as Node))
       ) {
         setOpen(false)
         setShowPrefs(false)
@@ -371,9 +373,11 @@ export function NotificationBell() {
         </div>
       )}
 
-      {/* Preferences floating panel */}
+      {/* Preferences floating panel — inside dropdownRef scope for click-outside */}
       {open && showPrefs && (
-        <NotificationPrefsInline userId={userId} onClose={() => setShowPrefs(false)} />
+        <div ref={prefsRef} style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 10000 }}>
+          <NotificationPrefsInline userId={userId} onClose={() => setShowPrefs(false)} />
+        </div>
       )}
     </div>
   )
@@ -453,13 +457,11 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
   return (
     <div
       style={{
-        position: 'absolute', top: 'calc(100% + 8px)', right: 0,
         width: 360,
         background: 'hsl(var(--card))',
         border: '1px solid hsl(var(--border))',
         borderRadius: 12,
         boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-        zIndex: 10000,
         padding: '16px',
       }}
     >
