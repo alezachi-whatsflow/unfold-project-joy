@@ -14,10 +14,11 @@ import { DateRange } from "react-day-picker";
 export default function NotasFiscaisTab() {
   const [notas, setNotas] = useState<NotaFiscal[]>([]);
 
-  // loadNotas is async now (migrated to Supabase)
+  // loadNotas is async (Supabase)
   useEffect(() => {
-    const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || undefined;
-    loadNotas(tenantId).then(setNotas).catch(() => setNotas([]));
+    import("@/lib/tenantResolver").then(({ getTenantId }) =>
+      getTenantId().then(tid => loadNotas(tid)).then(setNotas).catch(() => setNotas([]))
+    );
   }, []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<NFStatus | "todas">("todas");
@@ -31,8 +32,12 @@ export default function NotasFiscaisTab() {
   const [cancelNF, setCancelNF] = useState<NotaFiscal | null>(null);
   const [emitirOpen, setEmitirOpen] = useState(false);
 
-  const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || undefined;
-  const persist = (updated: NotaFiscal[]) => { setNotas(updated); saveNotas(updated, tenantId); };
+  const persist = (updated: NotaFiscal[]) => {
+    setNotas(updated);
+    import("@/lib/tenantResolver").then(({ getTenantId }) =>
+      getTenantId().then(tid => saveNotas(updated, tid)).catch(console.error)
+    );
+  };
 
   const filtered = useMemo(() => {
     let result = notas;

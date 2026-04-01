@@ -1,16 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WebScrap, ProfileAnalysis, BusinessLead } from "@/types/intelligence";
+import { getTenantId } from "@/lib/tenantResolver";
 
-async function resolveTenantId(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data } = await supabase.from("user_tenants").select("tenant_id").eq("user_id", user.id).limit(1).maybeSingle();
-  if (data?.tenant_id) {
-    localStorage.setItem("whatsflow_default_tenant_id", data.tenant_id);
-    return data.tenant_id;
-  }
-  return null;
-}
+const resolveTenantId = getTenantId;
 
 // ─── Web Scraps ───
 
@@ -41,19 +33,7 @@ export async function fetchWebScraps(): Promise<WebScrap[]> {
 }
 
 export async function insertWebScrap(scrap: Omit<WebScrap, "id">): Promise<WebScrap> {
-  let tenantId = localStorage.getItem("whatsflow_default_tenant_id");
-  if (!tenantId) {
-    // Fallback: fetch from user_tenants
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: ut } = await supabase.from("user_tenants").select("tenant_id").eq("user_id", user.id).limit(1).maybeSingle();
-      if (ut?.tenant_id) {
-        tenantId = ut.tenant_id;
-        localStorage.setItem("whatsflow_default_tenant_id", tenantId);
-      }
-    }
-  }
-  if (!tenantId) throw new Error("Tenant nao identificado. Faca login novamente.");
+  const tenantId = await resolveTenantId();
 
   const { data, error } = await supabase
     .from("web_scraps")
@@ -123,8 +103,7 @@ export async function fetchProfiles(): Promise<ProfileAnalysis[]> {
 }
 
 export async function insertProfile(profile: Omit<ProfileAnalysis, "id">): Promise<ProfileAnalysis> {
-  const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || await resolveTenantId();
-  if (!tenantId) throw new Error("Tenant nao identificado.");
+  const tenantId = await resolveTenantId();
   const { data, error } = await supabase
     .from("profiles_analysis")
     .insert({
@@ -195,8 +174,7 @@ export async function fetchBusinessLeads(): Promise<BusinessLead[]> {
 }
 
 export async function insertBusinessLead(lead: Omit<BusinessLead, "id">): Promise<BusinessLead> {
-  const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || await resolveTenantId();
-  if (!tenantId) throw new Error("Tenant nao identificado.");
+  const tenantId = await resolveTenantId();
   const { data, error } = await supabase
     .from("business_leads")
     .insert({

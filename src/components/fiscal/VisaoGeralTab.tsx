@@ -32,10 +32,11 @@ export default function VisaoGeralTab() {
   const certs = useMemo(() => loadCertificates(), []);
   const config = useMemo(() => loadConfig(), []);
 
-  // loadNotas is async now (migrated to Supabase)
+  // loadNotas is async (Supabase)
   useEffect(() => {
-    const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || undefined;
-    loadNotas(tenantId).then(setNotas).catch(() => setNotas([]));
+    import("@/lib/tenantResolver").then(({ getTenantId }) =>
+      getTenantId().then(tid => loadNotas(tid)).then(setNotas).catch(() => setNotas([]))
+    );
   }, []);
 
   const now = new Date();
