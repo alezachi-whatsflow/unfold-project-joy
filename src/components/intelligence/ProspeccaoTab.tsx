@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { searchAndScrape } from "@/services/intelligenceService";
 import { NicheContextBanner } from "./prospeccao/NicheContextBanner";
 import { LeadCard } from "./prospeccao/LeadCard";
 import { CampaignHistory } from "./prospeccao/CampaignHistory";
@@ -98,12 +99,9 @@ export function ProspeccaoTab() {
 
     try {
       const query = `${nichoQuery.trim()} em ${searchCity} telefone endereço`;
-      const { data, error } = await supabase.functions.invoke("firecrawl-search", {
-        body: { query, options: { limit: 10, lang: "pt-br", country: "br" } },
-      });
+      const data = await searchAndScrape(query, { limit: 10, lang: "pt-br", country: "br" });
 
-      if (error) throw new Error(error.message);
-      if (!data?.success && data?.error) throw new Error(data.error);
+      if (!data?.success && (data as any)?.error) throw new Error((data as any).error);
 
       const results = data?.data || [];
       if (results.length === 0) {

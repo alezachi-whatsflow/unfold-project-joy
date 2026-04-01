@@ -13,6 +13,7 @@ function CrmSentBadge() {
   return <UiBadge className="ml-1.5 h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground">{count}</UiBadge>;
 }
 import { supabase } from "@/integrations/supabase/client";
+import { scrapeSite, scrapeInstagram, scrapeGoogleBusiness } from "@/services/intelligenceService";
 import { Radar, Brain, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IASkillsPage from "./IASkillsPage";
@@ -125,22 +126,20 @@ export default function IntelligencePage() {
     const username = query.replace(/^@/, "").trim();
     setCurrentStatus("scraping");
     
-    const { data, error } = await supabase.functions.invoke("instagram-scraper", { body: { username } });
-    if (error) throw new Error(`Erro ao chamar edge function: ${error.message || JSON.stringify(error)}`);
-    if (data?.error) throw new Error(data.error);
-    if (!data?.profile) throw new Error("Nenhum dado de perfil retornado pela análise.");
+    const igResult = await scrapeInstagram(username);
+    if (!igResult.success) throw new Error("Nenhum dado de perfil retornado pela analise.");
 
     const profile: ProfileAnalysis = {
-      id: data.profile.id, source: data.profile.source || "instagram", username: data.profile.username || username,
-      display_name: data.profile.display_name, bio: data.profile.bio,
-      followers: data.profile.followers, following: data.profile.following,
-      posts_count: data.profile.posts_count,
-      avg_engagement_rate: data.profile.avg_engagement_rate ? Number(data.profile.avg_engagement_rate) : null,
-      profile_url: data.profile.profile_url || `https://instagram.com/${username}`,
-      profile_image_url: data.profile.profile_image_url,
-      content_strategy_notes: data.profile.content_strategy_notes,
-      authority_score: data.profile.authority_score ? Number(data.profile.authority_score) : null,
-      analyzed_at: data.profile.analyzed_at || new Date().toISOString(), status: "completed",
+      id: crypto.randomUUID(), source: "instagram", username: igResult.username,
+      display_name: igResult.displayName, bio: igResult.bio,
+      followers: igResult.followers, following: igResult.following,
+      posts_count: igResult.postsCount,
+      avg_engagement_rate: igResult.avgEngagementRate,
+      profile_url: `https://instagram.com/${igResult.username}`,
+      profile_image_url: igResult.profileImageUrl,
+      content_strategy_notes: igResult.contentStrategyNotes,
+      authority_score: igResult.authorityScore,
+      analyzed_at: new Date().toISOString(), status: "completed",
     };
     addProfile(profile);
 
@@ -170,32 +169,27 @@ export default function IntelligencePage() {
   const handleGoogleBusinessAnalysis = async (query: string) => {
     setCurrentStatus("scraping");
     
-    const { data, error } = await supabase.functions.invoke("google-business-scraper", { body: { query } });
-    if (error) throw new Error(`Erro ao chamar edge function: ${error.message || JSON.stringify(error)}`);
-    if (data?.error) throw new Error(data.error);
-    if (!data?.business) throw new Error("Nenhum dado retornado pela análise.");
+    const gbResult = await scrapeGoogleBusiness(query);
+    if (!gbResult.success) throw new Error("Nenhum dado retornado pela analise.");
 
-    const business: GoogleBusinessData = data.business;
+    const business: GoogleBusinessData = {
+      name: gbResult.name, address: gbResult.address, phone: gbResult.phone,
+      website: gbResult.website, rating: gbResult.rating, reviews_count: gbResult.reviewsCount,
+      category: gbResult.category, latitude: gbResult.latitude, longitude: gbResult.longitude,
+      photos_count: gbResult.photosCount, description: gbResult.description,
+      top_reviews: gbResult.topReviews, place_id: gbResult.rawData?.placeId || null,
+    } as GoogleBusinessData;
     setGoogleBusiness(business);
 
     // Add to leads context
-    if (data.lead_id) {
-      addLead({
-        id: data.lead_id,
-        name: business.name,
-        address: business.address,
-        phone: business.phone,
-        website: business.website,
-        rating: business.rating,
-        reviews_count: business.reviews_count,
-        category: business.category,
-        latitude: business.latitude,
-        longitude: business.longitude,
-        place_id: business.place_id,
-        scraped_at: new Date().toISOString(),
-        status: "completed",
-      });
-    }
+    addLead({
+      id: crypto.randomUUID(),
+      name: business.name, address: business.address, phone: business.phone,
+      website: business.website, rating: business.rating, reviews_count: business.reviews_count,
+      category: business.category, latitude: business.latitude, longitude: business.longitude,
+      place_id: business.place_id,
+      scraped_at: new Date().toISOString(), status: "completed",
+    });
 
     // Calculate GMN score & threshold
     const gScore = calculateGMNScore(business.rating, business.reviews_count);
@@ -209,8 +203,7 @@ export default function IntelligencePage() {
 
   const handleWebsiteAnalysis = async (query: string) => {
     setCurrentStatus("scraping");
-    const { data, error } = await supabase.functions.invoke("firecrawl-scrape", { body: { url: query } });
-    if (error) throw error;
+    const data = await scrapeSite(query);
     if (!data?.success) throw new Error(data?.error || "Falha no scraping");
 
     const scrapData: Omit<WebScrap, "id"> = {
