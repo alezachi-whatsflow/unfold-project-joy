@@ -175,7 +175,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, onEdit }: { product: Product; onEdit: (p: Product) => void }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const metrics = calculateProductMetrics(product);
   const health = HEALTH_CONFIG[metrics.health];
@@ -244,7 +244,7 @@ function ProductCard({ product }: { product: Product }) {
             <ProductDetailDialog product={product} />
           </Dialog>
           <PermissionGate module="produtos" action="edit">
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => onEdit(product)}>
               <Pencil className="h-3 w-3" /> Editar
             </Button>
           </PermissionGate>
@@ -539,6 +539,162 @@ function NewProductModal() {
   );
 }
 
+function EditProductModal({ product, onClose, onSave }: { product: Product; onClose: () => void; onSave: (updates: Partial<Product>) => void }) {
+  const [form, setForm] = useState({
+    name: product.name,
+    category: product.category as string,
+    type: product.type,
+    status: product.status,
+    price: product.price,
+    billingCycle: product.billingCycle,
+    description: product.description || "",
+    cogs: product.cogs,
+    laborCost: product.laborCost,
+    supportCost: product.supportCost,
+    salesCommission: product.salesCommission,
+    monthlyHours: product.monthlyHours || 0,
+    weeklyHours: product.weeklyHours || 0,
+    deliveryTime: product.deliveryTime || "",
+    devicesWeb: product.includes?.devicesWeb || 0,
+    devicesMeta: product.includes?.devicesMeta || 0,
+    attendants: product.includes?.attendants || 0,
+    aiAgents: product.includes?.aiAgents || 0,
+    activeCustomers: product.activeCustomers,
+    mrr: product.mrr,
+    totalRevenue: product.totalRevenue,
+  });
+
+  const totalCosts = form.cogs + form.laborCost + form.supportCost + form.price * (form.salesCommission / 100);
+  const margin = form.price - totalCosts;
+  const marginPercent = form.price > 0 ? (margin / form.price) * 100 : 0;
+
+  const setField = (field: string, value: string | number) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      name: form.name,
+      category: form.category as ProductCategory,
+      type: form.type as "recurring" | "one_time",
+      status: form.status as "active" | "inactive" | "planning",
+      price: form.price,
+      billingCycle: form.billingCycle as any,
+      description: form.description,
+      cogs: form.cogs,
+      laborCost: form.laborCost,
+      supportCost: form.supportCost,
+      salesCommission: form.salesCommission,
+      activeCustomers: form.activeCustomers,
+      mrr: form.mrr,
+      totalRevenue: form.totalRevenue,
+      ...(form.category === "plan_base" && {
+        includes: { devicesWeb: form.devicesWeb, devicesMeta: form.devicesMeta, attendants: form.attendants, aiAgents: form.aiAgents },
+      }),
+      ...(form.category === "service_support" && { monthlyHours: form.monthlyHours, weeklyHours: form.weeklyHours }),
+      ...(form.type === "one_time" && { deliveryTime: form.deliveryTime }),
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display">Editar: {product.name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <section>
+            <SectionLabel>Informacoes Basicas</SectionLabel>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2"><Label>Nome *</Label><Input value={form.name} onChange={(e) => setField("name", e.target.value)} required /></div>
+              <div>
+                <Label>Categoria</Label>
+                <Select value={form.category} onValueChange={(v) => setField("category", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="plan_base">Plano Base</SelectItem>
+                    <SelectItem value="addon_technology">Add-on Tecnologia</SelectItem>
+                    <SelectItem value="service_support">Facilite Whatsflow</SelectItem>
+                    <SelectItem value="service_onetime">Servico Unico</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setField("status", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
+                    <SelectItem value="planning">Em Planejamento</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:col-span-2"><Label>Descricao</Label><Textarea value={form.description} onChange={(e) => setField("description", e.target.value)} rows={2} /></div>
+            </div>
+          </section>
+          <section>
+            <SectionLabel>Precificacao</SectionLabel>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label>Preco (R$)</Label><Input type="number" min={0} step={0.01} value={form.price || ""} onChange={(e) => setField("price", Number(e.target.value))} /></div>
+              <div>
+                <Label>Ciclo</Label>
+                <Select value={form.billingCycle} onValueChange={(v) => setField("billingCycle", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                    <SelectItem value="quarterly">Trimestral</SelectItem>
+                    <SelectItem value="annual">Anual</SelectItem>
+                    <SelectItem value="one_time">Unico</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+          {form.category === "plan_base" && (
+            <section>
+              <SectionLabel>Incluso</SectionLabel>
+              <div className="grid gap-4 sm:grid-cols-4">
+                <div><Label>Disp. Web</Label><Input type="number" min={0} value={form.devicesWeb || ""} onChange={(e) => setField("devicesWeb", Number(e.target.value))} /></div>
+                <div><Label>Disp. Meta</Label><Input type="number" min={0} value={form.devicesMeta || ""} onChange={(e) => setField("devicesMeta", Number(e.target.value))} /></div>
+                <div><Label>Atendentes</Label><Input type="number" min={0} value={form.attendants || ""} onChange={(e) => setField("attendants", Number(e.target.value))} /></div>
+                <div><Label>Agentes I.A.</Label><Input type="number" min={0} value={form.aiAgents || ""} onChange={(e) => setField("aiAgents", Number(e.target.value))} /></div>
+              </div>
+            </section>
+          )}
+          <section>
+            <SectionLabel>Custos</SectionLabel>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label>COGS (R$)</Label><Input type="number" min={0} step={0.01} value={form.cogs || ""} onChange={(e) => setField("cogs", Number(e.target.value))} /></div>
+              <div><Label>Mao de Obra (R$)</Label><Input type="number" min={0} step={0.01} value={form.laborCost || ""} onChange={(e) => setField("laborCost", Number(e.target.value))} /></div>
+              <div><Label>Suporte (R$)</Label><Input type="number" min={0} step={0.01} value={form.supportCost || ""} onChange={(e) => setField("supportCost", Number(e.target.value))} /></div>
+              <div><Label>Comissao (%)</Label><Input type="number" min={0} max={100} step={0.1} value={form.salesCommission || ""} onChange={(e) => setField("salesCommission", Number(e.target.value))} /></div>
+            </div>
+          </section>
+          <section>
+            <SectionLabel>Dados Comerciais</SectionLabel>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div><Label>Clientes Ativos</Label><Input type="number" min={0} value={form.activeCustomers || ""} onChange={(e) => setField("activeCustomers", Number(e.target.value))} /></div>
+              <div><Label>MRR (R$)</Label><Input type="number" min={0} step={0.01} value={form.mrr || ""} onChange={(e) => setField("mrr", Number(e.target.value))} /></div>
+              <div><Label>Receita Total (R$)</Label><Input type="number" min={0} step={0.01} value={form.totalRevenue || ""} onChange={(e) => setField("totalRevenue", Number(e.target.value))} /></div>
+            </div>
+          </section>
+          <div className="border border-border bg-secondary/50 p-4">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Preview</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-xs text-muted-foreground">Margem</p><p className="font-bold text-lg">{formatCurrency(margin)} ({formatPercent(marginPercent)})</p></div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit">Salvar Alteracoes</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <h3 className="mb-3 flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -549,8 +705,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function ProductsPage() {
-  const { products, portfolioKPIs } = useProducts();
+  const { products, portfolioKPIs, updateProduct } = useProducts();
   const [filterCategory, setFilterCategory] = useState<ProductCategory | "all">("all");
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const filteredProducts = useMemo(() => {
     if (filterCategory === "all") return products;
@@ -640,11 +797,24 @@ export default function ProductsPage() {
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
             {items!.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} onEdit={setEditingProduct} />
             ))}
           </div>
         </section>
       ))}
+
+      {/* Edit Product Modal */}
+      {editingProduct && (
+        <EditProductModal
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSave={(updates) => {
+            updateProduct(editingProduct.id, updates);
+            setEditingProduct(null);
+            toast.success("Produto atualizado!");
+          }}
+        />
+      )}
     </div>
   );
 }
