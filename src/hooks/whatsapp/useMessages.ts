@@ -27,7 +27,7 @@ export function useMessages() {
 
   /* ── resolve media URLs (WhatsApp CDN → uazapi download link) ── */
   const resolveMessageMediaUrl = useCallback(async (row: any): Promise<string | null> => {
-    const mappedType = mapMessageType(row?.type);
+    const mappedType = mapMessageType(row?.type, row?.media_url, row?.caption);
     const currentUrl = row?.media_url || null;
 
     if (!isMediaType(mappedType)) return currentUrl;
@@ -94,7 +94,7 @@ export function useMessages() {
           hour: "2-digit", minute: "2-digit",
         }),
         direction: row.direction === "outgoing" ? "outgoing" : "incoming",
-        type: mapMessageType(row.type),
+        type: mapMessageType(row.type, row.media_url, row.caption),
         status: statusNumToLabel(row.status ?? 0),
         senderName,
         mediaUrl: mediaUrlOverride ?? row.media_url ?? null,

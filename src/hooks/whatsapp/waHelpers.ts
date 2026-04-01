@@ -39,13 +39,20 @@ export function statusNumToLabel(n: number): Message["status"] {
   return "pending";
 }
 
-export function mapMessageType(t: string): Message["type"] {
+export function mapMessageType(t: string, mediaUrl?: string | null, caption?: string | null): Message["type"] {
   const lower = (t || "").toLowerCase();
   if (lower.includes("image")) return "image";
   if (lower.includes("video") || lower === "ptv") return "video";
   if (lower.includes("audio") || lower === "ptt") return "audio";
   if (lower.includes("document")) return "document";
-  if (lower === "media") return "image";
+  // Generic "media" — detect by file extension
+  if (lower === "media") {
+    const url = (mediaUrl || caption || "").toLowerCase();
+    if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|csv|txt)(\?|$)/i.test(url)) return "document";
+    if (/\.(mp4|mov|avi|webm)(\?|$)/i.test(url)) return "video";
+    if (/\.(mp3|ogg|opus|m4a|wav)(\?|$)/i.test(url)) return "audio";
+    return "image";
+  }
   return "text";
 }
 
