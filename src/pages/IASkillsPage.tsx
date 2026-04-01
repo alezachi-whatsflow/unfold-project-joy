@@ -1,124 +1,31 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel,
-  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Eye, Users, Zap, Bot, Settings, Loader2, Brain, Receipt } from "lucide-react";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { Eye, Users, Bot, Brain, Receipt, Loader2, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useTenantId } from "@/hooks/useTenantId";
 
-interface SkillDef {
-  key: string;
-  label: string;
-  tagline: string;
-  description: string;
-  price: number;
-  stage: string;
-  icon: React.ReactNode;
-  color: string;
-  features: string[];
-  limit: string;
-}
-
-const SKILLS: SkillDef[] = [
-  {
-    key: "auditor",
-    label: "Auditor de Qualidade",
-    tagline: "Enxerga o que acontece na sua operação",
-    description: "Avalia cada atendimento automaticamente, identifica erros, oportunidades perdidas e recomenda melhorias.",
-    price: 99,
-    stage: "Estágio 1 — Visibilidade e diagnóstico",
-    icon: <Eye className="h-6 w-6" />,
-    color: "text-teal-400",
-    features: [
-      "Score de qualidade por conversa (0-10)",
-      "Identificação de erros por categoria",
-      "Ranking semanal de atendentes",
-      "Recomendação de treinamento",
-      "Relatório diário via WhatsApp",
-    ],
-    limit: "Não responde ao cliente. Não substitui atendente.",
-  },
-  {
-    key: "copilot",
-    label: "Copiloto do Consultor",
-    tagline: "Ajuda seu time a performar melhor em tempo real",
-    description: "Sugere respostas, próximos passos e contorno de objeções para o atendente em tempo real.",
-    price: 149,
-    stage: "Estágio 2 — Performance do time",
-    icon: <Users className="h-6 w-6" />,
-    color: "text-purple-400",
-    features: [
-      "Sugestões de resposta em tempo real",
-      "Consulta à base de conhecimento",
-      "Contorno de objeções com modelos prontos",
-      "Classificação: intenção, momento do funil, risco",
-      "Resumo automático + sugestão de anotação no CRM",
-    ],
-    limit: "Não automatiza. Visível apenas para o atendente.",
-  },
-  {
-    key: "closer",
-    label: "Closer Autônomo",
-    tagline: "Executa automaticamente quando viável",
-    description: "Automatiza atendimento, qualificação e condução comercial com autonomia controlada.",
-    price: 199,
-    stage: "Estágio 3 — Automação e escala",
-    icon: <Bot className="h-6 w-6" />,
-    color: "text-amber-400",
-    features: [
-      "Atendimento 24/7 com primeiro contato automático",
-      "Qualificação e scoring automático de leads",
-      "Condução do lead até agendamento ou proposta",
-      "Escalonamento inteligente para humano",
-      "Aprendizado contínuo por pontos de abandono",
-    ],
-    limit: "Age diretamente no WhatsApp. Requer configuração cuidadosa.",
-  },
-  {
-    key: "expense_extractor",
-    label: "Extrator de Despesas",
-    tagline: "Reconhece recibos e lança despesas automaticamente",
-    description: "Recebe foto de recibo via WhatsApp, extrai dados com Vision AI e lança a despesa automaticamente no sistema.",
-    price: 79,
-    stage: "Estágio 4 — Automação financeira",
-    icon: <Receipt className="h-6 w-6" />,
-    color: "text-emerald-500",
-    features: [
-      "OCR via Vision AI (GPT-4o / Claude)",
-      "Extração: fornecedor, valor, data, categoria",
-      "Confirmação automática via WhatsApp",
-      "Anexo salvo no armazenamento (R2)",
-      "Lançamento direto na guia Despesas",
-    ],
-    limit: "Requer conexão WhatsApp ativa e bucket R2 configurado.",
-  },
-];
+const SKILL_META: Record<string, { label: string; icon: React.ReactNode; color: string; description: string }> = {
+  auditor: { label: "Auditor de Qualidade", icon: <Eye className="h-5 w-5" />, color: "text-teal-400", description: "Avalia atendimentos automaticamente" },
+  copilot: { label: "Copiloto do Consultor", icon: <Users className="h-5 w-5" />, color: "text-purple-400", description: "Sugere respostas em tempo real" },
+  closer: { label: "Closer Autonomo", icon: <Bot className="h-5 w-5" />, color: "text-amber-400", description: "Automatiza atendimento 24/7" },
+  expense_extractor: { label: "Extrator de Despesas", icon: <Receipt className="h-5 w-5" />, color: "text-emerald-500", description: "Reconhece recibos via Vision AI" },
+};
 
 export default function IASkillsPage() {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [confirmDialog, setConfirmDialog] = useState<{ skill: string; action: "activate" | "deactivate" } | null>(null);
-
+  const { slug } = useParams<{ slug: string }>();
   const tenantId = useTenantId();
 
-  // Fetch license
   const { data: license, isLoading } = useQuery({
     queryKey: ["license-ai", tenantId],
     queryFn: async () => {
       if (!tenantId) return null;
       const { data, error } = await supabase
         .from("licenses")
-        .select("id, ai_active_skills, ai_config, plan, monthly_value")
+        .select("id, has_ai_module, ai_active_skills")
         .eq("tenant_id", tenantId)
         .maybeSingle();
       if (error) throw error;
@@ -126,56 +33,6 @@ export default function IASkillsPage() {
     },
     enabled: !!tenantId,
   });
-
-  const toggleMutation = useMutation({
-    mutationFn: async ({ skillKey, active }: { skillKey: string; active: boolean }) => {
-      if (!tenantId) throw new Error("Tenant não identificado");
-      const currentSkills = license?.ai_active_skills ?? activeSkills;
-      const updatedSkills = { ...currentSkills, [skillKey]: active };
-
-      if (license?.id) {
-        const { error } = await supabase
-          .from("licenses")
-          .update({ ai_active_skills: updatedSkills })
-          .eq("id", license.id);
-        if (error) throw error;
-      } else {
-        // Fallback: update by tenant_id if license id not available (RLS)
-        const { error } = await supabase
-          .from("licenses")
-          .update({ ai_active_skills: updatedSkills })
-          .eq("tenant_id", tenantId);
-        if (error) throw error;
-      }
-    },
-    onSuccess: (_, { skillKey, active }) => {
-      queryClient.invalidateQueries({ queryKey: ["license-ai"] });
-      const label = SKILLS.find(s => s.key === skillKey)?.label;
-      toast.success(`${label} ${active ? "ativado" : "desativado"} com sucesso!`);
-    },
-    onError: (err: any) => {
-      toast.error("Erro ao atualizar skill: " + (err.message || ""));
-    },
-  });
-
-  const handleToggle = (skillKey: string, currentValue: boolean) => {
-    if (currentValue) {
-      // Deactivating requires confirmation
-      setConfirmDialog({ skill: skillKey, action: "deactivate" });
-    } else {
-      setConfirmDialog({ skill: skillKey, action: "activate" });
-    }
-  };
-
-  const confirmToggle = () => {
-    if (!confirmDialog) return;
-    const active = confirmDialog.action === "activate";
-    toggleMutation.mutate({ skillKey: confirmDialog.skill, active });
-    setConfirmDialog(null);
-  };
-
-  const activeSkills = license?.ai_active_skills ?? { auditor: false, copilot: false, closer: false, expense_extractor: false };
-  const totalAddOn = SKILLS.reduce((sum, s) => sum + (activeSkills[s.key] ? s.price : 0), 0);
 
   if (isLoading) {
     return (
@@ -185,135 +42,112 @@ export default function IASkillsPage() {
     );
   }
 
+  const hasAiModule = !!license?.has_ai_module;
+  const activeSkills: Record<string, boolean> = license?.ai_active_skills ?? {};
+
+  // ── Empty State: module not active ──
+  if (!hasAiModule) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Card className="max-w-md w-full text-center border-dashed">
+          <CardContent className="py-12 space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <Lock className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Modulo de I.A. nao habilitado</h2>
+            <p className="text-sm text-muted-foreground">
+              Ative o Modulo de Inteligencia Artificial na Central de Assinatura para desbloquear
+              Auditor, Copiloto, Closer e Extrator de Despesas.
+            </p>
+            <Button
+              onClick={() => navigate(`/app/${slug}/assinatura`)}
+              className="gap-2"
+            >
+              Gerenciar Add-ons <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── Active State: config-only view ──
+  const activeCount = Object.values(activeSkills).filter(Boolean).length;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Brain className="h-7 w-7 text-primary" /> Módulo de IA
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Ative e configure as skills de inteligência artificial para seu atendimento
-          </p>
-        </div>
-        {totalAddOn > 0 && (
-          <Badge variant="outline" className="text-lg px-4 py-2 border-primary text-primary">
-            + R$ {totalAddOn}/mês
-          </Badge>
-        )}
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <Brain className="h-7 w-7 text-primary" /> Modulo de IA
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {activeCount} skill{activeCount !== 1 ? "s" : ""} ativa{activeCount !== 1 ? "s" : ""}
+          {" — "}
+          <button
+            onClick={() => navigate(`/app/${slug}/assinatura`)}
+            className="text-primary hover:underline"
+          >
+            Gerenciar add-ons
+          </button>
+        </p>
       </div>
 
-      {/* Maturity Stages Banner */}
-      <Card className="border-dashed">
-        <CardContent className="py-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-            <div className="space-y-1">
-              <Zap className="h-5 w-5 mx-auto text-teal-400" />
-              <p className="text-xs font-medium text-foreground">Estágio 1</p>
-              <p className="text-[10px] text-muted-foreground">Sem visibilidade → Auditor</p>
-            </div>
-            <div className="space-y-1">
-              <Zap className="h-5 w-5 mx-auto text-purple-400" />
-              <p className="text-xs font-medium text-foreground">Estágio 2</p>
-              <p className="text-[10px] text-muted-foreground">Time inconsistente → Copiloto</p>
-            </div>
-            <div className="space-y-1">
-              <Zap className="h-5 w-5 mx-auto text-amber-400" />
-              <p className="text-xs font-medium text-foreground">Estágio 3</p>
-              <p className="text-[10px] text-muted-foreground">Alto volume → Closer</p>
-            </div>
-            <div className="space-y-1">
-              <Zap className="h-5 w-5 mx-auto text-emerald-500" />
-              <p className="text-xs font-medium text-foreground">Estágio 4</p>
-              <p className="text-[10px] text-muted-foreground">Recibos manuais → Extrator</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Skill Cards */}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {SKILLS.map((skill) => {
-          const isActive = !!activeSkills[skill.key];
+      {/* Active Skills Overview */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {Object.entries(SKILL_META).map(([key, meta]) => {
+          const isActive = !!activeSkills[key];
           return (
             <Card
-              key={skill.key}
-              className={`relative transition-all duration-300 ${
-                isActive
-                  ? "border-primary/50 shadow-primary/10"
-                  : "border-border hover:border-muted-foreground/30"
-              }`}
+              key={key}
+              className={`transition-all ${isActive ? "border-primary/40" : "border-border opacity-50"}`}
             >
-              <CardHeader className="pb-3">
+              <CardContent className="pt-5 pb-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className={`${skill.color}`}>{skill.icon}</div>
-                  <Switch
-                    checked={isActive}
-                    onCheckedChange={() => handleToggle(skill.key, isActive)}
-                    disabled={toggleMutation.isPending}
-                  />
+                  <div className={`${meta.color}`}>{meta.icon}</div>
+                  <Badge variant={isActive ? "default" : "secondary"} className="text-[10px]">
+                    {isActive ? "Ativo" : "Inativo"}
+                  </Badge>
                 </div>
-                <CardTitle className="text-lg">{skill.label}</CardTitle>
-                <CardDescription className="italic">{skill.tagline}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{skill.description}</p>
-
-                <Badge variant="secondary" className="text-xs">{skill.stage}</Badge>
-
-                <Separator />
-
-                <ul className="space-y-1.5">
-                  {skill.features.map((f, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <span className="text-primary mt-0.5">•</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-foreground">+ R$ {skill.price}/mês</span>
-                  {isActive && skill.key === "auditor" && (
-                    <Button size="sm" variant="outline" onClick={() => navigate("/ia/auditor")}>
-                      <Eye className="mr-1 h-3.5 w-3.5" /> Dashboard
-                    </Button>
-                  )}
+                <div>
+                  <p className="font-semibold text-sm text-foreground">{meta.label}</p>
+                  <p className="text-xs text-muted-foreground">{meta.description}</p>
                 </div>
-
-                <p className="text-[10px] text-muted-foreground/80 italic border-t border-dashed border-border pt-2">
-                  ⚠ {skill.limit}
-                </p>
+                {isActive && key === "auditor" && (
+                  <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => navigate(`/app/${slug}/intelligence`)}>
+                    <Eye className="mr-1 h-3.5 w-3.5" /> Abrir Dashboard
+                  </Button>
+                )}
+                {!isActive && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full text-xs text-muted-foreground"
+                    onClick={() => navigate(`/app/${slug}/assinatura`)}
+                  >
+                    Ativar na Central de Assinatura
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Confirm Dialog */}
-      <AlertDialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmDialog?.action === "activate" ? "Ativar" : "Desativar"}{" "}
-              {SKILLS.find(s => s.key === confirmDialog?.skill)?.label}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmDialog?.action === "activate"
-                ? `Isso adicionará R$ ${SKILLS.find(s => s.key === confirmDialog?.skill)?.price}/mês ao seu plano.`
-                : "A skill será desativada e não processará mais dados automaticamente."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmToggle}>
-              {confirmDialog?.action === "activate" ? "Ativar" : "Desativar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Configuration hint */}
+      {activeCount > 0 && (
+        <Card className="border-dashed">
+          <CardContent className="py-4 flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Configuracao das skills</p>
+              <p className="text-xs text-muted-foreground">
+                As skills ativas processam dados automaticamente. Use a aba "Auditor de Qualidade" para ver avaliacoes,
+                ou configure o comportamento dos agentes na secao de Integracao.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

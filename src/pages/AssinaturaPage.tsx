@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { MessageSquare, AlertTriangle, ShieldCheck, CheckCircle2, Plus, Bot, Clock, Wifi, Smartphone, Loader2, Copy, Check, DollarSign, CalendarClock, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { AISkillsAddons } from "@/components/assinatura/AISkillsAddons";
 
 const PLAN_LABELS: Record<string, string> = {
   solo_pro: "Solo Pro",
@@ -256,6 +257,9 @@ export default function AssinaturaPage() {
           </Button>
         </div>
       </div>
+
+      {/* AI Skills Add-ons */}
+      <AISkillsAddons hasAiModule={!!limits.hasAiModule} />
 
       {/* Upsell Section — always visible */}
       <UpsellSection limits={limits} userRole={user?.user_metadata?.role || "admin"} />
