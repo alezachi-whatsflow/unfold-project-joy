@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { loadNotas, saveNotas, getNextNFNumber } from "@/lib/notasFiscaisData";
 import { NotaFiscal, NFStatus, NFTipo } from "@/types/notasFiscais";
@@ -12,7 +12,13 @@ import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 export default function NotasFiscaisTab() {
-  const [notas, setNotas] = useState<NotaFiscal[]>(loadNotas);
+  const [notas, setNotas] = useState<NotaFiscal[]>([]);
+
+  // loadNotas is async now (migrated to Supabase)
+  useEffect(() => {
+    const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || undefined;
+    loadNotas(tenantId).then(setNotas).catch(() => setNotas([]));
+  }, []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<NFStatus | "todas">("todas");
   const [tipoFilter, setTipoFilter] = useState<NFTipo | "todos">("todos");
@@ -25,7 +31,8 @@ export default function NotasFiscaisTab() {
   const [cancelNF, setCancelNF] = useState<NotaFiscal | null>(null);
   const [emitirOpen, setEmitirOpen] = useState(false);
 
-  const persist = (updated: NotaFiscal[]) => { setNotas(updated); saveNotas(updated); };
+  const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || undefined;
+  const persist = (updated: NotaFiscal[]) => { setNotas(updated); saveNotas(updated, tenantId); };
 
   const filtered = useMemo(() => {
     let result = notas;

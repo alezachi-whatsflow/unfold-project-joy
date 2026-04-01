@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Receipt, ShieldCheck, Settings, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
@@ -28,9 +28,15 @@ function loadConfig(): FiscalConfig | null {
 }
 
 export default function VisaoGeralTab() {
-  const notas = useMemo(() => loadNotas(), []);
+  const [notas, setNotas] = useState<NotaFiscal[]>([]);
   const certs = useMemo(() => loadCertificates(), []);
   const config = useMemo(() => loadConfig(), []);
+
+  // loadNotas is async now (migrated to Supabase)
+  useEffect(() => {
+    const tenantId = localStorage.getItem("whatsflow_default_tenant_id") || undefined;
+    loadNotas(tenantId).then(setNotas).catch(() => setNotas([]));
+  }, []);
 
   const now = new Date();
   const currentMonth = now.getMonth();
