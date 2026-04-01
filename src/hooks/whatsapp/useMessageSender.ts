@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Conversation } from "@/data/mockConversations";
 import type { AttachmentPayload } from "@/components/whatsapp/chat/ChatInput";
 import { isGroupJid, jidToPhone } from "./waHelpers";
+import { callUazapi } from "@/services/uazapiService";
+import { getTenantId } from "@/lib/tenantResolver";
 
 interface UseMessageSenderOptions {
   selectedJidRef: React.MutableRefObject<string | null>;
@@ -79,11 +81,11 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       await supabase.from("whatsapp_messages").insert({
         instance_name: conv.instanceName, remote_jid: selectedJid,
         message_id: `ml_out_${Date.now()}`, direction: "outgoing", type: "text",
-        body: finalText, status: 4, tenant_id: localStorage.getItem("whatsflow_default_tenant_id"),
+        body: finalText, status: 4, tenant_id: await getTenantId().catch(() => null),
       });
     } else if (conv.instanceName?.startsWith("telegram_")) {
       const chatId = selectedJid.replace("tg_", "").replace("@telegram", "");
-      const tId = localStorage.getItem("whatsflow_default_tenant_id");
+      const tId = await getTenantId().catch(() => null);
       const { data: tgResult, error: tgError } = await supabase.functions.invoke("telegram-send", {
         body: { chat_id: Number(chatId), text: finalText, tenant_id: tId },
       });
@@ -97,14 +99,17 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
         body: finalText, status: 4, tenant_id: tId,
       });
     } else {
-      const { data: result, error } = await supabase.functions.invoke("uazapi-proxy", {
-        body: {
-          instanceName: conv.instanceName, path: "/send/text", method: "POST",
-          body: { number: isGroup ? selectedJid : jidToPhone(selectedJid), text: finalText },
-        },
-      });
-      if (error) { console.error("Send error:", error); return; }
-      if (!Boolean((result as any)?.ok ?? true)) { console.error("uazapi returned non-ok:", result); return; }
+      // Direct uazapi call (no Edge Function dependency)
+      try {
+        await callUazapi(conv.instanceName, "/send/text", "POST", {
+          number: isGroup ? selectedJid : jidToPhone(selectedJid),
+          text: finalText,
+        });
+      } catch (err: any) {
+        console.error("Send error:", err);
+        toast.error(`Erro ao enviar: ${err.message || "Falha no envio"}`);
+        return;
+      }
     }
 
     await fetchConversations();
@@ -160,10 +165,12 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
           break;
       }
 
-      const { error } = await supabase.functions.invoke("uazapi-proxy", {
-        body: { instanceName: conv.instanceName, path, method: "POST", body },
-      });
-      if (error) { console.error("Attachment send error:", error); throw error; }
+      try {
+        await callUazapi(conv.instanceName, path, "POST", body);
+      } catch (err: any) {
+        console.error("Attachment send error:", err);
+        throw err;
+      }
     }
 
     await fetchConversations();
