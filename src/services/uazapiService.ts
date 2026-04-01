@@ -101,14 +101,31 @@ async function saveOutgoingMessage(
 
   if (!remoteJid) return;
 
-  const type = path.includes("/media") ? "media"
-    : path.includes("/location") ? "location"
-    : path.includes("/contact") ? "contact"
-    : "text";
+  // Detect actual type from file URL/name instead of generic "media"
+  let type = "text";
+  if (path.includes("/media")) {
+    const fileUrl = (requestBody?.file || requestBody?.url || "").toLowerCase();
+    const mediaType = (requestBody?.type || "").toLowerCase();
+    if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|csv|txt)(\?|$)/.test(fileUrl) || mediaType === "document") {
+      type = "document";
+    } else if (/\.(mp4|mov|avi|webm)(\?|$)/.test(fileUrl) || mediaType === "video") {
+      type = "video";
+    } else if (/\.(mp3|ogg|opus|m4a|wav)(\?|$)/.test(fileUrl) || mediaType === "audio") {
+      type = "audio";
+    } else {
+      type = "image";
+    }
+  } else if (path.includes("/location")) {
+    type = "location";
+  } else if (path.includes("/contact")) {
+    type = "contact";
+  }
 
   const { getTenantId } = await import("@/lib/tenantResolver");
   let tenantId: string | undefined;
   try { tenantId = await getTenantId(); } catch { /* ignore */ }
+
+  const fileUrl = requestBody?.file || requestBody?.url || null;
 
   await (supabase as any).from("whatsapp_messages").insert({
     instance_name: instanceName,
@@ -117,6 +134,8 @@ async function saveOutgoingMessage(
     direction: "outgoing",
     type,
     body: requestBody?.text || requestBody?.message || null,
+    media_url: fileUrl,
+    caption: requestBody?.text || (type !== "text" ? (fileUrl?.split("/").pop()?.split("?")[0] || null) : null),
     status: 2,
     tenant_id: tenantId || null,
     raw_payload: rd,
