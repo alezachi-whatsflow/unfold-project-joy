@@ -140,6 +140,19 @@ export default function IntelligencePage() {
       content_strategy_notes: igResult.contentStrategyNotes,
       authority_score: igResult.authorityScore,
       analyzed_at: new Date().toISOString(), status: "completed",
+      // Enriched commercial data
+      is_verified: igResult.isVerified,
+      is_business: igResult.isBusiness,
+      business_category: igResult.businessCategory,
+      bio_links: igResult.bioLinks,
+      has_cta_in_bio: igResult.hasCta,
+      recent_posts: igResult.recentPosts,
+      top_hashtags: igResult.topHashtags,
+      content_mix: igResult.contentMix,
+      posting_frequency: igResult.postingFrequency,
+      best_performing_post: igResult.bestPerformingPost,
+      avg_likes: igResult.avgLikes,
+      avg_comments: igResult.avgComments,
     };
     addProfile(profile);
 

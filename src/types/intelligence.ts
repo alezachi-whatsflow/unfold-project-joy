@@ -36,6 +36,31 @@ export interface ProfileAnalysis {
   authority_score: number | null;
   analyzed_at: string;
   status: AnalysisStatus;
+  // Instagram enriched data (commercial insights)
+  is_verified?: boolean;
+  is_business?: boolean;
+  business_category?: string | null;
+  bio_links?: string[];
+  has_cta_in_bio?: boolean;
+  recent_posts?: InstagramPost[];
+  top_hashtags?: string[];
+  content_mix?: { photos: number; videos: number; reels: number; carousels: number };
+  posting_frequency?: string | null; // e.g. "3.2 posts/semana"
+  best_performing_post?: InstagramPost | null;
+  avg_likes?: number | null;
+  avg_comments?: number | null;
+}
+
+export interface InstagramPost {
+  id: string;
+  type: "Image" | "Video" | "Sidecar";
+  caption: string | null;
+  likes: number;
+  comments: number;
+  timestamp: string;
+  url: string;
+  hashtags: string[];
+  engagement_rate?: number;
 }
 
 // ─── Google Maps / Business Lead ───

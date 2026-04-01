@@ -151,22 +151,112 @@ export async function scrapeInstagram(username: string) {
 
   const profile = results[0];
 
-  // Calculate authority score
+  // === Extract enriched data ===
   const followers = profile.followersCount || 0;
-  const engagement = profile.avgEngagement || 0;
+  const following = profile.followsCount || 0;
   const posts = profile.postsCount || 0;
   const isVerified = profile.verified || false;
+  const isBusiness = profile.isBusinessAccount || false;
   const hasBio = !!profile.biography;
+  const bioLinks = (profile.externalUrls || profile.bioLinks || []).map((l: any) => typeof l === "string" ? l : l?.url || l?.link || "").filter(Boolean);
+  const hasCta = bioLinks.length > 0 || /link|whatsapp|wa\.me|bit\.ly|compre|agende|contato/i.test(profile.biography || "");
 
+  // Recent posts analysis
+  const latestPosts = (profile.latestPosts || profile.posts || []).slice(0, 12);
+  const recentPosts = latestPosts.map((p: any) => {
+    const caption = p.caption || p.text || "";
+    const hashtags = caption.match(/#[\w\u00C0-\u024F]+/g) || [];
+    return {
+      id: p.id || p.shortCode || "",
+      type: p.type || (p.videoUrl ? "Video" : p.childPosts ? "Sidecar" : "Image"),
+      caption: caption.slice(0, 300),
+      likes: p.likesCount || p.likes || 0,
+      comments: p.commentsCount || p.comments || 0,
+      timestamp: p.timestamp || p.takenAtTimestamp ? new Date((p.takenAtTimestamp || 0) * 1000).toISOString() : "",
+      url: p.url || `https://instagram.com/p/${p.shortCode || p.id}`,
+      hashtags,
+      engagement_rate: followers > 0 ? (((p.likesCount || 0) + (p.commentsCount || 0)) / followers) * 100 : 0,
+    };
+  });
+
+  // Content mix
+  const contentMix = { photos: 0, videos: 0, reels: 0, carousels: 0 };
+  for (const p of recentPosts) {
+    if (p.type === "Video") contentMix.videos++;
+    else if (p.type === "Sidecar") contentMix.carousels++;
+    else contentMix.photos++;
+  }
+
+  // Top hashtags (frequency)
+  const hashtagCount: Record<string, number> = {};
+  for (const p of recentPosts) {
+    for (const h of p.hashtags) {
+      hashtagCount[h] = (hashtagCount[h] || 0) + 1;
+    }
+  }
+  const topHashtags = Object.entries(hashtagCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([tag]) => tag);
+
+  // Average likes/comments
+  const totalLikes = recentPosts.reduce((s: number, p: any) => s + (p.likes || 0), 0);
+  const totalComments = recentPosts.reduce((s: number, p: any) => s + (p.comments || 0), 0);
+  const avgLikes = recentPosts.length > 0 ? Math.round(totalLikes / recentPosts.length) : 0;
+  const avgComments = recentPosts.length > 0 ? Math.round(totalComments / recentPosts.length) : 0;
+
+  // Engagement rate
+  const avgEngagement = followers > 0 && recentPosts.length > 0
+    ? ((totalLikes + totalComments) / recentPosts.length / followers) * 100
+    : (profile.avgEngagement || 0);
+
+  // Posting frequency
+  let postingFrequency: string | null = null;
+  if (recentPosts.length >= 2) {
+    const timestamps = recentPosts.map((p: any) => new Date(p.timestamp).getTime()).filter((t: number) => t > 0).sort();
+    if (timestamps.length >= 2) {
+      const spanDays = (timestamps[timestamps.length - 1] - timestamps[0]) / (1000 * 60 * 60 * 24);
+      if (spanDays > 0) {
+        const perWeek = (timestamps.length / spanDays) * 7;
+        postingFrequency = `${perWeek.toFixed(1)} posts/semana`;
+      }
+    }
+  }
+
+  // Best performing post
+  const bestPost = recentPosts.length > 0
+    ? recentPosts.reduce((best: any, p: any) => (p.likes + p.comments) > (best.likes + best.comments) ? p : best, recentPosts[0])
+    : null;
+
+  // Authority score (enriched)
   let score = 0;
-  if (followers >= 100000) score += 3;
+  if (followers >= 100000) score += 2.5;
   else if (followers >= 10000) score += 2;
   else if (followers >= 1000) score += 1;
-  if (engagement >= 5) score += 2;
-  else if (engagement >= 2) score += 1;
-  if (posts >= 100) score += 1;
-  if (isVerified) score += 2;
-  if (hasBio) score += 1;
+  else if (followers >= 500) score += 0.5;
+  if (avgEngagement >= 5) score += 2;
+  else if (avgEngagement >= 2) score += 1.5;
+  else if (avgEngagement >= 1) score += 0.5;
+  if (posts >= 200) score += 1;
+  else if (posts >= 50) score += 0.5;
+  if (isVerified) score += 1.5;
+  if (isBusiness) score += 0.5;
+  if (hasBio) score += 0.5;
+  if (hasCta) score += 1;
+  if (contentMix.videos > 0 || contentMix.carousels > 0) score += 0.5;
+
+  // Content strategy analysis
+  const strategies: string[] = [];
+  if (contentMix.videos === 0 && contentMix.carousels === 0) strategies.push("Sem videos ou carrosseis — oportunidade de diversificar formato");
+  if (contentMix.videos > contentMix.photos) strategies.push("Foco em video — bom para alcance organico");
+  if (topHashtags.length === 0) strategies.push("Nao utiliza hashtags — oportunidade de aumentar alcance");
+  if (topHashtags.length > 5) strategies.push(`Usa hashtags ativamente (top: ${topHashtags.slice(0, 3).join(", ")})`);
+  if (!hasCta) strategies.push("Sem CTA na bio — adicionar link de contato/WhatsApp");
+  if (hasCta) strategies.push("Tem CTA/link na bio — perfil orientado a conversao");
+  if (avgEngagement < 1) strategies.push("Engajamento abaixo de 1% — revisar qualidade do conteudo e horarios");
+  if (avgEngagement >= 3) strategies.push("Engajamento forte — audiencia qualificada");
+  if (following > followers * 2) strategies.push("Segue mais do que e seguido — possivel mass-following");
+  const contentStrategyNotes = strategies.join("\n");
 
   return {
     success: true,
@@ -174,13 +264,24 @@ export async function scrapeInstagram(username: string) {
     displayName: profile.fullName || cleanUsername,
     bio: profile.biography || "",
     followers,
-    following: profile.followsCount || 0,
+    following,
     postsCount: posts,
-    avgEngagementRate: engagement,
-    authorityScore: Math.min(score, 10),
-    profileImageUrl: profile.profilePicUrl || null,
+    avgEngagementRate: avgEngagement,
+    authorityScore: Math.min(Math.round(score * 10) / 10, 10),
+    profileImageUrl: profile.profilePicUrl || profile.profilePicUrlHD || null,
     isVerified,
-    contentStrategyNotes: null,
+    isBusiness,
+    businessCategory: profile.businessCategoryName || profile.categoryName || null,
+    bioLinks,
+    hasCta,
+    recentPosts,
+    topHashtags,
+    contentMix,
+    postingFrequency,
+    bestPerformingPost: bestPost,
+    avgLikes,
+    avgComments,
+    contentStrategyNotes,
     rawData: profile,
   };
 }
