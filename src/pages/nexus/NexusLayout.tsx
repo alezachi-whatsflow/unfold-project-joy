@@ -142,6 +142,20 @@ export default function NexusLayout() {
           )}
         </div>
 
+        {/* NEXUS ADMIN badge */}
+        {(!collapsed || isMobile) && (
+          <div
+            className="mx-3 mt-2 mb-1 px-3 py-1.5 rounded-md text-center text-[10px] font-bold tracking-widest uppercase"
+            style={{
+              background: 'var(--nexus-accent-subtle, rgba(16,185,129,0.08))',
+              border: '0.5px solid var(--nexus-accent-border, rgba(16,185,129,0.2))',
+              color: 'var(--nexus-accent-light, #34d399)',
+            }}
+          >
+            NEXUS ADMIN
+          </div>
+        )}
+
         {/* Nav items */}
         <nav className="flex-1 py-2 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => (
@@ -151,10 +165,10 @@ export default function NexusLayout() {
               end={item.end}
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors mx-2 ${
+                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors mx-2 rounded-md ${
                   isActive
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                    ? 'bg-primary/10 text-primary font-medium border-l-[3px] border-primary rounded-l-none pl-[calc(1rem-3px)]'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50 border-l-[3px] border-transparent rounded-l-none pl-[calc(1rem-3px)]'
                 }`
               }
             >
@@ -217,7 +231,7 @@ export default function NexusLayout() {
       {/* Main */}
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
-        <header className="sticky top-0 z-10 glass-header px-4 sm:px-6 py-3 flex items-center justify-between">
+        <header className="sticky top-0 z-10 glass-header px-4 sm:px-6 py-3 flex items-center justify-between" style={{ borderTop: '3px solid var(--nexus-accent, #10b981)' }}>
           <div className="flex items-center gap-3">
             {isMobile && <div className="w-8" />}
             <Shield className="h-4 w-4 text-emerald-400" />

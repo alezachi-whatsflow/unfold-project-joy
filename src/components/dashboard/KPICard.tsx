@@ -25,10 +25,10 @@ const accentBorders = {
 };
 
 const iconBg = {
-  primary: "bg-primary/15 text-primary",
-  accent: "bg-accent/15 text-accent",
-  warning: "bg-warning/15 text-warning",
-  destructive: "bg-destructive/15 text-destructive",
+  primary: "bg-primary/[0.22] text-primary border border-primary/20",
+  accent: "bg-accent/[0.22] text-accent border border-accent/20",
+  warning: "bg-warning/[0.22] text-warning border border-warning/20",
+  destructive: "bg-destructive/[0.22] text-destructive border border-destructive/20",
 };
 
 export function KPICard({
@@ -47,8 +47,9 @@ export function KPICard({
   return (
     <div
       className={cn(
-        "group relative border bg-card p-5 transition-all duration-300",
-        "hover:-translate-y-1 hover:hover:shadow-primary/5",
+        "group relative overflow-hidden rounded-xl border bg-card p-5",
+        "transition-all duration-300 ease-out",
+        "hover:-translate-y-0.5 hover:border-primary/20",
         "opacity-0 animate-fade-in-up",
         accentBorders[accentColor]
       )}

@@ -20,9 +20,9 @@ import { sidebarIconMap } from "@/components/ui/SidebarIcons";
 import whatsflowLogo from "@/assets/whatsflow-logo.png";
 
 // ──────────────────────── shared styles ────────────────────────
-const menuItemBase = "flex items-center no-underline transition-all duration-150 ease-in-out";
-const menuItemDefault = "text-muted-foreground hover:bg-black/[0.04] hover:text-foreground";
-const menuItemActive = "bg-black/[0.06] text-primary font-semibold [&>svg]:opacity-100";
+const menuItemBase = "flex items-center no-underline transition-all duration-[var(--transition-base)]";
+const menuItemDefault = "text-muted-foreground hover:bg-muted/60 hover:text-foreground border-l-[3px] border-transparent rounded-l-none";
+const menuItemActive = "bg-primary/10 text-primary font-semibold border-l-[3px] border-primary rounded-l-none [&>svg]:opacity-100";
 
 // ──────────────────────── badge queries ────────────────────────
 function useBadges() {
@@ -229,8 +229,8 @@ function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: 
         to={resolvedRoute}
         end={item.route === '/'}
         title={isCollapsed ? item.label : undefined}
-        style={{ padding: isCollapsed ? "8px 0" : padding, fontSize: isCollapsed ? 13 : fontSize }}
-        className={() => cn(menuItemBase, isCollapsed ? "justify-center" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
+        style={{ padding: isCollapsed ? "8px 0" : padding, fontSize: isCollapsed ? 13 : fontSize, minHeight: 'var(--sidebar-item-height, 44px)' }}
+        className={() => cn(menuItemBase, isCollapsed ? "justify-center pl-0 border-l-0" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
       >
         <span className="relative shrink-0 flex items-center justify-center" style={{ minWidth: '1.8rem' }}>
           {CustomIcon ? <CustomIcon size={15} /> : <LucideIcon className="h-[15px] w-[15px]" />}
@@ -286,7 +286,7 @@ function SidebarGroupedCards({ collapsed, isMobile }: { collapsed: boolean; isMo
           {!isCollapsed ? (
             <div className="mt-3 mb-1 mx-1">
               {prefs.showLabels && (
-                <span className="block px-3 pb-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground/60">
+                <span className="block px-3 pt-5 pb-1.5 text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/70">
                   {group.label}
                 </span>
               )}
@@ -598,6 +598,14 @@ export function AppSidebar() {
         />
       )}
       {renderLayout()}
+      {!isCollapsed && (
+        <div className="px-3 py-2 border-t border-border/30 mt-auto">
+          <kbd className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/50 font-mono">
+            {navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+          </kbd>
+          <span className="text-[10px] text-muted-foreground ml-1.5">Busca rapida</span>
+        </div>
+      )}
       <UserFooter collapsed={isCollapsed} isMobile={isMobile} />
     </aside>
   );
