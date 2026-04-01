@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { MessageSquare, AlertTriangle, ShieldCheck, CheckCircle2, Plus, Bot, Clock, Wifi, Smartphone, Loader2, Copy, Check, DollarSign, CalendarClock, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AISkillsAddons } from "@/components/assinatura/AISkillsAddons";
+import { useProducts } from "@/contexts/ProductContext";
 
 const PLAN_LABELS: Record<string, string> = {
   solo_pro: "Solo Pro",
@@ -311,6 +312,7 @@ function LimitBar({ label, used, total, color, warn, suffix }: { label: string; 
 
 // ─── UPSELL SECTION ───────────────────────────────────────────────────────────
 function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) {
+  const { products } = useProducts();
   const [upsellItem, setUpsellItem] = useState<{ type: string; label: string; value: number; qty?: number } | null>(null);
   const [qty, setQty] = useState(1);
   const isAdmin = userRole === "admin" || userRole === "superadmin";
@@ -321,16 +323,25 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
     setUpsellItem({ type, label, value: unitPrice, qty: defaultQty });
   };
 
+  // Get prices from products table (DB) with hardcoded fallback
+  const findProductPrice = (nameMatch: RegExp, fallback: number) => {
+    const p = products.find((prod) => nameMatch.test(prod.name) && prod.status === "active");
+    return p ? p.price : fallback;
+  };
+
   const totalWeb = limits.maxDevicesWeb;
-  const unitPriceWeb = totalWeb <= 5 ? 150 : totalWeb <= 20 ? 125 : 100;
+  const unitPriceWebFromDb = findProductPrice(/disp.*web|web.*whatsapp/i, 0);
+  const unitPriceWeb = unitPriceWebFromDb > 0 ? unitPriceWebFromDb : (totalWeb <= 5 ? 150 : totalWeb <= 20 ? 125 : 100);
   const tierLabelWeb = `R$ ${unitPriceWeb}/un`;
 
   const totalMeta = limits.maxDevicesMeta;
-  const unitPriceMeta = totalMeta <= 5 ? 100 : totalMeta <= 20 ? 80 : 60;
+  const unitPriceMetaFromDb = findProductPrice(/disp.*meta|meta.*business/i, 0);
+  const unitPriceMeta = unitPriceMetaFromDb > 0 ? unitPriceMetaFromDb : (totalMeta <= 5 ? 100 : totalMeta <= 20 ? 80 : 60);
   const tierLabelMeta = `R$ ${unitPriceMeta}/un`;
 
   const totalAtt = limits.maxAttendants;
-  const unitPriceAtt = totalAtt <= 5 ? 80 : totalAtt <= 10 ? 75 : totalAtt <= 20 ? 70 : 60;
+  const unitPriceAttFromDb = findProductPrice(/atendente/i, 0);
+  const unitPriceAtt = unitPriceAttFromDb > 0 ? unitPriceAttFromDb : (totalAtt <= 5 ? 80 : totalAtt <= 10 ? 75 : totalAtt <= 20 ? 70 : 60);
   const tierLabelAtt = `R$ ${unitPriceAtt}/un`;
 
   const btnClass = (active = true) =>
@@ -386,48 +397,61 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
           <button onClick={() => handle("extra_att", "+1 Atendente", unitPriceAtt)} className={btnClass(isAdmin)} style={{ backgroundColor: "var(--wl-primary)" }}>Contratar</button>
         </Card>
 
-        {!limits.hasAiModule && (
-          <Card className="p-5 border-[var(--wl-primary)]/30">
-            <div className="flex items-center gap-2 mb-2"><Bot className="h-5 w-5" style={{ color: "var(--wl-primary)" }} /><h3 className="font-bold text-sm">Módulo I.A.</h3></div>
-            <p className="text-xs text-muted-foreground mb-3">Automatize atendimentos com até 5 agentes inteligentes.</p>
-            <p className="text-2xl font-black" style={{ color: "var(--wl-primary)" }}>R$ 350<span className="text-base font-normal text-muted-foreground">/mês</span></p>
-            <button onClick={() => handle("ia_module", "Módulo I.A.", 350)} className={btnClass(isAdmin)} style={{ backgroundColor: "var(--wl-primary)" }}>Ativar Módulo I.A.</button>
-          </Card>
-        )}
+        {!limits.hasAiModule && (() => {
+          const iaPrice = findProductPrice(/agentes.*i\.?a|modulo.*i\.?a/i, 350);
+          return (
+            <Card className="p-5 border-[var(--wl-primary)]/30">
+              <div className="flex items-center gap-2 mb-2"><Bot className="h-5 w-5" style={{ color: "var(--wl-primary)" }} /><h3 className="font-bold text-sm">Modulo I.A.</h3></div>
+              <p className="text-xs text-muted-foreground mb-3">Automatize atendimentos com ate 5 agentes inteligentes.</p>
+              <p className="text-2xl font-black" style={{ color: "var(--wl-primary)" }}>R$ {iaPrice.toLocaleString("pt-BR")}<span className="text-base font-normal text-muted-foreground">/mes</span></p>
+              <button onClick={() => handle("ia_module", "Modulo I.A.", iaPrice)} className={btnClass(isAdmin)} style={{ backgroundColor: "var(--wl-primary)" }}>Ativar Modulo I.A.</button>
+            </Card>
+          );
+        })()}
 
-        {limits.facilitePlan !== "avancado" && (
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-2"><Clock className="h-5 w-5 text-purple-500" /><h3 className="font-bold text-sm">Facilite Whatsflow</h3></div>
-            {(!limits.facilitePlan || limits.facilitePlan === "none") && <p className="text-xs text-muted-foreground mb-3">Suporte especializado com horas mensais dedicadas.</p>}
-            {limits.facilitePlan === "basico" && <p className="text-xs text-amber-500 mb-3">Você tem o Facilite Básico. Faça upgrade.</p>}
-            {limits.facilitePlan === "intermediario" && <p className="text-xs text-amber-500 mb-3">Upgrade disponível para Avançado (R$ 1.500/mês).</p>}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {(!limits.facilitePlan || limits.facilitePlan === "none") && (
-                <>
-                  <button onClick={() => handle("facilite_basico", "Facilite Básico", 250)} className="border p-2 text-xs font-bold hover:border-purple-400 transition">Básico<br />R$ 250</button>
-                  <button onClick={() => handle("facilite_inter", "Facilite Intermediário", 700)} className="border p-2 text-xs font-bold hover:border-purple-400 transition">Interm.<br />R$ 700</button>
-                  <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="border col-span-2 p-2 text-xs font-bold hover:border-purple-400 transition">Avançado — R$ 1.500</button>
-                </>
-              )}
-              {limits.facilitePlan === "basico" && (
-                <>
-                  <button onClick={() => handle("facilite_inter", "Facilite Intermediário", 700)} className="border p-2 text-xs font-bold hover:border-purple-400">Interm. R$ 700</button>
-                  <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="border p-2 text-xs font-bold hover:border-purple-400">Avançado R$ 1.500</button>
-                </>
-              )}
-              {limits.facilitePlan === "intermediario" && (
-                <button onClick={() => handle("facilite_avancado", "Facilite Avançado", 1500)} className="border p-2 text-xs font-bold col-span-2 hover:border-purple-400">Upgrade → Avançado R$ 1.500</button>
-              )}
-            </div>
-          </Card>
-        )}
+        {limits.facilitePlan !== "avancado" && (() => {
+          const pBasico = findProductPrice(/facilite.*basico/i, 250);
+          const pInter = findProductPrice(/facilite.*intermedi/i, 700);
+          const pAvancado = findProductPrice(/facilite.*avan/i, 1500);
+          return (
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-2"><Clock className="h-5 w-5 text-purple-500" /><h3 className="font-bold text-sm">Facilite Whatsflow</h3></div>
+              {(!limits.facilitePlan || limits.facilitePlan === "none") && <p className="text-xs text-muted-foreground mb-3">Suporte especializado com horas mensais dedicadas.</p>}
+              {limits.facilitePlan === "basico" && <p className="text-xs text-amber-500 mb-3">Voce tem o Facilite Basico. Faca upgrade.</p>}
+              {limits.facilitePlan === "intermediario" && <p className="text-xs text-amber-500 mb-3">Upgrade disponivel para Avancado (R$ {pAvancado.toLocaleString("pt-BR")}/mes).</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {(!limits.facilitePlan || limits.facilitePlan === "none") && (
+                  <>
+                    <button onClick={() => handle("facilite_basico", "Facilite Basico", pBasico)} className="border p-2 text-xs font-bold hover:border-purple-400 transition">Basico<br />R$ {pBasico.toLocaleString("pt-BR")}</button>
+                    <button onClick={() => handle("facilite_inter", "Facilite Intermediario", pInter)} className="border p-2 text-xs font-bold hover:border-purple-400 transition">Interm.<br />R$ {pInter.toLocaleString("pt-BR")}</button>
+                    <button onClick={() => handle("facilite_avancado", "Facilite Avancado", pAvancado)} className="border col-span-2 p-2 text-xs font-bold hover:border-purple-400 transition">Avancado — R$ {pAvancado.toLocaleString("pt-BR")}</button>
+                  </>
+                )}
+                {limits.facilitePlan === "basico" && (
+                  <>
+                    <button onClick={() => handle("facilite_inter", "Facilite Intermediario", pInter)} className="border p-2 text-xs font-bold hover:border-purple-400">Interm. R$ {pInter.toLocaleString("pt-BR")}</button>
+                    <button onClick={() => handle("facilite_avancado", "Facilite Avancado", pAvancado)} className="border p-2 text-xs font-bold hover:border-purple-400">Avancado R$ {pAvancado.toLocaleString("pt-BR")}</button>
+                  </>
+                )}
+                {limits.facilitePlan === "intermediario" && (
+                  <button onClick={() => handle("facilite_avancado", "Facilite Avancado", pAvancado)} className="border p-2 text-xs font-bold col-span-2 hover:border-purple-400">Upgrade → Avancado R$ {pAvancado.toLocaleString("pt-BR")}</button>
+                )}
+              </div>
+            </Card>
+          );
+        })()}
 
-        <Card className="p-5">
-          <div className="flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-emerald-500" /><h3 className="font-bold text-sm">Implantação Starter</h3></div>
-          <p className="text-xs text-muted-foreground mb-3">Configuração profissional em até 15 dias úteis.</p>
-          <p className="text-2xl font-black text-emerald-500">R$ 2.000<span className="text-xs font-normal text-muted-foreground"> (único)</span></p>
-          <button onClick={() => handle("implantacao", "Implantação Starter", 2000)} className={btnClass(isAdmin)} style={{ backgroundColor: "#10b981" }}>Contratar Implantação</button>
-        </Card>
+        {(() => {
+          const implPrice = findProductPrice(/implanta/i, 2000);
+          return (
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-emerald-500" /><h3 className="font-bold text-sm">Implantacao Starter</h3></div>
+              <p className="text-xs text-muted-foreground mb-3">Configuracao profissional em ate 15 dias uteis.</p>
+              <p className="text-2xl font-black text-emerald-500">R$ {implPrice.toLocaleString("pt-BR")}<span className="text-xs font-normal text-muted-foreground"> (unico)</span></p>
+              <button onClick={() => handle("implantacao", "Implantacao Starter", implPrice)} className={btnClass(isAdmin)} style={{ backgroundColor: "#10b981" }}>Contratar Implantacao</button>
+            </Card>
+          );
+        })()}
       </div>
 
       <UpsellModal item={upsellItem} onClose={() => setUpsellItem(null)} />
