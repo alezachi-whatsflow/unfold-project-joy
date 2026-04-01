@@ -11,10 +11,18 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
+  let APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
+  if (!APIFY_API_KEY) {
+    // Fallback: fetch from ai_configurations table
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data } = await sb.from("ai_configurations").select("api_key").eq("provider", "apify").eq("is_active", true).order("is_global", { ascending: false }).limit(1).maybeSingle();
+      if (data?.api_key) APIFY_API_KEY = data.api_key;
+    } catch (e) { console.warn("Failed to fetch Apify key from DB:", e); }
+  }
   if (!APIFY_API_KEY) {
     return new Response(
-      JSON.stringify({ error: "APIFY_API_KEY is not configured" }),
+      JSON.stringify({ error: 'Apify not configured. Add key in Nexus > I.A. Config with provider "apify".' }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

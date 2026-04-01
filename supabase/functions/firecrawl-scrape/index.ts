@@ -1,7 +1,36 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+async function getFirecrawlKey(): Promise<string | null> {
+  // 1. Try env var first
+  const envKey = Deno.env.get('FIRECRAWL_API_KEY') || Deno.env.get('FIRECRAWL_API_KEY_1');
+  if (envKey) return envKey;
+
+  // 2. Fallback: fetch from ai_configurations table (global or any tenant)
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data } = await supabase
+      .from("ai_configurations")
+      .select("api_key")
+      .eq("provider", "firecrawl")
+      .eq("is_active", true)
+      .order("is_global", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.api_key) return data.api_key;
+  } catch (e) {
+    console.warn("Failed to fetch Firecrawl key from DB:", e);
+  }
+
+  return null;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -18,11 +47,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('FIRECRAWL_API_KEY') || Deno.env.get('FIRECRAWL_API_KEY_1');
+    const apiKey = await getFirecrawlKey();
     if (!apiKey) {
-      console.error('FIRECRAWL_API_KEY not configured');
+      console.error('FIRECRAWL_API_KEY not configured (env nor DB)');
       return new Response(
-        JSON.stringify({ success: false, error: 'Firecrawl API key not configured' }),
+        JSON.stringify({ success: false, error: 'Firecrawl API key not configured. Add it in Nexus > I.A. Config with provider "firecrawl".' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
