@@ -9,10 +9,21 @@ interface AvatarProps {
 }
 
 const WaAvatar = React.memo(function WaAvatar({ initials, color, size = 49, isOnline, imageUrl }: AvatarProps) {
+  const [imgError, setImgError] = React.useState(false);
+  const showImage = imageUrl && !imgError;
+
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
-      {imageUrl ? (
-        <img src={imageUrl} alt={initials} loading="lazy" className="rounded-full object-cover" style={{ width: size, height: size }} />
+      {showImage ? (
+        <img
+          src={imageUrl}
+          alt={initials}
+          loading="lazy"
+          className="rounded-full object-cover"
+          style={{ width: size, height: size }}
+          onError={() => setImgError(true)}
+          referrerPolicy="no-referrer"
+        />
       ) : (
         <div
           className="rounded-full flex items-center justify-center font-semibold select-none"
