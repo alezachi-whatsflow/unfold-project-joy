@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
-  Bell, MessageSquare, Users, DollarSign, LifeBuoy,
-  AlertTriangle, Settings, Check, X,
+  Bell, BellRing, BellOff, MessageSquare, Users, DollarSign, LifeBuoy,
+  AlertTriangle, Settings, Check, X, Monitor,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
 import { markAsRead, markAllAsRead } from '@/services/notificationService'
+import { toast } from 'sonner'
 
 /* ── category visual map ─────────────────────────────────── */
 const CATEGORY_META: Record<string, { Icon: typeof Bell; color: string }> = {
@@ -76,7 +77,15 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [desktopEnabled, setDesktopEnabled] = useState(false)
   const [showPrefs, setShowPrefs] = useState(false)
+
+  // Sync desktop notification state with browser permission
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setDesktopEnabled(Notification.permission === 'granted')
+    }
+  }, [])
 
   /* ── fetch initial data ────────────────────────────────── */
   const fetchNotifications = useCallback(async (uid: string) => {
@@ -138,6 +147,16 @@ export function NotificationBell() {
             setNotifications((prev) => [n, ...prev].slice(0, 20))
             setUnreadCount((c) => c + 1)
             if (soundEnabled) playNotificationSound()
+            // Desktop notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+              try {
+                new window.Notification(n.title, {
+                  body: n.message || '',
+                  icon: '/pwa-192x192.png',
+                  tag: n.id,
+                })
+              } catch { /* ignore */ }
+            }
           },
         )
         .subscribe()
@@ -408,6 +427,53 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
   const [loaded, setLoaded] = useState(false)
   const rowExistsRef = useRef(false)
 
+  // Browser notification permission state
+  const [browserPermission, setBrowserPermission] = useState<NotificationPermission>(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  )
+
+  const handleDesktopToggle = async () => {
+    if (!('Notification' in window)) {
+      toast.error('Seu navegador nao suporta notificacoes desktop')
+      return
+    }
+
+    if (Notification.permission === 'denied') {
+      toast.error('Notificacoes bloqueadas. Clique no icone de cadeado na barra de endereco e permita notificacoes para este site.')
+      return
+    }
+
+    if (Notification.permission === 'granted') {
+      toast.info('Para desativar, use as configuracoes do navegador (icone de cadeado)')
+      return
+    }
+
+    // Request permission
+    const result = await Notification.requestPermission()
+    setBrowserPermission(result)
+
+    if (result === 'granted') {
+      toast.success('Notificacoes do sistema ativadas')
+      // Save preference to DB
+      if (userId) {
+        const tenantId = localStorage.getItem('whatsflow_default_tenant_id')
+        await (supabase as any)
+          .from('profiles')
+          .update({ push_notifications_enabled: true })
+          .eq('id', userId)
+      }
+      // Show test notification
+      try {
+        new window.Notification('Whatsflow', {
+          body: 'Notificacoes ativadas com sucesso!',
+          icon: '/pwa-192x192.png',
+        })
+      } catch { /* ignore */ }
+    } else if (result === 'denied') {
+      toast.error('Notificacoes foram bloqueadas. Para reativar, clique no icone de cadeado na barra de endereco.')
+    }
+  }
+
   useEffect(() => {
     if (!userId) return
     ;(async () => {
@@ -512,10 +578,41 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
         </div>
       ))}
 
+      {/* Desktop notifications toggle */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 0 0',
+        padding: '12px 0 8px',
         marginTop: 4,
+        borderTop: '1px solid hsl(var(--border) / 0.4)',
+      }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Monitor size={13} /> Notificacoes do computador
+          </div>
+          <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>
+            {browserPermission === 'denied'
+              ? 'Bloqueado pelo navegador'
+              : browserPermission === 'granted'
+              ? 'Ativado'
+              : 'Mostrar alertas na area de trabalho'}
+          </div>
+        </div>
+        <ToggleSwitch
+          checked={browserPermission === 'granted'}
+          onChange={handleDesktopToggle}
+          disabled={browserPermission === 'denied'}
+        />
+      </div>
+
+      {browserPermission === 'denied' && (
+        <div style={{ fontSize: 10, color: 'hsl(var(--destructive))', padding: '0 0 8px', lineHeight: 1.4 }}>
+          Notificacoes bloqueadas no navegador. Clique no icone de cadeado na barra de endereco e permita notificacoes.
+        </div>
+      )}
+
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '8px 0 0',
       }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 500, color: 'hsl(var(--foreground))' }}>Som de notificacao</div>
@@ -527,16 +624,18 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
 }
 
 /* ── simple toggle switch ────────────────────────────────── */
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <button
       onClick={onChange}
+      disabled={disabled}
       style={{
         width: 36, height: 20, borderRadius: 10,
-        background: checked ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-        border: 'none', cursor: 'pointer',
+        background: disabled ? 'hsl(var(--muted))' : checked ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
+        border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
         position: 'relative', transition: 'background 0.2s',
         flexShrink: 0,
+        opacity: disabled ? 0.5 : 1,
       }}
     >
       <span
