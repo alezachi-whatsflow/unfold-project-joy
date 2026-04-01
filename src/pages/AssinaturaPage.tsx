@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { MessageSquare, AlertTriangle, ShieldCheck, CheckCircle2, Plus, Bot, Clock, Wifi, Smartphone, Loader2, Copy, Check, DollarSign, CalendarClock, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AISkillsAddons } from "@/components/assinatura/AISkillsAddons";
-import { useProducts } from "@/contexts/ProductContext";
+// pricing comes from license.pricing_config (set by Nexus admin)
 
 const PLAN_LABELS: Record<string, string> = {
   solo_pro: "Solo Pro",
@@ -312,10 +312,10 @@ function LimitBar({ label, used, total, color, warn, suffix }: { label: string; 
 
 // ─── UPSELL SECTION ───────────────────────────────────────────────────────────
 function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) {
-  const { products } = useProducts();
   const [upsellItem, setUpsellItem] = useState<{ type: string; label: string; value: number; qty?: number } | null>(null);
   const [qty, setQty] = useState(1);
   const isAdmin = userRole === "admin" || userRole === "superadmin";
+  const pricing = limits.pricingConfig;
 
   const handle = (type: string, label: string, unitPrice: number, defaultQty = 1) => {
     if (!isAdmin) return;
@@ -323,25 +323,14 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
     setUpsellItem({ type, label, value: unitPrice, qty: defaultQty });
   };
 
-  // Get prices from products table (DB) with hardcoded fallback
-  const findProductPrice = (nameMatch: RegExp, fallback: number) => {
-    const p = products.find((prod) => nameMatch.test(prod.name) && prod.status === "active");
-    return p ? p.price : fallback;
-  };
-
-  const totalWeb = limits.maxDevicesWeb;
-  const unitPriceWebFromDb = findProductPrice(/disp.*web|web.*whatsapp/i, 0);
-  const unitPriceWeb = unitPriceWebFromDb > 0 ? unitPriceWebFromDb : (totalWeb <= 5 ? 150 : totalWeb <= 20 ? 125 : 100);
+  // All prices come from license.pricing_config (set by Nexus admin)
+  const unitPriceWeb = pricing.device_web_price;
   const tierLabelWeb = `R$ ${unitPriceWeb}/un`;
 
-  const totalMeta = limits.maxDevicesMeta;
-  const unitPriceMetaFromDb = findProductPrice(/disp.*meta|meta.*business/i, 0);
-  const unitPriceMeta = unitPriceMetaFromDb > 0 ? unitPriceMetaFromDb : (totalMeta <= 5 ? 100 : totalMeta <= 20 ? 80 : 60);
+  const unitPriceMeta = pricing.device_meta_price;
   const tierLabelMeta = `R$ ${unitPriceMeta}/un`;
 
-  const totalAtt = limits.maxAttendants;
-  const unitPriceAttFromDb = findProductPrice(/atendente/i, 0);
-  const unitPriceAtt = unitPriceAttFromDb > 0 ? unitPriceAttFromDb : (totalAtt <= 5 ? 80 : totalAtt <= 10 ? 75 : totalAtt <= 20 ? 70 : 60);
+  const unitPriceAtt = pricing.attendant_price;
   const tierLabelAtt = `R$ ${unitPriceAtt}/un`;
 
   const btnClass = (active = true) =>
@@ -398,7 +387,7 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
         </Card>
 
         {!limits.hasAiModule && (() => {
-          const iaPrice = findProductPrice(/agentes.*i\.?a|modulo.*i\.?a/i, 350);
+          const iaPrice = pricing.ai_module_price;
           return (
             <Card className="p-5 border-[var(--wl-primary)]/30">
               <div className="flex items-center gap-2 mb-2"><Bot className="h-5 w-5" style={{ color: "var(--wl-primary)" }} /><h3 className="font-bold text-sm">Modulo I.A.</h3></div>
@@ -410,9 +399,9 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
         })()}
 
         {limits.facilitePlan !== "avancado" && (() => {
-          const pBasico = findProductPrice(/facilite.*basico/i, 250);
-          const pInter = findProductPrice(/facilite.*intermedi/i, 700);
-          const pAvancado = findProductPrice(/facilite.*avan/i, 1500);
+          const pBasico = pricing.facilite_basico_price;
+          const pInter = pricing.facilite_intermediario_price;
+          const pAvancado = pricing.facilite_avancado_price;
           return (
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-2"><Clock className="h-5 w-5 text-purple-500" /><h3 className="font-bold text-sm">Facilite Whatsflow</h3></div>
@@ -442,7 +431,7 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
         })()}
 
         {(() => {
-          const implPrice = findProductPrice(/implanta/i, 2000);
+          const implPrice = pricing.implantacao_price;
           return (
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-emerald-500" /><h3 className="font-bold text-sm">Implantacao Starter</h3></div>

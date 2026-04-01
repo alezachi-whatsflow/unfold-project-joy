@@ -101,6 +101,11 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     payment_condition: license?.payment_condition || 'mensal',
     checkout_url: license?.checkout_url || '',
     internal_notes: license?.internal_notes || '',
+    pricing_config: license?.pricing_config || {
+      device_web_price: 125, device_meta_price: 100, attendant_price: 60,
+      ai_module_price: 350, facilite_basico_price: 250, facilite_intermediario_price: 700,
+      facilite_avancado_price: 1500, implantacao_price: 2000,
+    },
   });
 
   useEffect(() => {
@@ -140,6 +145,11 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
         payment_condition: license?.payment_condition || 'mensal',
         checkout_url: license?.checkout_url || '',
         internal_notes: license?.internal_notes || '',
+        pricing_config: license?.pricing_config || {
+          device_web_price: 125, device_meta_price: 100, attendant_price: 60,
+          ai_module_price: 350, facilite_basico_price: 250, facilite_intermediario_price: 700,
+          facilite_avancado_price: 1500, implantacao_price: 2000,
+        },
       });
     }
   }, [open]);
@@ -268,6 +278,16 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       has_implantacao_starter: form.has_implantacao_starter,
       billing_cycle: form.billing_cycle,
       internal_notes: form.internal_notes || null,
+      pricing_config: form.pricing_config || {
+        device_web_price: 125,
+        device_meta_price: 100,
+        attendant_price: 60,
+        ai_module_price: 350,
+        facilite_basico_price: 250,
+        facilite_intermediario_price: 700,
+        facilite_avancado_price: 1500,
+        implantacao_price: 2000,
+      },
     };
     // Add optional columns only if they have values (columns may not exist in DB yet)
     if (form.cancelled_at) payload.cancelled_at = form.cancelled_at;
@@ -680,9 +700,37 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
             )}
           </section>
 
+          {/* Pricing Config — valores que o cliente vê na Assinatura */}
+          <section className="space-y-2">
+            <SectionTitle>Precos para o Cliente (Assinatura)</SectionTitle>
+            <p className="text-[10px] text-muted-foreground mb-2">Valores unitarios exibidos na tela de Assinatura do cliente.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {([
+                { key: 'device_web_price', label: 'Disp. Web (R$)' },
+                { key: 'device_meta_price', label: 'Disp. Meta (R$)' },
+                { key: 'attendant_price', label: 'Atendente (R$)' },
+                { key: 'ai_module_price', label: 'Modulo I.A. (R$)' },
+                { key: 'facilite_basico_price', label: 'Facilite Basico' },
+                { key: 'facilite_intermediario_price', label: 'Facilite Interm.' },
+                { key: 'facilite_avancado_price', label: 'Facilite Avancado' },
+                { key: 'implantacao_price', label: 'Implantacao (R$)' },
+              ] as const).map(({ key, label }) => (
+                <div key={key}>
+                  <Label className="text-[10px]">{label}</Label>
+                  <Input
+                    type="number" min={0} step={0.01}
+                    value={form.pricing_config?.[key] ?? ''}
+                    onChange={(e) => set('pricing_config', { ...form.pricing_config, [key]: Number(e.target.value) })}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Observações */}
           <section className="space-y-2">
-            <SectionTitle>Observação Interna</SectionTitle>
+            <SectionTitle>Observacao Interna</SectionTitle>
             <Textarea value={form.internal_notes} onChange={(e) => set('internal_notes', e.target.value)} placeholder="Visível apenas no Nexus..." className="min-h-[60px]" />
           </section>
 

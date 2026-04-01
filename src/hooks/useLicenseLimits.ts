@@ -20,6 +20,16 @@ export interface LicenseLimits {
   monthlyValue: number;
   monthlyMessagesLimit: number;
   storageLimitGb: number;
+  pricingConfig: {
+    device_web_price: number;
+    device_meta_price: number;
+    attendant_price: number;
+    ai_module_price: number;
+    facilite_basico_price: number;
+    facilite_intermediario_price: number;
+    facilite_avancado_price: number;
+    implantacao_price: number;
+  };
 }
 
 export function useLicenseLimits(tenantId?: string) {
@@ -68,6 +78,16 @@ export function useLicenseLimits(tenantId?: string) {
         monthlyValue: license.monthly_value || 0,
         monthlyMessagesLimit: license.monthly_messages_limit || 10000,
         storageLimitGb: Number(license.storage_limit_gb) || 1,
+        pricingConfig: {
+          device_web_price: license.pricing_config?.device_web_price ?? 125,
+          device_meta_price: license.pricing_config?.device_meta_price ?? 100,
+          attendant_price: license.pricing_config?.attendant_price ?? 60,
+          ai_module_price: license.pricing_config?.ai_module_price ?? 350,
+          facilite_basico_price: license.pricing_config?.facilite_basico_price ?? 250,
+          facilite_intermediario_price: license.pricing_config?.facilite_intermediario_price ?? 700,
+          facilite_avancado_price: license.pricing_config?.facilite_avancado_price ?? 1500,
+          implantacao_price: license.pricing_config?.implantacao_price ?? 2000,
+        },
       };
     },
     enabled: !!tenantId && !!user?.id,
