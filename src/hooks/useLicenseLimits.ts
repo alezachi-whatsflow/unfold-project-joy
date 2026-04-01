@@ -7,14 +7,19 @@ export interface LicenseLimits {
   maxDevicesMeta: number;
   maxAttendants: number;
   hasAiModule: boolean;
+  aiAgentsLimit: number;
   currentDevicesWeb: number;
   currentDevicesMeta: number;
   currentAttendants: number;
   plan: string;
   status: string;
+  licenseType: string;
   validUntil: string | null;
+  startsAt: string | null;
   facilitePlan: string;
   monthlyValue: number;
+  monthlyMessagesLimit: number;
+  storageLimitGb: number;
 }
 
 export function useLicenseLimits(tenantId?: string) {
@@ -50,14 +55,19 @@ export function useLicenseLimits(tenantId?: string) {
         maxDevicesMeta: (license.base_devices_meta || 1) + (license.extra_devices_meta || 0),
         maxAttendants: (license.base_attendants || 1) + (license.extra_attendants || 0),
         hasAiModule: license.has_ai_module || false,
+        aiAgentsLimit: license.ai_agents_limit || 0,
         currentDevicesWeb: webCount || 0,
         currentDevicesMeta: metaCount || 0,
         currentAttendants: 0,
         plan: license.plan,
         status: license.status,
-        validUntil: license.expires_at,
+        licenseType: license.license_type || 'individual',
+        validUntil: license.expires_at || license.valid_until,
+        startsAt: license.starts_at || license.activated_at || license.created_at,
         facilitePlan: license.facilite_plan || 'none',
         monthlyValue: license.monthly_value || 0,
+        monthlyMessagesLimit: license.monthly_messages_limit || 10000,
+        storageLimitGb: Number(license.storage_limit_gb) || 1,
       };
     },
     enabled: !!tenantId && !!user?.id,

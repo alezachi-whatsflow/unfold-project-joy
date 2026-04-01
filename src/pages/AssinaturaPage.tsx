@@ -29,7 +29,13 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 const FACILITE_LABELS: Record<string, string> = {
-  none: "", basico: "Básico", intermediario: "Intermediário", avancado: "Avançado",
+  none: "", basico: "Basico", intermediario: "Intermediario", avancado: "Avancado",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  internal: "Interno",
+  individual: "Individual",
+  whitelabel: "WhiteLabel",
 };
 
 export default function AssinaturaPage() {
@@ -175,60 +181,64 @@ export default function AssinaturaPage() {
       )}
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Plan Card */}
+        {/* Resumo — espelha Nexus License Detail */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" /> Plano Atual
+              <ShieldCheck className="h-5 w-5 text-primary" /> Resumo
             </h2>
             <span className="px-3 py-1 bg-primary/10 text-primary font-bold text-sm rounded-full">
               {PLAN_LABELS[limits.plan] || limits.plan}
             </span>
           </div>
-          <div className="space-y-4 text-sm">
-            <div className="flex justify-between py-2 border-b border-white/5">
-              <span className="text-muted-foreground">Status da Licença</span>
-              <span className={`font-semibold ${statusInfo.color}`}>{statusInfo.label}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-white/5">
-              <span className="text-muted-foreground">Ambiente</span>
-              <span className="font-semibold">{accountName}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-white/5">
-              <span className="text-muted-foreground">Vencimento</span>
-              <span className="font-semibold">
-                {limits.validUntil
-                  ? `${new Date(limits.validUntil).toLocaleDateString("pt-BR")} (${daysLeft! > 0 ? `${daysLeft} dias` : "expirado"})`
-                  : "—"}
-              </span>
-            </div>
-            {limits.monthlyValue > 0 && (
-              <div className="flex justify-between py-2 border-b border-white/5">
-                <span className="text-muted-foreground">Valor mensal</span>
-                <span className="font-semibold">R$ {limits.monthlyValue.toLocaleString("pt-BR")}</span>
-              </div>
-            )}
+          <div className="space-y-3 text-sm">
+            <InfoRow label="Tipo" value={TYPE_LABELS[limits.licenseType] || limits.licenseType} />
+            <InfoRow label="Plano" value={PLAN_LABELS[limits.plan] || limits.plan} />
+            <InfoRow label="Status" value={statusInfo.label} valueClass={statusInfo.color} />
+            <InfoRow label="Valor" value={limits.monthlyValue > 0 ? `R$ ${limits.monthlyValue.toLocaleString("pt-BR")}/mes` : "Isento"} />
+            <InfoRow label="Ambiente" value={accountName} />
+            <InfoRow
+              label="Ativacao"
+              value={limits.startsAt ? new Date(limits.startsAt).toLocaleDateString("pt-BR") : "—"}
+            />
+            <InfoRow
+              label="Vencimento"
+              value={limits.validUntil
+                ? `${new Date(limits.validUntil).toLocaleDateString("pt-BR")} (${daysLeft! > 0 ? `${daysLeft} dias` : "expirado"})`
+                : "—"}
+            />
+            <InfoRow
+              label="Facilite"
+              value={limits.facilitePlan && limits.facilitePlan !== "none" ? FACILITE_LABELS[limits.facilitePlan] || limits.facilitePlan : "—"}
+            />
+            <InfoRow
+              label="Modulo I.A."
+              value={limits.hasAiModule ? `Sim (${limits.aiAgentsLimit} agentes)` : "Nao"}
+              valueClass={limits.hasAiModule ? "text-emerald-400" : "text-muted-foreground"}
+            />
           </div>
         </Card>
 
-        {/* Limits Card */}
+        {/* Recursos — espelha Nexus "Recursos" */}
         <Card className="p-6">
-          <h2 className="text-xl font-bold flex items-center gap-2 mb-6">Limites de Uso</h2>
+          <h2 className="text-xl font-bold flex items-center gap-2 mb-6">Recursos</h2>
           <div className="space-y-5">
-            <LimitBar label="Dispositivos Web" used={limits.currentDevicesWeb} total={limits.maxDevicesWeb} color="bg-primary" />
+            <LimitBar label="Disp. Web" used={limits.currentDevicesWeb} total={limits.maxDevicesWeb} color="bg-primary" />
             <LimitBar
-              label="Dispositivos Meta (API Oficial)"
+              label="Disp. Meta"
               used={limits.currentDevicesMeta}
               total={limits.maxDevicesMeta}
               color={limits.currentDevicesMeta >= limits.maxDevicesMeta ? "bg-amber-500" : "bg-primary"}
               warn={limits.currentDevicesMeta >= limits.maxDevicesMeta}
             />
-            <LimitBar label="Atendentes Simultâneos" used={limits.currentAttendants} total={limits.maxAttendants} color="bg-blue-500" />
+            <LimitBar label="Atendentes" used={limits.currentAttendants} total={limits.maxAttendants} color="bg-blue-500" />
+            <LimitBar label="Mensagens/mes" used={0} total={limits.monthlyMessagesLimit} color="bg-purple-500" />
+            <LimitBar label="Storage" used={0} total={limits.storageLimitGb} color="bg-teal-500" suffix="GB" />
 
             <div className="pt-4 border-t border-white/5 flex flex-wrap gap-4">
               {limits.hasAiModule && (
                 <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20">
-                  <CheckCircle2 className="h-3 w-3" /> Módulo I.A. Ativo
+                  <CheckCircle2 className="h-3 w-3" /> Modulo I.A. Ativo
                 </span>
               )}
               {limits.facilitePlan && limits.facilitePlan !== "none" && (
@@ -270,8 +280,18 @@ export default function AssinaturaPage() {
   );
 }
 
+// ─── INFO ROW ─────────────────────────────────────────────────────────────────
+function InfoRow({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
+  return (
+    <div className="flex justify-between py-2 border-b border-white/5">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-semibold ${valueClass || ""}`}>{value}</span>
+    </div>
+  );
+}
+
 // ─── LIMIT BAR ────────────────────────────────────────────────────────────────
-function LimitBar({ label, used, total, color, warn }: { label: string; used: number; total: number; color: string; warn?: boolean }) {
+function LimitBar({ label, used, total, color, warn, suffix }: { label: string; used: number; total: number; color: string; warn?: boolean; suffix?: string }) {
   const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
   return (
     <div>
@@ -280,7 +300,7 @@ function LimitBar({ label, used, total, color, warn }: { label: string; used: nu
           {label}
           {warn && <AlertTriangle className="h-3 w-3 text-amber-500" />}
         </span>
-        <span className="text-muted-foreground">{used} / {total}</span>
+        <span className="text-muted-foreground">{used} / {total}{suffix ? ` ${suffix}` : ""}</span>
       </div>
       <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
         <div className={`${color} h-full rounded-full transition-all`} style={{ width: `${pct}%` }} />
