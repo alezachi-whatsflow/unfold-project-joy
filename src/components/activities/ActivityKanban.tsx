@@ -83,6 +83,7 @@ function ActivityCard({
 }) {
   const p = PRIORITY_MAP[activity.priority] || PRIORITY_MAP.medium;
   const isOverdue = activity.due_date && new Date(activity.due_date) < new Date() && activity.status !== "done";
+  const isCrmDeal = activity.id.startsWith("negocio-");
 
   return (
     <Card className="border-border hover:transition-shadow">
@@ -113,29 +114,35 @@ function ActivityCard({
         )}
 
         <div className="flex items-center justify-between pt-1 border-t border-border">
-          <div className="flex gap-0.5">
-            {columns
-              .filter((c) => c.key !== activity.status)
-              .map((c) => (
-                <Button
-                  key={c.key}
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-[10px] px-2"
-                  onClick={() => onStatusChange(activity.id, c.key)}
-                >
-                  → {c.label}
+          {isCrmDeal ? (
+            <p className="text-[10px] text-muted-foreground italic">Gerado do CRM — edite em Vendas</p>
+          ) : (
+            <>
+              <div className="flex gap-0.5">
+                {columns
+                  .filter((c) => c.key !== activity.status)
+                  .map((c) => (
+                    <Button
+                      key={c.key}
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[10px] px-2"
+                      onClick={() => onStatusChange(activity.id, c.key)}
+                    >
+                      → {c.label}
+                    </Button>
+                  ))}
+              </div>
+              <div className="flex gap-0.5">
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(activity)}>
+                  <Pencil className="h-3 w-3" />
                 </Button>
-              ))}
-          </div>
-          <div className="flex gap-0.5">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(activity)}>
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(activity.id)}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(activity.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
