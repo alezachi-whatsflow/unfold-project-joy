@@ -25,8 +25,17 @@ function parseSender(from: string): { name: string; email: string } {
 }
 
 export async function sendEmail({ to, subject, html, from }: SendEmailParams): Promise<void> {
-  const apiKey = Deno.env.get("SMTP2GO_API_KEY");
-  if (!apiKey) throw new Error("SMTP2GO_API_KEY not configured");
+  let apiKey = Deno.env.get("SMTP2GO_API_KEY") || Deno.env.get("SENDGRID_API_KEY");
+  if (!apiKey) {
+    // Fallback: fetch from ai_configurations
+    try {
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data } = await sb.from("ai_configurations").select("api_key").eq("provider", "smtp").eq("is_active", true).order("is_global", { ascending: false }).limit(1).maybeSingle();
+      if (data?.api_key) apiKey = data.api_key;
+    } catch (e) { console.warn("[smtp] Failed to fetch key from DB:", e); }
+  }
+  if (!apiKey) throw new Error("Email API key not configured. Add in Nexus > I.A. Config with provider 'smtp'.");
 
   const recipients = Array.isArray(to) ? to : [to];
   const sender = parseSender(from || DEFAULT_SENDER);

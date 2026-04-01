@@ -54,8 +54,19 @@ Deno.serve(async (req) => {
       return json({ error: "Campo 'answers' (string) é obrigatório" }, 400);
     }
 
-    // 3. Get Assistant ID from secrets
-    const assistantId = Deno.env.get("OPENAI_CRM_ASSISTANT_ID");
+    // 3. Get Assistant ID from secrets or DB
+    let assistantId = Deno.env.get("OPENAI_CRM_ASSISTANT_ID");
+    if (!assistantId) {
+      // Fallback: fetch from ai_configurations
+      const { data: aiConf } = await createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
+        .from("ai_configurations")
+        .select("project_id")
+        .eq("provider", "openai_crm_assistant")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      if (aiConf?.project_id) assistantId = aiConf.project_id;
+    }
     if (!assistantId) {
       return json({ error: "OPENAI_CRM_ASSISTANT_ID not configured" }, 500);
     }
