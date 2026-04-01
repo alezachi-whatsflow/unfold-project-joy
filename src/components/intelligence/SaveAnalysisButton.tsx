@@ -130,7 +130,11 @@ export function SaveAnalysisButton({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const { getTenantId } = await import("@/lib/tenantResolver");
+      const tenantId = await getTenantId();
+
       const row = {
+        tenant_id: tenantId,
         company_name: companyName,
         category: googleBusiness?.category || latestScrap?.niche || null,
         overall_score: overallThreshold.score,
