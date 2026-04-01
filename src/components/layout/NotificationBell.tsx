@@ -456,7 +456,6 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
       toast.success('Notificacoes do sistema ativadas')
       // Save preference to DB
       if (userId) {
-        const tenantId = localStorage.getItem('whatsflow_default_tenant_id')
         await (supabase as any)
           .from('profiles')
           .update({ push_notifications_enabled: true })
@@ -503,7 +502,11 @@ function NotificationPrefsInline({ userId, onClose }: PrefsInlineProps) {
 
   async function toggle(key: string) {
     if (!userId) return
-    const tenantId = localStorage.getItem('whatsflow_default_tenant_id')
+    let tenantId: string | null = null
+    try {
+      const { getTenantId } = await import('@/lib/tenantResolver')
+      tenantId = await getTenantId()
+    } catch { /* ignore */ }
     if (!tenantId) return
 
     // Compute new prefs from latest state via functional updater
