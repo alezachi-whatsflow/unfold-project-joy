@@ -71,7 +71,7 @@ function renderContent(activity: Activity): React.ReactNode {
   if (type === 'whatsapp_scheduled') {
     return (
       <span className="text-sm text-muted-foreground">
-        {c.text || ''}{c.scheduled_at ? ` — agendada para ${new Date(c.scheduled_at as string).toLocaleString('pt-BR')}` : ''}
+        {c.text || ''}{c.scheduled_at ? ` — agendada para ${fmtDateTime(c.scheduled_at as string)}` : ''}
       </span>
     )
   }

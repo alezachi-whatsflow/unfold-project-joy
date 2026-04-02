@@ -1,3 +1,4 @@
+import { fmtDateTime } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +59,7 @@ export default function LogsTab() {
   const exportCSV = () => {
     const headers = ["Data", "Sessão", "Número", "Direção", "Tipo", "Status", "Origem", "Conteúdo"];
     const rows = filtered.map((l) => [
-      new Date(l.timestamp).toLocaleString("pt-BR"),
+      fmtDateTime(l.timestamp),
       l.session_id,
       l.conversa_id,
       l.direcao,
@@ -151,7 +152,7 @@ export default function LogsTab() {
             )}
             {filtered.map((l) => (
               <TableRow key={l.id} className={cn(l.status === "failed" && "bg-destructive/10")}>
-                <TableCell className="text-xs whitespace-nowrap">{new Date(l.timestamp).toLocaleString("pt-BR")}</TableCell>
+                <TableCell className="text-xs whitespace-nowrap">{fmtDateTime(l.timestamp)}</TableCell>
                 <TableCell className="text-xs font-mono">{l.session_id}</TableCell>
                 <TableCell className="text-xs">{l.conversa_id}</TableCell>
                 <TableCell className="text-xs">

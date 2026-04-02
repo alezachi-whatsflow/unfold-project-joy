@@ -56,10 +56,7 @@ export function mapMessageType(t: string, mediaUrl?: string | null, caption?: st
   return "text";
 }
 
-export function formatTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
+export { fmtTime as formatTime } from "@/lib/dateUtils";
 
 export const WHATSAPP_CDN_REGEX = /(?:^https?:\/\/)?(?:mmg\.whatsapp\.net|[^/]*\.cdn\.whatsapp\.net)/i;
 

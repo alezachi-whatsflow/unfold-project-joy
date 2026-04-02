@@ -1,3 +1,4 @@
+import { fmtDate, fmtDateTime } from "@/lib/dateUtils";
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -347,8 +348,8 @@ export default function NexusLicenseDetail() {
             <Row label="Plano" value={license.plan === 'profissional' ? 'Profissional' : license.plan === 'solo_pro' ? 'Solo Pro' : license.plan} />
             <Row label="Valor" value={licenseType === 'internal' ? 'Isento' : `R$ ${Number(license.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês`} />
             <Row label="Ciclo" value={license.billing_cycle || '—'} />
-            <Row label="Ativação" value={license.starts_at ? new Date(license.starts_at).toLocaleDateString('pt-BR') : '—'} />
-            <Row label="Vencimento" value={license.expires_at ? new Date(license.expires_at).toLocaleDateString('pt-BR') : '—'} />
+            <Row label="Ativação" value={license.starts_at ? fmtDate(license.starts_at) : '—'} />
+            <Row label="Vencimento" value={license.expires_at ? fmtDate(license.expires_at) : '—'} />
             <Row label="Facilite" value={license.facilite_plan === 'none' ? 'Nenhum' : license.facilite_plan || 'Nenhum'} />
             <Row label="Módulo I.A." value={license.has_ai_module ? `Sim (${license.ai_agents_limit || 0} agentes)` : 'Não'} />
             {licenseType === 'whitelabel' && (
@@ -459,7 +460,7 @@ export default function NexusLicenseDetail() {
                       <div className="w-full h-full bg-primary/60 rounded-t" />
                     </div>
                     <span className="text-[9px] text-muted-foreground">
-                      {new Date(u.period_month).toLocaleDateString('pt-BR', { month: 'short' })}
+                      {fmtDate(u.period_month)}
                     </span>
                   </div>
                 );
@@ -558,7 +559,7 @@ export default function NexusLicenseDetail() {
                 ) : auditLogs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString('pt-BR')}
+                      {fmtDateTime(log.created_at)}
                     </TableCell>
                     <TableCell className="text-xs">{log.nexus_users?.name || '—'}</TableCell>
                     <TableCell><Badge className="text-[10px]">{log.action}</Badge></TableCell>

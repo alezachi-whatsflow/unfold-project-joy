@@ -24,7 +24,7 @@ export function buildUserStages(user: NexusUserDB): TimelineStage[] {
       labelMobile: '✉',
       status: inviteSent ? 'done' : 'pending',
       timestamp: user.invite_sent_at
-        ? new Date(user.invite_sent_at).toLocaleString('pt-BR')
+        ? fmtDateTime(user.invite_sent_at)
         : undefined,
     },
     {
@@ -37,7 +37,7 @@ export function buildUserStages(user: NexusUserDB): TimelineStage[] {
           ? 'current'
           : 'pending',
       timestamp: user.invite_accepted_at
-        ? new Date(user.invite_accepted_at).toLocaleString('pt-BR')
+        ? fmtDateTime(user.invite_accepted_at)
         : undefined,
     },
     {
@@ -46,7 +46,7 @@ export function buildUserStages(user: NexusUserDB): TimelineStage[] {
       labelMobile: '✓',
       status: isActive ? 'done' : inviteAccepted ? 'current' : 'pending',
       timestamp: user.last_login
-        ? new Date(user.last_login).toLocaleString('pt-BR')
+        ? fmtDateTime(user.last_login)
         : undefined,
     },
   ]

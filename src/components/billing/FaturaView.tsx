@@ -1,3 +1,4 @@
+import { fmtDate, fmtDateTime } from "@/lib/dateUtils";
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
@@ -56,11 +57,11 @@ function fmt(n: number) {
 }
 function fmtDate(d: string | null | undefined) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('pt-BR');
+  return fmtDate(d);
 }
 function fmtDateTime(d: string | null | undefined) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('pt-BR');
+  return fmtDateTime(d);
 }
 
 // Tier pricing: extra attendant unit price based on total attendant count

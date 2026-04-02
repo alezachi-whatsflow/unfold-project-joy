@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,7 +226,7 @@ export default function SuperAdminLicenses() {
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {lic.expires_at ? new Date(lic.expires_at).toLocaleDateString("pt-BR") : "—"}
+                      {lic.expires_at ? fmtDate(lic.expires_at) : "—"}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">

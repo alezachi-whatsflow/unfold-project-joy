@@ -14,25 +14,12 @@ function nameColor(name: string): string {
   return colors[Math.abs(h) % colors.length];
 }
 
-// Format timestamp: returns as-is if already formatted (DD/MM/YYYY HH:MM)
-// or parses ISO dates into that format
+import { fmtDateTime } from "@/lib/dateUtils";
+
 function formatMsgTime(ts: string): string {
   if (!ts) return "";
-  // Already formatted as "DD/MM/YYYY HH:MM" — return as-is
   if (/^\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}$/.test(ts)) return ts;
-  // Try parsing ISO format
-  try {
-    const d = new Date(ts);
-    if (isNaN(d.getTime())) return ts;
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
-  } catch {
-    return ts;
-  }
+  return fmtDateTime(ts);
 }
 
 interface MessageBubbleProps {

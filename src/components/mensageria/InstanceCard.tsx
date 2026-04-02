@@ -1,3 +1,4 @@
+import { fmtDate, fmtDateTime } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -132,7 +133,7 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
           {/* Connection/Disconnection info */}
           <div style={{ display: "flex", gap: 12, fontSize: 10, color: "var(--text-muted)", flexWrap: "wrap" }}>
             {instance.api_created_at && (
-              <span>📅 Criado: {new Date(instance.api_created_at).toLocaleDateString("pt-BR")}</span>
+              <span>📅 Criado: {fmtDate(instance.api_created_at)}</span>
             )}
             {instance.status === "connected" && instance.ultimo_ping && (
               <span style={{ color: "var(--inbox-active-color, #0E8A5C)" }}>
@@ -141,7 +142,7 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
             )}
             {instance.last_disconnect && (
               <span style={{ color: instance.status === "disconnected" ? "#ef4444" : "var(--text-muted)" }}>
-                ⚠️ Última desconexão: {new Date(instance.last_disconnect).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                ⚠️ Última desconexão: {fmtDateTime(instance.last_disconnect)}
                 {instance.last_disconnect_reason && ` (${instance.last_disconnect_reason})`}
               </span>
             )}

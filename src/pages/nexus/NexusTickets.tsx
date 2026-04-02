@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -139,7 +140,7 @@ export default function NexusTickets() {
                       <Badge className={`text-[10px] ${STATUS_STYLES[t.status] || ''}`}>{t.status}</Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {new Date(t.created_at).toLocaleDateString('pt-BR')}
+                      {fmtDate(t.created_at)}
                     </TableCell>
                   </TableRow>
                 ))}

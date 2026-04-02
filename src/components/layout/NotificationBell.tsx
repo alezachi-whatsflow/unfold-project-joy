@@ -30,7 +30,7 @@ function timeAgo(date: string): string {
   const days = Math.floor(hrs / 24)
   if (days === 1)   return 'ontem'
   if (days < 30)    return `há ${days} dias`
-  return new Date(date).toLocaleDateString('pt-BR')
+  return fmtDate(date)
 }
 
 interface Notification {

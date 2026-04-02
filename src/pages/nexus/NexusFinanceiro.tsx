@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,7 +72,7 @@ export default function NexusFinanceiro() {
   function exportCSV() {
     const rows = filteredBillings.map((l: any) => [
       l.tenants?.name, l.plan, Number(l.monthly_value || 0).toFixed(2), l.status, l.billing_cycle,
-      l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '',
+      l.expires_at ? fmtDate(l.expires_at) : '',
     ].join(';'));
     const csv = ['Empresa;Plano;Valor;Status;Ciclo;Vencimento', ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -163,7 +164,7 @@ export default function NexusFinanceiro() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
+                    {l.expires_at ? fmtDate(l.expires_at) : '—'}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

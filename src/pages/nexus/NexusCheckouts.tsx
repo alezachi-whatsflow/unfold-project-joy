@@ -1,3 +1,4 @@
+import { fmtDate, fmtTime } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,8 +155,8 @@ export default function NexusCheckouts() {
               return (
                 <tr key={s.id} className="border-t border-border hover:bg-accent/30 transition-colors">
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs">
-                    {new Date(s.created_at).toLocaleDateString("pt-BR")}<br />
-                    <span className="text-[10px]">{new Date(s.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                    {fmtDate(s.created_at)}<br />
+                    <span className="text-[10px]">{fmtTime(s.created_at)}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc.color}`}>{tc.label}</span>

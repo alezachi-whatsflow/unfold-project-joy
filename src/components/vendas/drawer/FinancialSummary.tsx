@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,8 +151,8 @@ export default function FinancialSummary({
           )}
           <InfoItem label="Origem" value={NEGOCIO_ORIGEM_LABELS[negocio.origem] || negocio.origem} />
           <InfoItem label="Probabilidade" value={`${negocio.probabilidade}%`} />
-          <InfoItem label="Fechamento previsto" value={negocio.data_previsao_fechamento ? new Date(negocio.data_previsao_fechamento).toLocaleDateString('pt-BR') : '\u2014'} />
-          <InfoItem label="Fechamento real" value={negocio.data_fechamento ? new Date(negocio.data_fechamento).toLocaleDateString('pt-BR') : '\u2014'} />
+          <InfoItem label="Fechamento previsto" value={negocio.data_previsao_fechamento ? fmtDate(negocio.data_previsao_fechamento) : '\u2014'} />
+          <InfoItem label="Fechamento real" value={negocio.data_fechamento ? fmtDate(negocio.data_fechamento) : '\u2014'} />
         </div>
         {negocio.tags.length > 0 && (
           <div className="flex gap-1 flex-wrap mt-2">

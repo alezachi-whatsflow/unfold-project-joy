@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -255,7 +256,7 @@ export default function WhitelabelEquipe() {
                 </div>
 
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '—'}
+                  {user.created_at ? fmtDate(user.created_at) : '—'}
                 </span>
 
                 <div className="flex items-center gap-2">

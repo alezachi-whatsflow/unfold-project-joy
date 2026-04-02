@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,7 @@ function timeAgo(iso: string) {
   if (mins < 60) return `há ${mins}min`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `há ${hrs}h`;
-  return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return fmtDate(iso);
 }
 
 interface Props {

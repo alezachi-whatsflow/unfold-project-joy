@@ -1,3 +1,4 @@
+import { fmtDate, fmtDateTime } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -13,11 +14,11 @@ function fmt(n: number) {
 }
 function fmtDate(d: string | null) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('pt-BR');
+  return fmtDate(d);
 }
 function fmtDateTime(d: string | null) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('pt-BR');
+  return fmtDateTime(d);
 }
 
 export default function WLClientDetail() {

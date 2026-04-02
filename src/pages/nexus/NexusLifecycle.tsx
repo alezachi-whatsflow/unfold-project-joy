@@ -1,3 +1,4 @@
+import { fmtDate, fmtDateTime } from "@/lib/dateUtils";
 import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +19,7 @@ import {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function fmtDate(d: string | null) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('pt-BR');
+  return fmtDateTime(d);
 }
 function fmtBytes(b: number) {
   if (b === 0) return '0 B';

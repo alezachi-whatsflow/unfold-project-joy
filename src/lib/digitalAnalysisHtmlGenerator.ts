@@ -293,9 +293,7 @@ function buildNeuroSection(data: DigitalAnalysisData): string {
 }
 
 export function generateAnalysisHtml(data: DigitalAnalysisData): string {
-  const date = new Date(data.created_at).toLocaleDateString("pt-BR", {
-    day: "2-digit", month: "long", year: "numeric",
-  });
+  const date = fmtDate(data.created_at);
 
   const goalScore = 7.5;
   const overallPct = Math.min((data.overall_score / 10) * 100, 100);

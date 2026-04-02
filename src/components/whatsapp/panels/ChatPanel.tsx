@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones, X, Send, LifeBuoy } from "lucide-react";
+import { fmtDateTime } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { QuickLeadDrawer } from "../QuickLeadDrawer";
 import type { Conversation } from "@/data/mockConversations";
@@ -612,7 +613,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
                         {note.user_name}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        {new Date(note.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        {fmtDateTime(note.created_at)}
                       </span>
                     </div>
                     <p className="text-xs whitespace-pre-wrap text-foreground">

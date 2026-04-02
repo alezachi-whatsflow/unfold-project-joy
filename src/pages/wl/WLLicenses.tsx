@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Plus, Search, Edit, Ban, Power, ShieldAlert, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
@@ -98,7 +99,7 @@ export default function WLLicenses() {
                   <td className="px-6 py-4 font-bold">{lic.account}</td>
                   <td className="px-6 py-4 font-medium" style={{ color: "var(--wl-primary)" }}>{lic.plan}</td>
                   <td className="px-6 py-4 font-mono">R$ {lic.mrr.toFixed(2)}</td>
-                  <td className="px-6 py-4 font-mono text-muted-foreground">{new Date(lic.expires).toLocaleDateString('pt-BR')}</td>
+                  <td className="px-6 py-4 font-mono text-muted-foreground">{fmtDate(lic.expires)}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${statusColor(lic.status)}`}>
                       {lic.status}

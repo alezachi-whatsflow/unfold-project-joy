@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -211,7 +212,7 @@ export default function UsersPage() {
                 </div>
 
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}
+                  {p.created_at ? fmtDate(p.created_at) : "—"}
                 </span>
 
                 <div className="flex items-center gap-2">

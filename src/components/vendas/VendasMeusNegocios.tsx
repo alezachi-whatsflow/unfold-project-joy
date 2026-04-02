@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useTenantId } from "@/hooks/useTenantId";
@@ -57,7 +58,7 @@ export default function VendasMeusNegocios() {
       ativos: ativos.length,
       ganhosMes,
       taxa,
-      proximo: proximo ? new Date(proximo.data_previsao_fechamento!).toLocaleDateString('pt-BR') : '—',
+      proximo: proximo ? fmtDate(proximo.data_previsao_fechamento!) : '—',
     };
   }, [meusNegocios]);
 
@@ -116,7 +117,7 @@ export default function VendasMeusNegocios() {
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">{fmt(n.valor_liquido)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {n.data_previsao_fechamento ? new Date(n.data_previsao_fechamento).toLocaleDateString('pt-BR') : '—'}
+                        {n.data_previsao_fechamento ? fmtDate(n.data_previsao_fechamento) : '—'}
                       </TableCell>
                       {!isRepresentante && (
                         <TableCell>

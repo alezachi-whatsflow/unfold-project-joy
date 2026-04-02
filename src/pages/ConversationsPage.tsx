@@ -1,3 +1,4 @@
+import { fmtTime } from "@/lib/dateUtils";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,7 +209,7 @@ export default function ConversationsPage() {
                       }`}>
                         <p>{m.content}</p>
                         <p className={`text-[10px] mt-1 ${m.direction === 'outbound' ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                          {new Date(m.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {fmtTime(m.timestamp)}
                           {m.direction === 'outbound' && (
                             <span className="ml-1">{m.status === 'read' ? '✓✓' : m.status === 'delivered' ? '✓✓' : '✓'}</span>
                           )}

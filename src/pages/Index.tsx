@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -192,7 +193,7 @@ export default function Index() {
                         <Badge variant="secondary" className="text-[10px]">{n.status}</Badge>
                       </td>
                       <td className="px-4 py-3 text-right text-muted-foreground text-xs">
-                        {n.updated_at ? new Date(n.updated_at).toLocaleDateString("pt-BR") : "—"}
+                        {n.updated_at ? fmtDate(n.updated_at) : "—"}
                       </td>
                     </tr>
                   ))

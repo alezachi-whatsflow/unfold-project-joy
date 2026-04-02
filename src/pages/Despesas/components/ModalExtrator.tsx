@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useRef, useCallback, type DragEvent } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, FileText, Bot, Loader2 } from "lucide-react";
@@ -175,7 +176,7 @@ export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Data</label>
-                  <p className="font-medium">{new Date(extracted.date + "T00:00:00").toLocaleDateString("pt-BR")}</p>
+                  <p className="font-medium">{fmtDate(extracted.date + "T00:00:00")}</p>
                 </div>
                 <div className="col-span-2">
                   <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Descrição</label>

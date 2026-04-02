@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { MapPin, Star, Phone, Globe, Clock, Image, MessageSquare, ExternalLink, Building2, ShoppingBag, Rss, CheckCircle2, XCircle, Instagram, Info, CreditCard, Wifi } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -295,7 +296,7 @@ export function GoogleBusinessCard({ business }: GoogleBusinessCardProps) {
                     )}
                     {post.date && (
                       <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                        {new Date(post.date).toLocaleDateString("pt-BR")}
+                        {fmtDate(post.date)}
                       </p>
                     )}
                   </div>

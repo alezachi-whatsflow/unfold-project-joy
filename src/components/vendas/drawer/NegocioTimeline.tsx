@@ -1,3 +1,4 @@
+import { fmtDate, fmtTime } from "@/lib/dateUtils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ export default function NegocioTimeline({ negocio, onAddHistoricoItem }: Negocio
               <div>
                 <p className="text-xs text-foreground">{h.descricao}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {new Date(h.data).toLocaleDateString('pt-BR')} {new Date(h.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  {fmtDate(h.data)} {fmtTime(h.data)}
                   {h.usuarioNome && ` \u2014 ${h.usuarioNome}`}
                 </p>
               </div>

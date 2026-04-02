@@ -1,3 +1,4 @@
+import { fmtDateTime } from "@/lib/dateUtils";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,7 +69,7 @@ export default function SuperAdminAuditLog() {
   const exportCSV = () => {
     const headers = "Data,Ator,Role,Tenant,Ação,Recurso,IP\n";
     const rows = filtered.map((l) =>
-      `${new Date(l.created_at).toLocaleString("pt-BR")},${l.actor_id || ""},${l.actor_role || ""},${l.tenant_name || ""},${l.action},${l.resource || ""},${l.ip_address || ""}`
+      `${fmtDateTime(l.created_at)},${l.actor_id || ""},${l.actor_role || ""},${l.tenant_name || ""},${l.action},${l.resource || ""},${l.ip_address || ""}`
     ).join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -136,7 +137,7 @@ export default function SuperAdminAuditLog() {
                 {filtered.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString("pt-BR")}
+                      {fmtDateTime(log.created_at)}
                     </TableCell>
                     <TableCell className="text-xs">{log.tenant_name}</TableCell>
                     <TableCell>

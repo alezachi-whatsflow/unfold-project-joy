@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,7 @@ const ComunidadePage = () => {
     fetchPosts();
   };
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  const formatDate = (d: string) => fmtDate(d);
   const categoryColors: Record<string, string> = {
     dicas: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
     duvidas: "bg-amber-500/15 text-amber-400 border-amber-500/20",

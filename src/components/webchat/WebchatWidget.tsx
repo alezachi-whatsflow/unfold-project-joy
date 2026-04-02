@@ -1,3 +1,4 @@
+import { fmtTime } from "@/lib/dateUtils";
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ═══════════════════════════════════════════════════════════════
@@ -310,7 +311,7 @@ export default function WebchatWidget({ tenantId, apiUrl, position = "bottom-rig
             </div>
             <div style={S.msgMeta}>
               {m.direction === "agent" ? m.sender?.toUpperCase() : "VOCÊ"} ·{" "}
-              {new Date(m.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              {fmtTime(m.timestamp)}
               {m.pending && " · ENVIANDO..."}
             </div>
           </div>

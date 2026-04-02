@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserTenants } from "@/hooks/useUserTenants";
@@ -200,12 +201,12 @@ export default function AssinaturaPage() {
             <InfoRow label="Ambiente" value={accountName} />
             <InfoRow
               label="Ativacao"
-              value={limits.startsAt ? new Date(limits.startsAt).toLocaleDateString("pt-BR") : "—"}
+              value={limits.startsAt ? fmtDate(limits.startsAt) : "—"}
             />
             <InfoRow
               label="Vencimento"
               value={limits.validUntil
-                ? `${new Date(limits.validUntil).toLocaleDateString("pt-BR")} (${daysLeft! > 0 ? `${daysLeft} dias` : "expirado"})`
+                ? `${fmtDate(limits.validUntil)} (${daysLeft! > 0 ? `${daysLeft} dias` : "expirado"})`
                 : "—"}
             />
             <InfoRow
@@ -579,7 +580,7 @@ function LicenseHistory({ tenantId }: { tenantId?: string }) {
             <tbody>
               {history.map((h: any) => (
                 <tr key={h.id} className="border-t border-white/5 hover:bg-white/5">
-                  <td className="px-4 py-3 text-muted-foreground">{new Date(h.created_at).toLocaleDateString("pt-BR")}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{fmtDate(h.created_at)}</td>
                   <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${typeColor[h.change_type] || "bg-slate-500/10 text-slate-400"}`}>{typeLabel[h.change_type] || h.change_type}</span></td>
                   <td className="px-4 py-3">{h.reason || "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{h.changed_by_role || "Sistema"}</td>

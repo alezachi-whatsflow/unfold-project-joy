@@ -1,3 +1,4 @@
+import { fmtTime } from "@/lib/dateUtils";
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -61,7 +62,7 @@ export default function HomePage() {
       setActivity(
         (logs ?? []).map((l: any) => ({
           text: `Msg de ${l.conversa_id?.slice(-4) ?? "?"}`,
-          time: new Date(l.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+          time: fmtTime(l.timestamp),
         }))
       );
     })();

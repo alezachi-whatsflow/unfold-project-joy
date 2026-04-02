@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { fmtDateTime } from "@/lib/dateUtils";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   open: { label: "Aberto", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: MessageSquare },
@@ -104,7 +105,7 @@ export default function SupportPage() {
                   <div className="flex items-center gap-2 mt-1">
                     <span className={cn("text-[10px] font-medium", pc.color)}>{pc.label}</span>
                     <span className="text-[10px] text-muted-foreground">{t.category}</span>
-                    <span className="text-[10px] text-muted-foreground ml-auto">{new Date(t.updated_at).toLocaleDateString("pt-BR")}</span>
+                    <span className="text-[10px] text-muted-foreground ml-auto">{fmtDateTime(t.updated_at)}</span>
                   </div>
                 </button>
               );
@@ -214,7 +215,7 @@ function TicketChat({ ticket }: { ticket: Ticket }) {
               </p>
               <p className="whitespace-pre-wrap break-words">{m.content}</p>
               <p className="text-[10px] text-muted-foreground mt-1 text-right">
-                {new Date(m.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                {fmtDateTime(m.created_at)}
               </p>
             </div>
           </div>

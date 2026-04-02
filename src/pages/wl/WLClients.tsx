@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useParams, useOutletContext, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -137,7 +138,7 @@ export default function WLClients() {
                         R$ {fmt(c.monthly_value || 0)}
                       </td>
                       <td className="px-5 py-3 text-right text-xs text-white/40">
-                        {c.expires_at ? new Date(c.expires_at).toLocaleDateString('pt-BR') : '—'}
+                        {c.expires_at ? fmtDate(c.expires_at) : '—'}
                       </td>
                       <td className="px-5 py-3 text-right">
                         <ExternalLink className="h-3.5 w-3.5 text-white/30" />

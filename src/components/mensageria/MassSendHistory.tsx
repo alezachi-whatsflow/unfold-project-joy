@@ -1,3 +1,4 @@
+import { fmtDateTime, fmtTime } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,7 +97,7 @@ export default function MassSendHistory({ onBack }: Props) {
   const totalFailed = batches.reduce((s, b) => s + b.failed_count, 0);
   const totalContacts = batches.reduce((s, b) => s + b.total_contacts, 0);
 
-  const formatDate = (d: string) => new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const formatDate = (d: string) => fmtDateTime(d);
   const formatDuration = (start: string, end: string | null) => {
     if (!end) return "em andamento";
     const ms = new Date(end).getTime() - new Date(start).getTime();
@@ -284,7 +285,7 @@ export default function MassSendHistory({ onBack }: Props) {
                           </td>
                           <td className="p-2 text-red-400 max-w-[150px] truncate">{r.error_message || "—"}</td>
                           <td className="p-2 text-right" style={{ color: "var(--text-muted)" }}>
-                            {r.sent_at ? new Date(r.sent_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—"}
+                            {r.sent_at ? fmtTime(r.sent_at) : "—"}
                           </td>
                         </tr>
                       ))}

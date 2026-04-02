@@ -1,3 +1,4 @@
+import { fmtDateTime } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { useAsaas } from "@/contexts/AsaasContext";
 import { upsertDunningRule, simulateDunning, fetchCheckoutSources, fetchDunningExecutions } from "@/lib/asaasQueries";
@@ -274,7 +275,7 @@ export function AsaasDunningPanel() {
                       </span>
                     </div>
                     <span className="text-[10px] text-muted-foreground">
-                      {new Date(exec.executed_at).toLocaleString("pt-BR")}
+                      {fmtDateTime(exec.executed_at)}
                     </span>
                   </div>
                 </div>

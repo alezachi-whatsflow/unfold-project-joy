@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState } from "react";
 import { Calendar, MapPin, Users, Flame } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +53,7 @@ export function CampaignHistory({ onLoadCampaign }: Props) {
                 <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.city}</span>
                 <span className="flex items-center gap-1"><Users className="h-3 w-3" />{c.leads_found} leads</span>
                 {c.hot_leads > 0 && <span className="flex items-center gap-1 text-green-500"><Flame className="h-3 w-3" />{c.hot_leads} quentes</span>}
-                <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(c.created_at).toLocaleDateString("pt-BR")}</span>
+                <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{fmtDate(c.created_at)}</span>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => onLoadCampaign(c)}>Carregar</Button>

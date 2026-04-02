@@ -1,3 +1,4 @@
+import { fmtDateTime } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -204,7 +205,7 @@ export function PaymentTimelineDialog({ payment, onClose, environment }: Props) 
                           <p className="text-xs font-medium">{item.label}</p>
                           <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {new Date(item.date).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                            {fmtDateTime(item.date)}
                           </p>
                         </div>
                         {item.detail && (

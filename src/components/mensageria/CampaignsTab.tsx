@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -284,7 +285,7 @@ export default function CampaignsTab() {
                     </TableCell>
                     <TableCell className="text-xs">{c.delay_min}s - {c.delay_max}s</TableCell>
                     <TableCell className="text-xs">
-                      {c.created_at ? new Date(c.created_at).toLocaleDateString("pt-BR") : "—"}
+                      {c.created_at ? fmtDate(c.created_at) : "—"}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">

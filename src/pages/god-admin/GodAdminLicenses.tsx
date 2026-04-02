@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Search, Edit, Ban, ShieldAlert, CheckCircle2, AlertTriangle, XCircle, FileText } from "lucide-react";
@@ -128,7 +129,7 @@ export default function GodAdminLicenses() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={new Date(lic.expires) < new Date() ? "text-rose-400 font-bold" : ""}>
-                      {new Date(lic.expires).toLocaleDateString('pt-BR')}
+                      {fmtDate(lic.expires)}
                     </span>
                   </td>
                   <td className="px-6 py-4">

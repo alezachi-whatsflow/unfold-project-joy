@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { CheckCircle2, Clock, Mail, UserCheck, Circle } from "lucide-react";
 
 type InvitationStatus = "pending" | "invited" | "accepted" | "active";
@@ -24,7 +25,7 @@ const STATUS_ORDER: Record<string, number> = {
 
 function formatDate(d?: string | null) {
   if (!d) return null;
-  return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return fmtDate(d);
 }
 
 export function InvitationTimeline({ status, invitedAt, acceptedAt, createdAt }: InvitationTimelineProps) {

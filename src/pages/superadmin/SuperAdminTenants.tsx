@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -250,7 +251,7 @@ export default function SuperAdminTenants() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {t.valid_until ? new Date(t.valid_until).toLocaleDateString("pt-BR") : "—"}
+                      {t.valid_until ? fmtDate(t.valid_until) : "—"}
                     </TableCell>
                     <TableCell className="text-xs font-mono text-muted-foreground">{t.license_key}</TableCell>
                     <TableCell>

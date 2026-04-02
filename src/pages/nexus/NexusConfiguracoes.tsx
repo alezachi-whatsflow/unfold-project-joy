@@ -1,3 +1,4 @@
+import { fmtDateTime } from "@/lib/dateUtils";
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -437,8 +438,8 @@ export default function NexusConfiguracoes() {
                     </div>
                     {s.description && <p className="text-[10px] text-muted-foreground">{s.description}</p>}
                     <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground">
-                      {s.next_run_at && <span>Próxima: {new Date(s.next_run_at).toLocaleString('pt-BR')}</span>}
-                      {s.last_run_at && <span>Última: {new Date(s.last_run_at).toLocaleString('pt-BR')}</span>}
+                      {s.next_run_at && <span>Próxima: {fmtDateTime(s.next_run_at)}</span>}
+                      {s.last_run_at && <span>Última: {fmtDateTime(s.last_run_at)}</span>}
                       {s.total_runs > 0 && <span>Execuções: {s.total_runs}</span>}
                     </div>
                   </div>
@@ -531,7 +532,7 @@ export default function NexusConfiguracoes() {
                   : log.status === 'running' ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
                   : log.status === 'partial' ? <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                   : <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />}
-                <span className="text-muted-foreground">{new Date(log.started_at).toLocaleString('pt-BR')}</span>
+                <span className="text-muted-foreground">{fmtDateTime(log.started_at)}</span>
                 <span>{log.result?.scopes || log.scope?.length || 0} escopos</span>
                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
                 <span>{log.result?.targets || log.target_tenant_ids?.length || 0} contas</span>

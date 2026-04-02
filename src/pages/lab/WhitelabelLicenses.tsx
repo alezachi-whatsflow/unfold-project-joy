@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -161,7 +162,7 @@ export default function WhitelabelLicenses() {
                     <TableCell><Badge variant="outline">{PLAN_LABELS[l.plan] || l.plan}</Badge></TableCell>
                     <TableCell><Badge variant={l.status === 'active' ? 'default' : 'secondary'}>{l.status}</Badge></TableCell>
                     <TableCell>R$ {(l.monthly_value || 0).toFixed(2)}</TableCell>
-                    <TableCell>{l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}</TableCell>
+                    <TableCell>{l.expires_at ? fmtDate(l.expires_at) : '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

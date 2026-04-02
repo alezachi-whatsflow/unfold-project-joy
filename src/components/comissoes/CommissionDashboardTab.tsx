@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -212,7 +213,7 @@ export default function CommissionDashboardTab() {
                   return (
                     <TableRow key={s.id} className="border-border">
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                        {fmtDate(s.created_at)}
                       </TableCell>
                       <TableCell className="text-xs font-medium">{person?.name || "-"}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">{s.wallet_id}</TableCell>

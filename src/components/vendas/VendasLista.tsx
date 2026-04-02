@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useTenantId } from "@/hooks/useTenantId";
@@ -179,7 +180,7 @@ export default function VendasLista() {
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">{fmt(n.valor_liquido)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {n.data_previsao_fechamento ? new Date(n.data_previsao_fechamento).toLocaleDateString('pt-BR') : '—'}
+                        {n.data_previsao_fechamento ? fmtDate(n.data_previsao_fechamento) : '—'}
                       </TableCell>
                       <TableCell>
                         {n.cobranca_id ? <CheckCircle className="h-4 w-4 text-primary" /> : n.gerar_cobranca ? <XCircle className="h-4 w-4 text-muted-foreground/30" /> : <span className="text-muted-foreground">—</span>}

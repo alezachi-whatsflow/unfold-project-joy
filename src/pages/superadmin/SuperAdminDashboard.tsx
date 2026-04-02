@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -162,7 +163,7 @@ export default function SuperAdminDashboard() {
                     {t.status === "active" ? "Ativo" : t.status}
                   </Badge>
                   <span className="text-[10px] text-muted-foreground">
-                    {new Date(t.created_at).toLocaleDateString("pt-BR")}
+                    {fmtDate(t.created_at)}
                   </span>
                 </div>
               </div>

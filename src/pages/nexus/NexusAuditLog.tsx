@@ -1,3 +1,4 @@
+import { fmtDateTime } from "@/lib/dateUtils";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -83,7 +84,7 @@ export default function NexusAuditLog() {
 
   function exportCSV() {
     const rows = filtered.map((l) => [
-      new Date(l.created_at).toLocaleString('pt-BR'),
+      fmtDateTime(l.created_at),
       l.nexus_users?.name || '', l.actor_role, l.action,
       l.target_entity || '', l.ip_address || '',
     ].join(';'));
@@ -145,7 +146,7 @@ export default function NexusAuditLog() {
                   {filtered.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(log.created_at).toLocaleString('pt-BR')}
+                        {fmtDateTime(log.created_at)}
                       </TableCell>
                       <TableCell className="text-sm">{log.nexus_users?.name || '—'}</TableCell>
                       <TableCell><Badge variant="outline" className="text-[10px]">{log.actor_role}</Badge></TableCell>

@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -129,7 +130,7 @@ export default function NexusEquipe() {
               roleColor={getRoleColor(user.role)}
               stages={buildUserStages(user)}
               overallStatus={getUserOverallStatus(user)}
-              expiresAt={user.last_login ? new Date(user.last_login).toLocaleDateString('pt-BR') : undefined}
+              expiresAt={user.last_login ? fmtDate(user.last_login) : undefined}
               onEdit={(id) => {
                 const u = users.find(x => x.id === id);
                 setEditMember(u || null);

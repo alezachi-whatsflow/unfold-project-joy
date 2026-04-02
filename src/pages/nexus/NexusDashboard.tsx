@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,7 +173,7 @@ export default function NexusDashboard() {
                       {l.status}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
+                      {l.expires_at ? fmtDate(l.expires_at) : '—'}
                     </span>
                   </div>
                 </div>

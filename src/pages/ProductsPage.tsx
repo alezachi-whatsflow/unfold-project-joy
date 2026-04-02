@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { useProducts, calculateProductMetrics } from "@/contexts/ProductContext";
@@ -157,8 +158,8 @@ function ProductDetailDialog({ product }: { product: Product }) {
         <section>
           <SectionLabel>Registro</SectionLabel>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <DetailRow label="Criado em" value={new Date(product.createdAt).toLocaleDateString("pt-BR")} />
-            <DetailRow label="Atualizado em" value={new Date(product.updatedAt).toLocaleDateString("pt-BR")} />
+            <DetailRow label="Criado em" value={fmtDate(product.createdAt)} />
+            <DetailRow label="Atualizado em" value={fmtDate(product.updatedAt)} />
           </div>
         </section>
       </div>

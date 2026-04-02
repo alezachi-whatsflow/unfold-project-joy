@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,7 +57,7 @@ const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
 
 function fmtDate(val: string | null): string {
-  return val ? new Date(val).toLocaleDateString('pt-BR') : '—';
+  return val ? fmtDate(val) : '—';
 }
 
 function getColValue(l: any, col: string, wlMap?: Record<string, string>): string {
@@ -223,7 +224,7 @@ export default function NexusLicenses() {
     allLicenses
       .filter((l) => l.status === 'active')
       .forEach((l) => {
-        const mo = new Date(l.created_at).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+        const mo = fmtDate(l.created_at);
         mrrByMonth[mo] = (mrrByMonth[mo] || 0) + Number(l.monthly_value || 0);
       });
     const mrrTrend = Object.entries(mrrByMonth).map(([month, mrr]) => ({ month, mrr })).slice(-12);
@@ -243,7 +244,7 @@ export default function NexusLicenses() {
     const rows = filtered.map((l: any) => [
       l.tenants?.name, l.tenants?.email, l.plan, l.status,
       Number(l.monthly_value || 0).toFixed(2),
-      l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '',
+      l.expires_at ? fmtDate(l.expires_at) : '',
       l.has_ia_auditor ? 'SIM' : 'NÃO',
       l.has_ia_copiloto ? 'SIM' : 'NÃO',
       l.has_ia_closer ? 'SIM' : 'NÃO',
@@ -554,7 +555,7 @@ export default function NexusLicenses() {
                         )}
                         {l.expires_at && (
                           <p className="text-[10px] text-muted-foreground">
-                            Venc: {new Date(l.expires_at).toLocaleDateString('pt-BR')}
+                            Venc: {fmtDate(l.expires_at)}
                           </p>
                         )}
                       </CardContent>
@@ -728,32 +729,32 @@ export default function NexusLicenses() {
                           </TableCell>
                           {/* Ativação */}
                           <TableCell className="text-muted-foreground whitespace-nowrap">
-                            {l.starts_at ? new Date(l.starts_at).toLocaleDateString('pt-BR') : '—'}
+                            {l.starts_at ? fmtDate(l.starts_at) : '—'}
                           </TableCell>
                           {/* Cancelado */}
                           <TableCell className="whitespace-nowrap">
                             {l.cancelled_at
-                              ? <span className="text-red-400">{new Date(l.cancelled_at).toLocaleDateString('pt-BR')}</span>
+                              ? <span className="text-red-400">{fmtDate(l.cancelled_at)}</span>
                               : <span className="text-muted-foreground">—</span>
                             }
                           </TableCell>
                           {/* Bloqueio */}
                           <TableCell className="whitespace-nowrap">
                             {l.blocked_at
-                              ? <span className="text-amber-400">{new Date(l.blocked_at).toLocaleDateString('pt-BR')}</span>
+                              ? <span className="text-amber-400">{fmtDate(l.blocked_at)}</span>
                               : <span className="text-muted-foreground">—</span>
                             }
                           </TableCell>
                           {/* Desbloqueio */}
                           <TableCell className="whitespace-nowrap">
                             {l.unblocked_at
-                              ? <span className="text-emerald-400">{new Date(l.unblocked_at).toLocaleDateString('pt-BR')}</span>
+                              ? <span className="text-emerald-400">{fmtDate(l.unblocked_at)}</span>
                               : <span className="text-muted-foreground">—</span>
                             }
                           </TableCell>
                           {/* Vencimento */}
                           <TableCell className="text-muted-foreground whitespace-nowrap">
-                            {l.expires_at ? new Date(l.expires_at).toLocaleDateString('pt-BR') : '—'}
+                            {l.expires_at ? fmtDate(l.expires_at) : '—'}
                           </TableCell>
                           {/* Disp. Oficial (Meta) */}
                           <TableCell className="text-center">

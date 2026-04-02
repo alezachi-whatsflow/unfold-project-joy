@@ -5,6 +5,7 @@ import {
   isGroupJid, jidToPhone, statusNumToLabel, mapMessageType,
   isMediaType, WHATSAPP_CDN_REGEX, extractDownloadUrl,
 } from "./waHelpers";
+import { fmtDateTime } from "@/lib/dateUtils";
 
 export interface MessageCacheEntry {
   messages: Message[];
@@ -90,11 +91,8 @@ export function useMessages() {
         id: row.id,
         conversationId: row.remote_jid,
         content: row.body || row.caption || `[${row.type}]`,
-        timestamp: createdAt.toLocaleString("pt-BR", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit",
-        }),
-        _sortTs: createdAt.getTime(), // raw ms for reliable sorting
+        timestamp: fmtDateTime(createdAt),
+        _sortTs: createdAt.getTime(),
         direction: row.direction === "outgoing" ? "outgoing" : "incoming",
         type: mapMessageType(row.type, row.media_url, row.caption),
         status: statusNumToLabel(row.status ?? 0),

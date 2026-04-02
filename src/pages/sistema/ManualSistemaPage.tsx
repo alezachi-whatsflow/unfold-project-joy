@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -174,7 +175,7 @@ const ManualSistemaPage = () => {
                   <div className="pr-4">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-[10px] text-muted-foreground">
-                        Atualizado em {new Date(selectedArticle.updated_at).toLocaleDateString("pt-BR")}
+                        Atualizado em {fmtDate(selectedArticle.updated_at)}
                       </span>
                       {!isRead(selectedArticle.id) && (
                         <Button size="sm" variant="outline" onClick={markAsRead} className="gap-1.5 text-xs">

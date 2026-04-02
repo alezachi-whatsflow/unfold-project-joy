@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +74,7 @@ function getMonthOptions() {
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "-";
   try {
-    return new Date(dateStr + "T00:00:00").toLocaleDateString("pt-BR");
+    return fmtDate(dateStr + "T00:00:00");
   } catch {
     return dateStr;
   }

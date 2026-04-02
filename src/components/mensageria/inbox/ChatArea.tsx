@@ -1,3 +1,4 @@
+import { fmtDate, fmtTime } from "@/lib/dateUtils";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ const ORIGEM_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return fmtTime(iso);
 }
 
 function StatusIcon({ status }: { status: string }) {
@@ -36,7 +37,7 @@ function groupByDate(msgs: Message[]) {
   const groups: { date: string; messages: Message[] }[] = [];
   let current = "";
   for (const m of msgs) {
-    const d = new Date(m.timestamp).toLocaleDateString("pt-BR");
+    const d = fmtDate(m.timestamp);
     if (d !== current) {
       current = d;
       groups.push({ date: d, messages: [] });

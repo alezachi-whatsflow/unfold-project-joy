@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useNegocios } from "@/hooks/useNegocios";
@@ -340,7 +341,7 @@ export default function VendasPipeline() {
                     )}
                     {neg.data_previsao_fechamento && (
                       <p className={`text-[10px] mt-0.5 ${new Date(neg.data_previsao_fechamento) < new Date() ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        📅 {new Date(neg.data_previsao_fechamento).toLocaleDateString('pt-BR')}
+                        📅 {fmtDate(neg.data_previsao_fechamento)}
                       </p>
                     )}
                     {neg.tags.length > 0 && (

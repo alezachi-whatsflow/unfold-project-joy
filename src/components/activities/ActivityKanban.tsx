@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dateUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,7 @@ function ActivityCard({
         {activity.due_date && (
           <div className={`flex items-center gap-1 text-xs ${isOverdue ? "text-destructive" : "text-muted-foreground"}`}>
             {isOverdue ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-            {new Date(activity.due_date + "T12:00:00").toLocaleDateString("pt-BR")}
+            {fmtDate(activity.due_date + "T12:00:00")}
             {activity.due_time && ` às ${activity.due_time.slice(0, 5)}`}
           </div>
         )}
