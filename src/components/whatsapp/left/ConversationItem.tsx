@@ -73,7 +73,7 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
       {/* Content */}
       <div className="flex-1 min-w-0">
         {/* Line 1: Name + Time/Action */}
-        <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center justify-between gap-1 overflow-hidden">
           <span className="text-[13px] font-medium text-foreground truncate">{c.name}</span>
           <div className="flex items-center gap-1.5 shrink-0">
             {isQueueMode && onAssign ? (
@@ -98,7 +98,7 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
         </div>
 
         {/* Line 2: Message preview */}
-        <div className="flex items-center gap-1 mt-0.5">
+        <div className="flex items-center gap-1 mt-0.5 overflow-hidden">
           {c.slaBreach && (
             <AlertTriangle size={11} className="shrink-0 text-red-500" title="SLA excedido" />
           )}
