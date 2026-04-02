@@ -51,21 +51,27 @@ const OnboardingPage = () => {
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const userId = user?.id;
   useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
     const fetchSteps = async () => {
-      if (!user) return;
       setLoading(true);
-      const { data } = await supabase.from("onboarding_steps").select("step_key").eq("user_id", user.id);
+      const { data } = await supabase.from("onboarding_steps").select("step_key").eq("user_id", userId);
+      if (cancelled) return;
       const keys = (data || []).map((d: any) => d.step_key);
       if (!keys.includes("conta_criada")) {
-        await supabase.from("onboarding_steps").insert({ user_id: user.id, step_key: "conta_criada" });
+        await supabase.from("onboarding_steps").insert({ user_id: userId, step_key: "conta_criada" }).then(() => {});
         keys.push("conta_criada");
       }
-      setCompletedSteps(keys);
-      setLoading(false);
+      if (!cancelled) {
+        setCompletedSteps(keys);
+        setLoading(false);
+      }
     };
     fetchSteps();
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [userId]);
 
   const handleStartTour = (step: OnboardingStep) => {
     const tourConfig = TOUR_CONFIGS[step.key];
@@ -147,7 +153,7 @@ const OnboardingPage = () => {
                           <CheckCircle2 className="h-3.5 w-3.5 text-primary-foreground" />
                         </div>
                       ) : status === "current" ? (
-                        <div className="w-[22px] h-[22px] rounded-full border-2 border-primary bg-primary/20 flex items-center justify-center animate-pulse">
+                        <div className="w-[22px] h-[22px] rounded-full border-2 border-primary bg-primary/20 flex items-center justify-center">
                           <Circle className="h-2.5 w-2.5 text-primary" />
                         </div>
                       ) : (
