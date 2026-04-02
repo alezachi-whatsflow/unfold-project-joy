@@ -180,13 +180,26 @@ export function useMessages() {
         lastSyncRef.current = syncTs;
         lastStatusSyncRef.current = new Date().toISOString();
 
+        // Merge: keep any cached outgoing messages not yet in DB (recently sent)
+        const cached = messagesCacheRef.current.get(jid);
+        let merged = mapped;
+        if (cached?.messages.length) {
+          const dbIds = new Set(mapped.map(m => m.id));
+          const recentOutgoing = cached.messages.filter(
+            m => m.direction === "outgoing" && !dbIds.has(m.id)
+          );
+          if (recentOutgoing.length > 0) {
+            merged = [...mapped, ...recentOutgoing];
+          }
+        }
+
         messagesCacheRef.current.set(jid, {
-          messages: mapped,
+          messages: merged,
           lastSync: syncTs,
           lastStatusSync: lastStatusSyncRef.current,
         });
 
-        setMessages(mapped);
+        setMessages(merged);
       }
     },
     [mapDbMessageToUi, resolveMessageMediaUrl]

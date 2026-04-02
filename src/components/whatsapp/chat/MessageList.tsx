@@ -66,7 +66,7 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
     setIsAtBottom(atBottom);
   }, []);
 
