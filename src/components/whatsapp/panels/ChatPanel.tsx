@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones, X, Send, LifeBuoy } from "lucide-react";
+import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones, X, Send, LifeBuoy, MessageSquarePlus } from "lucide-react";
 import { fmtDateTime } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { QuickLeadDrawer } from "../QuickLeadDrawer";
@@ -423,6 +423,16 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
             {c.tags.map((tag, i) => <TagBadge key={i} label={tag.label} color={tag.color} />)}
           </div>
           <div className="flex items-center gap-4 ml-4">
+            {onNewConversation && (
+              <button
+                onClick={onNewConversation}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors hover:opacity-80"
+                style={{ background: "var(--wa-green, #25D366)", color: "#fff" }}
+                title="Nova Conversa"
+              >
+                <MessageSquarePlus size={12} /> Nova
+              </button>
+            )}
             {[Video, Phone, Search].map((Icon, i) => (
               <button key={i} style={{ color: "var(--wa-text-secondary)" }} className="hover:brightness-150 transition-all" aria-label="action">
                 <Icon size={22} />
@@ -439,7 +449,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
 
         {/* Quick Actions Bar */}
         <div className="flex items-center gap-2 px-4 py-1.5 overflow-x-auto border-t border-white/[0.04]" style={{ height: 36 }}>
-          {/* "Iniciar Atendimento" — show when conversation has no assigned agent */}
+          {/* "Iniciar Atendimento" */}
           {onAssign && (
             <button
               onClick={onAssign}
