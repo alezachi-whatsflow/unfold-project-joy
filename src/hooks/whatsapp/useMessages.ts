@@ -85,14 +85,16 @@ export function useMessages() {
         senderName = rawPayload?.senderName || rawPayload?.pushName || undefined;
       }
 
+      const createdAt = new Date(row.created_at);
       return {
         id: row.id,
         conversationId: row.remote_jid,
         content: row.body || row.caption || `[${row.type}]`,
-        timestamp: new Date(row.created_at).toLocaleString("pt-BR", {
+        timestamp: createdAt.toLocaleString("pt-BR", {
           day: "2-digit", month: "2-digit", year: "numeric",
           hour: "2-digit", minute: "2-digit",
         }),
+        _sortTs: createdAt.getTime(), // raw ms for reliable sorting
         direction: row.direction === "outgoing" ? "outgoing" : "incoming",
         type: mapMessageType(row.type, row.media_url, row.caption),
         status: statusNumToLabel(row.status ?? 0),
@@ -189,18 +191,10 @@ export function useMessages() {
             m => m.direction === "outgoing" && !dbIds.has(m.id)
           );
           if (recentOutgoing.length > 0) {
-            // Dedup + sort by timestamp (DD/MM/YYYY HH:MM format)
             const all = [...mapped, ...recentOutgoing];
             const seen = new Set<string>();
             merged = all.filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
-            // Sort: parse "DD/MM/YYYY HH:MM" → comparable date
-            merged.sort((a, b) => {
-              const parse = (ts: string) => {
-                const m = ts.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-                return m ? new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]).getTime() : 0;
-              };
-              return parse(a.timestamp) - parse(b.timestamp);
-            });
+            merged.sort((a, b) => ((a as any)._sortTs || 0) - ((b as any)._sortTs || 0));
           }
         }
 

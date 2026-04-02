@@ -3,6 +3,27 @@ import type { Message } from "@/data/mockMessages";
 import MessageBubble from "./MessageBubble";
 import { ArrowDown, Loader2 } from "lucide-react";
 
+function formatDateSeparator(dateStr: string): string {
+  if (!dateStr) return "";
+  const parts = dateStr.split("/");
+  if (parts.length !== 3) return dateStr;
+  const [dd, mm, yyyy] = parts;
+  const date = new Date(+yyyy, +mm - 1, +dd);
+  if (isNaN(date.getTime())) return dateStr;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((today.getTime() - target.getTime()) / (86400000));
+
+  if (diffDays === 0) return "Hoje";
+  if (diffDays === 1) return "Ontem";
+  if (diffDays < 7) return date.toLocaleDateString("pt-BR", { weekday: "long" });
+
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
 interface MessageListProps {
   messages: Message[];
   conversationId?: string;
@@ -85,7 +106,7 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
     const groups: { date: string; msgs: Message[] }[] = [];
     let lastDate = "";
     messages.forEach((m) => {
-      const date = m.timestamp.split(" ")[0] || "";
+      const date = (m.timestamp.split(" ")[0] || "").replace(/[,.]$/, "");
       if (date !== lastDate) {
         groups.push({ date, msgs: [m] });
         lastDate = date;
@@ -132,7 +153,7 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
                 className="text-xs px-3 py-1"
                 style={{ backgroundColor: "var(--wa-bg-panel)", color: "var(--wa-text-secondary)" }}
               >
-                {group.date}
+                {formatDateSeparator(group.date)}
               </span>
             </div>
             {group.msgs.map((m, i) => {
