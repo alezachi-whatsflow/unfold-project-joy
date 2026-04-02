@@ -13,7 +13,7 @@ const TextRenderer: React.FC<MessageRendererProps> = ({ message }) => {
   const content = message.content || "";
 
   // Detect signature at TOP: first line is *Name* (WhatsApp bold format)
-  const topSigMatch = content.match(/^\*([^*]+)\*\n([\s\S]*)$/);
+  const topSigMatch = content.match(/^\*([^*]+)\*\n\n?([\s\S]*)$/);
   if (topSigMatch) {
     const sigName = topSigMatch[1];
     const body = topSigMatch[2];
