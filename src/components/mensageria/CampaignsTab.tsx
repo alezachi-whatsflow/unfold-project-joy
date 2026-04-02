@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { campaignService } from "@/services/campaignService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import CampaignCreateDialog from "./CampaignCreateDialog";
 
 interface Campaign {
   id: string;
@@ -318,92 +319,12 @@ export default function CampaignsTab() {
         </div>
       )}
 
-      {/* Create Campaign Dialog */}
-      <Dialog open={showCreate} onOpenChange={(o) => !o && setShowCreate(false)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Nova Campanha de Disparo</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Nome da campanha</Label>
-              <Input
-                placeholder="Ex: Black Friday 2026"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Instância</Label>
-              <Select value={form.instance_name} onValueChange={(v) => setForm({ ...form, instance_name: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione a instância" /></SelectTrigger>
-                <SelectContent>
-                  {instances.map((i) => (
-                    <SelectItem key={i.instance_name} value={i.instance_name}>
-                      {i.label || i.instance_name}
-                    </SelectItem>
-                  ))}
-                  {instances.length === 0 && (
-                    <SelectItem value="_none" disabled>Nenhuma instância conectada</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Números (um por linha ou separados por vírgula)</Label>
-              <Textarea
-                placeholder="5543999011234&#10;5511987654321&#10;5521976543210"
-                value={form.numbers}
-                onChange={(e) => setForm({ ...form, numbers: e.target.value })}
-                rows={5}
-              />
-              <p className="text-[10px] text-muted-foreground">
-                {form.numbers.split(/[\n,;]+/).filter((n) => n.trim()).length} números detectados
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Mensagem</Label>
-              <Textarea
-                placeholder="Olá! Temos uma oferta especial para você..."
-                value={form.message}
-                onChange={(e) => setForm({ ...form, message: e.target.value })}
-                rows={4}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Delay mínimo (seg)</Label>
-                <Input
-                  type="number"
-                  min={5}
-                  value={form.delayMin}
-                  onChange={(e) => setForm({ ...form, delayMin: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Delay máximo (seg)</Label>
-                <Input
-                  type="number"
-                  min={5}
-                  value={form.delayMax}
-                  onChange={(e) => setForm({ ...form, delayMax: Number(e.target.value) })}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={creating} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Criar e Enviar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Create Campaign Dialog — dynamic Meta vs uazapi */}
+      <CampaignCreateDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={fetchCampaigns}
+      />
     </div>
   );
 }
