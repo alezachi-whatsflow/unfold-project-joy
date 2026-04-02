@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTickets, useTicketMessages, type Ticket } from "@/hooks/useTickets";
 import { useTenantId } from "@/hooks/useTenantId";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,10 +53,43 @@ export default function SupportPage() {
     return true;
   });
 
+  // Resizable panel
+  const [panelWidth, setPanelWidth] = useState(() => {
+    const saved = sessionStorage.getItem("wf_support_panel_w");
+    return saved ? Number(saved) : 380;
+  });
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startW = useRef(380);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    isDragging.current = true;
+    startX.current = e.clientX;
+    startW.current = panelWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return;
+      const newW = Math.max(280, Math.min(600, startW.current + (ev.clientX - startX.current)));
+      setPanelWidth(newW);
+    };
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      sessionStorage.setItem("wf_support_panel_w", String(panelWidth));
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, [panelWidth]);
+
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ background: "var(--bg-base)" }}>
       {/* Left: Ticket List */}
-      <div className="w-[380px] shrink-0 border-r border-border flex flex-col overflow-hidden" style={{ background: "var(--bg-surface, var(--bg-base))" }}>
+      <div className="shrink-0 border-r border-border flex flex-col overflow-hidden" style={{ width: panelWidth, background: "var(--bg-surface, var(--bg-base))" }}>
         <div className="p-4 space-y-3 border-b border-border">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-bold flex items-center gap-2">
@@ -113,6 +146,14 @@ export default function SupportPage() {
           )}
         </div>
       </div>
+
+      {/* Resize Handle */}
+      <div
+        onMouseDown={handleMouseDown}
+        className="shrink-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors"
+        style={{ background: "var(--border)" }}
+        title="Arraste para redimensionar"
+      />
 
       {/* Right: Ticket Detail + Chat */}
       <div className="flex-1 flex flex-col overflow-hidden">
