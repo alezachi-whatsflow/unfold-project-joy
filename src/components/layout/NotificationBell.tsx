@@ -143,7 +143,8 @@ export function NotificationBell() {
             filter: `user_id=eq.${user.id}`,
           },
           (payload: any) => {
-            const n = payload.new as Notification
+            const n = payload?.new as Notification | undefined
+            if (!n?.id || !n?.title) return // Guard: skip invalid payloads
             setNotifications((prev) => [n, ...prev].slice(0, 20))
             setUnreadCount((c) => c + 1)
             if (soundEnabled) playNotificationSound()

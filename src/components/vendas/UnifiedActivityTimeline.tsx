@@ -180,6 +180,7 @@ export default function UnifiedActivityTimeline({ cardId, contactJid, limit = 50
         table: 'crm_activities',
         filter: filterKey,
       }, (payload: any) => {
+        if (!payload?.new?.id) return;
         setActivities(prev => [payload.new as Activity, ...prev])
       })
       .subscribe()

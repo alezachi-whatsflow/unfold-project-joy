@@ -40,8 +40,9 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
         { event: "*", schema: "public", table: "whatsapp_messages" },
         (payload) => {
           void (async () => {
-            const newMsg = payload.new as any;
-            if (!newMsg) return;
+            try {
+            const newMsg = payload?.new as any;
+            if (!newMsg?.id || !newMsg?.remote_jid) return; // Guard: skip invalid/DELETE payloads
 
             fetchConversations();
 
@@ -82,6 +83,9 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
             }
 
             pollInterval = 2000; // reset on realtime event
+            } catch (e) {
+              console.warn("[RealtimeSync] Error processing event:", e);
+            }
           })();
         }
       )
