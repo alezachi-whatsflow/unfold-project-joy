@@ -164,4 +164,72 @@ export const TOUR_CONFIGS: Record<string, TourConfig> = {
       },
     ],
   },
+
+  configurar_playbooks: {
+    stepKey: "configurar_playbooks",
+    route: "/intelligence",
+    title: "Playbooks de I.A.",
+    icon: "🤖",
+    steps: [
+      {
+        title: "Conheca os Playbooks de I.A.",
+        description: "Playbooks sao funcionarios autonomos que conversam com seus leads pelo WhatsApp, coletam dados e salvam no CRM. Economize horas do seu time.",
+      },
+      {
+        title: "4 playbooks ja prontos",
+        description: "Voce ja tem 4 playbooks nativos: Qualificacao, Diagnostico, Follow-Up e NPS. Eles ja estao configurados e prontos para ativar.",
+      },
+      {
+        title: "Como funciona",
+        description: "A IA conduz a conversa, faz perguntas e coleta dados. Se o cliente ficar irritado ou pedir humano, escala automaticamente para um atendente.",
+      },
+      {
+        title: "Crie o seu",
+        description: "Clique em '+ Novo Playbook', defina o prompt, os campos para extrair e as regras de escalonamento. Limite: 20 playbooks por conta.",
+        selector: "[data-tour='new-playbook-btn']",
+      },
+    ],
+  },
+
+  configurar_suporte: {
+    stepKey: "configurar_suporte",
+    route: "/suporte",
+    title: "Central de Suporte",
+    icon: "🎫",
+    steps: [
+      {
+        title: "Central de Suporte",
+        description: "Gerencie tickets de atendimento, converse com a equipe e responda clientes em um unico lugar.",
+      },
+      {
+        title: "Chat Dual",
+        description: "Cada ticket tem dois modos: 'Resposta ao Cliente' (enviada ao WhatsApp) e 'Nota Interna' (visivel so para a equipe, fundo amarelo).",
+      },
+      {
+        title: "Integrado ao CRM e WhatsApp",
+        description: "Crie tickets a partir de negocios do pipeline (botao no drawer) ou de conversas do WhatsApp (acao 'Abrir Ticket').",
+      },
+    ],
+  },
+
+  configurar_campanhas: {
+    stepKey: "configurar_campanhas",
+    route: "/mensageria",
+    title: "Campanhas de Disparo",
+    icon: "📢",
+    steps: [
+      {
+        title: "Campanhas Inteligentes",
+        description: "Envie mensagens em massa com formulario adaptativo: Meta Cloud API usa templates, WhatsApp Web usa texto livre com delay anti-ban.",
+      },
+      {
+        title: "Escolha o canal",
+        description: "Ao selecionar a instancia de envio, o formulario muda automaticamente. Meta mostra templates aprovados, uazapi mostra campo de texto livre.",
+      },
+      {
+        title: "Anti-ban",
+        description: "Para WhatsApp Web, configure o delay entre mensagens (recomendado: 10-30 segundos). Isso protege seu numero de bloqueio.",
+      },
+    ],
+  },
 };

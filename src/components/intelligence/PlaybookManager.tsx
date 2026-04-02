@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { fmtDateTime } from "@/lib/dateUtils";
+import { FeatureHint } from "@/components/ui/FeatureHint";
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   qualification: { label: "Qualificacao", color: "text-blue-500 bg-blue-500/10", icon: Target },
@@ -51,6 +52,10 @@ export function PlaybookManager() {
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" /> Playbooks de I.A.
+            <FeatureHint
+              title="O que sao Playbooks?"
+              description="Agentes de IA que conversam com seus leads no WhatsApp, coletam dados automaticamente e escalam para humano quando necessario. Economize ate 4h/dia do seu time."
+            />
           </h2>
           <p className="text-sm text-muted-foreground">
             Funcionarios autonomos que conduzem conversas e coletam dados do CRM

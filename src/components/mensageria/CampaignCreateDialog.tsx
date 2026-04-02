@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { FeatureHint } from "@/components/ui/FeatureHint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -184,7 +185,13 @@ export default function CampaignCreateDialog({ open, onClose, onCreated }: Props
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Campanha de Disparo</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Nova Campanha de Disparo
+            <FeatureHint
+              title="Campanhas Inteligentes"
+              description="O formulario se adapta ao canal escolhido. Meta Cloud API usa templates aprovados. WhatsApp Web permite texto livre com delay anti-ban."
+            />
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">

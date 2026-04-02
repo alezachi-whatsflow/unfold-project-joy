@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { fmtDateTime } from "@/lib/dateUtils";
+import { FeatureHint } from "@/components/ui/FeatureHint";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   open: { label: "Aberto", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: MessageSquare },
@@ -94,6 +95,10 @@ export default function SupportPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-bold flex items-center gap-2">
               <LifeBuoy className="h-5 w-5 text-primary" /> Suporte
+              <FeatureHint
+                title="Central de Suporte"
+                description="Crie tickets, converse com a equipe (notas internas) e responda clientes em um so lugar. Vincule tickets a negocios do CRM ou conversas do WhatsApp."
+              />
             </h1>
             <Button size="sm" onClick={() => setShowNewDialog(true)} className="gap-1 text-xs">
               <Plus className="h-3.5 w-3.5" /> Novo Ticket
