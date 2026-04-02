@@ -71,8 +71,14 @@ export function usePipelines(tenantId?: string) {
   }, [queryClient]);
 
   const createPipeline = useCallback(async (data: Partial<SalesPipeline>) => {
+    let tid = tenantId;
+    if (!tid) {
+      // Fallback: resolve from auth
+      const { getTenantId } = await import("@/lib/tenantResolver");
+      tid = await getTenantId();
+    }
     const { error } = await supabase.from('sales_pipelines').insert({
-      tenant_id: tenantId!,
+      tenant_id: tid,
       name: data.name || 'Novo Pipeline',
       description: data.description || null,
       stages: data.stages || [
