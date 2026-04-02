@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserTenants } from "@/hooks/useUserTenants";
-import { useLicenseLimits } from "@/hooks/useLicenseLimits";
+import { useLicenseLimits, getTierPrice } from "@/hooks/useLicenseLimits";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
@@ -324,13 +324,17 @@ function UpsellSection({ limits, userRole }: { limits: any; userRole: string }) 
   };
 
   // All prices come from license.pricing_config (set by Nexus admin)
-  const unitPriceWeb = pricing.device_web_price;
+  // Uses tier system: price depends on current quantity
+  const totalWeb = limits.maxDevicesWeb;
+  const unitPriceWeb = getTierPrice(pricing.device_web_tiers || [], totalWeb);
   const tierLabelWeb = `R$ ${unitPriceWeb}/un`;
 
-  const unitPriceMeta = pricing.device_meta_price;
+  const totalMeta = limits.maxDevicesMeta;
+  const unitPriceMeta = getTierPrice(pricing.device_meta_tiers || [], totalMeta);
   const tierLabelMeta = `R$ ${unitPriceMeta}/un`;
 
-  const unitPriceAtt = pricing.attendant_price;
+  const totalAtt = limits.maxAttendants;
+  const unitPriceAtt = getTierPrice(pricing.attendant_tiers || [], totalAtt);
   const tierLabelAtt = `R$ ${unitPriceAtt}/un`;
 
   const btnClass = (active = true) =>

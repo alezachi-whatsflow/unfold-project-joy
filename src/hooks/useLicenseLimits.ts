@@ -20,16 +20,27 @@ export interface LicenseLimits {
   monthlyValue: number;
   monthlyMessagesLimit: number;
   storageLimitGb: number;
-  pricingConfig: {
-    device_web_price: number;
-    device_meta_price: number;
-    attendant_price: number;
-    ai_module_price: number;
-    facilite_basico_price: number;
-    facilite_intermediario_price: number;
-    facilite_avancado_price: number;
-    implantacao_price: number;
-  };
+  pricingConfig: PricingConfig;
+}
+
+export interface PriceTier { min: number; max: number; price: number; }
+
+export interface PricingConfig {
+  device_web_tiers: PriceTier[];
+  device_meta_tiers: PriceTier[];
+  attendant_tiers: PriceTier[];
+  ai_module_price: number;
+  facilite_basico_price: number;
+  facilite_intermediario_price: number;
+  facilite_avancado_price: number;
+  implantacao_price: number;
+}
+
+export function getTierPrice(tiers: PriceTier[], currentQty: number): number {
+  for (const tier of tiers) {
+    if (currentQty >= tier.min && currentQty <= tier.max) return tier.price;
+  }
+  return tiers[tiers.length - 1]?.price ?? 0;
 }
 
 export function useLicenseLimits(tenantId?: string) {
@@ -79,9 +90,15 @@ export function useLicenseLimits(tenantId?: string) {
         monthlyMessagesLimit: license.monthly_messages_limit || 10000,
         storageLimitGb: Number(license.storage_limit_gb) || 1,
         pricingConfig: {
-          device_web_price: license.pricing_config?.device_web_price ?? 125,
-          device_meta_price: license.pricing_config?.device_meta_price ?? 100,
-          attendant_price: license.pricing_config?.attendant_price ?? 60,
+          device_web_tiers: license.pricing_config?.device_web_tiers ?? [
+            { min: 1, max: 5, price: 150 }, { min: 6, max: 20, price: 125 }, { min: 21, max: 50, price: 100 },
+          ],
+          device_meta_tiers: license.pricing_config?.device_meta_tiers ?? [
+            { min: 1, max: 5, price: 100 }, { min: 6, max: 20, price: 70 }, { min: 21, max: 50, price: 50 },
+          ],
+          attendant_tiers: license.pricing_config?.attendant_tiers ?? [
+            { min: 1, max: 5, price: 80 }, { min: 6, max: 10, price: 75 }, { min: 11, max: 20, price: 70 }, { min: 21, max: 50, price: 60 },
+          ],
           ai_module_price: license.pricing_config?.ai_module_price ?? 350,
           facilite_basico_price: license.pricing_config?.facilite_basico_price ?? 250,
           facilite_intermediario_price: license.pricing_config?.facilite_intermediario_price ?? 700,

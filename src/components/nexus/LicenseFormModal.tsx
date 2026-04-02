@@ -102,7 +102,9 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     checkout_url: license?.checkout_url || '',
     internal_notes: license?.internal_notes || '',
     pricing_config: license?.pricing_config || {
-      device_web_price: 125, device_meta_price: 100, attendant_price: 60,
+      device_web_tiers: [{min:1,max:5,price:150},{min:6,max:20,price:125},{min:21,max:50,price:100}],
+      device_meta_tiers: [{min:1,max:5,price:100},{min:6,max:20,price:70},{min:21,max:50,price:50}],
+      attendant_tiers: [{min:1,max:5,price:80},{min:6,max:10,price:75},{min:11,max:20,price:70},{min:21,max:50,price:60}],
       ai_module_price: 350, facilite_basico_price: 250, facilite_intermediario_price: 700,
       facilite_avancado_price: 1500, implantacao_price: 2000,
     },
@@ -701,19 +703,50 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           </section>
 
           {/* Pricing Config — valores que o cliente vê na Assinatura */}
-          <section className="space-y-2">
+          <section className="space-y-3">
             <SectionTitle>Precos para o Cliente (Assinatura)</SectionTitle>
-            <p className="text-[10px] text-muted-foreground mb-2">Valores unitarios exibidos na tela de Assinatura do cliente.</p>
+            <p className="text-[10px] text-muted-foreground">Valores unitarios por faixa. O cliente ve o preco da faixa atual dele.</p>
+
+            {/* Tiered pricing tables */}
+            {([
+              { label: 'Disp. Web WhatsApp', tierKey: 'device_web_tiers', defaults: [{min:1,max:5,price:150},{min:6,max:20,price:125},{min:21,max:50,price:100}] },
+              { label: 'Disp. Meta Cloud', tierKey: 'device_meta_tiers', defaults: [{min:1,max:5,price:100},{min:6,max:20,price:70},{min:21,max:50,price:50}] },
+              { label: 'Atendentes', tierKey: 'attendant_tiers', defaults: [{min:1,max:5,price:80},{min:6,max:10,price:75},{min:11,max:20,price:70},{min:21,max:50,price:60}] },
+            ] as const).map(({ label, tierKey, defaults }) => {
+              const tiers = form.pricing_config?.[tierKey] || [...defaults];
+              return (
+                <div key={tierKey} className="border border-border rounded p-2">
+                  <p className="text-[10px] font-semibold mb-1">{label}</p>
+                  <div className="space-y-1">
+                    {tiers.map((tier: any, i: number) => (
+                      <div key={i} className="grid grid-cols-3 gap-1 items-center">
+                        <span className="text-[9px] text-muted-foreground">{String(tier.min).padStart(2,'0')} a {String(tier.max).padStart(2,'0')}</span>
+                        <Input
+                          type="number" min={0} step={1}
+                          value={tier.price}
+                          onChange={(e) => {
+                            const updated = [...tiers];
+                            updated[i] = { ...tier, price: Number(e.target.value) };
+                            set('pricing_config', { ...form.pricing_config, [tierKey]: updated });
+                          }}
+                          className="h-6 text-[10px] px-1"
+                        />
+                        <span className="text-[9px] text-muted-foreground">R$/un</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Fixed prices */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {([
-                { key: 'device_web_price', label: 'Disp. Web (R$)' },
-                { key: 'device_meta_price', label: 'Disp. Meta (R$)' },
-                { key: 'attendant_price', label: 'Atendente (R$)' },
-                { key: 'ai_module_price', label: 'Modulo I.A. (R$)' },
+                { key: 'ai_module_price', label: 'Modulo I.A.' },
                 { key: 'facilite_basico_price', label: 'Facilite Basico' },
                 { key: 'facilite_intermediario_price', label: 'Facilite Interm.' },
                 { key: 'facilite_avancado_price', label: 'Facilite Avancado' },
-                { key: 'implantacao_price', label: 'Implantacao (R$)' },
+                { key: 'implantacao_price', label: 'Implantacao' },
               ] as const).map(({ key, label }) => (
                 <div key={key}>
                   <Label className="text-[10px]">{label}</Label>
