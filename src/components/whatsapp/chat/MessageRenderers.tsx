@@ -8,10 +8,22 @@ export interface MessageRendererProps {
   formatTime: (ts: string) => string;
 }
 
-// Text renderer
-const TextRenderer: React.FC<MessageRendererProps> = ({ message }) => (
-  <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-);
+// Text renderer — detects signature (— Name) and renders smaller
+const TextRenderer: React.FC<MessageRendererProps> = ({ message }) => {
+  const content = message.content || "";
+  const sigIndex = content.lastIndexOf("\n\n\u2014 ");
+  if (sigIndex > 0) {
+    const body = content.slice(0, sigIndex);
+    const sig = content.slice(sigIndex + 2); // includes "— Name"
+    return (
+      <div className="whitespace-pre-wrap break-words">
+        <span className="text-sm">{body}</span>
+        <span className="block text-[9px] text-muted-foreground/70 mt-0.5">{sig}</span>
+      </div>
+    );
+  }
+  return <p className="text-sm whitespace-pre-wrap break-words">{content}</p>;
+};
 
 // Image renderer
 const ImageRenderer: React.FC<MessageRendererProps> = ({ message }) => (
