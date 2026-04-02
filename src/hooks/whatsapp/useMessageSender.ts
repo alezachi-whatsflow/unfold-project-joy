@@ -112,9 +112,10 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       }
     }
 
-    await fetchConversations();
-    await fetchMessages(selectedJid);
-  }, [selectedJidRef, conversations, fetchConversations, fetchMessages]);
+    // Refresh conversation list only (last message preview)
+    // Polling/realtime will sync the sent message — no fetchMessages here to avoid reorder flicker
+    fetchConversations();
+  }, [selectedJidRef, conversations, fetchConversations]);
 
   /* ── send attachment ── */
   const handleSendAttachment = useCallback(async (payload: AttachmentPayload) => {
@@ -173,9 +174,10 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       }
     }
 
-    await fetchConversations();
-    await fetchMessages(selectedJid);
-  }, [selectedJidRef, conversations, fetchConversations, fetchMessages]);
+    // Refresh conversation list only (last message preview)
+    // Polling/realtime will sync the sent message — no fetchMessages here to avoid reorder flicker
+    fetchConversations();
+  }, [selectedJidRef, conversations, fetchConversations]);
 
   return { handleSend, handleSendAttachment };
 }
