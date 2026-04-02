@@ -6,6 +6,7 @@ import {
   isGroupJid, jidToPhone, phoneInitials, groupInitials,
   colorFromJid, formatTime, detectChannel,
 } from "./waHelpers";
+import { callUazapi } from "@/services/uazapiService";
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -192,13 +193,47 @@ export function useConversations() {
   /* ── trigger initial load + avatar sync ──── */
   useEffect(() => {
     fetchConversations();
-    supabase.from("whatsapp_instances").select("instance_name").then(({ data: insts }) => {
-      for (const inst of insts ?? []) {
-        supabase.functions.invoke("sync-message-status", {
-          body: { instanceName: inst.instance_name, syncAvatars: true },
-        }).catch(() => {});
-      }
-    });
+
+    // Sync avatars directly via uazapi (no Edge Function needed)
+    (async () => {
+      try {
+        const { data: contacts } = await (supabase as any)
+          .from("whatsapp_contacts")
+          .select("id, jid, phone, instance_name, profile_pic_url")
+          .is("profile_pic_url", null)
+          .limit(30);
+
+        if (!contacts || contacts.length === 0) return;
+
+        // Group by instance for batch calls
+        const byInstance = new Map<string, any[]>();
+        for (const c of contacts) {
+          if (!c.instance_name) continue;
+          if (!byInstance.has(c.instance_name)) byInstance.set(c.instance_name, []);
+          byInstance.get(c.instance_name)!.push(c);
+        }
+
+        for (const [instName, instContacts] of byInstance) {
+          for (const contact of instContacts.slice(0, 10)) {
+            try {
+              const phone = contact.jid?.replace(/@.*$/, "") || contact.phone;
+              if (!phone) continue;
+              const result = await callUazapi(instName, "/chat/details", "POST", { number: phone, preview: true });
+              const picUrl = result?.data?.imagePreview || result?.data?.image || result?.data?.profilePicUrl || null;
+              if (picUrl) {
+                await (supabase as any)
+                  .from("whatsapp_contacts")
+                  .update({ profile_pic_url: picUrl, updated_at: new Date().toISOString() })
+                  .eq("id", contact.id);
+              }
+            } catch { /* skip individual errors */ }
+          }
+        }
+
+        // Reload conversations to show new avatars
+        fetchConversations();
+      } catch { /* best-effort */ }
+    })();
   }, [fetchConversations]);
 
   /* ── assign / resolve ──── */
