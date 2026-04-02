@@ -325,8 +325,9 @@ export function SalesFunnelConfigCard() {
     try {
       await createPipeline({ name: `Pipeline ${pipelines.length + 1}` });
       toast.success("Novo pipeline criado!");
-    } catch {
-      toast.error("Erro ao criar pipeline");
+    } catch (err: any) {
+      console.error("[Pipeline] Create error:", err);
+      toast.error("Erro ao criar pipeline: " + (err?.message || "Erro desconhecido"));
     }
   };
 
