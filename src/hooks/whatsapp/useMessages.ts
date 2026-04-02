@@ -82,7 +82,8 @@ export function useMessages() {
             rawPayload?.participant?.replace(/@.*$/, "") ||
             jidToPhone(row.remote_jid);
         }
-      } else if (row.direction === "outgoing") {
+      } else if (row.direction === "outgoing" && isGroup) {
+        // Only show sender name in groups, not in 1:1 chats
         senderName = rawPayload?.senderName || rawPayload?.pushName || undefined;
       }
 
