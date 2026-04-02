@@ -439,8 +439,8 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
 
         {/* Quick Actions Bar */}
         <div className="flex items-center gap-2 px-4 py-1.5 overflow-x-auto border-t border-white/[0.04]" style={{ height: 36 }}>
-          {/* "Iniciar Atendimento" — show when conversation is unassigned (queue) */}
-          {activeFilter === "queue" && !c.assignedTo && onAssign && (
+          {/* "Iniciar Atendimento" — show when conversation has no assigned agent */}
+          {onAssign && (
             <button
               onClick={onAssign}
               className="msg-pill flex items-center gap-1.5 shrink-0 pill-green"
