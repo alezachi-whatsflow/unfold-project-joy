@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "@/hooks/useTenantId";
+import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 
 export interface Ticket {
@@ -42,15 +43,24 @@ export interface TicketMessage {
 export function useTickets() {
   const tenantId = useTenantId();
   const queryClient = useQueryClient();
+  const { isOwnedOnly, userId } = usePermissions();
+  const viewOwnedOnly = isOwnedOnly("suporte");
 
   const { data: tickets = [], isLoading } = useQuery({
-    queryKey: ["tickets", tenantId],
+    queryKey: ["tickets", tenantId, viewOwnedOnly ? userId : "all"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      let query = (supabase as any)
         .from("tickets")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("updated_at", { ascending: false });
+
+      // RBAC: if user can only see their own tickets
+      if (viewOwnedOnly && userId) {
+        query = query.or(`assigned_to.eq.${userId},created_by.eq.${userId}`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as Ticket[];
     },

@@ -1,6 +1,10 @@
 import type { UserRole } from '@/types/roles';
 
-export type PermissionAction = 'view' | 'create' | 'edit' | 'delete' | 'export';
+// Extended actions: original 5 + scope + operational
+export type PermissionAction =
+  | 'view' | 'create' | 'edit' | 'delete' | 'export'  // legacy
+  | 'view_all' | 'view_owned'                          // scope visibility
+  | 'transfer';                                         // operational
 
 export type ModulePermission = {
   view: boolean;
@@ -8,9 +12,17 @@ export type ModulePermission = {
   edit: boolean;
   delete: boolean;
   export: boolean;
+  // Extended (optional — backward compat)
+  view_all?: boolean;
+  view_owned?: boolean;
+  transfer?: boolean;
 };
 
 export type PermissionMatrix = Record<string, ModulePermission>;
+
+// Modules that support scope-based visibility
+export const SCOPED_MODULES = ['mensageria', 'vendas', 'atividades', 'suporte', 'caixa_entrada'] as const;
+export type ScopedModule = (typeof SCOPED_MODULES)[number];
 
 export const ALL_MODULES = [
   'dashboard',
@@ -33,89 +45,52 @@ export const ALL_MODULES = [
   'ia_composable',
   'assinatura',
   'analytics',
+  'atividades',
+  'suporte',
 ] as const;
 
 export type AppModule = (typeof ALL_MODULES)[number];
 
-export const MODULE_LABELS: Record<AppModule, string> = {
+export const MODULE_LABELS: Record<string, string> = {
   dashboard:      'Dashboard',
   vendas:         'Vendas',
-  cobrancas:      'Cobranças',
-  comissoes:      'Comissões',
+  cobrancas:      'Cobrancas',
+  comissoes:      'Comissoes',
   receitas:       'Receitas',
   despesas:       'Despesas',
   clientes:       'Clientes',
   produtos:       'Produtos',
   fiscal:         'Fiscal',
   intelligence:   'Intelligence',
-  relatorios:     'Relatórios',
-  configuracoes:  'Configurações',
-  usuarios:       'Usuários',
+  relatorios:     'Relatorios',
+  configuracoes:  'Configuracoes',
+  usuarios:       'Usuarios',
   inserir_dados:  'Inserir Dados',
   mensageria:     'Mensageria',
   caixa_entrada:  'Caixa de Entrada',
-  integracoes:    'Integrações',
+  integracoes:    'Integracoes',
   ia_composable:  'IA Composable',
   assinatura:     'Assinatura',
   analytics:      'Analytics',
+  atividades:     'Atividades',
+  suporte:        'Suporte',
 };
 
-const full: ModulePermission = { view: true, create: true, edit: true, delete: true, export: true };
-const viewExport: ModulePermission = { view: true, create: false, edit: false, delete: false, export: true };
-const viewOnly: ModulePermission = { view: true, create: false, edit: false, delete: false, export: false };
+const full: ModulePermission = { view: true, create: true, edit: true, delete: true, export: true, view_all: true, view_owned: true, transfer: true };
+const viewExport: ModulePermission = { view: true, create: false, edit: false, delete: false, export: true, view_all: true };
+const viewOnly: ModulePermission = { view: true, create: false, edit: false, delete: false, export: false, view_all: true };
 const noAccess: ModulePermission = { view: false, create: false, edit: false, delete: false, export: false };
-const crudNoDelete = (exp: boolean): ModulePermission => ({ view: true, create: true, edit: true, delete: false, export: exp });
+const crudNoDelete = (exp: boolean): ModulePermission => ({ view: true, create: true, edit: true, delete: false, export: exp, view_all: true, transfer: false });
+const ownedCrud = (exp: boolean): ModulePermission => ({ view: true, create: true, edit: true, delete: false, export: exp, view_all: false, view_owned: true, transfer: false });
 
 export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
-  superadmin: {
-    dashboard:      full,
-    vendas:         full,
-    cobrancas:      full,
-    comissoes:      full,
-    receitas:       full,
-    despesas:       full,
-    clientes:       full,
-    produtos:       full,
-    fiscal:         full,
-    intelligence:   full,
-    relatorios:     full,
-    configuracoes:  full,
-    usuarios:       full,
-    inserir_dados:  full,
-    mensageria:     full,
-    caixa_entrada:  full,
-    integracoes:    full,
-    ia_composable:  full,
-    assinatura:     full,
-    analytics:      full,
-  },
+  superadmin: Object.fromEntries(ALL_MODULES.map(m => [m, full])),
 
-  admin: {
-    dashboard:      full,
-    vendas:         full,
-    cobrancas:      full,
-    comissoes:      full,
-    receitas:       full,
-    despesas:       full,
-    clientes:       full,
-    produtos:       full,
-    fiscal:         full,
-    intelligence:   full,
-    relatorios:     full,
-    configuracoes:  full,
-    usuarios:       full,
-    inserir_dados:  full,
-    mensageria:     full,
-    caixa_entrada:  full,
-    integracoes:    full,
-    ia_composable:  full,
-    assinatura:     full,
-    analytics:      full,
-  },
+  admin: Object.fromEntries(ALL_MODULES.map(m => [m, full])),
 
   gestor: {
     dashboard:      viewExport,
-    vendas:         crudNoDelete(true),
+    vendas:         { ...crudNoDelete(true), view_all: true, transfer: true },
     cobrancas:      crudNoDelete(true),
     comissoes:      crudNoDelete(true),
     receitas:       crudNoDelete(true),
@@ -126,14 +101,16 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     intelligence:   viewExport,
     relatorios:     viewExport,
     configuracoes:  noAccess,
-    usuarios:       { view: true, create: true, edit: true, delete: false, export: false },
+    usuarios:       { view: true, create: true, edit: true, delete: false, export: false, view_all: true },
     inserir_dados:  { view: true, create: true, edit: true, delete: false, export: false },
-    mensageria:     crudNoDelete(false),
-    caixa_entrada:  crudNoDelete(false),
+    mensageria:     { ...crudNoDelete(false), view_all: true, transfer: true },
+    caixa_entrada:  { ...crudNoDelete(false), view_all: true, transfer: true },
     integracoes:    viewOnly,
     ia_composable:  viewOnly,
     assinatura:     viewOnly,
     analytics:      viewExport,
+    atividades:     { ...crudNoDelete(false), view_all: true, transfer: true },
+    suporte:        { ...crudNoDelete(false), view_all: true, transfer: true },
   },
 
   financeiro: {
@@ -157,16 +134,18 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     ia_composable:  noAccess,
     assinatura:     viewOnly,
     analytics:      viewExport,
+    atividades:     viewOnly,
+    suporte:        viewOnly,
   },
 
   consultor: {
     dashboard:      viewOnly,
-    vendas:         { view: true, create: true, edit: true, delete: false, export: false },
+    vendas:         { ...ownedCrud(false), transfer: false },
     cobrancas:      viewOnly,
     comissoes:      viewOnly,
     receitas:       viewOnly,
     despesas:       noAccess,
-    clientes:       { view: true, create: true, edit: true, delete: false, export: false },
+    clientes:       { ...ownedCrud(false) },
     produtos:       viewOnly,
     fiscal:         noAccess,
     intelligence:   viewOnly,
@@ -174,34 +153,38 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     configuracoes:  noAccess,
     usuarios:       noAccess,
     inserir_dados:  noAccess,
-    mensageria:     crudNoDelete(false),
-    caixa_entrada:  crudNoDelete(false),
+    mensageria:     { ...ownedCrud(false) },
+    caixa_entrada:  { ...ownedCrud(false) },
     integracoes:    noAccess,
     ia_composable:  viewOnly,
     assinatura:     noAccess,
     analytics:      viewOnly,
+    atividades:     { ...ownedCrud(false) },
+    suporte:        { ...ownedCrud(false) },
   },
 
   representante: {
-    dashboard:      viewOnly,                                                         // Vê seus KPIs
-    vendas:         { view: true, create: true, edit: true, delete: false, export: true }, // Gerencia seus negócios
-    cobrancas:      viewOnly,                                                         // Vê cobranças dos seus clientes
-    comissoes:      { view: true, create: false, edit: false, delete: false, export: true }, // Vê e exporta suas comissões
-    receitas:       viewOnly,                                                         // Vê receitas dos seus negócios
+    dashboard:      viewOnly,
+    vendas:         { ...ownedCrud(true) },
+    cobrancas:      viewOnly,
+    comissoes:      { view: true, create: false, edit: false, delete: false, export: true, view_owned: true },
+    receitas:       viewOnly,
     despesas:       noAccess,
-    clientes:       { view: true, create: true, edit: true, delete: false, export: true },  // Gerencia seus clientes
-    produtos:       viewOnly,                                                         // Consulta catálogo
+    clientes:       { ...ownedCrud(true) },
+    produtos:       viewOnly,
     fiscal:         noAccess,
     intelligence:   noAccess,
-    relatorios:     { view: true, create: false, edit: false, delete: false, export: true }, // Vê e exporta relatórios
+    relatorios:     { view: true, create: false, edit: false, delete: false, export: true },
     configuracoes:  noAccess,
     usuarios:       noAccess,
     inserir_dados:  { view: true, create: true, edit: false, delete: false, export: false },
-    mensageria:     viewOnly,                                                         // Vê mensagens dos seus leads
-    caixa_entrada:  viewOnly,                                                         // Vê conversas atribuídas a ele
+    mensageria:     { ...ownedCrud(false) },
+    caixa_entrada:  { ...ownedCrud(false) },
     integracoes:    noAccess,
     ia_composable:  noAccess,
     assinatura:     noAccess,
-    analytics:      viewOnly,                                                         // Vê analytics dos seus dados
+    analytics:      viewOnly,
+    atividades:     { ...ownedCrud(false) },
+    suporte:        { ...ownedCrud(false) },
   },
 };

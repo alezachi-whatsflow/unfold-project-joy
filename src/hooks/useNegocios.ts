@@ -3,13 +3,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Negocio, NegocioStatus, HistoricoItem } from '@/types/vendas';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export function useNegocios(tenantId?: string, pipelineId?: string | null) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { isOwnedOnly, userId } = usePermissions();
+  const viewOwnedOnly = isOwnedOnly('vendas');
 
   const { data: negocios = [], isLoading } = useQuery({
-    queryKey: ['negocios', tenantId, pipelineId],
+    queryKey: ['negocios', tenantId, pipelineId, viewOwnedOnly ? userId : 'all'],
     enabled: !!tenantId,
     queryFn: async () => {
       let query = supabase
@@ -20,6 +23,11 @@ export function useNegocios(tenantId?: string, pipelineId?: string | null) {
 
       if (pipelineId) {
         query = query.or(`pipeline_id.eq.${pipelineId},pipeline_id.is.null`);
+      }
+
+      // RBAC: if user can only see their own records, filter by consultor_id
+      if (viewOwnedOnly && userId) {
+        query = query.eq('consultor_id', userId);
       }
 
       const { data, error } = await query;

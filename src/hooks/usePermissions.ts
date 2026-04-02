@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { UserRole } from '@/types/roles';
-import { DEFAULT_PERMISSIONS, type PermissionAction, type PermissionMatrix } from '@/config/permissions';
+import { DEFAULT_PERMISSIONS, SCOPED_MODULES, type PermissionAction, type PermissionMatrix } from '@/config/permissions';
 
 export function usePermissions() {
   const { user, loading: isAuthLoading } = useAuth();
@@ -48,6 +48,20 @@ export function usePermissions() {
       for (const mod of Object.keys(custom)) {
         if (!merged[mod]) merged[mod] = { ...custom[mod] };
       }
+
+      // Backward compat: if legacy 'view' is set but 'view_all'/'view_owned' are not,
+      // default to view_all=true for admin roles, view_owned=true for others
+      for (const mod of Object.keys(merged)) {
+        const p = merged[mod];
+        if (p.view && p.view_all === undefined && p.view_owned === undefined) {
+          if (['superadmin', 'admin', 'gestor'].includes(userRole)) {
+            p.view_all = true;
+          } else {
+            p.view_owned = true;
+          }
+        }
+      }
+
       return merged;
     }
 
@@ -55,12 +69,41 @@ export function usePermissions() {
   }, [userRole, profile?.custom_permissions]);
 
   const isSuperAdmin = userRole === 'superadmin';
+  const isAdmin = userRole === 'admin' || isSuperAdmin;
+  const isGestor = userRole === 'gestor';
 
+  /**
+   * Check if user has a specific permission.
+   * Admins (superadmin/admin) always return true for view_all, view_owned, transfer.
+   */
   const can = (module: string, action: PermissionAction): boolean => {
-    if (isSuperAdmin) return true; // superadmin has unrestricted access to everything
+    if (isSuperAdmin) return true;
+    if (isAdmin && ['view_all', 'view_owned', 'transfer'].includes(action)) return true;
+
     const mod = permissions[module];
     if (!mod) return false;
-    return mod[action] ?? false;
+
+    // Backward compat: 'view' resolves to view_all for admins
+    if (action === 'view_all' && mod.view_all === undefined) {
+      return isGestor ? true : (mod.view ?? false);
+    }
+    if (action === 'view_owned' && mod.view_owned === undefined) {
+      return mod.view ?? false;
+    }
+
+    return (mod as any)[action] ?? false;
+  };
+
+  /**
+   * Check if user can only see their own records for a scoped module.
+   * Returns true if user has view_owned but NOT view_all.
+   */
+  const isOwnedOnly = (module: string): boolean => {
+    if (isSuperAdmin || isAdmin || isGestor) return false;
+    const mod = permissions[module];
+    if (!mod) return true;
+    if (mod.view_all) return false;
+    return mod.view_owned ?? false;
   };
 
   const canView = (module: string) => can(module, 'view');
@@ -68,6 +111,8 @@ export function usePermissions() {
   const canEdit = (module: string) => can(module, 'edit');
   const canDelete = (module: string) => can(module, 'delete');
   const canExport = (module: string) => can(module, 'export');
+  const canViewAll = (module: string) => can(module, 'view_all');
+  const canTransfer = (module: string) => can(module, 'transfer');
 
   return {
     can,
@@ -76,13 +121,16 @@ export function usePermissions() {
     canEdit,
     canDelete,
     canExport,
+    canViewAll,
+    canTransfer,
+    isOwnedOnly,
     userRole,
+    userId: user?.id,
     permissions,
-    isSuperAdmin: userRole === 'superadmin',
-    isAdmin: userRole === 'admin' || userRole === 'superadmin',
-    isGestor: userRole === 'gestor',
+    isSuperAdmin,
+    isAdmin,
+    isGestor,
     isPermissionsLoading: isAuthLoading || (Boolean(user?.id) && isLoading),
     permissionsError,
   };
 }
-
