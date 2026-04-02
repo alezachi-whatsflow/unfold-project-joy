@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones, X, Send } from "lucide-react";
+import { Video, Phone, Search, MoreVertical, PanelRightOpen, PanelRightClose, RefreshCw, CheckCircle2, Bot, Tag, StickyNote, MoreHorizontal, Lock, UserPlus, Headphones, X, Send, LifeBuoy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickLeadDrawer } from "../QuickLeadDrawer";
 import type { Conversation } from "@/data/mockConversations";
@@ -40,6 +40,7 @@ const quickActions = [
   { id: "tag", label: "Tag", icon: Tag, bg: "rgba(14,165,233,0.15)", text: "#38BDF8", border: "rgba(14,165,233,0.4)" },
   { id: "notes", label: "Notas", icon: StickyNote, bg: "rgba(100,116,139,0.15)", text: "#94A3B8", border: "rgba(100,116,139,0.4)" },
   { id: "lead", label: "Criar Lead", icon: UserPlus, bg: "rgba(37,211,102,0.15)", text: "#25D366", border: "rgba(37,211,102,0.3)" },
+  { id: "ticket", label: "Abrir Ticket", icon: LifeBuoy, bg: "rgba(139,92,246,0.15)", text: "#A78BFA", border: "rgba(139,92,246,0.3)" },
   { id: "more", label: "Mais", icon: MoreHorizontal, bg: "rgba(100,116,139,0.1)", text: "#8696A0", border: "rgba(100,116,139,0.3)" },
 ];
 
@@ -328,6 +329,29 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
     }
   }, [conversation, iaEnabled]);
 
+  const openTicket = useCallback(async () => {
+    if (!conversation) return;
+    try {
+      const { getTenantId } = await import("@/lib/tenantResolver");
+      const tid = await getTenantId();
+      const { data: { user } } = await supabase.auth.getUser();
+      await (supabase as any).from("tickets").insert({
+        tenant_id: tid,
+        title: `Suporte: ${conversation.name || conversation.phone}`,
+        description: `Ticket criado a partir da conversa WhatsApp com ${conversation.name || conversation.phone}`,
+        reference_type: "whatsapp_contact",
+        reference_id: conversation.id,
+        whatsapp_jid: conversation.id,
+        whatsapp_instance: conversation.instanceName,
+        category: "support",
+        created_by: user?.id || null,
+      });
+      toast.success("Ticket de suporte criado!");
+    } catch (e: any) {
+      toast.error("Erro ao criar ticket: " + (e.message || ""));
+    }
+  }, [conversation]);
+
   /* ═══════════════════════════════════════════════════ */
   /*  Quick action click dispatcher                     */
   /* ═══════════════════════════════════════════════════ */
@@ -350,6 +374,9 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
         break;
       case "ai":
         toggleAI();
+        break;
+      case "ticket":
+        openTicket();
         break;
     }
   }, [onResolve, openTransfer, openTags, openNotes, toggleAI]);

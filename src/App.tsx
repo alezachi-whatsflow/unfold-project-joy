@@ -46,6 +46,7 @@ import IAAuditorPage from "./pages/IAAuditorPage";
 import ActivitiesPage from "./pages/ActivitiesPage";
 
 import ConversationsPage from "./pages/ConversationsPage";
+import SupportPage from "./pages/SupportPage";
 import WaConnectionsPage from "./pages/WaConnectionsPage";
 import AssinaturaPage from "./pages/AssinaturaPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
@@ -228,7 +229,8 @@ const AppRoutes = () => (
       <Route path="integracoes" element={<ProtectedRoute module="mensageria"><RouteErrorBoundary section="Integracoes"><IntegracoesPage /></RouteErrorBoundary></ProtectedRoute>} />
       <Route path="ia" element={<Navigate to="../intelligence" replace />} />
       <Route path="ia/auditor" element={<Navigate to="../intelligence" replace />} />
-      <Route path="conversas" element={<ProtectedRoute module="mensageria"><ConversationsPage /></ProtectedRoute>} />
+      <Route path="conversas" element={<Navigate to="../suporte" replace />} />
+      <Route path="suporte" element={<ProtectedRoute module="mensageria"><SupportPage /></ProtectedRoute>} />
       <Route path="assinatura" element={<AssinaturaPage />} />
       <Route path="analytics" element={<ProtectedRoute module="dashboard"><AnalyticsPage /></ProtectedRoute>} />
       <Route path="wa-connections" element={<Navigate to="integracoes" replace />} />

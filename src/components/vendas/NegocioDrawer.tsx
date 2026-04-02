@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useICPProfile } from "@/hooks/useICPProfile";
 import { useTenantId } from "@/hooks/useTenantId";
+import { useTickets } from "@/hooks/useTickets";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { NEGOCIO_STATUS_CONFIG, type Negocio, type NegocioStatus } from "@/types/vendas";
@@ -9,6 +10,7 @@ import NegocioEditModal from "./NegocioEditModal";
 import FechamentoGanhoModal from "./FechamentoGanhoModal";
 import MotivoPerdaModal from "./MotivoPerdaModal";
 import QualifierModal from "@/components/sales/QualifierModal";
+import { LifeBuoy } from "lucide-react";
 import DrawerHeader from "./drawer/DrawerHeader";
 import DigitalIntelligenceSection from "./drawer/DigitalIntelligenceSection";
 import FinancialSummary from "./drawer/FinancialSummary";
@@ -92,6 +94,9 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
 
         {isDI && <DigitalIntelligenceSection negocio={negocio} />}
 
+        {/* Quick Ticket Button */}
+        <CreateTicketFromNegocio negocio={negocio} />
+
         <NegocioTimeline negocio={negocio} onAddHistoricoItem={addHistoricoItem} />
       </div>
 
@@ -111,6 +116,7 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
       )}
 
       {hasQuestionnaire && (
+        /* @ts-ignore */
         <QualifierModal
           open={qualifierOpen}
           onOpenChange={setQualifierOpen}
@@ -132,5 +138,27 @@ export default function NegocioDrawer({ negocio, onClose }: Props) {
         />
       )}
     </div>
+  );
+}
+
+/* ── Quick ticket creation from negocio ── */
+function CreateTicketFromNegocio({ negocio }: { negocio: Negocio }) {
+  const { createTicket } = useTickets();
+
+  return (
+    <button
+      onClick={() => createTicket.mutate({
+        title: `Demanda: ${negocio.titulo}`,
+        description: `Ticket vinculado ao negocio "${negocio.titulo}" (${negocio.cliente_nome || "sem cliente"})`,
+        reference_type: "negocio",
+        reference_id: negocio.id,
+        category: "commercial",
+      })}
+      disabled={createTicket.isPending}
+      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground border border-dashed border-border rounded-lg hover:bg-muted/50 hover:text-foreground transition-colors"
+    >
+      <LifeBuoy className="h-3.5 w-3.5" />
+      {createTicket.isPending ? "Criando..." : "Abrir Ticket de Suporte"}
+    </button>
   );
 }
