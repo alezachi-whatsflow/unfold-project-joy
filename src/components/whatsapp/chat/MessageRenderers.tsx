@@ -52,7 +52,7 @@ const VideoRenderer: React.FC<MessageRendererProps> = ({ message }) => (
     ) : (
       <p className="text-sm text-muted-foreground italic">🎬 Vídeo</p>
     )}
-    {message.caption && <p className="text-sm mt-1">{message.caption}</p>}
+    {message.caption && <p className="text-sm mt-1 whitespace-pre-wrap break-words">{message.caption}</p>}
   </div>
 );
 

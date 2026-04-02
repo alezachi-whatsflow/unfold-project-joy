@@ -105,7 +105,7 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
   return (
     <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1`}>
       <div
-        className="max-w-[65%] px-2.5 pt-1.5 pb-1 overflow-hidden"
+        className="max-w-[65%] min-w-0 px-2.5 pt-1.5 pb-1 overflow-hidden break-words"
         style={{
           backgroundColor: isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)",
           borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
