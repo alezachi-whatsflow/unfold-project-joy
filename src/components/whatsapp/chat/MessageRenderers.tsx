@@ -8,13 +8,28 @@ export interface MessageRendererProps {
   formatTime: (ts: string) => string;
 }
 
-// Text renderer — detects signature (— Name) and renders smaller
+// Text renderer — detects WhatsApp bold *name* signature at top
 const TextRenderer: React.FC<MessageRendererProps> = ({ message }) => {
   const content = message.content || "";
-  const sigIndex = content.lastIndexOf("\n\n\u2014 ");
-  if (sigIndex > 0) {
-    const body = content.slice(0, sigIndex);
-    const sig = content.slice(sigIndex + 2); // includes "— Name"
+
+  // Detect signature at TOP: first line is *Name* (WhatsApp bold format)
+  const topSigMatch = content.match(/^\*([^*]+)\*\n([\s\S]*)$/);
+  if (topSigMatch) {
+    const sigName = topSigMatch[1];
+    const body = topSigMatch[2];
+    return (
+      <div className="whitespace-pre-wrap break-words">
+        <span className="block text-[10px] font-bold" style={{ color: "var(--wa-green, hsl(var(--primary)))" }}>{sigName}</span>
+        <span className="text-sm">{body}</span>
+      </div>
+    );
+  }
+
+  // Legacy: detect signature at BOTTOM (— Name)
+  const bottomSigIndex = content.lastIndexOf("\n\n\u2014 ");
+  if (bottomSigIndex > 0) {
+    const body = content.slice(0, bottomSigIndex);
+    const sig = content.slice(bottomSigIndex + 2);
     return (
       <div className="whitespace-pre-wrap break-words">
         <span className="text-sm">{body}</span>
@@ -22,6 +37,7 @@ const TextRenderer: React.FC<MessageRendererProps> = ({ message }) => {
       </div>
     );
   }
+
   return <p className="text-sm whitespace-pre-wrap break-words">{content}</p>;
 };
 

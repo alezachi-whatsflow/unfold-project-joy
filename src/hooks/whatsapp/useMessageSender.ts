@@ -50,7 +50,8 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
     let finalText = text.trim();
     const sig = signatureCacheRef.current;
     if (sig?.enabled && sig.text.trim()) {
-      finalText = `${finalText}\n\n\u2014 ${sig.text}`;
+      // Signature at the TOP in bold (*name* format for WhatsApp)
+      finalText = `*${sig.text}*\n${finalText}`;
     }
 
     const conv = conversations.find((c) => c.id === selectedJid);
