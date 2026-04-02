@@ -14,10 +14,11 @@ function CrmSentBadge() {
 }
 import { supabase } from "@/integrations/supabase/client";
 import { scrapeSite, scrapeInstagram, scrapeGoogleBusiness } from "@/services/intelligenceService";
-import { Radar, Brain, Eye } from "lucide-react";
+import { Radar, Brain, Eye, Bot } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IASkillsPage from "./IASkillsPage";
 import IAAuditorPage from "./IAAuditorPage";
+import { PlaybookManager } from "@/components/intelligence/PlaybookManager";
 import { SearchForm } from "@/components/intelligence/SearchForm";
 import { WebAnalysisCard } from "@/components/intelligence/WebAnalysisCard";
 import { AuthorityDiagnosticCard } from "@/components/intelligence/AuthorityDiagnosticCard";
@@ -302,7 +303,7 @@ export default function IntelligencePage() {
   const hasInstagramResults = latestProfile && latestProfile.source === "instagram";
   const hasGoogleResults = googleBusiness !== null;
 
-  const [activeTab, setActiveTab] = useState<"analysis" | "ia" | "auditor">("analysis");
+  const [activeTab, setActiveTab] = useState<"analysis" | "ia" | "auditor" | "playbooks">("analysis");
 
   return (
     <div className="space-y-6">
@@ -322,6 +323,7 @@ export default function IntelligencePage() {
           {([
             { key: "analysis" as const, label: "Análise Digital", icon: <Radar className="h-4 w-4" /> },
             { key: "ia" as const, label: "Módulo de IA", icon: <Brain className="h-4 w-4" /> },
+            { key: "playbooks" as const, label: "Playbooks", icon: <Bot className="h-4 w-4" /> },
             { key: "auditor" as const, label: "Auditor de Qualidade", icon: <Eye className="h-4 w-4" /> },
           ]).map((tab) => (
             <button
@@ -478,6 +480,9 @@ export default function IntelligencePage() {
 
       {/* Section: Módulo de IA */}
       {activeTab === "ia" && <IASkillsPage />}
+
+      {/* Section: Playbooks */}
+      {activeTab === "playbooks" && <PlaybookManager />}
 
       {/* Section: Auditor de Qualidade */}
       {activeTab === "auditor" && <IAAuditorPage />}
