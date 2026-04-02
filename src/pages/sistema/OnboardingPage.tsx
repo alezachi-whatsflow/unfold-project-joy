@@ -181,14 +181,26 @@ const OnboardingPage = () => {
                     </div>
 
                     {/* Action */}
-                    {status !== "completed" && step.hasTour && (
+                    {step.hasTour && (
                       <Button
                         size="sm"
                         variant={status === "current" ? "default" : "outline"}
                         onClick={() => handleStartTour(step)}
                         className="shrink-0 gap-1.5 text-xs"
                       >
-                        <Play className="h-3 w-3" /> {step.action} <ArrowRight className="h-3.5 w-3.5" />
+                        <Play className="h-3 w-3" />
+                        {status === "completed" ? "Refazer tour" : step.action}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {!step.hasTour && step.route && status !== "completed" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(step.route)}
+                        className="shrink-0 gap-1.5 text-xs"
+                      >
+                        {step.action} <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </div>
