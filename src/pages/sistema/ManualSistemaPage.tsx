@@ -28,11 +28,12 @@ interface ArticleProgress {
 
 const categoryLabels: Record<string, string> = {
   primeiros_passos: "Primeiros Passos",
-  clientes: "Gestão de Clientes",
-  financeiro: "Módulo Financeiro",
+  clientes: "Gestao de Clientes",
+  financeiro: "Modulo Financeiro",
   whatsapp: "WhatsApp & Mensagens",
-  relatorios: "Relatórios & Analytics",
-  configuracoes: "Configurações",
+  playbooks_ia: "Playbooks de I.A.",
+  relatorios: "Relatorios & Analytics",
+  configuracoes: "Configuracoes",
 };
 
 const categoryIcons: Record<string, string> = {
@@ -40,6 +41,7 @@ const categoryIcons: Record<string, string> = {
   clientes: "👥",
   financeiro: "💰",
   whatsapp: "📱",
+  playbooks_ia: "🤖",
   relatorios: "📊",
   configuracoes: "⚙️",
 };

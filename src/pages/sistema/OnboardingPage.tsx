@@ -30,6 +30,7 @@ const STEPS: OnboardingStep[] = [
   { key: "primeira_cobranca", title: "Criar primeira cobrança", description: "Crie uma cobrança para um dos seus clientes", action: "Iniciar tour guiado", route: "/cobrancas", estimatedMinutes: 3, icon: "💳", hasTour: true },
   { key: "explorar_dashboard", title: "Explorar o Dashboard", description: "Conheça os indicadores e métricas do seu negócio", action: "Iniciar tour guiado", route: "/dashboard", estimatedMinutes: 2, icon: "📊", hasTour: true },
   { key: "convidar_membro", title: "Convidar um membro da equipe", description: "Adicione outros membros da sua equipe para colaborar", action: "Iniciar tour guiado", route: "/usuarios", estimatedMinutes: 2, icon: "👋", hasTour: true },
+  { key: "configurar_playbooks", title: "Configurar Playbooks de I.A.", description: "Ative funcionarios autonomos que qualificam leads e coletam dados pelo WhatsApp", action: "Configurar agora", route: "/intelligence", estimatedMinutes: 5, icon: "🤖", hasTour: false },
 ];
 
 const motivationalMessages = [
