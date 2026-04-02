@@ -189,7 +189,18 @@ export function useMessages() {
             m => m.direction === "outgoing" && !dbIds.has(m.id)
           );
           if (recentOutgoing.length > 0) {
-            merged = [...mapped, ...recentOutgoing];
+            // Dedup + sort by timestamp (DD/MM/YYYY HH:MM format)
+            const all = [...mapped, ...recentOutgoing];
+            const seen = new Set<string>();
+            merged = all.filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
+            // Sort: parse "DD/MM/YYYY HH:MM" → comparable date
+            merged.sort((a, b) => {
+              const parse = (ts: string) => {
+                const m = ts.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+                return m ? new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]).getTime() : 0;
+              };
+              return parse(a.timestamp) - parse(b.timestamp);
+            });
           }
         }
 
