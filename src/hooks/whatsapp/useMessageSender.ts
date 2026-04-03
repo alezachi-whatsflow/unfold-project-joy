@@ -6,6 +6,7 @@ import type { AttachmentPayload } from "@/components/whatsapp/chat/ChatInput";
 import { isGroupJid, jidToPhone } from "./waHelpers";
 import { callUazapi } from "@/services/uazapiService";
 import { getTenantId } from "@/lib/tenantResolver";
+import { isBackendAvailable, messagesApi } from "@/lib/apiClient";
 
 interface UseMessageSenderOptions {
   selectedJidRef: React.MutableRefObject<string | null>;
@@ -100,12 +101,23 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
         body: finalText, status: 4, tenant_id: tId,
       });
     } else {
-      // Direct uazapi call (no Edge Function dependency)
+      // Feature Toggle: Backend API vs Direct uazapi
       try {
-        await callUazapi(conv.instanceName, "/send/text", "POST", {
-          number: isGroup ? selectedJid : jidToPhone(selectedJid),
-          text: finalText,
-        });
+        if (isBackendAvailable()) {
+          // NEW PATH: Send via Backend API → BullMQ → 202 Accepted
+          await messagesApi.send({
+            instanceName: conv.instanceName,
+            recipientJid: isGroup ? selectedJid : jidToPhone(selectedJid),
+            text: finalText,
+            isGroup,
+          });
+        } else {
+          // LEGACY PATH: Direct uazapi call (current behavior)
+          await callUazapi(conv.instanceName, "/send/text", "POST", {
+            number: isGroup ? selectedJid : jidToPhone(selectedJid),
+            text: finalText,
+          });
+        }
       } catch (err: any) {
         console.error("Send error:", err);
         toast.error(`Erro ao enviar: ${err.message || "Falha no envio"}`);
@@ -168,7 +180,19 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       }
 
       try {
-        await callUazapi(conv.instanceName, path, "POST", body);
+        if (isBackendAvailable() && payload.type === "media") {
+          // NEW PATH: Backend API for media
+          await messagesApi.sendMedia({
+            instanceName: conv.instanceName,
+            recipientJid: number,
+            mediaType: payload.mediaType || "document",
+            mediaUrl: payload.file,
+            caption: payload.text || "",
+          });
+        } else {
+          // LEGACY PATH: Direct uazapi
+          await callUazapi(conv.instanceName, path, "POST", body);
+        }
       } catch (err: any) {
         console.error("Attachment send error:", err);
         throw err;

@@ -11,6 +11,7 @@ import { Loader2, Send, AlertTriangle, Zap, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "@/hooks/useTenantId";
 import { campaignService } from "@/services/campaignService";
+import { isBackendAvailable, campaignsApi } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { fmtDateTime } from "@/lib/dateUtils";
 
@@ -130,43 +131,56 @@ export default function CampaignCreateDialog({ open, onClose, onCreated }: Props
     try {
       const contactList = numbers.split(/[\n,;]+/).map(n => n.trim()).filter(Boolean);
 
-      if (provider === "uazapi") {
-        const result = await campaignService.createSimple(selectedInstance, {
+      if (isBackendAvailable()) {
+        // NEW PATH: Backend API → BullMQ → 202 Accepted
+        await campaignsApi.create({
+          name,
+          instanceName: selectedInstance,
           numbers: contactList,
-          type: "text",
-          text: message,
+          message: provider === "uazapi" ? message : undefined,
+          templateId: provider === "meta" ? selectedTemplate : undefined,
+          provider: provider || "uazapi",
           delayMin,
           delayMax,
-          scheduled_for: 0,
-          info: name,
         });
+      } else {
+        // LEGACY PATH: Direct Supabase + campaignService
+        if (provider === "uazapi") {
+          const result = await campaignService.createSimple(selectedInstance, {
+            numbers: contactList,
+            type: "text",
+            text: message,
+            delayMin,
+            delayMax,
+            scheduled_for: 0,
+            info: name,
+          });
 
-        await (supabase as any).from("whatsapp_campaigns").insert({
-          name,
-          instance_name: selectedInstance,
-          type: "simple",
-          status: "scheduled",
-          total_contacts: contactList.length,
-          delay_min: delayMin,
-          delay_max: delayMax,
-          folder_id: result?.folder_id || null,
-          message_type: "text",
-          info: name,
-          tenant_id: tenantId,
-        });
-      } else if (provider === "meta") {
-        // Meta: send template to each contact via meta-proxy or direct API
-        // For now, save campaign and mark as scheduled
-        await (supabase as any).from("whatsapp_campaigns").insert({
-          name,
-          instance_name: selectedInstance,
-          type: "template",
-          status: "scheduled",
-          total_contacts: contactList.length,
-          message_type: "hsm",
-          info: `Template: ${selectedTemplateFull?.name || selectedTemplate}`,
-          tenant_id: tenantId,
-        });
+          await (supabase as any).from("whatsapp_campaigns").insert({
+            name,
+            instance_name: selectedInstance,
+            type: "simple",
+            status: "scheduled",
+            total_contacts: contactList.length,
+            delay_min: delayMin,
+            delay_max: delayMax,
+            folder_id: result?.folder_id || null,
+            message_type: "text",
+            info: name,
+            tenant_id: tenantId,
+          });
+        } else if (provider === "meta") {
+          await (supabase as any).from("whatsapp_campaigns").insert({
+            name,
+            instance_name: selectedInstance,
+            type: "template",
+            status: "scheduled",
+            total_contacts: contactList.length,
+            message_type: "hsm",
+            info: `Template: ${selectedTemplateFull?.name || selectedTemplate}`,
+            tenant_id: tenantId,
+          });
+        }
       }
 
       toast.success(`Campanha "${name}" criada com ${contactList.length} contatos!`);
