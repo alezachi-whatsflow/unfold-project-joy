@@ -22,6 +22,9 @@ import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import dotenv from "dotenv";
 import { getQueueManager } from "./queues/queueManager.js";
+import messagesRouter from "./routes/messages.js";
+import campaignsRouter from "./routes/campaigns.js";
+import { setSocketIO } from "./services/realtimeEmitter.js";
 
 dotenv.config();
 
@@ -54,8 +57,15 @@ io.on("connection", (socket) => {
   });
 });
 
+// ── Connect Socket.io to Realtime Emitter ──
+setSocketIO(io);
+
 // ── Queue Manager ──
 const queueManager = getQueueManager();
+
+// ── API Routes ──
+app.use("/api/messages", messagesRouter);
+app.use("/api/campaigns", campaignsRouter);
 
 // ── Health Check ──
 app.get("/health", async (_req, res) => {
