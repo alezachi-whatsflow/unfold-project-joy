@@ -238,7 +238,7 @@ export default function ExpensesPage() {
             className="h-9 px-4 rounded-md text-sm font-medium flex items-center gap-2 border transition-colors hover:bg-[hsl(var(--muted))]"
             style={{ borderColor: "#818CF8", color: "#818CF8" }}
           >
-            <Bot size={15} /> Extrator IA
+            <Bot size={15} /> Assistente IA
           </button>
           <PermissionGate module="despesas" action="create">
             <button

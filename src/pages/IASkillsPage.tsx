@@ -11,7 +11,7 @@ const SKILL_META: Record<string, { label: string; icon: React.ReactNode; color: 
   auditor: { label: "Auditor de Qualidade", icon: <Eye className="h-5 w-5" />, color: "text-teal-400", description: "Avalia atendimentos automaticamente" },
   copilot: { label: "Copiloto do Consultor", icon: <Users className="h-5 w-5" />, color: "text-purple-400", description: "Sugere respostas em tempo real" },
   closer: { label: "Closer Autonomo", icon: <Bot className="h-5 w-5" />, color: "text-amber-400", description: "Automatiza atendimento 24/7" },
-  expense_extractor: { label: "Extrator de Despesas", icon: <Receipt className="h-5 w-5" />, color: "text-emerald-500", description: "Reconhece recibos via Vision AI" },
+  expense_extractor: { label: "Assistente Autonomo", icon: <Receipt className="h-5 w-5" />, color: "text-emerald-500", description: "Agente autonomo: despesas, agenda, resumos, comunicacao" },
 };
 
 export default function IASkillsPage() {
@@ -57,7 +57,7 @@ export default function IASkillsPage() {
             <h2 className="text-xl font-bold text-foreground">Modulo de I.A. nao habilitado</h2>
             <p className="text-sm text-muted-foreground">
               Ative o Modulo de Inteligencia Artificial na Central de Assinatura para desbloquear
-              Auditor, Copiloto, Closer e Extrator de Despesas.
+              Auditor, Copiloto, Closer e Assistente Autonomo.
             </p>
             <Button
               onClick={() => navigate(`/app/${slug}/assinatura`)}
