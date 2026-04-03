@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Users, Bot, Brain, Receipt, Loader2, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Eye, Users, Bot, Brain, Receipt, Loader2, Lock, ArrowRight, CheckCircle2, Settings } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTenantId } from "@/hooks/useTenantId";
 
@@ -115,6 +115,11 @@ export default function IASkillsPage() {
                 {isActive && key === "auditor" && (
                   <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => navigate(`/app/${slug}/intelligence`)}>
                     <Eye className="mr-1 h-3.5 w-3.5" /> Abrir Dashboard
+                  </Button>
+                )}
+                {isActive && key === "expense_extractor" && (
+                  <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => navigate(`/app/${slug}/intelligence?tab=assistant`)}>
+                    <Settings className="mr-1 h-3.5 w-3.5" /> Configurar Assistente
                   </Button>
                 )}
                 {!isActive && (
