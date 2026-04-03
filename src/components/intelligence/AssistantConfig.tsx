@@ -213,11 +213,12 @@ export function AssistantConfig() {
                 )}
 
                 {isEnabled && cap.key === "schedule" && (
-                  <div className="mt-4 pl-12">
+                  <div className="mt-4 pl-12 space-y-3">
                     <div>
                       <Label className="text-xs">Duracao padrao de reunioes (minutos)</Label>
                       <Input type="number" min={15} max={120} step={15} value={settings.schedule_default_duration} onChange={(e) => update("schedule_default_duration", Number(e.target.value))} className="w-24 h-8 text-xs" />
                     </div>
+                    <GoogleCalendarConnect />
                   </div>
                 )}
 
@@ -280,6 +281,91 @@ export function AssistantConfig() {
           {saving ? "Salvando..." : "Salvar Configuracoes"}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/* ── Google Calendar Connection Widget ── */
+function GoogleCalendarConnect() {
+  const [status, setStatus] = useState<{ connected: boolean; email?: string; name?: string } | null>(null);
+  const [checking, setChecking] = useState(true);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+
+  useEffect(() => {
+    if (!backendUrl) { setChecking(false); return; }
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) { setChecking(false); return; }
+        const res = await fetch(`${backendUrl}/auth/google/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        setStatus(json);
+      } catch { setStatus({ connected: false }); }
+      finally { setChecking(false); }
+    })();
+  }, [backendUrl]);
+
+  const handleConnect = async () => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token || !backendUrl) {
+      toast.error("Backend nao configurado. Adicione VITE_BACKEND_URL.");
+      return;
+    }
+    window.location.href = `${backendUrl}/auth/google?jwt=${token}`;
+  };
+
+  const handleDisconnect = async () => {
+    if (!backendUrl) return;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    await fetch(`${backendUrl}/auth/google/disconnect`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    setStatus({ connected: false });
+    toast.success("Google Calendar desconectado");
+  };
+
+  if (!backendUrl) {
+    return (
+      <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
+        <Calendar className="h-4 w-4 inline mr-1" />
+        Google Calendar disponivel quando o Backend estiver configurado.
+      </div>
+    );
+  }
+
+  if (checking) return <Loader2 className="h-4 w-4 animate-spin" />;
+
+  return (
+    <div className="p-3 border border-border rounded-lg space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-blue-500" />
+          <span className="text-xs font-semibold">Google Calendar</span>
+        </div>
+        {status?.connected ? (
+          <Badge variant="default" className="text-[9px] bg-emerald-500">Conectado</Badge>
+        ) : (
+          <Badge variant="secondary" className="text-[9px]">Desconectado</Badge>
+        )}
+      </div>
+      {status?.connected ? (
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-muted-foreground">{status.email}</span>
+          <Button size="sm" variant="ghost" className="text-[10px] text-destructive h-6" onClick={handleDisconnect}>
+            Desconectar
+          </Button>
+        </div>
+      ) : (
+        <Button size="sm" variant="outline" className="w-full text-xs gap-1" onClick={handleConnect}>
+          <Calendar className="h-3 w-3" /> Conectar Google Calendar
+        </Button>
+      )}
     </div>
   );
 }

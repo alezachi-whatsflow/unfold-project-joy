@@ -24,6 +24,7 @@ import dotenv from "dotenv";
 import { getQueueManager } from "./queues/queueManager.js";
 import messagesRouter from "./routes/messages.js";
 import campaignsRouter from "./routes/campaigns.js";
+import googleAuthRouter from "./routes/googleAuth.js";
 import { setSocketIO } from "./services/realtimeEmitter.js";
 
 dotenv.config();
@@ -66,6 +67,7 @@ const queueManager = getQueueManager();
 // ── API Routes ──
 app.use("/api/messages", messagesRouter);
 app.use("/api/campaigns", campaignsRouter);
+app.use("/auth/google", googleAuthRouter);
 
 // ── Health Check ──
 app.get("/health", async (_req, res) => {
