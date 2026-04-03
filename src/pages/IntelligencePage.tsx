@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IASkillsPage from "./IASkillsPage";
 import IAAuditorPage from "./IAAuditorPage";
 import { PlaybookManager } from "@/components/intelligence/PlaybookManager";
-import { AssistantConfig } from "@/components/intelligence/AssistantConfig";
+// AssistantConfig moved to IASkillsPage dialog
 import { SearchForm } from "@/components/intelligence/SearchForm";
 import { WebAnalysisCard } from "@/components/intelligence/WebAnalysisCard";
 import { AuthorityDiagnosticCard } from "@/components/intelligence/AuthorityDiagnosticCard";
@@ -304,8 +304,7 @@ export default function IntelligencePage() {
   const hasInstagramResults = latestProfile && latestProfile.source === "instagram";
   const hasGoogleResults = googleBusiness !== null;
 
-  const initialTab = searchParams.get("tab") === "assistant" ? "assistant" : "analysis";
-  const [activeTab, setActiveTab] = useState<"analysis" | "ia" | "playbooks" | "assistant" | "auditor">(initialTab as any);
+  const [activeTab, setActiveTab] = useState<"analysis" | "ia" | "playbooks" | "auditor">("analysis");
 
   return (
     <div className="space-y-6">
@@ -326,7 +325,6 @@ export default function IntelligencePage() {
             { key: "analysis" as const, label: "Análise Digital", icon: <Radar className="h-4 w-4" /> },
             { key: "ia" as const, label: "Módulo de IA", icon: <Brain className="h-4 w-4" /> },
             { key: "playbooks" as const, label: "Playbooks", icon: <Bot className="h-4 w-4" /> },
-            { key: "assistant" as const, label: "Assistente Autonomo", icon: <Settings className="h-4 w-4" /> },
             { key: "auditor" as const, label: "Auditor de Qualidade", icon: <Eye className="h-4 w-4" /> },
           ]).map((tab) => (
             <button
@@ -486,9 +484,6 @@ export default function IntelligencePage() {
 
       {/* Section: Playbooks */}
       {activeTab === "playbooks" && <PlaybookManager />}
-
-      {/* Section: Assistente Autonomo Config */}
-      {activeTab === "assistant" && <AssistantConfig />}
 
       {/* Section: Auditor de Qualidade */}
       {activeTab === "auditor" && <IAAuditorPage />}

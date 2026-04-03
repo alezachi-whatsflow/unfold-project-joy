@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Eye, Users, Bot, Brain, Receipt, Loader2, Lock, ArrowRight, CheckCircle2, Settings } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTenantId } from "@/hooks/useTenantId";
+import { AssistantConfig } from "@/components/intelligence/AssistantConfig";
 
 const SKILL_META: Record<string, { label: string; icon: React.ReactNode; color: string; description: string }> = {
   auditor: { label: "Auditor de Qualidade", icon: <Eye className="h-5 w-5" />, color: "text-teal-400", description: "Avalia atendimentos automaticamente" },
@@ -18,6 +21,7 @@ export default function IASkillsPage() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const tenantId = useTenantId();
+  const [showAssistantConfig, setShowAssistantConfig] = useState(false);
 
   const { data: license, isLoading } = useQuery({
     queryKey: ["license-ai", tenantId],
@@ -118,7 +122,7 @@ export default function IASkillsPage() {
                   </Button>
                 )}
                 {isActive && key === "expense_extractor" && (
-                  <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => navigate(`/app/${slug}/intelligence?tab=assistant`)}>
+                  <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => setShowAssistantConfig(true)}>
                     <Settings className="mr-1 h-3.5 w-3.5" /> Configurar Assistente
                   </Button>
                 )}
@@ -153,6 +157,13 @@ export default function IASkillsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Assistant Config Dialog */}
+      <Dialog open={showAssistantConfig} onOpenChange={setShowAssistantConfig}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <AssistantConfig />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
