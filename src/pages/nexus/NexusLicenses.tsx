@@ -56,9 +56,7 @@ const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
 
-function fmtDate(val: string | null): string {
-  return val ? fmtDate(val) : '—';
-}
+// fmtDate from dateUtils already returns "—" for null/undefined
 
 function getColValue(l: any, col: string, wlMap?: Record<string, string>): string {
   switch (col) {
