@@ -30,7 +30,7 @@ export const TOUR_CONFIGS: Record<string, TourConfig> = {
 
   conectar_whatsapp: {
     stepKey: "conectar_whatsapp",
-    route: "/wa-connections",
+    route: "/integracoes",
     title: "Conectar WhatsApp",
     icon: "📱",
     steps: [
@@ -116,7 +116,7 @@ export const TOUR_CONFIGS: Record<string, TourConfig> = {
 
   explorar_dashboard: {
     stepKey: "explorar_dashboard",
-    route: "/dashboard",
+    route: "/home",
     title: "Explorar o Dashboard",
     icon: "📊",
     steps: [

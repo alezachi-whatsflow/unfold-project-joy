@@ -23,12 +23,12 @@ interface OnboardingStep {
 }
 
 const STEPS: OnboardingStep[] = [
-  { key: "conta_criada", title: "Conta criada", description: "Sua conta foi criada com sucesso no Whatsflow Finance", action: "Concluído automaticamente", route: "/", estimatedMinutes: 0, icon: "✅", hasTour: false },
+  { key: "conta_criada", title: "Conta criada", description: "Sua conta foi criada com sucesso no Whatsflow Finance", action: "Concluido automaticamente", route: "/home", estimatedMinutes: 0, icon: "✅", hasTour: false },
   { key: "perfil_empresa", title: "Configurar perfil da empresa", description: "Preencha os dados da sua empresa para personalizar a plataforma", action: "Iniciar tour guiado", route: "/settings", estimatedMinutes: 2, icon: "🏢", hasTour: true },
-  { key: "conectar_whatsapp", title: "Conectar número WhatsApp", description: "Conecte seu número de WhatsApp para enviar e receber mensagens", action: "Iniciar tour guiado", route: "/wa-connections", estimatedMinutes: 3, icon: "📱", hasTour: true },
-  { key: "cadastrar_cliente", title: "Cadastrar primeiro cliente", description: "Adicione seu primeiro cliente na plataforma para começar a gerenciar", action: "Iniciar tour guiado", route: "/customers", estimatedMinutes: 2, icon: "👥", hasTour: true },
-  { key: "primeira_cobranca", title: "Criar primeira cobrança", description: "Crie uma cobrança para um dos seus clientes", action: "Iniciar tour guiado", route: "/cobrancas", estimatedMinutes: 3, icon: "💳", hasTour: true },
-  { key: "explorar_dashboard", title: "Explorar o Dashboard", description: "Conheça os indicadores e métricas do seu negócio", action: "Iniciar tour guiado", route: "/dashboard", estimatedMinutes: 2, icon: "📊", hasTour: true },
+  { key: "conectar_whatsapp", title: "Conectar numero WhatsApp", description: "Conecte seu numero de WhatsApp para enviar e receber mensagens", action: "Iniciar tour guiado", route: "/integracoes", estimatedMinutes: 3, icon: "📱", hasTour: true },
+  { key: "cadastrar_cliente", title: "Cadastrar primeiro cliente", description: "Adicione seu primeiro cliente na plataforma para comecar a gerenciar", action: "Iniciar tour guiado", route: "/customers", estimatedMinutes: 2, icon: "👥", hasTour: true },
+  { key: "primeira_cobranca", title: "Criar primeira cobranca", description: "Crie uma cobranca para um dos seus clientes", action: "Iniciar tour guiado", route: "/cobrancas", estimatedMinutes: 3, icon: "💳", hasTour: true },
+  { key: "explorar_dashboard", title: "Explorar o Dashboard", description: "Conheca os indicadores e metricas do seu negocio", action: "Iniciar tour guiado", route: "/home", estimatedMinutes: 2, icon: "📊", hasTour: true },
   { key: "convidar_membro", title: "Convidar um membro da equipe", description: "Adicione outros membros da sua equipe para colaborar", action: "Iniciar tour guiado", route: "/usuarios", estimatedMinutes: 2, icon: "👋", hasTour: true },
   { key: "configurar_playbooks", title: "Configurar Playbooks de I.A.", description: "Ative funcionarios autonomos que qualificam leads e coletam dados pelo WhatsApp", action: "Configurar agora", route: "/intelligence", estimatedMinutes: 5, icon: "🤖", hasTour: false },
 ];
