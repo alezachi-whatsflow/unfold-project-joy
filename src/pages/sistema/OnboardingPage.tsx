@@ -74,9 +74,11 @@ const OnboardingPage = () => {
     return () => { cancelled = true; };
   }, [userId]);
 
+  // Resolve slug from URL or from current location path
+  const resolvedSlug = slug || window.location.pathname.match(/\/app\/([^/]+)/)?.[1] || "whatsflow";
+
   const handleStartTour = (step: OnboardingStep) => {
-    const basePath = slug ? `/app/${slug}` : "";
-    const fullRoute = basePath + step.route;
+    const fullRoute = `/app/${resolvedSlug}${step.route}`;
 
     const tourConfig = TOUR_CONFIGS[step.key];
     if (tourConfig) {
