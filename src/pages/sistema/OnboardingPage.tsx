@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Rocket, CheckCircle2, Circle, ArrowRight, Clock, PartyPopper, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useTour } from "@/contexts/TourContext";
 import { TOUR_CONFIGS } from "@/config/tourSteps";
@@ -47,6 +47,7 @@ const motivationalMessages = [
 const OnboardingPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug?: string }>();
   const { startTour } = useTour();
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,11 +75,16 @@ const OnboardingPage = () => {
   }, [userId]);
 
   const handleStartTour = (step: OnboardingStep) => {
+    const basePath = slug ? `/app/${slug}` : "";
+    const fullRoute = basePath + step.route;
+
     const tourConfig = TOUR_CONFIGS[step.key];
     if (tourConfig) {
-      startTour(tourConfig);
+      // Navigate to the correct route first, then start the tour overlay
+      navigate(fullRoute);
+      setTimeout(() => startTour(tourConfig), 500);
     } else {
-      navigate(step.route);
+      navigate(fullRoute);
     }
   };
 
