@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { Settings, Sliders } from 'lucide-react'
+import { Settings, Sliders, Calculator } from 'lucide-react'
 import { toast } from 'sonner'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { GatewayConfigModal } from '../components/shared/GatewayConfigModal'
 import { CheckoutConfigPanel } from '../components/shared/CheckoutConfigPanel'
+import { FeeConfigPanel } from '../components/shared/FeeConfigPanel'
 
 type Org = {
   id: string
@@ -37,6 +39,7 @@ export function PzaafiNexusDashboard() {
   const [newTier, setNewTier] = useState<string>('cliente')
   const [saving, setSaving] = useState(false)
   const [showGatewayModal, setShowGatewayModal] = useState(false)
+  const [showFeeConfig, setShowFeeConfig] = useState<{ id: string; name: string; tenantId: string } | null>(null)
   const [selectedOrgForGateway, setSelectedOrgForGateway] = useState<{ id: string; name: string } | null>(null)
   const [configOrgId, setConfigOrgId] = useState<string | null>(null)
 
@@ -309,6 +312,13 @@ export function PzaafiNexusDashboard() {
                             <Sliders size={14} style={{ color: 'hsl(var(--primary))' }} />
                           </button>
                           <button
+                            onClick={() => setShowFeeConfig({ id: org.id, name: org.name, tenantId: org.tenant_id })}
+                            className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
+                            title="Configurar Taxas"
+                          >
+                            <Calculator size={14} style={{ color: 'hsl(var(--primary))' }} />
+                          </button>
+                          <button
                             onClick={() => { setSelectedOrgForGateway({ id: org.id, name: org.name }); setShowGatewayModal(true) }}
                             className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]"
                             title="Configurar Gateway"
@@ -343,6 +353,23 @@ export function PzaafiNexusDashboard() {
           isOpen={showGatewayModal}
           onClose={() => { setShowGatewayModal(false); setSelectedOrgForGateway(null) }}
         />
+      )}
+
+      {/* Fee Config Modal */}
+      {showFeeConfig && (
+        <Dialog open onOpenChange={() => setShowFeeConfig(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Taxas — {showFeeConfig.name}</DialogTitle>
+            </DialogHeader>
+            <FeeConfigPanel
+              organizationId={showFeeConfig.id}
+              tenantId={showFeeConfig.tenantId}
+              isNexus={true}
+              onClose={() => setShowFeeConfig(null)}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

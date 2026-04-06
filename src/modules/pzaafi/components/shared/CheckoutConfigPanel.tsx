@@ -320,26 +320,7 @@ export function CheckoutConfigPanel({ orgId, orgName, onClose }: CheckoutConfigP
           <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>
             Taxas
           </h4>
-          <div
-            className="rounded-md p-3 space-y-1 text-xs"
-            style={{ background: 'hsl(var(--muted)/0.3)', border: '1px solid hsl(var(--border)/0.5)' }}
-          >
-            <div className="flex justify-between">
-              <span style={{ color: 'hsl(var(--muted-foreground))' }}>PIX</span>
-              <span style={{ color: 'hsl(var(--foreground))' }}>0,99%</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: 'hsl(var(--muted-foreground))' }}>Cartão</span>
-              <span style={{ color: 'hsl(var(--foreground))' }}>2,99% + R$ 0,49</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: 'hsl(var(--muted-foreground))' }}>Boleto</span>
-              <span style={{ color: 'hsl(var(--foreground))' }}>R$ 3,49</span>
-            </div>
-            <p className="pt-1 text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>
-              Taxas definidas pelo gateway conectado
-            </p>
-          </div>
+          <DynamicFeeDisplay organizationId={orgId} />
         </section>
 
         {/* 4. Link do checkout */}
@@ -403,4 +384,59 @@ export function CheckoutConfigPanel({ orgId, orgName, onClose }: CheckoutConfigP
       </div>
     </div>
   )
+}
+
+/* ── Dynamic Fee Display ── */
+function DynamicFeeDisplay({ organizationId }: { organizationId: string }) {
+  const [fees, setFees] = useState<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("pzaafi_fee_configs")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+      setFees(data);
+    })();
+  }, [organizationId]);
+
+  const pix = fees ? (fees.pix_gateway_fee_pct + fees.pix_pzaafi_fee_pct).toFixed(2) + "%" : "0,99%";
+  const card = fees
+    ? `${(fees.card_gateway_fee_pct + fees.card_pzaafi_fee_pct).toFixed(2)}% + R$ ${(fees.card_gateway_fee_fixed + fees.card_pzaafi_fee_fixed).toFixed(2)}`
+    : "2,99% + R$ 0,49";
+  const boleto = fees ? `R$ ${(fees.boleto_gateway_fee + fees.boleto_pzaafi_fee).toFixed(2)}` : "R$ 1,50";
+
+  return (
+    <div
+      className="rounded-md p-3 space-y-1 text-xs"
+      style={{ background: 'hsl(var(--muted)/0.3)', border: '1px solid hsl(var(--border)/0.5)' }}
+    >
+      <div className="flex justify-between">
+        <span style={{ color: 'hsl(var(--muted-foreground))' }}>PIX</span>
+        <span style={{ color: 'hsl(var(--foreground))' }}>{pix}</span>
+      </div>
+      <div className="flex justify-between">
+        <span style={{ color: 'hsl(var(--muted-foreground))' }}>Cartao</span>
+        <span style={{ color: 'hsl(var(--foreground))' }}>{card}</span>
+      </div>
+      <div className="flex justify-between">
+        <span style={{ color: 'hsl(var(--muted-foreground))' }}>Boleto</span>
+        <span style={{ color: 'hsl(var(--foreground))' }}>{boleto}</span>
+      </div>
+      {fees?.tenant_markup_enabled && (
+        <div className="flex justify-between pt-1 border-t border-border/30">
+          <span style={{ color: 'hsl(270 60% 50%)' }}>Comissao</span>
+          <span style={{ color: 'hsl(270 60% 50%)' }}>
+            {fees.tenant_markup_pct > 0 ? `${fees.tenant_markup_pct}%` : ""}
+            {fees.tenant_markup_pct > 0 && fees.tenant_markup_fixed > 0 ? " + " : ""}
+            {fees.tenant_markup_fixed > 0 ? `R$ ${fees.tenant_markup_fixed.toFixed(2)}` : ""}
+          </span>
+        </div>
+      )}
+      <p className="pt-1 text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>
+        {fees ? "Taxas configuradas pelo administrador" : "Taxas padrao (configure na engrenagem)"}
+      </p>
+    </div>
+  );
 }
