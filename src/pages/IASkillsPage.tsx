@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Eye, Users, Bot, Brain, Receipt, Loader2, Lock, ArrowRight, CheckCircle2, Settings } from "lucide-react";
+import { Eye, Users, Bot, Brain, Receipt, Loader2, Lock, ArrowRight, CheckCircle2, Settings, MessageSquare } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTenantId } from "@/hooks/useTenantId";
 import { AssistantConfig } from "@/components/intelligence/AssistantConfig";
@@ -122,9 +122,14 @@ export default function IASkillsPage() {
                   </Button>
                 )}
                 {isActive && key === "expense_extractor" && (
-                  <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => setShowAssistantConfig(true)}>
-                    <Settings className="mr-1 h-3.5 w-3.5" /> Configurar Assistente
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="default" className="flex-1 text-xs" onClick={() => navigate(`/app/${slug}/copilot`)}>
+                      <MessageSquare className="mr-1 h-3.5 w-3.5" /> Abrir Chat
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAssistantConfig(true)}>
+                      <Settings className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 )}
                 {!isActive && (
                   <Button

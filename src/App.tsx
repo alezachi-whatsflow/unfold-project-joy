@@ -44,6 +44,7 @@ import WhatsAppPage from "./pages/WhatsAppPage";
 import IASkillsPage from "./pages/IASkillsPage";
 import IAAuditorPage from "./pages/IAAuditorPage";
 import ActivitiesPage from "./pages/ActivitiesPage";
+import CopilotPage from "./pages/CopilotPage";
 
 import ConversationsPage from "./pages/ConversationsPage";
 import SupportPage from "./pages/SupportPage";
@@ -229,6 +230,7 @@ const AppRoutes = () => (
       <Route path="integracoes" element={<ProtectedRoute module="mensageria"><RouteErrorBoundary section="Integracoes"><IntegracoesPage /></RouteErrorBoundary></ProtectedRoute>} />
       <Route path="ia" element={<Navigate to="../intelligence" replace />} />
       <Route path="ia/auditor" element={<Navigate to="../intelligence" replace />} />
+      <Route path="copilot" element={<ProtectedRoute module="intelligence"><CopilotPage /></ProtectedRoute>} />
       <Route path="conversas" element={<Navigate to="../suporte" replace />} />
       <Route path="suporte" element={<ProtectedRoute module="mensageria"><SupportPage /></ProtectedRoute>} />
       <Route path="assinatura" element={<AssinaturaPage />} />
