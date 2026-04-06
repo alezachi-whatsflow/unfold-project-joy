@@ -2,7 +2,7 @@ import { fmtDate, fmtTime } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, Check, ExternalLink, Search, RefreshCcw, Plus, Link2, Loader2, CreditCard, AlertCircle } from "lucide-react";
+import { Copy, Check, ExternalLink, Search, RefreshCcw, Plus, Link2, Loader2, CreditCard, AlertCircle, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
+import { PzaafiNexusDashboard } from "@/modules/pzaafi/dashboards/PzaafiNexusDashboard";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending:   { label: "Pendente",    color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
@@ -66,23 +67,56 @@ export default function NexusCheckouts() {
     toast({ title: "Link copiado!", description: link });
   };
 
+  const [activeTab, setActiveTab] = useState<"sessions" | "pzaafi">("sessions");
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Checkouts</h1>
-          <p className="text-muted-foreground text-sm mt-1">Monitoramento de todas as sessões de checkout e ativações.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Checkouts & Pagamentos</h1>
+          <p className="text-muted-foreground text-sm mt-1">Gestao global de sessoes de checkout, organizacoes e gateway de pagamento.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
             <RefreshCcw className="h-4 w-4" /> Atualizar
           </Button>
-          <Button size="sm" onClick={() => setShowCreate(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Novo Checkout
-          </Button>
+          {activeTab === "sessions" && (
+            <Button size="sm" onClick={() => setShowCreate(true)} className="gap-2">
+              <Plus className="h-4 w-4" /> Novo Checkout
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Tab Navigation */}
+      <div className="border-b border-border">
+        <nav className="flex gap-6">
+          {([
+            { key: "sessions" as const, label: "Sessoes de Checkout", icon: <CreditCard className="h-4 w-4" /> },
+            { key: "pzaafi" as const, label: "Pzaafi — Organizacoes", icon: <Building2 className="h-4 w-4" /> },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-1.5 pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab: Pzaafi Organizations */}
+      {activeTab === "pzaafi" && <PzaafiNexusDashboard />}
+
+      {/* Tab: Checkout Sessions */}
+      {activeTab === "sessions" && (<>
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -215,6 +249,7 @@ export default function NexusCheckouts() {
           copyLink(id);
         }}
       />
+      </>)}
     </div>
   );
 }
