@@ -5,13 +5,15 @@
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/useAuth"
-import { useMyChats, useChatMessages, useNotifications, type InternalChat } from "@/hooks/useInternalChat"
+import { useMyChats, useChatMessages, useNotifications, useTeamMembers, type InternalChat } from "@/hooks/useInternalChat"
+import { useTenantId } from "@/hooks/useTenantId"
+import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
-  MessageCircle, X, Send, Bell, ChevronLeft, Loader2, CheckCheck,
+  MessageCircle, X, Send, Bell, ChevronLeft, Loader2, CheckCheck, Plus, Search, Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fmtDateTime } from "@/lib/dateUtils"
@@ -20,13 +22,18 @@ import { useNavigate } from "react-router-dom"
 export function GlobalInternalChatDrawer() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const tenantId = useTenantId()
+  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState<"list" | "chat" | "notifications">("list")
+  const [view, setView] = useState<"list" | "chat" | "notifications" | "new_chat">("list")
   const [selectedChat, setSelectedChat] = useState<InternalChat | null>(null)
+  const [memberSearch, setMemberSearch] = useState("")
+  const [creatingChat, setCreatingChat] = useState(false)
 
   const { data: chats = [], isLoading: chatsLoading } = useMyChats()
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications()
   const { messages, isLoading: msgsLoading, sendMessage } = useChatMessages(selectedChat?.id || null)
+  const { data: teamMembers = [] } = useTeamMembers()
   const [input, setInput] = useState("")
   const endRef = useRef<HTMLDivElement>(null)
 
@@ -80,6 +87,45 @@ export function GlobalInternalChatDrawer() {
     setView("chat")
   }
 
+  const startDirectChat = async (memberId: string, memberName: string) => {
+    if (!tenantId || !user?.id || creatingChat) return
+    setCreatingChat(true)
+    try {
+      // Use the DB function to find or create a direct chat
+      const { data: chatId, error } = await (supabase as any).rpc("find_or_create_direct_chat", {
+        p_tenant_id: tenantId,
+        p_user_a: user.id,
+        p_user_b: memberId,
+      })
+      if (error) throw error
+
+      // Fetch the chat to set in state
+      const { data: chat } = await (supabase as any)
+        .from("internal_chats")
+        .select("*")
+        .eq("id", chatId)
+        .single()
+
+      if (chat) {
+        // Set a display name for the chat
+        const displayChat = { ...chat, name: memberName } as InternalChat
+        setSelectedChat(displayChat)
+        setView("chat")
+        queryClient.invalidateQueries({ queryKey: ["internal-chats"] })
+      }
+    } catch (e: any) {
+      console.error("Error creating chat:", e)
+    } finally {
+      setCreatingChat(false)
+    }
+  }
+
+  const filteredMembers = teamMembers.filter(m => {
+    if (m.id === user?.id) return false
+    if (!memberSearch) return true
+    return m.full_name?.toLowerCase().includes(memberSearch.toLowerCase())
+  })
+
   if (!user) return null
 
   return (
@@ -116,13 +162,18 @@ export function GlobalInternalChatDrawer() {
           {/* Header */}
           <div className="px-3 py-2.5 border-b border-border flex items-center gap-2 bg-card">
             {view !== "list" && (
-              <button onClick={() => { setView("list"); setSelectedChat(null) }} className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => { setView("list"); setSelectedChat(null); setMemberSearch("") }} className="text-muted-foreground hover:text-foreground">
                 <ChevronLeft className="h-4 w-4" />
               </button>
             )}
             <h3 className="text-sm font-semibold flex-1">
-              {view === "list" ? "Chat Interno" : view === "notifications" ? "Notificacoes" : selectedChat?.name || "Conversa"}
+              {view === "list" ? "Chat Interno" : view === "new_chat" ? "Nova Conversa" : view === "notifications" ? "Notificacoes" : selectedChat?.name || "Conversa"}
             </h3>
+            {view === "list" && (
+              <button onClick={() => setView("new_chat")} className="text-primary hover:text-primary/80" title="Nova conversa">
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
             {view === "notifications" && unreadCount > 0 && (
               <button onClick={() => markAllRead.mutate()} className="text-[10px] text-primary hover:underline">
                 Marcar todas lidas
@@ -139,7 +190,13 @@ export function GlobalInternalChatDrawer() {
               {chatsLoading ? (
                 <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
               ) : chats.length === 0 ? (
-                <p className="text-center text-xs text-muted-foreground py-8">Nenhuma conversa</p>
+                <div className="flex flex-col items-center justify-center py-10 px-4 space-y-3">
+                  <Users className="h-8 w-8 text-muted-foreground/30" />
+                  <p className="text-xs text-muted-foreground text-center">Nenhuma conversa ainda</p>
+                  <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => setView("new_chat")}>
+                    <Plus className="h-3 w-3" /> Iniciar conversa
+                  </Button>
+                </div>
               ) : (
                 chats.map(chat => (
                   <button
@@ -185,6 +242,45 @@ export function GlobalInternalChatDrawer() {
                 ))
               )}
             </ScrollArea>
+          )}
+
+          {view === "new_chat" && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="px-3 py-2 border-b border-border">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar membro..."
+                    value={memberSearch}
+                    onChange={e => setMemberSearch(e.target.value)}
+                    className="pl-8 h-8 text-xs"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <ScrollArea className="flex-1">
+                {filteredMembers.length === 0 ? (
+                  <p className="text-center text-xs text-muted-foreground py-8">Nenhum membro encontrado</p>
+                ) : (
+                  filteredMembers.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => startDirectChat(m.id, m.full_name || "Sem nome")}
+                      disabled={creatingChat}
+                      className="w-full text-left px-3 py-2.5 border-b border-border/50 hover:bg-muted/50 transition-colors flex items-center gap-2.5"
+                    >
+                      <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
+                        {(m.full_name || "?")[0].toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate">{m.full_name || "Sem nome"}</p>
+                        <p className="text-[10px] text-muted-foreground">{m.role}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </ScrollArea>
+            </div>
           )}
 
           {view === "chat" && selectedChat && (
