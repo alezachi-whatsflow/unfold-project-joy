@@ -11,6 +11,7 @@ import { ROLE_LABELS, ROLE_COLORS } from "@/types/roles";
 import { ALL_MODULES, MODULE_LABELS, type PermissionAction } from "@/config/permissions";
 import { toast } from "sonner";
 import { User, Shield, Lock, CheckCircle, XCircle } from "lucide-react";
+import { CalendarManagement } from "@/components/settings/CalendarManagement";
 
 const ACTION_LABELS: Record<PermissionAction, string> = {
   view: "Ver",
@@ -159,7 +160,10 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Segurança */}
+      {/* Google Calendar */}
+      <CalendarManagement />
+
+      {/* Seguranca */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg"><Lock className="h-5 w-5" /> Segurança</CardTitle>
