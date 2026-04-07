@@ -646,10 +646,10 @@ export default function NexusLicenses() {
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
-                  <Table className="min-w-[1400px]">
+                  <div className="overflow-auto max-h-[calc(100vh-280px)]" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}>
+                  <Table className="min-w-[1800px]">
                     <TableHeader>
-                      <TableRow className="text-[11px]">
+                      <TableRow className="text-[11px] sticky top-0 bg-card z-20">
                         <TableHead className="w-10 sticky left-0 bg-card z-10">
                           <Checkbox
                             checked={filtered.length > 0 && filtered.every((l: any) => selectedIds.has(l.id))}

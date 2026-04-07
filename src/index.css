@@ -17,6 +17,32 @@
   display: none;
 }
 
+/* Show thin scrollbars on data tables */
+.overflow-auto[style*="scrollbar"],
+[data-scrollbar="visible"] {
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
+}
+.overflow-auto[style*="scrollbar"]::-webkit-scrollbar,
+[data-scrollbar="visible"]::-webkit-scrollbar {
+  display: block !important;
+  width: 6px;
+  height: 6px;
+}
+.overflow-auto[style*="scrollbar"]::-webkit-scrollbar-track,
+[data-scrollbar="visible"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-auto[style*="scrollbar"]::-webkit-scrollbar-thumb,
+[data-scrollbar="visible"]::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+.overflow-auto[style*="scrollbar"]::-webkit-scrollbar-thumb:hover,
+[data-scrollbar="visible"]::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
 @layer base {
   /* ═══════════════════════════════════════════════════════════════════
      PZAAFI BRAND KIT v5.0 — Dark Mode Only · Cyber-Minimalist
