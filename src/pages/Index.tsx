@@ -20,26 +20,28 @@ export default function Index() {
   const [period, setPeriod] = useState("7d");
   const tenantId = useTenantId();
 
-  /* First access detection — redirect to onboarding */
+  /* First access detection — redirect to Wizard (company setup) */
   useEffect(() => {
-    if (!user?.id) return;
-    const key = `pzaafi_onboarded_${user.id}`;
+    if (!user?.id || !tenantId) return;
+    const key = `pzaafi_wizard_done_${user.id}`;
     if (localStorage.getItem(key)) return;
 
     (async () => {
-      const { data } = await supabase
-        .from("onboarding_steps")
-        .select("step_key")
-        .eq("user_id", user.id)
-        .limit(2);
+      // Check if company_profile exists and wizard is completed
+      const { data: profile } = await supabase
+        .from("company_profile")
+        .select("wizard_completed")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
 
-      if (!data || data.length <= 1) {
-        navigate(`/app/${slug || "whatsflow"}/sistema/onboarding`, { replace: true });
+      if (!profile || !profile.wizard_completed) {
+        // First access — go to Wizard (Vendas page shows wizard automatically)
+        navigate(`/app/${slug || "whatsflow"}/vendas`, { replace: true });
       } else {
         localStorage.setItem(key, "true");
       }
     })();
-  }, [user?.id, slug, navigate]);
+  }, [user?.id, tenantId, slug, navigate]);
   const { data: license } = useLicenseLimits(tenantId);
 
   // Real KPI data from database
