@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { MessageCircle, Phone, MoreVertical, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import { MessageCircle, Phone, MoreVertical, ChevronDown, ChevronUp, Plus, X, GitBranch, Loader2 } from "lucide-react";
 import type { Conversation } from "@/data/mockConversations";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
 import StatusBadge from "../shared/StatusBadge";
+import { usePipelines } from "@/hooks/usePipelines";
+import { useTenantId } from "@/hooks/useTenantId";
+import { useNegocios } from "@/hooks/useNegocios";
+import { toast } from "sonner";
 
 interface RightPanelProps {
   conversation: Conversation | null;
@@ -12,7 +16,11 @@ interface RightPanelProps {
 }
 
 export default function RightPanel({ conversation, isOpen, onClose }: RightPanelProps) {
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ tags: true, info: true, custom: false });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ tags: true, info: true, custom: false, pipeline: true });
+  const tenantId = useTenantId();
+  const { pipelines } = usePipelines(tenantId);
+  const { createNegocio } = useNegocios();
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
 
   const toggleSection = (id: string) => setOpenSections((p) => ({ ...p, [id]: !p[id] }));
 
@@ -28,12 +36,35 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
         ...(c.participantCount ? [{ label: "Participantes", value: String(c.participantCount) }] : []),
       ]
     : [
-        { label: "Status no funil", value: "Qualificado" },
         { label: "Nome", value: c.name },
         { label: "Telefone", value: c.phone },
         { label: "Email", value: "—" },
         { label: "CPF/CNPJ", value: "—" },
       ];
+
+  const handleSendToPipeline = async (pipelineId: string, pipelineName: string) => {
+    if (!tenantId) return;
+    setSendingTo(pipelineId);
+    try {
+      await createNegocio({
+        titulo: `Lead: ${c.name}`,
+        status: "prospeccao",
+        origem: "whatsapp",
+        cliente_nome: c.name,
+        pipeline_id: pipelineId,
+        notas: `Telefone: ${c.phone}\nOrigem: Caixa de Entrada`,
+        valor_total: 0,
+        valor_liquido: 0,
+        probabilidade: 50,
+        tags: ["inbox"],
+      } as any);
+      toast.success(`Negocio criado em "${pipelineName}"!`);
+    } catch (e: any) {
+      toast.error("Erro: " + e.message);
+    } finally {
+      setSendingTo(null);
+    }
+  };
 
   return (
     <div
@@ -43,7 +74,7 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
       {/* Close button */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--wa-border)" }}>
         <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
-          {isGroup ? "Informações do grupo" : "Informações do contato"}
+          {isGroup ? "Informacoes do grupo" : "Informacoes do contato"}
         </span>
         <button onClick={onClose} aria-label="Fechar painel">
           <X size={18} style={{ color: "var(--wa-text-secondary)" }} />
@@ -70,6 +101,52 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
           ))}
         </div>
       </div>
+
+      {/* Send to Pipeline Section */}
+      {!isGroup && pipelines.length > 0 && (
+        <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
+          <button onClick={() => toggleSection("pipeline")} className="w-full flex items-center justify-between px-4 py-3">
+            <span className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--wa-text-primary)" }}>
+              <GitBranch size={14} /> Enviar para Pipeline
+            </span>
+            {openSections.pipeline ? <ChevronUp size={16} style={{ color: "var(--wa-text-secondary)" }} /> : <ChevronDown size={16} style={{ color: "var(--wa-text-secondary)" }} />}
+          </button>
+          {openSections.pipeline && (
+            <div className="px-4 pb-3 space-y-1.5">
+              {pipelines.map(p => {
+                const isSending = sendingTo === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => handleSendToPipeline(p.id, p.name)}
+                    disabled={!!sendingTo}
+                    className="w-full text-left px-3 py-2 rounded-md text-xs transition-colors flex items-center gap-2"
+                    style={{
+                      backgroundColor: "var(--wa-bg-input)",
+                      color: "var(--wa-text-primary)",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-border-input)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-bg-input)")}
+                  >
+                    {isSending ? (
+                      <Loader2 size={12} className="animate-spin shrink-0" />
+                    ) : (
+                      <GitBranch size={12} className="shrink-0" style={{ color: "var(--wa-green)" }} />
+                    )}
+                    <span className="flex-1 truncate font-medium">{p.name}</span>
+                    <span className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>
+                      {p.stages.filter((s: any) => s.enabled).length} etapas
+                    </span>
+                  </button>
+                );
+              })}
+              <p className="text-[10px] mt-1" style={{ color: "var(--wa-text-tertiary)" }}>
+                Cria um negocio no pipeline selecionado com dados do contato
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tags & Status Section */}
       <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
@@ -106,7 +183,7 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
       <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
         <button onClick={() => toggleSection("info")} className="w-full flex items-center justify-between px-4 py-3">
           <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
-            {isGroup ? "Informações do Grupo" : "Informações do Lead"}
+            {isGroup ? "Informacoes do Grupo" : "Informacoes do Lead"}
           </span>
           {openSections.info ? <ChevronUp size={16} style={{ color: "var(--wa-text-secondary)" }} /> : <ChevronDown size={16} style={{ color: "var(--wa-text-secondary)" }} />}
         </button>
@@ -119,7 +196,7 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
               </div>
             ))}
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase" style={{ color: "var(--wa-text-tertiary)" }}>Anotações</span>
+              <span className="text-[10px] uppercase" style={{ color: "var(--wa-text-tertiary)" }}>Anotacoes</span>
               <textarea
                 className="w-full bg-transparent border rounded text-sm resize-none outline-none px-2 py-1"
                 style={{ borderColor: "var(--wa-border-input)", color: "var(--wa-text-primary)", minHeight: 60 }}
