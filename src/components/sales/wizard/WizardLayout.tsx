@@ -125,6 +125,57 @@ export default function WizardLayout({ onComplete }: Props) {
     employee_count: '',
   });
 
+  // CNPJ auto-fetch state
+  const [cnpjLoading, setCnpjLoading] = useState(false);
+  const [cnpjData, setCnpjData] = useState<any>(null);
+
+  const fetchCnpjData = async (cnpj: string) => {
+    setCnpjLoading(true);
+    setCnpjData(null);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+      if (!res.ok) throw new Error("CNPJ nao encontrado");
+      const data = await res.json();
+      setCnpjData(data);
+
+      // Map CNAE description to segment value
+      const cnaeDesc = (data.cnae_fiscal_descricao || "").toLowerCase();
+      let detectedSegment = "";
+      if (cnaeDesc.includes("saude") || cnaeDesc.includes("medic") || cnaeDesc.includes("clinic") || cnaeDesc.includes("hospital")) detectedSegment = "saude";
+      else if (cnaeDesc.includes("odonto") || cnaeDesc.includes("dentist")) detectedSegment = "odontologia";
+      else if (cnaeDesc.includes("educacao") || cnaeDesc.includes("ensino") || cnaeDesc.includes("escola") || cnaeDesc.includes("curso")) detectedSegment = "educacao";
+      else if (cnaeDesc.includes("imobili") || cnaeDesc.includes("construc") || cnaeDesc.includes("incorpora")) detectedSegment = "imoveis";
+      else if (cnaeDesc.includes("tecnologia") || cnaeDesc.includes("software") || cnaeDesc.includes("informatica") || cnaeDesc.includes("sistema")) detectedSegment = "tecnologia";
+      else if (cnaeDesc.includes("aliment") || cnaeDesc.includes("restaur") || cnaeDesc.includes("lanchonete")) detectedSegment = "alimentacao";
+      else if (cnaeDesc.includes("advog") || cnaeDesc.includes("juridic")) detectedSegment = "juridico";
+      else if (cnaeDesc.includes("contab") || cnaeDesc.includes("contad")) detectedSegment = "contabilidade";
+      else if (cnaeDesc.includes("financ") || cnaeDesc.includes("banco") || cnaeDesc.includes("credito")) detectedSegment = "financeiro";
+      else if (cnaeDesc.includes("comercio") || cnaeDesc.includes("varejo") || cnaeDesc.includes("loja") || cnaeDesc.includes("atacad")) detectedSegment = "varejo";
+      else if (cnaeDesc.includes("moda") || cnaeDesc.includes("confeccao") || cnaeDesc.includes("vestuario")) detectedSegment = "moda";
+      else if (cnaeDesc.includes("agro") || cnaeDesc.includes("pecuar") || cnaeDesc.includes("agricul")) detectedSegment = "agronegocio";
+      else if (cnaeDesc.includes("beleza") || cnaeDesc.includes("estetic") || cnaeDesc.includes("cabeleir") || cnaeDesc.includes("cosmetic")) detectedSegment = "beleza";
+      else if (cnaeDesc.includes("logistic") || cnaeDesc.includes("transport") || cnaeDesc.includes("frete")) detectedSegment = "logistica";
+      else if (cnaeDesc.includes("market") || cnaeDesc.includes("publicidad") || cnaeDesc.includes("propaganda") || cnaeDesc.includes("agencia")) detectedSegment = "marketing";
+      else if (cnaeDesc.includes("recrutam") || cnaeDesc.includes("recursos humanos")) detectedSegment = "rh";
+      else if (cnaeDesc.includes("industri") || cnaeDesc.includes("fabric") || cnaeDesc.includes("manufat")) detectedSegment = "industria";
+
+      // Auto-fill fields
+      setCompany(prev => ({
+        ...prev,
+        company_name: prev.company_name || data.razao_social || data.nome_fantasia || "",
+        city: data.municipio || prev.city,
+        state: data.uf || prev.state,
+        ...(detectedSegment ? { segment: detectedSegment } : {}),
+      }));
+
+      toast.success(`CNPJ encontrado: ${data.razao_social || data.nome_fantasia}`);
+    } catch (e: any) {
+      toast.error("CNPJ nao encontrado na Receita Federal");
+    } finally {
+      setCnpjLoading(false);
+    }
+  };
+
   // Integration detection state
   const [channels, setChannels] = useState<ChannelStatus[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(false);
@@ -685,11 +736,38 @@ export default function WizardLayout({ onComplete }: Props) {
                   <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     CNPJ / CPF
                   </label>
-                  <Input
-                    value={company.cnpj}
-                    onChange={(e) => setCompany({ ...company, cnpj: e.target.value })}
-                    placeholder="00.000.000/0000-00"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={company.cnpj}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, '').slice(0, 14);
+                        // Format CNPJ: 00.000.000/0000-00
+                        let formatted = raw;
+                        if (raw.length > 2) formatted = raw.slice(0, 2) + '.' + raw.slice(2);
+                        if (raw.length > 5) formatted = formatted.slice(0, 6) + '.' + raw.slice(5);
+                        if (raw.length > 8) formatted = formatted.slice(0, 10) + '/' + raw.slice(8);
+                        if (raw.length > 12) formatted = formatted.slice(0, 15) + '-' + raw.slice(12);
+                        setCompany({ ...company, cnpj: formatted });
+
+                        // Auto-fetch when CNPJ is complete (14 digits)
+                        if (raw.length === 14) {
+                          fetchCnpjData(raw);
+                        }
+                      }}
+                      placeholder="00.000.000/0000-00"
+                      maxLength={18}
+                    />
+                    {cnpjLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                  {cnpjData && (
+                    <p className="text-[10px] text-emerald-500">
+                      Dados preenchidos automaticamente via CNPJ
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -703,8 +781,8 @@ export default function WizardLayout({ onComplete }: Props) {
                       <SelectValue placeholder="Selecione o segmento" />
                     </SelectTrigger>
                     <SelectContent>
-                      {SEGMENTS.map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      {SEGMENTS.map((s: any) => (
+                        <SelectItem key={s.value || s} value={s.value || s}>{s.label || s}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
