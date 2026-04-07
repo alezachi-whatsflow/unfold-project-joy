@@ -9,6 +9,7 @@ import { TopNavBar } from "./TopNavBar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
+import { GlobalInternalChatDrawer } from "@/components/chat/GlobalInternalChatDrawer";
 
 export function DashboardLayout() {
   const isMobile = useIsMobile();
@@ -129,6 +130,7 @@ export function DashboardLayout() {
         </main>
       </div>
       <CommandPalette />
+      <GlobalInternalChatDrawer />
     </div>
   );
 }
