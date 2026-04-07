@@ -459,24 +459,33 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
               </div>
               {form.license_type === 'whitelabel' && (
                 <div className="space-y-2 md:col-span-2">
-                  <Label className="text-xs font-semibold uppercase text-muted-foreground">Slug do WhiteLabel</Label>
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">Slug do Partner</Label>
                   <Input
-                    placeholder="ex: sendhit, minha-marca (usado no CSV import e URLs)"
+                    placeholder="ex: sendhit, minha-marca"
                     value={form.whitelabel_slug}
                     onChange={(e) => set('whitelabel_slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'))}
                   />
-                  <p className="text-[10px] text-muted-foreground">Identificador unico. Clientes no CSV usam este slug na coluna WHITELABEL.</p>
+                  <p className="text-[10px] text-muted-foreground">Identificador unico para URL do portal. Ex: /partners/sendhit</p>
                 </div>
               )}
-              {form.license_type === 'individual' && (
+              {(form.license_type === 'individual' || form.license_type === 'whitelabel') && whitelabels.length > 0 && (
                 <div className="space-y-2 md:col-span-2">
-                  <Label className="text-xs font-semibold uppercase text-muted-foreground">Pertence ao WhiteLabel? (Opcional)</Label>
-                  <Select value={form.parent_license_id} onValueChange={(v) => set('parent_license_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Contrato Direto (Whatsflow)" /></SelectTrigger>
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                    {form.license_type === 'individual' ? 'Vinculado ao Partner' : 'Partner existente (se ja criado)'}
+                  </Label>
+                  <Select value={form.parent_license_id} onValueChange={(v) => {
+                    set('parent_license_id', v);
+                    // Auto-fill slug from selected WL
+                    if (form.license_type === 'whitelabel') {
+                      const wl = whitelabels.find((w: any) => w.id === v);
+                      if (wl?.whitelabel_slug) set('whitelabel_slug', wl.whitelabel_slug);
+                    }
+                  }}>
+                    <SelectTrigger><SelectValue placeholder={form.license_type === 'individual' ? 'Selecione o Partner' : 'Novo Partner (sem vinculo)'} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Contrato Direto (Whatsflow)</SelectItem>
-                      {whitelabels.map((w) => (
-                        <SelectItem key={w.id} value={w.id}>{w.tenants?.name || w.whitelabel_slug || 'WhiteLabel Sem Nome'}</SelectItem>
+                      <SelectItem value="none">{form.license_type === 'individual' ? 'Contrato Direto (sem Partner)' : 'Novo Partner'}</SelectItem>
+                      {whitelabels.map((w: any) => (
+                        <SelectItem key={w.id} value={w.id}>{w.tenants?.name || w.whitelabel_slug || 'Partner'}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
