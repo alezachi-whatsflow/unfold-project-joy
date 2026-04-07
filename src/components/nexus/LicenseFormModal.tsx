@@ -435,7 +435,11 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
               )}
               <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase text-muted-foreground">Tipo de Licença</Label>
-                <Select value={form.license_type} onValueChange={(v) => set('license_type', v)}>
+                <Select value={form.license_type} onValueChange={(v) => {
+                  set('license_type', v);
+                  // Clear slug when switching away from whitelabel
+                  if (v !== 'whitelabel') set('whitelabel_slug', '');
+                }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="individual">Individual (Cliente Final)</SelectItem>
@@ -475,11 +479,6 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
                   </Label>
                   <Select value={form.parent_license_id} onValueChange={(v) => {
                     set('parent_license_id', v);
-                    // Auto-fill slug from selected WL
-                    if (form.license_type === 'whitelabel') {
-                      const wl = whitelabels.find((w: any) => w.id === v);
-                      if (wl?.whitelabel_slug) set('whitelabel_slug', wl.whitelabel_slug);
-                    }
                   }}>
                     <SelectTrigger><SelectValue placeholder={form.license_type === 'individual' ? 'Selecione o Partner' : 'Novo Partner (sem vinculo)'} /></SelectTrigger>
                     <SelectContent>
