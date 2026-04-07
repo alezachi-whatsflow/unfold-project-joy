@@ -79,14 +79,14 @@ export default function WLClientDetail() {
   if (licLoading || profLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (!license) {
     return (
-      <div className="py-16 text-center text-white/30">
+      <div className="py-16 text-center text-muted-foreground">
         Cliente não encontrado.
       </div>
     );
@@ -136,7 +136,7 @@ export default function WLClientDetail() {
       <Button
         variant="ghost"
         size="sm"
-        className="text-white/50 hover:text-white hover:bg-white/5 -ml-1"
+        className="text-muted-foreground hover:text-foreground hover:bg-muted -ml-1"
         onClick={() => navigate(`/wl/${slug}/clientes`)}
       >
         <ArrowLeft className="h-4 w-4 mr-1" />
@@ -146,13 +146,13 @@ export default function WLClientDetail() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">{license.tenants?.name || '—'}</h1>
-          <p className="text-sm text-white/40 mt-0.5">{license.tenants?.email || ''}</p>
+          <h1 className="text-2xl font-bold text-foreground">{license.tenants?.name || '—'}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{license.tenants?.email || ''}</p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 shrink-0"
+          className="border-border text-foreground hover:text-foreground hover:bg-muted shrink-0"
           onClick={() => setFaturaOpen(true)}
         >
           <FileText className="h-3.5 w-3.5 mr-1.5" />
@@ -161,9 +161,9 @@ export default function WLClientDetail() {
       </div>
 
       {/* Contract summary */}
-      <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <Card className="border-border" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
         <CardHeader className="pb-3">
-          <CardTitle className="text-xs text-white/40 uppercase tracking-widest font-medium flex items-center gap-2">
+          <CardTitle className="text-xs text-muted-foreground uppercase tracking-widest font-medium flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" />
             Contrato
           </CardTitle>
@@ -177,7 +177,7 @@ export default function WLClientDetail() {
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 license.status === 'active'
                   ? 'bg-emerald-500/15 text-emerald-400'
-                  : 'bg-white/10 text-white/40'
+                  : 'bg-white/10 text-muted-foreground'
               }`}>
                 {license.status === 'active' ? 'Ativo' : license.status}
               </span>
@@ -194,9 +194,9 @@ export default function WLClientDetail() {
       </Card>
 
       {/* Attendants */}
-      <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <Card className="border-border" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-xs text-white/40 uppercase tracking-widest font-medium flex items-center gap-2">
+          <CardTitle className="text-xs text-muted-foreground uppercase tracking-widest font-medium flex items-center gap-2">
             <Users className="h-3.5 w-3.5" />
             Atendentes ({attendantRows.length})
           </CardTitle>
@@ -205,7 +205,7 @@ export default function WLClientDetail() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-white/30 text-xs">
+                <tr className="border-b border-border text-muted-foreground text-xs">
                   <th className="text-left px-5 py-2.5 font-medium">N°</th>
                   <th className="text-left px-5 py-2.5 font-medium">Nome</th>
                   <th className="text-left px-5 py-2.5 font-medium">Último Login</th>
@@ -216,30 +216,30 @@ export default function WLClientDetail() {
               <tbody>
                 {attendantRows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-white/20 text-xs">
+                    <td colSpan={5} className="px-5 py-8 text-center text-muted-foreground text-xs">
                       Nenhum atendente vinculado.
                     </td>
                   </tr>
                 ) : (
                   attendantRows.map((a: any, i: number) => (
-                    <tr key={a.id} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="px-5 py-3 text-white/40">{i + 1}</td>
+                    <tr key={a.id} className="border-b border-border/50 hover:bg-muted">
+                      <td className="px-5 py-3 text-muted-foreground">{i + 1}</td>
                       <td className="px-5 py-3">
-                        <p className="text-white font-medium">{a.full_name || '—'}</p>
-                        <p className="text-xs text-white/30">{a.role}</p>
+                        <p className="text-foreground font-medium">{a.full_name || '—'}</p>
+                        <p className="text-xs text-muted-foreground">{a.role}</p>
                       </td>
-                      <td className="px-5 py-3 text-white/50 text-xs">{fmtDateTime(a.last_login_at)}</td>
-                      <td className="px-5 py-3 text-white/50 text-xs">{fmtDate(a.created_at)}</td>
-                      <td className="px-5 py-3 text-right text-white/70">
+                      <td className="px-5 py-3 text-muted-foreground text-xs">{fmtDateTime(a.last_login_at)}</td>
+                      <td className="px-5 py-3 text-muted-foreground text-xs">{fmtDate(a.created_at)}</td>
+                      <td className="px-5 py-3 text-right text-foreground">
                         {a.extraCost > 0
                           ? <span className="text-amber-400 font-medium">R$ {fmt(a.extraCost)}</span>
-                          : <span className="text-white/30">R$ 0,00</span>
+                          : <span className="text-muted-foreground">R$ 0,00</span>
                         }
                       </td>
                     </tr>
                   ))
                 )}
-                <tr className="border-t border-white/10 font-semibold text-white/70 text-xs">
+                <tr className="border-t border-border font-semibold text-foreground text-xs">
                   <td colSpan={4} className="px-5 py-3">Total por atendentes</td>
                   <td className="px-5 py-3 text-right">R$ {fmt(totalAttCost)}</td>
                 </tr>
@@ -250,9 +250,9 @@ export default function WLClientDetail() {
       </Card>
 
       {/* Devices */}
-      <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <Card className="border-border" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-xs text-white/40 uppercase tracking-widest font-medium flex items-center gap-2">
+          <CardTitle className="text-xs text-muted-foreground uppercase tracking-widest font-medium flex items-center gap-2">
             <Wifi className="h-3.5 w-3.5" />
             Dispositivos ({deviceRows.length})
           </CardTitle>
@@ -261,7 +261,7 @@ export default function WLClientDetail() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-white/30 text-xs">
+                <tr className="border-b border-border text-muted-foreground text-xs">
                   <th className="text-left px-5 py-2.5 font-medium">N°</th>
                   <th className="text-left px-5 py-2.5 font-medium">Dispositivo</th>
                   <th className="text-left px-5 py-2.5 font-medium">Plataforma</th>
@@ -271,26 +271,26 @@ export default function WLClientDetail() {
               <tbody>
                 {deviceRows.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-white/20 text-xs">
+                    <td colSpan={4} className="px-5 py-8 text-center text-muted-foreground text-xs">
                       Nenhum dispositivo contratado.
                     </td>
                   </tr>
                 ) : (
                   deviceRows.map((d, i) => (
-                    <tr key={d.id} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="px-5 py-3 text-white/40">{i + 1}</td>
-                      <td className="px-5 py-3 text-white font-medium">{d.label}</td>
-                      <td className="px-5 py-3 text-white/50 text-xs">{d.platform}</td>
-                      <td className="px-5 py-3 text-right text-white/70">
+                    <tr key={d.id} className="border-b border-border/50 hover:bg-muted">
+                      <td className="px-5 py-3 text-muted-foreground">{i + 1}</td>
+                      <td className="px-5 py-3 text-foreground font-medium">{d.label}</td>
+                      <td className="px-5 py-3 text-muted-foreground text-xs">{d.platform}</td>
+                      <td className="px-5 py-3 text-right text-foreground">
                         {d.extraCost > 0
                           ? <span className="text-amber-400 font-medium">R$ {fmt(d.extraCost)}</span>
-                          : <span className="text-white/30">R$ 0,00</span>
+                          : <span className="text-muted-foreground">R$ 0,00</span>
                         }
                       </td>
                     </tr>
                   ))
                 )}
-                <tr className="border-t border-white/10 font-semibold text-white/70 text-xs">
+                <tr className="border-t border-border font-semibold text-foreground text-xs">
                   <td colSpan={3} className="px-5 py-3">Total por dispositivos</td>
                   <td className="px-5 py-3 text-right">R$ {fmt(totalDevCost)}</td>
                 </tr>
@@ -302,10 +302,10 @@ export default function WLClientDetail() {
 
       {/* AI */}
       {license.has_ai_module && (
-        <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+        <Card className="border-border" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
           <CardContent className="py-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2 text-white/70">
+              <span className="flex items-center gap-2 text-foreground">
                 <Cpu className="h-4 w-4 text-purple-400" />
                 Módulo I.A.
               </span>
@@ -316,10 +316,10 @@ export default function WLClientDetail() {
       )}
 
       {/* Total */}
-      <Card className="border-white/20" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+      <Card className="border-border" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
-            <span className="font-bold text-white text-base">Total Mensal</span>
+            <span className="font-bold text-foreground text-base">Total Mensal</span>
             <span className="font-bold text-xl" style={{ color: 'var(--wl-primary)' }}>
               R$ {fmt(grandTotal)}
             </span>
@@ -372,9 +372,9 @@ function Field({ label, value, highlight, children }: {
 }) {
   return (
     <div>
-      <p className="text-xs text-white/30 mb-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
       {children || (
-        <p className={`text-sm font-medium ${highlight ? '' : 'text-white/80'}`}
+        <p className={`text-sm font-medium ${highlight ? '' : 'text-foreground'}`}
           style={highlight ? { color: 'var(--wl-primary)' } : undefined}>
           {value}
         </p>

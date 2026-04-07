@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Loader2, Search, ExternalLink, Users, Wifi, Cpu } from "lucide-react";
 
 function fmt(n: number) {
@@ -16,11 +17,11 @@ const STATUS_LABEL: Record<string, string> = {
   suspended: 'Suspenso', trial: 'Trial',
 };
 const STATUS_COLOR: Record<string, string> = {
-  active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  inactive: 'bg-white/10 text-white/40 border-white/10',
-  blocked: 'bg-red-500/15 text-red-400 border-red-500/30',
-  suspended: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  trial: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  active: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30',
+  inactive: 'bg-muted text-muted-foreground border-border',
+  blocked: 'bg-red-500/15 text-red-500 border-red-500/30',
+  suspended: 'bg-amber-500/15 text-amber-500 border-amber-500/30',
+  trial: 'bg-blue-500/15 text-blue-500 border-blue-500/30',
 };
 
 export default function WLClients() {
@@ -66,37 +67,37 @@ export default function WLClients() {
     <div className="space-y-5 pb-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Meus Clientes</h1>
-          <p className="text-sm text-white/40 mt-0.5">
+          <h1 className="text-2xl font-bold text-foreground">Meus Clientes</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {(clients || []).length} cliente{(clients || []).length !== 1 ? 's' : ''} cadastrado{(clients || []).length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
 
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por nome ou email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-0"
+          className="pl-9"
         />
       </div>
 
-      <div className="border border-white/10 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <Card className="overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-5 w-5 animate-spin text-white/30" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-white/30 text-sm">
+          <div className="py-16 text-center text-muted-foreground text-sm">
             {search ? 'Nenhum resultado encontrado.' : 'Nenhum cliente cadastrado ainda.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-white/40 text-xs uppercase">
+                <tr className="border-b border-border text-muted-foreground text-xs uppercase">
                   <th className="text-left px-5 py-3 font-medium">Cliente</th>
                   <th className="text-left px-5 py-3 font-medium">Status</th>
                   <th className="text-left px-5 py-3 font-medium">Recursos</th>
@@ -113,13 +114,13 @@ export default function WLClients() {
                   return (
                     <tr
                       key={c.id}
-                      className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
+                      className="border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => navigate(`/wl/${slug}/clientes/${c.id}`)}
                     >
                       <td className="px-5 py-3">
                         <div>
-                          <p className="font-semibold text-white">{c.tenants?.name || '—'}</p>
-                          <p className="text-xs text-white/40 mt-0.5">{c.tenants?.email || ''}</p>
+                          <p className="font-semibold text-foreground">{c.tenants?.name || '—'}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{c.tenants?.email || ''}</p>
                         </div>
                       </td>
                       <td className="px-5 py-3">
@@ -128,20 +129,20 @@ export default function WLClients() {
                         </Badge>
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex gap-3 text-xs text-white/50">
+                        <div className="flex gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1"><Users className="h-3 w-3" />{attendants}</span>
                           <span className="flex items-center gap-1"><Wifi className="h-3 w-3" />{devWeb}w/{devMeta}m</span>
-                          {c.has_ai_module && <span className="flex items-center gap-1 text-purple-400"><Cpu className="h-3 w-3" />I.A.</span>}
+                          {c.has_ai_module && <span className="flex items-center gap-1 text-purple-500"><Cpu className="h-3 w-3" />I.A.</span>}
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right font-semibold" style={{ color: 'var(--wl-primary)' }}>
                         R$ {fmt(c.monthly_value || 0)}
                       </td>
-                      <td className="px-5 py-3 text-right text-xs text-white/40">
+                      <td className="px-5 py-3 text-right text-xs text-muted-foreground">
                         {c.expires_at ? fmtDate(c.expires_at) : '—'}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <ExternalLink className="h-3.5 w-3.5 text-white/30" />
+                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                       </td>
                     </tr>
                   );
@@ -150,7 +151,7 @@ export default function WLClients() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

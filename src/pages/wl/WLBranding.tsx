@@ -9,13 +9,13 @@ export default function WLBranding() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">Branding</h1>
-          <p className="text-white/60">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Branding</h1>
+          <p className="text-muted-foreground">
             Personalize a identidade visual do portal dos seus clientes.
           </p>
         </div>
         <Button 
-          className="text-white font-semibold"
+          className="text-foreground font-semibold"
           style={{ backgroundColor: 'var(--wl-primary)' }}
         >
           <Save className="h-4 w-4 mr-2" />
@@ -26,28 +26,28 @@ export default function WLBranding() {
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="border border-white/10 bg-white/5 p-6">
-            <h3 className="font-semibold text-white flex items-center gap-2 mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4">
               <Paintbrush className="h-4 w-4" /> Cores Principais
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10">
-                <span className="text-sm font-medium text-white/80">Cor Primária</span>
+                <span className="text-sm font-medium text-foreground">Cor Primária</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-white/50">{branding?.primary_color}</span>
+                  <span className="text-xs text-muted-foreground">{branding?.primary_color}</span>
                   <div className="h-8 w-8 rounded-full shadow-inner" style={{ backgroundColor: 'var(--wl-primary)' }}></div>
                 </div>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10">
-                <span className="text-sm font-medium text-white/80">Cor Secundária (Sidebar)</span>
+                <span className="text-sm font-medium text-foreground">Cor Secundária (Sidebar)</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-white/50">{branding?.secondary_color}</span>
+                  <span className="text-xs text-muted-foreground">{branding?.secondary_color}</span>
                   <div className="h-8 w-8 rounded-full shadow-inner border border-white/10" style={{ backgroundColor: 'var(--wl-secondary)' }}></div>
                 </div>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10">
-                <span className="text-sm font-medium text-white/80">Cor de Fundo</span>
+                <span className="text-sm font-medium text-foreground">Cor de Fundo</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-white/50">{branding?.background_color}</span>
+                  <span className="text-xs text-muted-foreground">{branding?.background_color}</span>
                   <div className="h-8 w-8 rounded-full shadow-inner border border-white/10" style={{ backgroundColor: 'var(--wl-bg)' }}></div>
                 </div>
               </div>
@@ -57,7 +57,7 @@ export default function WLBranding() {
 
         <div>
           <div className="sticky top-6 border border-white/10 bg-black/40 p-6 overflow-hidden">
-            <h3 className="font-semibold text-white/60 text-sm mb-4">Preview ao Vivo</h3>
+            <h3 className="font-semibold text-muted-foreground text-sm mb-4">Preview ao Vivo</h3>
             
             <div className="overflow-hidden border border-white/10 flex flex-col h-[300px]" style={{ backgroundColor: 'var(--wl-bg)' }}>
               <div className="h-12 border-b flex items-center px-4" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>

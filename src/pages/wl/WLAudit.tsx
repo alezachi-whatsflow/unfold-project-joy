@@ -5,8 +5,8 @@ export default function WLAudit() {
   
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-white">Suporte / Audit</h1>
-      <p className="text-white/60">Histórico de ações e suporte a clientes.</p>
+      <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Suporte / Audit</h1>
+      <p className="text-muted-foreground">Historico de acoes e suporte a clientes.</p>
     </div>
   );
 }

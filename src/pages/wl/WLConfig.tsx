@@ -5,8 +5,8 @@ export default function WLConfig() {
   
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-white">Configurações</h1>
-      <p className="text-white/60">Configurações da sua WhiteLabel.</p>
+      <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Configuracoes</h1>
+      <p className="text-muted-foreground">Configuracoes da sua WhiteLabel.</p>
     </div>
   );
 }

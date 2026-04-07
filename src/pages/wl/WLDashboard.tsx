@@ -35,7 +35,7 @@ export default function WLDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -57,8 +57,8 @@ export default function WLDashboard() {
   return (
     <div className="space-y-6 pb-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-sm text-white/50 mt-1">Visão geral da sua operação</p>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">Visao geral da sua operacao</p>
       </div>
 
       {/* Pool Consumption */}
@@ -73,23 +73,23 @@ export default function WLDashboard() {
       </div>
 
       {/* Client table */}
-      <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm text-white/60 uppercase tracking-widest font-medium flex items-center gap-2">
+          <CardTitle className="text-sm text-muted-foreground uppercase tracking-widest font-medium flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Clientes Recentes
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {(clients || []).length === 0 ? (
-            <div className="py-12 text-center text-white/30 text-sm">
+            <div className="py-12 text-center text-muted-foreground text-sm">
               Nenhum cliente cadastrado ainda.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10 text-white/40 text-xs uppercase">
+                  <tr className="border-b border-border text-muted-foreground text-xs uppercase">
                     <th className="text-left px-6 py-3 font-medium">Cliente</th>
                     <th className="text-left px-6 py-3 font-medium">Status</th>
                     <th className="text-right px-6 py-3 font-medium">Atend.</th>
@@ -104,19 +104,19 @@ export default function WLDashboard() {
                       (c.base_devices_meta || 0) + (c.extra_devices_meta || 0);
                     const attendants = (c.base_attendants || 0) + (c.extra_attendants || 0);
                     return (
-                      <tr key={c.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="px-6 py-3 font-medium text-white">{t?.name || '—'}</td>
+                      <tr key={c.id} className="border-b border-border/50 hover:bg-muted/50">
+                        <td className="px-6 py-3 font-medium text-foreground">{t?.name || '—'}</td>
                         <td className="px-6 py-3">
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                             c.status === 'active'
-                              ? 'bg-emerald-500/15 text-emerald-400'
-                              : 'bg-white/10 text-white/40'
+                              ? 'bg-emerald-500/15 text-emerald-500'
+                              : 'bg-muted text-muted-foreground'
                           }`}>
                             {c.status === 'active' ? 'Ativo' : c.status}
                           </span>
                         </td>
-                        <td className="px-6 py-3 text-right text-white/70">{attendants}</td>
-                        <td className="px-6 py-3 text-right text-white/70">{devices}</td>
+                        <td className="px-6 py-3 text-right text-muted-foreground">{attendants}</td>
+                        <td className="px-6 py-3 text-right text-muted-foreground">{devices}</td>
                         <td className="px-6 py-3 text-right font-semibold" style={{ color: 'var(--wl-primary)' }}>
                           R$ {fmt(c.monthly_value || 0)}
                         </td>
@@ -137,13 +137,13 @@ function KpiCard({ icon: Icon, label, value, sub, color }: {
   icon: any; label: string; value: string; sub?: string; color: string;
 }) {
   return (
-    <Card className="border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+    <Card>
       <CardContent className="pt-4 pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-white/40 mb-1">{label}</p>
-            <p className="text-xl font-bold text-white">{value}</p>
-            {sub && <p className="text-xs text-white/30 mt-0.5">{sub}</p>}
+            <p className="text-xs text-muted-foreground mb-1">{label}</p>
+            <p className="text-xl font-bold text-foreground">{value}</p>
+            {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
           </div>
           <Icon className="h-5 w-5 mt-0.5" style={{ color }} />
         </div>

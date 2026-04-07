@@ -13,10 +13,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const NAV = [
   { to: "", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "clientes", icon: Users, label: "Meus Clientes" },
-  { to: "licencas", icon: KeyRound, label: "Licenças" },
+  { to: "licencas", icon: KeyRound, label: "Licencas" },
   { to: "branding", icon: Palette, label: "Branding" },
   { to: "suporte", icon: ScrollText, label: "Suporte / Audit" },
-  { to: "config", icon: Settings, label: "Configurações" },
+  { to: "config", icon: Settings, label: "Configuracoes" },
 ];
 
 export default function WLLayout() {
@@ -83,13 +83,12 @@ export default function WLLayout() {
 
   if (profileLoading || configLoading || nexusLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Nexus users authenticate via nexus_users table (not profiles)
   const isNexusUser = !!nexusUser?.is_active;
   const ALLOWED_ROLES = ['wl_admin', 'wl_support', 'god_admin'];
   if (!isNexusUser && !ALLOWED_ROLES.includes(profile?.role || '')) {
@@ -104,13 +103,13 @@ export default function WLLayout() {
   const wlLicenseId = wlConfig?.license_id || null;
 
   return (
-    <div className="flex h-screen w-full glass-ambient-bg">
+    <div className="flex h-screen w-full bg-background">
       {/* Mobile hamburger */}
       {isMobile && !mobileOpen && (
         <button onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 flex items-center justify-center bg-card border border-border"
+          className="fixed top-3 left-3 z-50 flex items-center justify-center bg-card border border-border rounded-md"
           style={{ width: 40, height: 40 }}>
-          <Menu className="h-5 w-5 text-white" />
+          <Menu className="h-5 w-5 text-foreground" />
         </button>
       )}
       {isMobile && mobileOpen && (
@@ -118,28 +117,26 @@ export default function WLLayout() {
       )}
       {/* Sidebar */}
       <aside
-        className={`flex flex-col glass-sidebar transition-all duration-300 z-50 shrink-0 ${
+        className={`flex flex-col border-r border-border bg-card transition-all duration-300 z-50 shrink-0 ${
           isMobile ? `fixed inset-y-0 left-0 w-[240px] ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}` : ''
         }`}
         style={{
-          backgroundColor: 'var(--wl-secondary, #1E293B)',
-          borderColor: 'rgba(255,255,255,0.05)',
           width: isMobile ? 240 : collapsed ? 64 : 240,
         }}
       >
-        <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
           <div
-            className="flex items-center justify-center shrink-0 text-white font-bold text-sm"
+            className="flex items-center justify-center shrink-0 text-white font-bold text-sm rounded-md"
             style={{ backgroundColor: 'var(--wl-primary)', width: 32, height: 32 }}
           >
             {branding.app_name.charAt(0).toUpperCase()}
           </div>
           {(!collapsed || isMobile) && (
-            <span className="text-sm font-bold text-white truncate">{branding.app_name}</span>
+            <span className="text-sm font-bold text-foreground truncate">{branding.app_name}</span>
           )}
           {isMobile && (
-            <button onClick={() => setMobileOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/10">
-              <X className="h-4 w-4 text-white/60" />
+            <button onClick={() => setMobileOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted">
+              <X className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
         </div>
@@ -154,8 +151,8 @@ export default function WLLayout() {
                 end={item.end}
                 onClick={() => isMobile && setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 mx-2 text-sm transition-all ${
-                    isActive ? 'text-white font-medium' : 'text-white/60 hover:text-white hover:bg-white/5'
+                  `flex items-center gap-3 px-4 py-2.5 mx-2 rounded-md text-sm transition-all ${
+                    isActive ? 'text-white font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`
                 }
                 style={(navData) => ({
@@ -169,11 +166,11 @@ export default function WLLayout() {
           })}
         </nav>
 
-        <div className="border-t p-3 space-y-1" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="border-t border-border p-3 space-y-1">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2 text-xs text-white/60 hover:text-white hover:bg-white/5"
+            className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
             onClick={() => signOut()}
           >
             <LogOut className="h-4 w-4" />
@@ -182,7 +179,7 @@ export default function WLLayout() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-full h-8 text-white/40 hover:bg-white/5"
+            className="w-full h-8 text-muted-foreground"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -192,12 +189,10 @@ export default function WLLayout() {
 
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header
-          className="sticky top-0 z-10 glass-header px-4 sm:px-6 py-3 flex items-center justify-between"
-        >
-          <span className="text-sm font-semibold text-white/80">{isMobile && <span className="inline-block w-8" />}Portal Administrativo</span>
+        <header className="sticky top-0 z-10 bg-card border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between">
+          <span className="text-sm font-semibold text-foreground">{isMobile && <span className="inline-block w-8" />}Portal Administrativo</span>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-white/50 hidden sm:block">{user?.email}</span>
+            <span className="text-xs text-muted-foreground hidden sm:block">{user?.email}</span>
             <div
               className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
               style={{ backgroundColor: 'var(--wl-accent)' }}
@@ -206,7 +201,7 @@ export default function WLLayout() {
             </div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-background">
           <Outlet context={{ branding, wlLicenseId }} />
         </div>
       </main>
