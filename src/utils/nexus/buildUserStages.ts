@@ -1,4 +1,5 @@
 import type { TimelineStage } from '@/components/nexus/UserTimelineRow'
+import { fmtDateTime } from '@/lib/dateUtils'
 
 type NexusUserDB = {
   id: string
