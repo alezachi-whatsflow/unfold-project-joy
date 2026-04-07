@@ -759,7 +759,12 @@ function CreateWhitelabelModal({
         })
         .select()
         .single();
-      if (tErr) throw new Error(`Erro ao criar tenant: ${tErr.message}`);
+      if (tErr) {
+        if (tErr.message.includes('idx_tenants_cpf_cnpj')) {
+          throw new Error('Este CNPJ ja esta cadastrado em outra empresa. Use um CNPJ diferente ou edite o parceiro existente.');
+        }
+        throw new Error(`Erro ao criar tenant: ${tErr.message}`);
+      }
 
       // 2. License (with pool quotas)
       const { data: license, error: lErr } = await supabase
