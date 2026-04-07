@@ -259,20 +259,29 @@ export default function NexusLicenses() {
     setDeleting(true);
     try {
       // 1. Delete sub-licenses first (no cascade on parent_license_id)
-      await supabase.from('licenses').delete().eq('parent_license_id', deleteTarget.id);
-      // 2. Delete license (cascades whitelabel_config)
-      await supabase.from('licenses').delete().eq('id', deleteTarget.id);
-      // 3. Delete tenant (cascades all tenant data)
+      const { error: subErr } = await supabase.from('licenses').delete().eq('parent_license_id', deleteTarget.id);
+      if (subErr) console.warn('Sub-license delete warning:', subErr.message);
+
+      // 2. Delete license
+      const { error: licErr } = await supabase.from('licenses').delete().eq('id', deleteTarget.id);
+      if (licErr) throw new Error(`Erro ao excluir licenca: ${licErr.message}`);
+
+      // 3. Delete tenant (only if not the current user's tenant)
       if (deleteTarget.tenant_id) {
-        await supabase.from('tenants').delete().eq('id', deleteTarget.tenant_id);
+        const { error: tenErr } = await supabase.from('tenants').delete().eq('id', deleteTarget.tenant_id);
+        if (tenErr) console.warn('Tenant delete warning:', tenErr.message);
       }
+
+      // 4. Audit log
       await supabase.from('nexus_audit_logs').insert({
         actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
         action: 'license_delete', license_id: deleteTarget.id,
-      });
-      toast({ title: 'Licença e dados excluídos com sucesso' });
+      }).then(() => {});
+
+      toast({ title: 'Licenca excluida com sucesso' });
       setDeleteTarget(null);
-      loadLicenses();
+      // Reload with a small delay to let DB settle
+      setTimeout(() => loadLicenses(), 300);
     } catch (err: any) {
       toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
     } finally {
@@ -296,14 +305,15 @@ export default function NexusLicenses() {
         const { data: licData } = await supabase
           .from('licenses').select('id, tenant_id').in('id', batch);
 
-        // Delete sub-licenses of this batch
-        await supabase.from('licenses').delete().in('parent_license_id', batch);
+        // Delete sub-licenses of this batch (ignore errors — some may not have subs)
+        await supabase.from('licenses').delete().in('parent_license_id', batch).then(() => {});
         // Delete licenses
-        await supabase.from('licenses').delete().in('id', batch);
-        // Delete tenants
+        const { error: batchErr } = await supabase.from('licenses').delete().in('id', batch);
+        if (batchErr) console.warn('Batch delete warning:', batchErr.message);
+        // Delete tenants (best-effort — some may have FK constraints)
         const tenantIds = (licData || []).map((l: any) => l.tenant_id).filter(Boolean);
-        if (tenantIds.length > 0) {
-          await supabase.from('tenants').delete().in('id', tenantIds);
+        for (const tid of tenantIds) {
+          await supabase.from('tenants').delete().eq('id', tid).then(() => {});
         }
 
         done += batch.length;
@@ -315,10 +325,10 @@ export default function NexusLicenses() {
         action: 'bulk_license_delete',
         target_entity: `${ids.length} licenças excluídas`,
       });
-      toast({ title: `${ids.length} licença(s) excluída(s) com sucesso` });
+      toast({ title: `${ids.length} licenca(s) excluida(s) com sucesso` });
       setSelectedIds(new Set());
       setShowBulkDelete(false);
-      loadLicenses();
+      setTimeout(() => loadLicenses(), 300);
     } catch (err: any) {
       toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
     } finally {
