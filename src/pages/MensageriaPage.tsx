@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Inbox, Send, Megaphone, Kanban, Users, UsersRound, Receipt, ScrollText,
+  Inbox, Send, Kanban, Users, UsersRound, Receipt, ScrollText,
   UserCog, Building2, MessageSquareText, Tag, Bot, FileText, Zap,
   BarChart3, Menu, Clock,
 } from "lucide-react";
@@ -15,7 +15,7 @@ import LogsTab from "@/components/mensageria/LogsTab";
 import MessageComposer from "@/components/mensageria/MessageComposer";
 import ContactChecker from "@/components/mensageria/ContactChecker";
 import LeadKanban from "@/components/mensageria/LeadKanban";
-import CampaignsTab from "@/components/mensageria/CampaignsTab";
+import MassSendHub from "@/components/mensageria/MassSendHub";
 import GroupDashboard from "@/components/whatsapp/groups/GroupDashboard";
 import QuickReplyManager from "@/components/mensageria/quick-replies/QuickReplyManager";
 import AgentDashboard from "@/components/mensageria/agents/AgentDashboard";
@@ -39,7 +39,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: "inbox",     label: "Caixa de Entrada",   icon: Inbox,            group: "operation" },
   // Group 2 — Tools
   { id: "enviar",    label: "Envios em Massa",    icon: Send,             group: "tools" },
-  { id: "campanhas", label: "Campanhas",           icon: Megaphone,        group: "tools" },
   { id: "leads",     label: "Leads",               icon: Kanban,           group: "tools" },
   { id: "grupos",    label: "Grupos",               icon: UsersRound,       group: "tools" },
   { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
@@ -69,8 +68,7 @@ const MensageriaPage = () => {
       // Operation
       case "inbox":           return <InboxTab />;
       // Tools
-      case "enviar":          return <MessageComposer onClose={() => setActiveTab("inbox")} />;
-      case "campanhas":       return <CampaignsTab />;
+      case "enviar":          return <MassSendHub onClose={() => setActiveTab("inbox")} />;
       case "leads":           return <LeadKanban />;
       case "grupos":          return <div className="h-full overflow-hidden"><GroupDashboard /></div>;
       case "contatos":        return <ContactChecker />;
