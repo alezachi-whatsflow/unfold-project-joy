@@ -75,14 +75,13 @@ const OnboardingPage = () => {
   }, [userId]);
 
   // Resolve slug from URL or from current location path
-  const resolvedSlug = slug || window.location.pathname.match(/\/app\/([^/]+)/)?.[1] || "whatsflow";
-
   const handleStartTour = (step: OnboardingStep) => {
-    const fullRoute = `/app/${resolvedSlug}${step.route}`;
+    // Always resolve slug fresh from URL to avoid stale params
+    const currentSlug = window.location.pathname.match(/\/app\/([^/]+)/)?.[1] || slug || "whatsflow";
+    const fullRoute = `/app/${currentSlug}${step.route}`;
 
     const tourConfig = TOUR_CONFIGS[step.key];
     if (tourConfig) {
-      // Navigate to the correct route first, then start the tour overlay
       navigate(fullRoute);
       setTimeout(() => startTour(tourConfig), 500);
     } else {
