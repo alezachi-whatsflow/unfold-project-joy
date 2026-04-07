@@ -26,6 +26,18 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
   } = opts;
 
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const conversationsRef = useRef(conversations);
+  conversationsRef.current = conversations;
+  const fetchConversationsRef = useRef(fetchConversations);
+  fetchConversationsRef.current = fetchConversations;
+  const fetchMessagesRef = useRef(fetchMessages);
+  fetchMessagesRef.current = fetchMessages;
+  const resolveMediaRef = useRef(resolveMessageMediaUrl);
+  resolveMediaRef.current = resolveMessageMediaUrl;
+  const mapMsgRef = useRef(mapDbMessageToUi);
+  mapMsgRef.current = mapDbMessageToUi;
+  const updateCacheRef = useRef(updateMessagesWithCache);
+  updateCacheRef.current = updateMessagesWithCache;
 
   useEffect(() => {
     let isActive = true;
@@ -44,17 +56,17 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
             const newMsg = payload?.new as any;
             if (!newMsg?.id || !newMsg?.remote_jid) return; // Guard: skip invalid/DELETE payloads
 
-            fetchConversations();
+            fetchConversationsRef.current();
 
             const msgJid = newMsg.remote_jid;
             const selectedJid = selectedJidRef.current;
 
             if (payload.eventType === "INSERT") {
-              const resolvedMediaUrl = await resolveMessageMediaUrl(newMsg);
-              const uiMsg = mapDbMessageToUi(newMsg, resolvedMediaUrl);
+              const resolvedMediaUrl = await resolveMediaRef.current(newMsg);
+              const uiMsg = mapMsgRef.current(newMsg, resolvedMediaUrl);
 
               if (selectedJid && msgJid === selectedJid) {
-                updateMessagesWithCache(selectedJid, (prev) => {
+                updateCacheRef.current(selectedJid, (prev) => {
                   if (prev.some((m) => m.id === newMsg.id)) return prev;
                   return [...prev, uiMsg];
                 });
@@ -69,7 +81,7 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
 
             if (payload.eventType === "UPDATE") {
               if (selectedJid && msgJid === selectedJid) {
-                updateMessagesWithCache(selectedJid, (prev) =>
+                updateCacheRef.current(selectedJid, (prev) =>
                   prev.map((m) =>
                     m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
                   )
@@ -95,7 +107,7 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
     const poll = async () => {
       if (!isActive) return;
 
-      await fetchConversations();
+      await fetchConversationsRef.current();
 
       const selectedJid = selectedJidRef.current;
 
@@ -116,16 +128,16 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
             const resolvedRows = await Promise.all(
               data.map(async (row: any) => ({
                 row,
-                resolvedMediaUrl: await resolveMessageMediaUrl(row),
+                resolvedMediaUrl: await resolveMediaRef.current(row),
               }))
             );
 
             if (selectedJidRef.current === selectedJid) {
-              updateMessagesWithCache(selectedJid, (prev) => {
+              updateCacheRef.current(selectedJid, (prev) => {
                 const existingIds = new Set(prev.map((m) => m.id));
                 const newMsgs: Message[] = resolvedRows
                   .filter(({ row }) => !existingIds.has(row.id))
-                  .map(({ row, resolvedMediaUrl }) => mapDbMessageToUi(row, resolvedMediaUrl));
+                  .map(({ row, resolvedMediaUrl }) => mapMsgRef.current(row, resolvedMediaUrl));
 
                 if (newMsgs.length > 0) {
                   lastSyncRef.current = data[data.length - 1].created_at;
@@ -150,7 +162,7 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
 
           if (updatedMsgs && updatedMsgs.length > 0 && selectedJidRef.current === selectedJid) {
             const statusMap = new Map(updatedMsgs.map((m: any) => [m.id, m.status]));
-            updateMessagesWithCache(selectedJid, (prev) =>
+            updateCacheRef.current(selectedJid, (prev) =>
               prev.map((m) => {
                 const newStatus = statusMap.get(m.id);
                 if (newStatus !== undefined) return { ...m, status: statusNumToLabel(newStatus) };
@@ -164,7 +176,7 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
 
         // 3) Active status sync via uazapi (for WhatsApp Web instances only)
         if (selectedJidRef.current === selectedJid) {
-          const conv = conversations.find((c) => c.id === selectedJid);
+          const conv = conversationsRef.current.find((c) => c.id === selectedJid);
           if (conv?.instanceName && !conv.instanceName.startsWith("meta:") && !conv.instanceName.startsWith("telegram_") && !conv.instanceName.startsWith("mercadolivre_")) {
             try {
               const { data: syncResult } = await supabase.functions.invoke("sync-message-status", {
@@ -180,7 +192,7 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
                   .gte("status", 3);
                 if (refreshed && refreshed.length > 0 && selectedJidRef.current === selectedJid) {
                   const readMap = new Map(refreshed.map((m: any) => [m.id, m.status]));
-                  updateMessagesWithCache(selectedJid, (prev) =>
+                  updateCacheRef.current(selectedJid, (prev) =>
                     prev.map((m) => {
                       const s = readMap.get(m.id);
                       return s !== undefined ? { ...m, status: statusNumToLabel(s) } : m;
@@ -207,8 +219,9 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
       clearTimeout(pollTimeoutRef.current);
       supabase.removeChannel(channel);
     };
-  }, [
-    selectedJidRef, conversations, fetchConversations,
-    mapDbMessageToUi, resolveMessageMediaUrl, updateMessagesWithCache,
-  ]);
+  // CRITICAL: Do NOT include `conversations` in deps — it changes every poll cycle
+  // and would destroy+recreate the realtime channel + polling loop continuously.
+  // The poll function reads conversations via closure from the ref-based opts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
