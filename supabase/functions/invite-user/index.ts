@@ -68,13 +68,19 @@ function buildRecoveryEmail(full_name: string, actionLink: string) {
   };
 }
 
-async function sendEmailSmtp(to: string, subject: string, html: string) {
-  await sendEmail({
-    from: "Whatsflow <no-reply@whatsflow.com.br>",
-    to,
-    subject,
-    html,
-  });
+async function sendEmailSmtp(to: string, subject: string, html: string): Promise<boolean> {
+  try {
+    await sendEmail({
+      from: "Whatsflow <no-reply@whatsflow.com.br>",
+      to,
+      subject,
+      html,
+    });
+    return true;
+  } catch (e) {
+    console.warn("[invite-user] SMTP send failed (non-fatal):", e.message);
+    return false;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -185,13 +191,16 @@ Deno.serve(async (req) => {
       }
 
       const emailContent = buildRecoveryEmail(full_name, linkData.properties.action_link);
-      await sendEmailSmtp(email, emailContent.subject, emailContent.html);
+      const emailSent = await sendEmailSmtp(email, emailContent.subject, emailContent.html);
 
       return new Response(
         JSON.stringify({
-          message: `E-mail para criar senha enviado para ${email}`,
+          message: emailSent
+            ? `E-mail para criar senha enviado para ${email}`
+            : `Usuario atualizado. Link de acesso gerado (SMTP nao configurado — envie manualmente: ${linkData.properties.action_link})`,
           user_id: existingUser.id,
           already_exists: true,
+          action_link: emailSent ? undefined : linkData.properties.action_link,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -249,14 +258,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Send custom email in Portuguese via Resend
+    // Send custom email in Portuguese
     const emailContent = buildInviteEmail(full_name, linkData.properties.action_link);
-    await sendEmailSmtp(email, emailContent.subject, emailContent.html);
+    const emailSent = await sendEmailSmtp(email, emailContent.subject, emailContent.html);
 
     return new Response(
       JSON.stringify({
-        message: `Convite enviado para ${email}`,
+        message: emailSent
+          ? `Convite enviado para ${email}`
+          : `Usuario criado com sucesso! SMTP nao configurado — envie o link manualmente.`,
         user_id: newUser.user.id,
+        action_link: emailSent ? undefined : linkData.properties.action_link,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
