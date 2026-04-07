@@ -301,7 +301,10 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     if (form.has_ia_auditor) payload.has_ia_auditor = true;
     if (form.has_ia_copiloto) payload.has_ia_copiloto = true;
     if (form.has_ia_closer) payload.has_ia_closer = true;
-    if (form.whitelabel_slug) payload.whitelabel_slug = form.whitelabel_slug;
+    // Only set whitelabel_slug for whitelabel license types
+    if (form.whitelabel_slug && form.license_type === 'whitelabel') {
+      payload.whitelabel_slug = form.whitelabel_slug;
+    }
     if (split.enabled && split.recipients.some(r => r.walletId)) payload.split_config = split;
 
     const saveTenantId = isEdit ? license.tenant_id : tenantId;
@@ -322,7 +325,10 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
     } else {
       const { data, error } = await supabase.from('licenses').insert(payload).select().single();
       if (error) {
-        toast({ title: 'Erro ao criar', description: error.message, variant: 'destructive' });
+        const msg = error.message.includes('idx_licenses_whitelabel_slug')
+          ? 'Este slug de WhiteLabel ja esta em uso. Escolha outro slug.'
+          : error.message;
+        toast({ title: 'Erro ao criar', description: msg, variant: 'destructive' });
       } else {
         await supabase.from('nexus_audit_logs').insert({
           actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
