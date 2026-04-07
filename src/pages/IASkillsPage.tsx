@@ -117,16 +117,41 @@ export default function IASkillsPage() {
                   <p className="text-xs text-muted-foreground">{meta.description}</p>
                 </div>
                 {isActive && key === "auditor" && (
-                  <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => navigate(`/app/${slug}/intelligence`)}>
-                    <Eye className="mr-1 h-3.5 w-3.5" /> Abrir Dashboard
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="default" className="flex-1 text-xs" onClick={() => navigate(`/app/${slug}/intelligence`)}>
+                      <Eye className="mr-1 h-3.5 w-3.5" /> Abrir Dashboard
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAssistantConfig(true)} title="Configurar">
+                      <Settings className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+                {isActive && key === "copilot" && (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="default" className="flex-1 text-xs" onClick={() => navigate(`/app/${slug}/mensageria`)}>
+                      <Users className="mr-1 h-3.5 w-3.5" /> Caixa de Entrada
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAssistantConfig(true)} title="Configurar">
+                      <Settings className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+                {isActive && key === "closer" && (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="default" className="flex-1 text-xs" onClick={() => navigate(`/app/${slug}/mensageria`)}>
+                      <Bot className="mr-1 h-3.5 w-3.5" /> Ver Atendimentos
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAssistantConfig(true)} title="Configurar">
+                      <Settings className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 )}
                 {isActive && key === "expense_extractor" && (
                   <div className="flex gap-2">
                     <Button size="sm" variant="default" className="flex-1 text-xs" onClick={() => navigate(`/app/${slug}/copilot`)}>
                       <MessageSquare className="mr-1 h-3.5 w-3.5" /> Abrir Chat
                     </Button>
-                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAssistantConfig(true)}>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAssistantConfig(true)} title="Configurar">
                       <Settings className="h-3.5 w-3.5" />
                     </Button>
                   </div>
