@@ -18,7 +18,7 @@ interface ChatPanelProps {
   messages: Message[];
   isRightOpen: boolean;
   onToggleRight: () => void;
-  onSend: (text: string) => void;
+  onSend: (text: string, options?: { replyId?: string }) => void;
   onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
   onNewConversation?: () => void;
   /** Assign the conversation to the current user (Iniciar Atendimento) */
@@ -510,7 +510,13 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       />
 
       {/* Input */}
-      <ChatInput key={conversation?.id} onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+      <ChatInput
+        key={conversation?.id}
+        onSend={(text, opts) => onSend(text, opts)}
+        onSendAttachment={onSendAttachment}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
+      />
 
       {/* Quick Lead Drawer */}
       <QuickLeadDrawer

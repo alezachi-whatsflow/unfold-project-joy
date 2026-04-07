@@ -28,9 +28,9 @@ export type AttachmentPayload =
   | { type: "poll"; question: string; options: string[] };
 
 interface ChatInputProps {
-  onSend: (text: string) => void;
+  onSend: (text: string, options?: { replyId?: string }) => void;
   onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
-  replyTo?: { senderName: string; content: string } | null;
+  replyTo?: { senderName: string; content: string; messageId?: string } | null;
   onCancelReply?: () => void;
 }
 
@@ -269,9 +269,8 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
   const handleSend = () => {
     if (!text.trim()) return;
-    onSend(text.trim());
+    onSend(text.trim(), replyTo?.messageId ? { replyId: replyTo.messageId } : undefined);
     setText("");
-    // Clear reply after sending
     onCancelReply?.();
   };
 

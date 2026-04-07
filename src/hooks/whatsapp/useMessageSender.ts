@@ -44,7 +44,7 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
   const isInstagramConversation = (n: string) => n?.startsWith("instagram:");
 
   /* ── send text ── */
-  const handleSend = useCallback(async (text: string) => {
+  const handleSend = useCallback(async (text: string, options?: { replyId?: string }) => {
     const selectedJid = selectedJidRef.current;
     if (!selectedJid || !text.trim()) return;
 
@@ -72,7 +72,7 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
     } else if (isMetaConversation(conv.instanceName) || isInstagramConversation(conv.instanceName)) {
       const phoneNumberId = conv.instanceName.replace("meta:", "").replace("instagram:", "");
       const { data: result, error } = await supabase.functions.invoke("meta-proxy", {
-        body: { action: "send-text", phone: jidToPhone(selectedJid), message: finalText, phone_number_id: phoneNumberId },
+        body: { action: "send-text", phone: jidToPhone(selectedJid), message: finalText, phone_number_id: phoneNumberId, ...(options?.replyId ? { context_message_id: options.replyId } : {}) },
       });
       if (error || !(result as any)?.ok) { console.error("Meta send error:", error || result); return; }
     } else if (conv.instanceName?.startsWith("mercadolivre_")) {
@@ -110,12 +110,14 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
             recipientJid: isGroup ? selectedJid : jidToPhone(selectedJid),
             text: finalText,
             isGroup,
+            ...(options?.replyId ? { replyid: options.replyId } : {}),
           });
         } else {
           // LEGACY PATH: Direct uazapi call (current behavior)
           await callUazapi(conv.instanceName, "/send/text", "POST", {
             number: isGroup ? selectedJid : jidToPhone(selectedJid),
             text: finalText,
+            ...(options?.replyId ? { replyid: options.replyId } : {}),
           });
         }
       } catch (err: any) {

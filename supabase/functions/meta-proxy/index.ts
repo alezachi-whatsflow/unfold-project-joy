@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, phone, message, media_url, media_type, phone_number_id, template } = await req.json();
+    const { action, phone, message, media_url, media_type, phone_number_id, template, context_message_id } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
           to: cleanPhone,
           type: "text",
           text: { body: message },
+          ...(context_message_id ? { context: { message_id: context_message_id } } : {}),
         };
         break;
 
