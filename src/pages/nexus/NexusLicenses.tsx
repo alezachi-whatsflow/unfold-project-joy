@@ -646,7 +646,7 @@ export default function NexusLicenses() {
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : (
                 <>
-                  <div className="overflow-auto max-h-[calc(100vh-280px)]" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}>
+                  <div className="overflow-auto max-h-[calc(100vh-280px)]" data-scrollbar="visible">
                   <Table className="min-w-[1800px]">
                     <TableHeader>
                       <TableRow className="text-[11px] sticky top-0 bg-card z-20">
