@@ -303,9 +303,15 @@ function InviteUserForm({ onClose }: { onClose: () => void }) {
         body: { email, full_name: name, role, tenant_id: tenantId },
       });
 
-      if (error) throw new Error(error.message || "Erro ao convidar usuário.");
+      if (error) throw new Error(error.message || "Erro ao convidar usuario.");
 
-      toast.success(result?.message || `Convite enviado para ${email}`);
+      if (result?.action_link) {
+        // SMTP not configured — show link for manual sharing
+        toast.success(result.message, { duration: 15000 });
+        try { await navigator.clipboard.writeText(result.action_link); toast.info("Link de acesso copiado para a area de transferencia!"); } catch {}
+      } else {
+        toast.success(result?.message || `Convite enviado para ${email}`);
+      }
       onClose();
     } catch (err: any) {
       toast.error(err?.message || "Erro ao convidar usuário.");

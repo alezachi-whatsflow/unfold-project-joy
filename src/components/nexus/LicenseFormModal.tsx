@@ -345,7 +345,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
         }
 
         if (activationEmail && tenantId) {
-          const { error: inviteError } = await supabase.functions.invoke('invite-user', {
+          const { data: inviteResult, error: inviteError } = await supabase.functions.invoke('invite-user', {
             body: {
               email: activationEmail,
               full_name: tenantName,
@@ -355,13 +355,17 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
             },
           });
           if (inviteError) {
-            console.error('Erro ao enviar e-mail de ativação:', inviteError);
-            toast({ title: 'Licença criada, mas e-mail de ativação falhou', description: inviteError.message, variant: 'destructive' });
+            console.error('Erro ao enviar e-mail de ativacao:', inviteError);
+            toast({ title: 'Licenca criada, mas e-mail de ativacao falhou', description: inviteError.message, variant: 'destructive' });
+          } else if (inviteResult?.action_link) {
+            // SMTP not configured — copy link
+            toast({ title: 'Licenca criada! SMTP nao configurado.', description: 'Link de acesso copiado para a area de transferencia.' });
+            try { await navigator.clipboard.writeText(inviteResult.action_link); } catch {}
           } else {
-            toast({ title: 'Licença criada e e-mail de ativação enviado!' });
+            toast({ title: 'Licenca criada e e-mail de ativacao enviado!' });
           }
         } else {
-          toast({ title: 'Licença criada com sucesso!' });
+          toast({ title: 'Licenca criada com sucesso!' });
         }
       }
     }
