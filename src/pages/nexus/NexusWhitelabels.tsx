@@ -30,26 +30,29 @@ function maskCNPJ(v: string): string {
 }
 
 // ─── Pricing ────────────────────────────────────────────────────────────────
-const WL_PRICE = {
-  base: 170,          // 3 atendentes + 1 WebWhatsapp + 1 Meta
+// Default pricing — overridable per partner
+const DEFAULT_WL_PRICE = {
+  base: 170,
   extra_attendant: 30,
   extra_web: 80,
   extra_meta: 50,
   ai: 250,
-} as const;
+};
+
+type WLPricing = typeof DEFAULT_WL_PRICE;
 
 function calcWLPrice(form: {
   extra_attendants: number;
   extra_web: number;
   extra_meta: number;
   has_ai: boolean;
-}) {
+}, pricing: WLPricing = DEFAULT_WL_PRICE) {
   return (
-    WL_PRICE.base +
-    form.extra_attendants * WL_PRICE.extra_attendant +
-    form.extra_web * WL_PRICE.extra_web +
-    form.extra_meta * WL_PRICE.extra_meta +
-    (form.has_ai ? WL_PRICE.ai : 0)
+    pricing.base +
+    form.extra_attendants * pricing.extra_attendant +
+    form.extra_web * pricing.extra_web +
+    form.extra_meta * pricing.extra_meta +
+    (form.has_ai ? pricing.ai : 0)
   );
 }
 
@@ -160,7 +163,7 @@ export default function NexusWhitelabels() {
         pool_max_attendants, pool_max_devices_web, pool_max_devices_meta,
         pool_max_messages, pool_max_storage_gb, pool_max_ai_agents,
         tenants(name, slug, email, cpf_cnpj),
-        whitelabel_config(id, display_name, logo_url, primary_color, support_email, support_whatsapp, slug, max_sub_licenses, can_create_licenses, modules_crm, modules_financeiro, modules_mensageria, modules_ia, modules_pzaafi, modules_intelligence)
+        whitelabel_config(id, display_name, logo_url, primary_color, support_email, support_whatsapp, slug, max_sub_licenses, can_create_licenses, modules_crm, modules_financeiro, modules_mensageria, modules_ia, modules_pzaafi, modules_intelligence, partner_pricing)
       `)
       .eq('license_type', 'whitelabel')
       .order('created_at', { ascending: false });
@@ -678,7 +681,21 @@ function CreateWhitelabelModal({
     modules_ia: false,
     modules_pzaafi: false,
     modules_intelligence: false,
+    // Custom pricing per partner
+    price_base: DEFAULT_WL_PRICE.base,
+    price_attendant: DEFAULT_WL_PRICE.extra_attendant,
+    price_web: DEFAULT_WL_PRICE.extra_web,
+    price_meta: DEFAULT_WL_PRICE.extra_meta,
+    price_ai: DEFAULT_WL_PRICE.ai,
   });
+
+  const pricing: WLPricing = {
+    base: form.price_base,
+    extra_attendant: form.price_attendant,
+    extra_web: form.price_web,
+    extra_meta: form.price_meta,
+    ai: form.price_ai,
+  };
 
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -720,13 +737,13 @@ function CreateWhitelabelModal({
     if (form.display_name) set('slug', slugify(form.display_name));
   }, [form.display_name]);
 
-  const monthly_value = useMemo(() => calcWLPrice(form), [form]);
+  const monthly_value = useMemo(() => calcWLPrice(form, pricing), [form]);
 
   async function handleSave() {
     if (!form.company_name.trim()) { toast({ title: 'Informe o nome da empresa', variant: 'destructive' }); return; }
     if (!form.display_name.trim()) { toast({ title: 'Informe o nome do WhiteLabel', variant: 'destructive' }); return; }
     if (!form.slug.trim()) { toast({ title: 'Informe o slug', variant: 'destructive' }); return; }
-    if (!form.company_email.trim()) { toast({ title: 'Informe o e-mail principal', description: 'O e-mail será usado para enviar o acesso ao painel.', variant: 'destructive' }); return; }
+    if (!form.company_email.trim()) { toast({ title: 'Informe o e-mail principal', description: 'O e-mail sera usado para enviar o acesso ao painel.', variant: 'destructive' }); return; }
 
     setSaving(true);
     try {
@@ -808,8 +825,9 @@ function CreateWhitelabelModal({
           modules_ia: form.modules_ia,
           modules_pzaafi: form.modules_pzaafi,
           modules_intelligence: form.modules_intelligence,
+          partner_pricing: pricing,
         });
-      if (cErr) throw new Error(`Erro ao criar configuração: ${cErr.message}`);
+      if (cErr) throw new Error(`Erro ao criar configuracao: ${cErr.message}`);
 
       // 5. Audit
       await supabase.from('nexus_audit_logs').insert({
@@ -957,7 +975,14 @@ function CreateWhitelabelModal({
           </Section>
 
           {/* Pricing */}
-          <Section title="Tabela de Preços do Contrato">
+          <Section title="Precos do Contrato (editavel por Partner)">
+            <div className="grid grid-cols-5 gap-2 mb-3">
+              <div><Label className="text-[10px]">Base (R$)</Label><Input type="number" min={0} step={10} value={form.price_base} onChange={e => set('price_base', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">Atend. (R$)</Label><Input type="number" min={0} step={5} value={form.price_attendant} onChange={e => set('price_attendant', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">Web (R$)</Label><Input type="number" min={0} step={5} value={form.price_web} onChange={e => set('price_web', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">Meta (R$)</Label><Input type="number" min={0} step={5} value={form.price_meta} onChange={e => set('price_meta', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">I.A. (R$)</Label><Input type="number" min={0} step={10} value={form.price_ai} onChange={e => set('price_ai', Number(e.target.value))} className="h-7 text-xs" /></div>
+            </div>
             {/* Price reference table */}
             <div className="border border-border overflow-hidden text-xs">
               <table className="w-full">
@@ -974,14 +999,14 @@ function CreateWhitelabelModal({
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">Licença base</td>
                     <td className="px-3 py-2 text-center text-muted-foreground">—</td>
-                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.base)}</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(pricing.base)}</td>
                     <td className="px-3 py-2 text-center text-muted-foreground">1</td>
-                    <td className="px-3 py-2 text-right font-medium">R$ {fmt(WL_PRICE.base)}</td>
+                    <td className="px-3 py-2 text-right font-medium">R$ {fmt(pricing.base)}</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">Atendentes</td>
                     <td className="px-3 py-2 text-center text-muted-foreground">3</td>
-                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.extra_attendant)}/adicional</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(pricing.extra_attendant)}/adicional</td>
                     <td className="px-3 py-2 text-center">
                       <Input
                         type="number" min={3}
@@ -991,13 +1016,13 @@ function CreateWhitelabelModal({
                       />
                     </td>
                     <td className="px-3 py-2 text-right font-medium">
-                      {form.extra_attendants > 0 ? `R$ ${fmt(form.extra_attendants * WL_PRICE.extra_attendant)}` : '—'}
+                      {form.extra_attendants > 0 ? `R$ ${fmt(form.extra_attendants * pricing.extra_attendant)}` : '—'}
                     </td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">API Web WhatsApp</td>
                     <td className="px-3 py-2 text-center text-muted-foreground">1</td>
-                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.extra_web)}/adicional</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(pricing.extra_web)}/adicional</td>
                     <td className="px-3 py-2 text-center">
                       <Input
                         type="number" min={1}
@@ -1007,13 +1032,13 @@ function CreateWhitelabelModal({
                       />
                     </td>
                     <td className="px-3 py-2 text-right font-medium">
-                      {form.extra_web > 0 ? `R$ ${fmt(form.extra_web * WL_PRICE.extra_web)}` : '—'}
+                      {form.extra_web > 0 ? `R$ ${fmt(form.extra_web * pricing.extra_web)}` : '—'}
                     </td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">API Business Meta</td>
                     <td className="px-3 py-2 text-center text-muted-foreground">1</td>
-                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.extra_meta)}/adicional</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(pricing.extra_meta)}/adicional</td>
                     <td className="px-3 py-2 text-center">
                       <Input
                         type="number" min={1}
@@ -1023,18 +1048,18 @@ function CreateWhitelabelModal({
                       />
                     </td>
                     <td className="px-3 py-2 text-right font-medium">
-                      {form.extra_meta > 0 ? `R$ ${fmt(form.extra_meta * WL_PRICE.extra_meta)}` : '—'}
+                      {form.extra_meta > 0 ? `R$ ${fmt(form.extra_meta * pricing.extra_meta)}` : '—'}
                     </td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">Módulo I.A.</td>
                     <td className="px-3 py-2 text-center text-muted-foreground">—</td>
-                    <td className="px-3 py-2 text-right">R$ {fmt(WL_PRICE.ai)}/mês</td>
+                    <td className="px-3 py-2 text-right">R$ {fmt(pricing.ai)}/mês</td>
                     <td className="px-3 py-2 text-center">
                       <Switch checked={form.has_ai} onCheckedChange={(v) => set('has_ai', v)} />
                     </td>
                     <td className="px-3 py-2 text-right font-medium">
-                      {form.has_ai ? `R$ ${fmt(WL_PRICE.ai)}` : '—'}
+                      {form.has_ai ? `R$ ${fmt(pricing.ai)}` : '—'}
                     </td>
                   </tr>
                   <tr className="bg-primary/5 font-bold">
@@ -1154,10 +1179,24 @@ function EditWhitelabelModal({
     modules_ia: (row.whitelabel_config as any)?.modules_ia ?? false,
     modules_pzaafi: (row.whitelabel_config as any)?.modules_pzaafi ?? false,
     modules_intelligence: (row.whitelabel_config as any)?.modules_intelligence ?? false,
+    // Pricing from DB or defaults
+    price_base: (row.whitelabel_config as any)?.partner_pricing?.base ?? DEFAULT_WL_PRICE.base,
+    price_attendant: (row.whitelabel_config as any)?.partner_pricing?.extra_attendant ?? DEFAULT_WL_PRICE.extra_attendant,
+    price_web: (row.whitelabel_config as any)?.partner_pricing?.extra_web ?? DEFAULT_WL_PRICE.extra_web,
+    price_meta: (row.whitelabel_config as any)?.partner_pricing?.extra_meta ?? DEFAULT_WL_PRICE.extra_meta,
+    price_ai: (row.whitelabel_config as any)?.partner_pricing?.ai ?? DEFAULT_WL_PRICE.ai,
   });
 
+  const pricing: WLPricing = {
+    base: form.price_base,
+    extra_attendant: form.price_attendant,
+    extra_web: form.price_web,
+    extra_meta: form.price_meta,
+    ai: form.price_ai,
+  };
+
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
-  const monthly_value = useMemo(() => calcWLPrice(form), [form]);
+  const monthly_value = useMemo(() => calcWLPrice(form, pricing), [form]);
 
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -1236,8 +1275,9 @@ function EditWhitelabelModal({
         modules_ia: form.modules_ia,
         modules_pzaafi: form.modules_pzaafi,
         modules_intelligence: form.modules_intelligence,
+        partner_pricing: pricing,
       }).eq('license_id', row.id);
-      if (cErr) throw new Error(`Erro ao atualizar configuração: ${cErr.message}`);
+      if (cErr) throw new Error(`Erro ao atualizar configuracao: ${cErr.message}`);
 
       // 5. Audit
       await supabase.from('nexus_audit_logs').insert({
@@ -1346,6 +1386,17 @@ function EditWhitelabelModal({
           </Section>
 
           {/* Pricing */}
+          {/* Pricing per partner */}
+          <Section title="Precos do Contrato">
+            <div className="grid grid-cols-5 gap-2">
+              <div><Label className="text-[10px]">Base (R$)</Label><Input type="number" min={0} step={10} value={form.price_base} onChange={e => set('price_base', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">Atend. (R$)</Label><Input type="number" min={0} step={5} value={form.price_attendant} onChange={e => set('price_attendant', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">Web (R$)</Label><Input type="number" min={0} step={5} value={form.price_web} onChange={e => set('price_web', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">Meta (R$)</Label><Input type="number" min={0} step={5} value={form.price_meta} onChange={e => set('price_meta', Number(e.target.value))} className="h-7 text-xs" /></div>
+              <div><Label className="text-[10px]">I.A. (R$)</Label><Input type="number" min={0} step={10} value={form.price_ai} onChange={e => set('price_ai', Number(e.target.value))} className="h-7 text-xs" /></div>
+            </div>
+          </Section>
+
           <Section title="Recursos Contratados">
             <div className="border border-border overflow-hidden text-xs">
               <table className="w-full">
@@ -1366,7 +1417,7 @@ function EditWhitelabelModal({
                         onChange={(e) => set('extra_attendants', Math.max(0, Number(e.target.value) - 3))}
                         className="h-7 w-16 text-xs text-center mx-auto" />
                     </td>
-                    <td className="px-3 py-2 text-right">{form.extra_attendants > 0 ? `R$ ${fmt(form.extra_attendants * WL_PRICE.extra_attendant)}` : '—'}</td>
+                    <td className="px-3 py-2 text-right">{form.extra_attendants > 0 ? `R$ ${fmt(form.extra_attendants * pricing.extra_attendant)}` : '—'}</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">API Web WhatsApp</td>
@@ -1376,7 +1427,7 @@ function EditWhitelabelModal({
                         onChange={(e) => set('extra_web', Math.max(0, Number(e.target.value) - 1))}
                         className="h-7 w-16 text-xs text-center mx-auto" />
                     </td>
-                    <td className="px-3 py-2 text-right">{form.extra_web > 0 ? `R$ ${fmt(form.extra_web * WL_PRICE.extra_web)}` : '—'}</td>
+                    <td className="px-3 py-2 text-right">{form.extra_web > 0 ? `R$ ${fmt(form.extra_web * pricing.extra_web)}` : '—'}</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">API Business Meta</td>
@@ -1386,13 +1437,13 @@ function EditWhitelabelModal({
                         onChange={(e) => set('extra_meta', Math.max(0, Number(e.target.value) - 1))}
                         className="h-7 w-16 text-xs text-center mx-auto" />
                     </td>
-                    <td className="px-3 py-2 text-right">{form.extra_meta > 0 ? `R$ ${fmt(form.extra_meta * WL_PRICE.extra_meta)}` : '—'}</td>
+                    <td className="px-3 py-2 text-right">{form.extra_meta > 0 ? `R$ ${fmt(form.extra_meta * pricing.extra_meta)}` : '—'}</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-medium text-foreground">Módulo I.A.</td>
                     <td className="px-3 py-2 text-center text-muted-foreground">—</td>
                     <td className="px-3 py-2 text-center"><Switch checked={form.has_ai} onCheckedChange={(v) => set('has_ai', v)} /></td>
-                    <td className="px-3 py-2 text-right">{form.has_ai ? `R$ ${fmt(WL_PRICE.ai)}` : '—'}</td>
+                    <td className="px-3 py-2 text-right">{form.has_ai ? `R$ ${fmt(pricing.ai)}` : '—'}</td>
                   </tr>
                   <tr className="bg-primary/5 font-bold">
                     <td colSpan={3} className="px-3 py-2.5 text-foreground">Total mensal</td>
