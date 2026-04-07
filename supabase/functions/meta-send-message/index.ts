@@ -91,11 +91,29 @@ Deno.serve(async (req) => {
       throw new Error(errMsg);
     }
 
-    console.log(`[meta-send-message] Sent to ${cleanTo} via ${phone_number_id}: ${result.messages?.[0]?.id}`);
+    const waMessageId = result.messages?.[0]?.id;
+    console.log(`[meta-send-message] Sent to ${cleanTo} via ${phone_number_id}: ${waMessageId}`);
+
+    // Save outgoing snapshot to whatsapp_messages (consistent with uazapi-proxy)
+    if (waMessageId) {
+      await adminClient.from("whatsapp_messages").upsert({
+        message_id: waMessageId,
+        instance_name: `meta:${phone_number_id}`,
+        remote_jid: `${cleanTo}@s.whatsapp.net`,
+        direction: "outgoing",
+        type: template ? "template" : "text",
+        body: text || template?.name || "",
+        status: 1,
+        track_source: "meta_cloud_api",
+        raw_payload: result,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "message_id" });
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      message_id: result.messages?.[0]?.id,
+      message_id: waMessageId,
       to: cleanTo,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,3 +1,10 @@
+/**
+ * meta-proxy — Unified Meta Cloud API proxy for WhatsApp messages.
+ *
+ * Sends text, image, document, audio, video via Graph API v21.0.
+ * Uses channel_integrations table (NOT deprecated meta_connections).
+ * Saves outgoing snapshot to whatsapp_messages for consistent inbox display.
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -13,35 +20,74 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, phone, message, media_url, media_type, phone_number_id } = await req.json();
+    const { action, phone, message, media_url, media_type, phone_number_id, template } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Get the active meta connection (use phone_number_id if provided)
-    let query = supabase
-      .from("meta_connections")
-      .select("*")
-      .eq("is_active", true);
+    // 1. Get the active Meta connection from channel_integrations (primary)
+    //    Falls back to meta_connections (deprecated) if not found
+    let accessToken: string | null = null;
+    let pnId = phone_number_id;
 
-    if (phone_number_id) {
-      query = query.eq("phone_number_id", phone_number_id);
+    if (pnId) {
+      // Try channel_integrations first
+      const { data: ci } = await supabase
+        .from("channel_integrations")
+        .select("access_token, phone_number_id")
+        .eq("phone_number_id", pnId)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle();
+
+      if (ci?.access_token) {
+        accessToken = ci.access_token;
+      }
     }
 
-    const { data: conn } = await query.limit(1).single();
+    // Fallback: try channel_integrations without phone_number_id filter
+    if (!accessToken) {
+      const { data: ci } = await supabase
+        .from("channel_integrations")
+        .select("access_token, phone_number_id")
+        .eq("status", "active")
+        .in("provider", ["WABA", "meta_whatsapp"])
+        .limit(1)
+        .maybeSingle();
 
-    if (!conn || !conn.access_token) {
+      if (ci?.access_token) {
+        accessToken = ci.access_token;
+        pnId = ci.phone_number_id;
+      }
+    }
+
+    // Last resort fallback: deprecated meta_connections
+    if (!accessToken) {
+      const { data: legacy } = await supabase
+        .from("meta_connections")
+        .select("access_token, phone_number_id")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (legacy?.access_token) {
+        accessToken = legacy.access_token;
+        pnId = legacy.phone_number_id;
+        console.warn("[meta-proxy] Using deprecated meta_connections table. Migrate to channel_integrations.");
+      }
+    }
+
+    if (!accessToken || !pnId) {
       return new Response(
-        JSON.stringify({ ok: false, error: "No active Meta connection found" }),
+        JSON.stringify({ ok: false, error: "No active Meta connection found. Configure in Integracoes." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const accessToken = conn.access_token;
-    const pnId = conn.phone_number_id;
     const cleanPhone = phone.replace(/\D/g, "");
 
+    // 2. Build message payload based on action
     let messagePayload: any;
 
     switch (action) {
@@ -51,6 +97,15 @@ Deno.serve(async (req) => {
           to: cleanPhone,
           type: "text",
           text: { body: message },
+        };
+        break;
+
+      case "send-template":
+        messagePayload = {
+          messaging_product: "whatsapp",
+          to: cleanPhone,
+          type: "template",
+          template: template || { name: "hello_world", language: { code: "pt_BR" } },
         };
         break;
 
@@ -97,7 +152,7 @@ Deno.serve(async (req) => {
         );
     }
 
-    // Send via Meta Graph API
+    // 3. Send via Meta Graph API
     const response = await fetch(`${GRAPH_API}/${pnId}/messages`, {
       method: "POST",
       headers: {
@@ -110,38 +165,47 @@ Deno.serve(async (req) => {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("Meta API error:", result);
+      console.error("[meta-proxy] Meta API error:", result);
       return new Response(
         JSON.stringify({ ok: false, error: result.error?.message || "Meta API error" }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // 4. Save outgoing snapshot to whatsapp_messages (same table as uazapi-proxy)
     const waMessageId = result.messages?.[0]?.id;
     const remoteJid = `${cleanPhone}@s.whatsapp.net`;
 
-    // Save outgoing message to whatsapp_messages
     if (waMessageId) {
+      const msgType = action === "send-text" ? "text"
+        : action === "send-template" ? "template"
+        : (media_type || action.replace("send-", ""));
+
       await supabase.from("whatsapp_messages").upsert({
         message_id: waMessageId,
         instance_name: `meta:${pnId}`,
         remote_jid: remoteJid,
         direction: "outgoing",
-        type: action === "send-text" ? "text" : (media_type || "text"),
+        type: msgType,
         body: message || "",
         media_url: media_url || null,
-        status: 1,
-        track_source: "meta",
+        caption: action !== "send-text" ? (message || null) : null,
+        status: 1, // SERVER_ACK
+        track_source: "meta_cloud_api",
         raw_payload: result,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }, { onConflict: "message_id" });
     }
 
+    console.log(`[meta-proxy] Sent ${action} to ${cleanPhone} via ${pnId}: ${waMessageId}`);
+
     return new Response(
-      JSON.stringify({ ok: true, success: true, data: result }),
+      JSON.stringify({ ok: true, success: true, data: result, message_id: waMessageId }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("meta-proxy error:", err);
+    console.error("[meta-proxy] error:", err);
     return new Response(
       JSON.stringify({ ok: false, error: String(err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
