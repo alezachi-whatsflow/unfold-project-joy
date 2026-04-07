@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, User, Phone } from "lucide-react";
 import { NEGOCIO_STATUS_CONFIG, ALL_STATUSES, type Negocio, type NegocioStatus } from "@/types/vendas";
 import { getPhoneFromNotas } from "../notesUtils";
@@ -32,6 +34,7 @@ export default function DrawerHeader({
 }: DrawerHeaderProps) {
   const sc = NEGOCIO_STATUS_CONFIG[negocio.status];
   const phoneLead = (negocio as Record<string, any>).phone_lead || getPhoneFromNotas(negocio.notas);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="p-4 border-b border-border/40">
@@ -66,7 +69,7 @@ export default function DrawerHeader({
             </div>
           )}
 
-          <div className="mt-2">
+          <div className="mt-2 flex items-center gap-2">
             <Select value={negocio.status} onValueChange={onStatusChange}>
               <SelectTrigger className="h-7 w-auto">
                 <Badge className="text-[10px]" style={{ background: `${sc.color}20`, color: sc.color, border: `1px solid ${sc.color}40` }}>
@@ -84,17 +87,35 @@ export default function DrawerHeader({
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Action buttons — spaced away from drawer close (X) */}
+            <PermissionGate module="vendas" action="edit">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={onEditClick} title="Editar"><Pencil className="h-3.5 w-3.5" /></Button>
+            </PermissionGate>
+            <PermissionGate module="vendas" action="delete">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setConfirmDelete(true)} title="Excluir"><Trash2 className="h-3.5 w-3.5" /></Button>
+            </PermissionGate>
           </div>
         </div>
-        <div className="flex gap-1">
-          <PermissionGate module="vendas" action="edit">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={onEditClick}><Pencil className="h-3.5 w-3.5" /></Button>
-          </PermissionGate>
-          <PermissionGate module="vendas" action="delete">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={onDeleteClick}><Trash2 className="h-3.5 w-3.5" /></Button>
-          </PermissionGate>
-        </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir negocio?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O negocio "{negocio.titulo}" sera excluido permanentemente. Esta acao nao pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={onDeleteClick} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
