@@ -1,8 +1,9 @@
 import { fmtDate } from "@/lib/dateUtils";
-import { useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { MessageSquare, Clock, CheckCircle2, DollarSign, ArrowUp, ArrowDown, BellRing, Activity, CalendarClock, AlertTriangle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,8 +15,31 @@ import { ACTIVE_STATUSES } from "@/types/vendas";
 
 export default function Index() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [period, setPeriod] = useState("7d");
   const tenantId = useTenantId();
+
+  /* First access detection — redirect to onboarding */
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `pzaafi_onboarded_${user.id}`;
+    if (localStorage.getItem(key)) return;
+
+    (async () => {
+      const { data } = await supabase
+        .from("onboarding_steps")
+        .select("step_key")
+        .eq("user_id", user.id)
+        .limit(2);
+
+      if (!data || data.length <= 1) {
+        navigate(`/app/${slug || "whatsflow"}/sistema/onboarding`, { replace: true });
+      } else {
+        localStorage.setItem(key, "true");
+      }
+    })();
+  }, [user?.id, slug, navigate]);
   const { data: license } = useLicenseLimits(tenantId);
 
   // Real KPI data from database
