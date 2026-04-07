@@ -18,9 +18,13 @@ interface MessageListProps {
   conversationId?: string;
   onLoadMore?: () => void;
   hasMore?: boolean;
+  onReply?: (msg: Message) => void;
+  onReact?: (msgId: string, emoji: string) => void;
+  onForward?: (msg: Message) => void;
+  onDelete?: (msgId: string) => void;
 }
 
-export default function MessageList({ messages, conversationId, onLoadMore, hasMore }: MessageListProps) {
+export default function MessageList({ messages, conversationId, onLoadMore, hasMore, onReply, onReact, onForward, onDelete }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -181,7 +185,7 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
             {group.msgs.map((m, i) => {
               const prev = i > 0 ? group.msgs[i - 1] : null;
               const showSender = !prev || prev.senderName !== m.senderName || prev.direction !== m.direction;
-              return <MemoizedMessageBubble key={m.id} message={m} showSender={showSender} />;
+              return <MemoizedMessageBubble key={m.id} message={m} showSender={showSender} onReply={onReply} onReact={onReact} onForward={onForward} onDelete={onDelete} />;
             })}
           </div>
         ))}

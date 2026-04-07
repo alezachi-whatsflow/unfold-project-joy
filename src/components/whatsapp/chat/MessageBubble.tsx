@@ -1,10 +1,12 @@
 import React from "react";
 import type { Message } from "@/data/mockMessages";
 import TickIcons from "../shared/TickIcons";
-import { Play, Mic } from "lucide-react";
+import { Play, Mic, RefreshCw } from "lucide-react";
 import WaAvatar from "../shared/Avatar";
-import { RefreshCw } from "lucide-react";
 import { getMessageRenderer } from "./MessageRenderers";
+import MessageContextMenu from "./MessageContextMenu";
+
+import { fmtDateTime } from "@/lib/dateUtils";
 
 // Simple hash for sender name colors
 function nameColor(name: string): string {
@@ -13,8 +15,6 @@ function nameColor(name: string): string {
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return colors[Math.abs(h) % colors.length];
 }
-
-import { fmtDateTime } from "@/lib/dateUtils";
 
 function formatMsgTime(ts: string): string {
   if (!ts) return "";
@@ -25,9 +25,19 @@ function formatMsgTime(ts: string): string {
 interface MessageBubbleProps {
   message: Message;
   showSender: boolean;
+  onReply?: (msg: Message) => void;
+  onReact?: (msgId: string, emoji: string) => void;
+  onForward?: (msg: Message) => void;
+  onDelete?: (msgId: string) => void;
+  onPin?: (msgId: string) => void;
+  onStar?: (msgId: string) => void;
+  onAddToNotes?: (msg: Message) => void;
 }
 
-const MessageBubble = React.memo(function MessageBubble({ message: m, showSender }: MessageBubbleProps) {
+const MessageBubble = React.memo(function MessageBubble({
+  message: m, showSender,
+  onReply, onReact, onForward, onDelete, onPin, onStar, onAddToNotes,
+}: MessageBubbleProps) {
   // Transfer message
   if (m.type === "transfer") {
     return (
@@ -90,28 +100,44 @@ const MessageBubble = React.memo(function MessageBubble({ message: m, showSender
   const Renderer = getMessageRenderer(m.type);
 
   return (
-    <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1`}>
-      <div
-        className="max-w-[65%] min-w-0 px-2.5 pt-1.5 pb-1 overflow-hidden break-words"
-        style={{
-          backgroundColor: isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)",
-          borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
-        }}
-      >
-        {showSender && m.senderName && (
-          <p className="text-xs font-semibold mb-0.5" style={{ color: nameColor(m.senderName) }}>
-            {m.senderName}
-          </p>
-        )}
-        {replyBlock}
-        <div style={{ color: "var(--wa-text-primary)" }}>
-          <Renderer message={m} nameColor={m.senderName ? nameColor(m.senderName) : undefined} formatTime={formatMsgTime} />
-        </div>
-        <div className="flex items-center justify-end gap-1 mt-0.5">
-          <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
-            {formatMsgTime(m.timestamp)}
-          </span>
-          {isOut && <TickIcons status={m.status} />}
+    <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1 group`}>
+      <div className="relative max-w-[65%] min-w-0">
+        {/* Context menu */}
+        <MessageContextMenu
+          message={m}
+          isOutgoing={isOut}
+          onReply={onReply}
+          onReact={onReact}
+          onForward={onForward}
+          onDelete={onDelete}
+          onPin={onPin}
+          onStar={onStar}
+          onAddToNotes={onAddToNotes}
+        />
+
+        {/* Bubble */}
+        <div
+          className="px-2.5 pt-1.5 pb-1 overflow-hidden break-words"
+          style={{
+            backgroundColor: isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)",
+            borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
+          }}
+        >
+          {showSender && m.senderName && (
+            <p className="text-xs font-semibold mb-0.5" style={{ color: nameColor(m.senderName) }}>
+              {m.senderName}
+            </p>
+          )}
+          {replyBlock}
+          <div style={{ color: "var(--wa-text-primary)" }}>
+            <Renderer message={m} nameColor={m.senderName ? nameColor(m.senderName) : undefined} formatTime={formatMsgTime} />
+          </div>
+          <div className="flex items-center justify-end gap-1 mt-0.5">
+            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
+              {formatMsgTime(m.timestamp)}
+            </span>
+            {isOut && <TickIcons status={m.status} />}
+          </div>
         </div>
       </div>
     </div>

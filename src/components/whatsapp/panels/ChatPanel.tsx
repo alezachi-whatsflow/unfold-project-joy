@@ -486,7 +486,28 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       </div>
 
       {/* Messages */}
-      <MessageList messages={messages} conversationId={conversation?.id} onLoadMore={onLoadMore} hasMore={hasMore} />
+      <MessageList
+        messages={messages}
+        conversationId={conversation?.id}
+        onLoadMore={onLoadMore}
+        hasMore={hasMore}
+        onReply={(msg) => setReplyTo({ senderName: msg.senderName || "Desconhecido", content: msg.content || "" })}
+        onReact={(msgId, emoji) => {
+          // React via uazapi/meta
+          import("@/services/messageService").then(({ messageService }) => {
+            if (conversation?.instanceName) {
+              messageService.react(conversation.instanceName, msgId, conversation.id, emoji);
+            }
+          });
+        }}
+        onDelete={(msgId) => {
+          if (conversation?.instanceName) {
+            import("@/services/messageService").then(({ messageService }) => {
+              messageService.delete(conversation.instanceName, msgId, conversation.id);
+            });
+          }
+        }}
+      />
 
       {/* Input */}
       <ChatInput key={conversation?.id} onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
