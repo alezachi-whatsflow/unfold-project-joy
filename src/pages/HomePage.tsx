@@ -39,6 +39,30 @@ export default function HomePage() {
   const isMobile = useIsMobile();
   const [mobileMenu, setMobileMenu] = useState(false);
 
+  /* First access detection — redirect to onboarding */
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `pzaafi_onboarded_${user.id}`;
+    if (localStorage.getItem(key)) return; // Already onboarded
+
+    // Check if this is first login (no company_profile yet)
+    (async () => {
+      const { data } = await supabase
+        .from("onboarding_steps")
+        .select("step_key")
+        .eq("user_id", user.id)
+        .limit(2);
+
+      // If user has 0-1 onboarding steps, redirect to onboarding
+      if (!data || data.length <= 1) {
+        const slug = window.location.pathname.match(/\/app\/([^/]+)/)?.[1] || "whatsflow";
+        navigate(`/app/${slug}/sistema/onboarding`, { replace: true });
+      } else {
+        localStorage.setItem(key, "true");
+      }
+    })();
+  }, [user?.id, navigate]);
+
   /* KPI state */
   const [pendingCount, setPendingCount] = useState(0);
   const [pipelineCount, setPipelineCount] = useState(0);
