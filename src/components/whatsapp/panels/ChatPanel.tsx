@@ -489,7 +489,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       <MessageList messages={messages} conversationId={conversation?.id} onLoadMore={onLoadMore} hasMore={hasMore} />
 
       {/* Input */}
-      <ChatInput onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+      <ChatInput key={conversation?.id} onSend={onSend} onSendAttachment={onSendAttachment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
 
       {/* Quick Lead Drawer */}
       <QuickLeadDrawer
