@@ -18,29 +18,30 @@
 }
 
 /* Show thin scrollbars on data tables */
-.overflow-auto[style*="scrollbar"],
 [data-scrollbar="visible"] {
   scrollbar-width: thin !important;
+  scrollbar-color: hsl(var(--border)) transparent !important;
   -ms-overflow-style: auto !important;
 }
-.overflow-auto[style*="scrollbar"]::-webkit-scrollbar,
 [data-scrollbar="visible"]::-webkit-scrollbar {
   display: block !important;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
-.overflow-auto[style*="scrollbar"]::-webkit-scrollbar-track,
 [data-scrollbar="visible"]::-webkit-scrollbar-track {
-  background: transparent;
+  background: hsl(var(--background));
+  border-radius: 4px;
 }
-.overflow-auto[style*="scrollbar"]::-webkit-scrollbar-thumb,
 [data-scrollbar="visible"]::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
-  border-radius: 3px;
+  border-radius: 4px;
+  border: 1px solid hsl(var(--background));
 }
-.overflow-auto[style*="scrollbar"]::-webkit-scrollbar-thumb:hover,
 [data-scrollbar="visible"]::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
+}
+[data-scrollbar="visible"]::-webkit-scrollbar-corner {
+  background: hsl(var(--background));
 }
 
 @layer base {
