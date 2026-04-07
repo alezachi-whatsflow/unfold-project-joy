@@ -18,65 +18,95 @@
 }
 
 @layer base {
-  /* ===== ARGON DASHBOARD THEME (default) — Light SaaS Premium ===== */
+  /* ═══════════════════════════════════════════════════════════════════
+     PZAAFI BRAND KIT v5.0 — Dark Mode Only · Cyber-Minimalist
+     Based on Brand Guidelines · April 2026
+
+     Primary:   #478BFF (Signal Blue) — CTAs, links, active borders
+     Accent:    #39F7B2 (Cyan Accent) — success, badges, mesh
+     Background:#0D0E14 (Dark Eclipse) — root background
+     Surface:   #121419 — cards, panels
+     Surface 2: #181C24 — elevated surfaces
+     Border:    #1E3757 (Signal Soft) — all borders 1px
+     Foreground:#E5E8ED (Wordmark Light) — primary text
+     Muted:     #8A8F9E (Mid Gray) — secondary text
+     Dim:       #555C6E — tertiary/disabled
+     Snow:      #F0F2F5 — inverse text on dark CTAs
+     ═══════════════════════════════════════════════════════════════════ */
   :root {
-    --background: 233 67% 98%;
-    --foreground: 216 33% 30%;
+    /* Core surfaces */
+    --background: 230 25% 6%;        /* #0D0E14 Dark Eclipse */
+    --foreground: 220 18% 91%;       /* #E5E8ED Wordmark Light */
 
-    --card: 0 0% 100%;
-    --card-foreground: 216 33% 30%;
+    --card: 228 18% 8%;              /* #121419 Surface */
+    --card-foreground: 220 18% 91%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 216 33% 30%;
+    --popover: 225 16% 12%;          /* #181C24 Surface 2 */
+    --popover-foreground: 220 18% 91%;
 
-    --primary: 233 73% 63%;
+    /* Signal Blue — primary interactive */
+    --primary: 218 100% 64%;         /* #478BFF Signal Blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 14% 89%;
-    --secondary-foreground: 216 33% 30%;
+    /* Secondary = Surface 2 */
+    --secondary: 225 16% 12%;        /* #181C24 */
+    --secondary-foreground: 220 18% 91%;
 
-    --muted: 210 16% 93%;
-    --muted-foreground: 220 16% 48%;
+    /* Muted = for disabled/secondary text */
+    --muted: 228 18% 8%;             /* #121419 */
+    --muted-foreground: 224 8% 58%;  /* #8A8F9E Mid Gray */
 
-    --accent: 233 73% 63%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent = Cyan (success, badges) */
+    --accent: 157 91% 60%;           /* #39F7B2 Cyan Accent */
+    --accent-foreground: 230 25% 6%;
 
-    --destructive: 349 89% 58%;
+    /* Destructive */
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 18% 87%;
-    --input: 210 14% 83%;
-    --ring: 233 73% 63%;
+    /* Borders & Inputs */
+    --border: 214 52% 23%;           /* #1E3757 Signal Soft */
+    --input: 214 52% 23%;
+    --ring: 218 100% 64%;            /* Signal Blue */
 
-    --radius: 0.5rem;
+    --radius: 0.375rem;              /* Tighter radius for cyber feel */
 
-    --success: 152 69% 49%;
-    --success-foreground: 0 0% 100%;
-    --warning: 12 96% 62%;
-    --warning-foreground: 0 0% 100%;
-    --info: 188 93% 50%;
+    /* Status colors */
+    --success: 157 91% 60%;          /* Cyan Accent */
+    --success-foreground: 230 25% 6%;
+    --warning: 36 100% 50%;
+    --warning-foreground: 230 25% 6%;
+    --info: 218 100% 64%;            /* Signal Blue */
     --info-foreground: 0 0% 100%;
 
-    --chart-1: 233 73% 63%;
-    --chart-2: 152 69% 49%;
-    --chart-3: 188 93% 50%;
-    --chart-4: 12 96% 62%;
-    --chart-5: 349 89% 58%;
+    /* Chart palette */
+    --chart-1: 218 100% 64%;         /* Signal Blue */
+    --chart-2: 157 91% 60%;          /* Cyan Accent */
+    --chart-3: 36 100% 50%;          /* Warning amber */
+    --chart-4: 270 60% 60%;          /* Purple */
+    --chart-5: 0 72% 55%;            /* Destructive */
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 216 33% 30%;
-    --sidebar-primary: 233 73% 63%;
+    /* Sidebar */
+    --sidebar-background: 228 18% 8%;  /* Surface */
+    --sidebar-foreground: 220 18% 91%;
+    --sidebar-primary: 218 100% 64%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 233 67% 97%;
-    --sidebar-accent-foreground: 233 73% 63%;
-    --sidebar-border: 210 18% 93%;
-    --sidebar-ring: 233 73% 63%;
+    --sidebar-accent: 225 16% 12%;
+    --sidebar-accent-foreground: 218 100% 64%;
+    --sidebar-border: 214 52% 23%;
+    --sidebar-ring: 218 100% 64%;
 
-    /* Argon shadows */
-    --shadow-card: 0 0 2rem 0 rgba(136, 152, 170, 0.15);
-    --shadow-button: 0 4px 6px rgba(50, 50, 93, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-sidebar: 0 0 2rem 0 rgba(136, 152, 170, 0.15);
-    --shadow-navbar: 0 2px 12px 0 rgba(0, 0, 0, 0.16);
+    /* Pzaafi brand tokens (non-shadcn) */
+    --pz-signal-blue: #478BFF;
+    --pz-cyan-accent: #39F7B2;
+    --pz-dark-eclipse: #0D0E14;
+    --pz-surface: #121419;
+    --pz-surface-2: #181C24;
+    --pz-signal-soft: #1E3757;
+    --pz-wordmark-light: #E5E8ED;
+    --pz-mid-gray: #8A8F9E;
+    --pz-dim: #555C6E;
+    --pz-snow: #F0F2F5;
   }
 }
 
@@ -86,7 +116,6 @@
   }
 
   html {
-    /* Safe area for PWA on iPhone with notch/Dynamic Island */
     --safe-area-top: env(safe-area-inset-top, 0px);
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-left: env(safe-area-inset-left, 0px);
@@ -96,7 +125,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: #67748e;
     font-size: 0.875rem;
     line-height: 1.5;
     -webkit-overflow-scrolling: touch;
@@ -117,7 +145,11 @@
 
 @layer utilities {
   .font-display {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  }
+
+  .font-brand {
+    font-family: 'Geist Mono', monospace;
   }
 
   /* Fluid typography scale */
@@ -145,6 +177,17 @@
   .text-fluid-4xl {
     font-size: clamp(1.875rem, 1.5rem + 1.25vw, 2.25rem);
   }
+
+  /* Pzaafi brand utilities */
+  .pz-glow-blue {
+    box-shadow: 0 0 20px rgba(71, 139, 255, 0.15);
+  }
+  .pz-glow-cyan {
+    box-shadow: 0 0 20px rgba(57, 247, 178, 0.15);
+  }
+  .pz-border-neon {
+    border: 1px solid rgba(71, 139, 255, 0.3);
+  }
 }
 
 @keyframes fade-in-up {
@@ -156,353 +199,4 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ===== HOME PAGE — Liquid Glass ===== */
-.home-page-root {
-  min-height: 100vh;
-  background: radial-gradient(ellipse at top left, #0D1F17, #0A0F0D 70%);
-  position: relative;
-  overflow-x: hidden;
-  padding-bottom: 100px;
-}
-
-.home-sphere {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-  z-index: 0;
-}
-.home-sphere-1 { width: 600px; height: 600px; top: -100px; left: -100px; background: rgba(0,200,150,0.06); }
-.home-sphere-2 { width: 400px; height: 400px; top: 40%; right: -80px; background: rgba(0,168,120,0.04); }
-.home-sphere-3 { width: 300px; height: 300px; bottom: -50px; left: 40%; background: rgba(0,102,68,0.05); }
-
-.home-header {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  right: 16px;
-  height: 56px;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  background: rgba(10,15,13,0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0,200,150,0.12);
-  border-radius: 16px;
-  animation: home-slide-down 0.3s ease-out;
-}
-
-.home-grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 16px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 88px 24px 24px;
-}
-@media (max-width: 1199px) {
-  .home-grid { grid-template-columns: repeat(6, 1fr); }
-}
-@media (max-width: 767px) {
-  .home-grid { grid-template-columns: 1fr; padding: 80px 16px 16px; }
-  .home-grid .col-span-12,
-  .home-grid [class*="lg:col-span"],
-  .home-grid [class*="sm:col-span"] { grid-column: span 1 !important; }
-}
-
-.glass-card {
-  position: relative;
-  overflow: hidden;
-  background: rgba(255,255,255,0.03);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(0,200,150,0.10);
-  border-radius: 20px;
-  padding: 24px;
-  cursor: pointer;
-  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
-  animation: home-card-in 0.4s ease-out both;
-}
-.glass-card:hover {
-  border-color: rgba(0,200,150,0.25);
-  background: rgba(0,200,150,0.05);
-  transform: translateY(-2px);
-}
-
-.home-cta-card {
-  background: linear-gradient(90deg, rgba(0,200,150,0.12), rgba(0,200,150,0.03)) !important;
-  border-left: 3px solid #00C896 !important;
-}
-
-.kpi-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(0,200,150,0.08);
-}
-
-/* Dock */
-.home-dock {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  gap: 4px;
-  background: rgba(8,12,10,0.85);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(0,200,150,0.20);
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,200,150,0.05) inset;
-  animation: home-dock-in 0.5s ease-out 0.4s both;
-}
-
-/* ── Global icon hover effect — scale + color + tooltip ── */
-.nav-icon-hover {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  color: var(--text-muted, rgba(240,253,248,0.6));
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transform-origin: center;
-  cursor: pointer;
-  position: relative;
-}
-.nav-icon-hover:hover {
-  background: var(--acc-bg, rgba(0,200,150,0.15));
-  color: var(--acc, #00C896);
-  transform: scale(1.25);
-}
-.nav-icon-hover.active {
-  background: var(--acc-bg, rgba(0,200,150,0.15));
-  color: var(--acc, #00C896);
-}
-
-/* Tooltip that appears below on hover */
-.nav-icon-tooltip {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-4px);
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  background: var(--bg-card, rgba(8,12,10,0.92));
-  border: 1px solid var(--border, rgba(0,200,150,0.15));
-  color: var(--text-primary, #F0FDF8);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 99999;
-}
-.nav-icon-hover:hover > .nav-icon-tooltip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* Side tooltip (for vertical sidebars) */
-.nav-icon-tooltip-right {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%) translateX(-4px);
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  background: var(--bg-card, rgba(8,12,10,0.9));
-  border: 1px solid var(--border, rgba(0,200,150,0.15));
-  color: var(--text-primary, #F0FDF8);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 50;
-}
-.nav-icon-hover:hover .nav-icon-tooltip-right {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
-}
-
-/* Legacy dock compatibility */
-.dock-icon {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  color: rgba(240,253,248,0.6);
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transform-origin: bottom center;
-}
-.dock-icon:hover {
-  background: rgba(0,200,150,0.15);
-  color: #00C896;
-  transform: scale(1.25);
-}
-
-.dock-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  background: rgba(8,12,10,0.9);
-  border: 1px solid rgba(0,200,150,0.15);
-  color: #F0FDF8;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.group:hover .dock-tooltip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-@keyframes home-slide-down {
-  from { opacity: 0; transform: translateY(-12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes home-card-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes home-dock-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-@keyframes bar-grow {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-.animate-bar-grow {
-  transform-origin: bottom;
-  animation: bar-grow 0.6s ease-out both;
-}
-
-/* ===== WhatsApp Messenger Theme ===== */
-:root {
-  --wa-bg-deep: #111B21;
-  --wa-bg-panel: #1F2C34;
-  --wa-bg-chat: #0B141A;
-  --wa-bg-header: #202C33;
-  --wa-bg-input: #2A3942;
-  --wa-bg-hover: #2A3942;
-  --wa-bg-selected: #2A3942;
-  --wa-bg-msg-out: #005C4B;
-  --wa-bg-msg-in: #1E2A30;
-  --wa-bg-system: rgba(11,20,26,0.7);
-  --wa-text-primary: #E9EDEF;
-  --wa-text-secondary: #8696A0;
-  --wa-text-tertiary: #667781;
-  --wa-text-link: #53BDEB;
-  --wa-green: #00A884;
-  --wa-green-dark: #008069;
-  --wa-teal: #00BCD4;
-  --wa-blue-read: #53BDEB;
-  --wa-border: #222D34;
-  --wa-border-input: #3B4A54;
-  --tag-ai: #7C3AED;
-  --tag-client: #0EA5E9;
-  --tag-lead: #10B981;
-  --tag-support: #F59E0B;
-  --tag-transfer: #EF4444;
-  --wa-wallpaper-pattern: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.4'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
-
-.chat-wallpaper {
-  background-color: var(--wa-bg-chat);
-  background-image: var(--wa-wallpaper-pattern);
-}
-
-@keyframes messageIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-.message-bubble { animation: messageIn 200ms ease-out; }
-
-.conv-item { transition: background-color 150ms ease; }
-.tick-icon { transition: color 300ms ease; }
-.right-panel-wa { transition: width 280ms cubic-bezier(0.4,0,0.2,1), opacity 280ms ease; }
-
-@keyframes typingDot {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-6px); opacity: 1; }
-}
-.typing-dot:nth-child(1) { animation: typingDot 1.2s 0.0s infinite; }
-.typing-dot:nth-child(2) { animation: typingDot 1.2s 0.2s infinite; }
-.typing-dot:nth-child(3) { animation: typingDot 1.2s 0.4s infinite; }
-
-/* MOBILE WEB — GLOBAL RULES */
-@media (max-width: 768px) {
-  button,
-  [role="button"],
-  a.btn,
-  [data-sidebar-item],
-  .msg-pill {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  input, select, textarea {
-    font-size: 16px !important;
-  }
-
-  [class*="glass-"] {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  [role="dialog"] > div {
-    margin: 0 !important;
-    max-width: 100% !important;
-    min-height: 100dvh;
-    border-radius: 0 !important;
-  }
-
-  [data-sidebar="sidebar"] {
-    width: 85vw !important;
-    max-width: 320px;
-  }
-}
-
-@supports (padding-top: env(safe-area-inset-top)) {
-  .app-header { padding-top: env(safe-area-inset-top); }
-  .app-footer { padding-bottom: env(safe-area-inset-bottom); }
 }

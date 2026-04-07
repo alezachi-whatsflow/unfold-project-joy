@@ -20,7 +20,9 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Inter"', "system-ui", "sans-serif"],
-        display: ['"Inter"', "system-ui", "sans-serif"],
+        mono: ['"Geist Mono"', '"JetBrains Mono"', "monospace"],
+        display: ['"Geist Mono"', "monospace"],
+        brand: ['"Geist Mono"', "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -81,6 +83,19 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        /* Pzaafi brand direct-access tokens */
+        pz: {
+          blue: "var(--pz-signal-blue)",
+          cyan: "var(--pz-cyan-accent)",
+          eclipse: "var(--pz-dark-eclipse)",
+          surface: "var(--pz-surface)",
+          "surface-2": "var(--pz-surface-2)",
+          soft: "var(--pz-signal-soft)",
+          light: "var(--pz-wordmark-light)",
+          gray: "var(--pz-mid-gray)",
+          dim: "var(--pz-dim)",
+          snow: "var(--pz-snow)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -116,6 +131,10 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "neon-pulse": {
+          "0%, 100%": { boxShadow: "0 0 8px rgba(71, 139, 255, 0.2)" },
+          "50%": { boxShadow: "0 0 20px rgba(71, 139, 255, 0.4)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -125,6 +144,7 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         shimmer: "shimmer 2s linear infinite",
+        "neon-pulse": "neon-pulse 2s ease-in-out infinite",
       },
     },
   },
