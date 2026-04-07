@@ -30,16 +30,32 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
   const prevConversationRef = useRef<string | undefined>(undefined);
   const scrollHeightBeforeLoadRef = useRef<number>(0);
 
-  // Instant scroll when conversation changes
+  const initialScrollDoneRef = useRef(false);
+
+  // Reset when conversation changes
   useEffect(() => {
     if (conversationId !== prevConversationRef.current) {
       prevConversationRef.current = conversationId;
-      prevLengthRef.current = messages.length;
+      prevLengthRef.current = 0;
+      initialScrollDoneRef.current = false;
       setIsAtBottom(true);
       setLoadingMore(false);
-      // Use requestAnimationFrame to ensure DOM has rendered
+    }
+  }, [conversationId]);
+
+  // Scroll to bottom when messages load or change
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    // First load for this conversation — instant scroll to bottom
+    if (!initialScrollDoneRef.current) {
+      initialScrollDoneRef.current = true;
+      prevLengthRef.current = messages.length;
+      // Double rAF ensures DOM is painted before scrolling
       requestAnimationFrame(() => {
-        endRef.current?.scrollIntoView({ behavior: "auto" });
+        requestAnimationFrame(() => {
+          endRef.current?.scrollIntoView({ behavior: "auto" });
+        });
       });
       return;
     }
@@ -60,18 +76,18 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
         });
       }
       setLoadingMore(false);
-    } else {
+    } else if (wasAdded) {
       // Always scroll when a new outgoing message is added (user just sent)
       const lastMsg = messages[messages.length - 1];
-      const isNewOutgoing = wasAdded && lastMsg?.direction === "outgoing";
+      const isNewOutgoing = lastMsg?.direction === "outgoing";
 
-      if (isNewOutgoing || (wasAdded && isAtBottom)) {
+      if (isNewOutgoing || isAtBottom) {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
       }
     }
 
     prevLengthRef.current = newCount;
-  }, [messages, isAtBottom, conversationId, loadingMore]);
+  }, [messages, isAtBottom, loadingMore]);
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
