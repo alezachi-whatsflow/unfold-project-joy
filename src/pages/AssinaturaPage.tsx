@@ -215,8 +215,16 @@ export default function AssinaturaPage() {
             />
             <InfoRow
               label="Modulo I.A."
-              value={limits.hasAiModule ? `Sim (${limits.aiAgentsLimit} agentes)` : "Nao"}
-              valueClass={limits.hasAiModule ? "text-emerald-400" : "text-muted-foreground"}
+              value={(() => {
+                const active: string[] = [];
+                if (limits.hasIaAuditor) active.push("Auditor");
+                if (limits.hasIaCopiloto) active.push("Assistente");
+                if (limits.hasIaCloser) active.push("Closer");
+                if (active.length > 0) return active.join(", ");
+                if (limits.hasAiModule) return `Ativo (${limits.aiAgentsLimit} agentes)`;
+                return "Nao";
+              })()}
+              valueClass={limits.hasAiModule || limits.hasIaAuditor || limits.hasIaCopiloto || limits.hasIaCloser ? "text-emerald-400" : "text-muted-foreground"}
             />
           </div>
         </Card>
@@ -237,14 +245,34 @@ export default function AssinaturaPage() {
             <LimitBar label="Mensagens/mes" used={0} total={limits.monthlyMessagesLimit} color="bg-purple-500" />
             <LimitBar label="Storage" used={0} total={limits.storageLimitGb} color="bg-teal-500" suffix="GB" />
 
-            <div className="pt-4 border-t border-white/5 flex flex-wrap gap-4">
-              {limits.hasAiModule && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20">
+            <div className="pt-4 border-t border-border/30 flex flex-wrap gap-2">
+              {limits.hasIaAuditor && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-teal-400 bg-teal-400/10 px-2.5 py-1 rounded-full border border-teal-400/20">
+                  <CheckCircle2 className="h-3 w-3" /> Auditor de Qualidade
+                </span>
+              )}
+              {limits.hasIaCopiloto && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/20">
+                  <CheckCircle2 className="h-3 w-3" /> Assistente Autonomo
+                </span>
+              )}
+              {limits.hasIaCloser && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">
+                  <CheckCircle2 className="h-3 w-3" /> Closer Autonomo
+                </span>
+              )}
+              {limits.hasAiModule && !limits.hasIaAuditor && !limits.hasIaCopiloto && !limits.hasIaCloser && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/20">
                   <CheckCircle2 className="h-3 w-3" /> Modulo I.A. Ativo
                 </span>
               )}
+              {!limits.hasAiModule && !limits.hasIaAuditor && !limits.hasIaCopiloto && !limits.hasIaCloser && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border">
+                  Nenhum modulo I.A. ativo
+                </span>
+              )}
               {limits.facilitePlan && limits.facilitePlan !== "none" && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full border border-blue-400/20 uppercase font-bold tracking-wider">
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-blue-400 bg-blue-400/10 px-2.5 py-1 rounded-full border border-blue-400/20 uppercase font-bold tracking-wider">
                   Facilite {FACILITE_LABELS[limits.facilitePlan] || limits.facilitePlan}
                 </span>
               )}

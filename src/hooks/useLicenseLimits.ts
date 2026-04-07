@@ -7,6 +7,9 @@ export interface LicenseLimits {
   maxDevicesMeta: number;
   maxAttendants: number;
   hasAiModule: boolean;
+  hasIaAuditor: boolean;
+  hasIaCopiloto: boolean;
+  hasIaCloser: boolean;
   aiAgentsLimit: number;
   currentDevicesWeb: number;
   currentDevicesMeta: number;
@@ -76,6 +79,9 @@ export function useLicenseLimits(tenantId?: string) {
         maxDevicesMeta: (license.base_devices_meta || 1) + (license.extra_devices_meta || 0),
         maxAttendants: (license.base_attendants || 1) + (license.extra_attendants || 0),
         hasAiModule: license.has_ai_module || false,
+        hasIaAuditor: license.has_ia_auditor || false,
+        hasIaCopiloto: license.has_ia_copiloto || false,
+        hasIaCloser: license.has_ia_closer || false,
         aiAgentsLimit: license.ai_agents_limit || 0,
         currentDevicesWeb: webCount || 0,
         currentDevicesMeta: metaCount || 0,
