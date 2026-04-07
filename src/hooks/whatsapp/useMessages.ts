@@ -90,6 +90,7 @@ export function useMessages() {
       const createdAt = new Date(row.created_at);
       return {
         id: row.id,
+        providerMessageId: row.message_id || null,
         conversationId: row.remote_jid,
         content: row.body || row.caption || `[${row.type}]`,
         timestamp: fmtDateTime(createdAt),

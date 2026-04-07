@@ -1,5 +1,6 @@
 export interface Message {
   id: string;
+  providerMessageId?: string;  // WhatsApp message_id (for reply/react)
   conversationId: string;
   content: string;
   timestamp: string;
