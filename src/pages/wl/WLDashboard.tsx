@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Users, DollarSign, Wifi, Cpu, TrendingUp } from "lucide-react";
+import PoolConsumptionBar from "@/components/wl/PoolConsumptionBar";
 
 function fmt(n: number) {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -59,6 +60,9 @@ export default function WLDashboard() {
         <h1 className="text-2xl font-bold text-white">Dashboard</h1>
         <p className="text-sm text-white/50 mt-1">Visão geral da sua operação</p>
       </div>
+
+      {/* Pool Consumption */}
+      {wlLicenseId && <PoolConsumptionBar wlLicenseId={wlLicenseId} />}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

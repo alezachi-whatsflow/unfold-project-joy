@@ -93,6 +93,13 @@ interface WLRow {
   extra_devices_meta: number;
   has_ai_module: boolean;
   created_at: string;
+  // Pool quotas
+  pool_max_attendants: number;
+  pool_max_devices_web: number;
+  pool_max_devices_meta: number;
+  pool_max_messages: number;
+  pool_max_storage_gb: number;
+  pool_max_ai_agents: number;
   tenants: { name: string; slug: string; email: string; cpf_cnpj: string | null } | null;
   whitelabel_config: {
     id?: string;
@@ -104,6 +111,12 @@ interface WLRow {
     slug: string | null;
     max_sub_licenses: number;
     can_create_licenses: boolean;
+    modules_crm?: boolean;
+    modules_financeiro?: boolean;
+    modules_mensageria?: boolean;
+    modules_ia?: boolean;
+    modules_pzaafi?: boolean;
+    modules_intelligence?: boolean;
   } | null;
   // computed
   sub_active: number;
@@ -144,8 +157,10 @@ export default function NexusWhitelabels() {
         base_devices_web, extra_devices_web,
         base_devices_meta, extra_devices_meta,
         has_ai_module,
+        pool_max_attendants, pool_max_devices_web, pool_max_devices_meta,
+        pool_max_messages, pool_max_storage_gb, pool_max_ai_agents,
         tenants(name, slug, email, cpf_cnpj),
-        whitelabel_config(id, display_name, logo_url, primary_color, support_email, support_whatsapp, slug, max_sub_licenses, can_create_licenses)
+        whitelabel_config(id, display_name, logo_url, primary_color, support_email, support_whatsapp, slug, max_sub_licenses, can_create_licenses, modules_crm, modules_financeiro, modules_mensageria, modules_ia, modules_pzaafi, modules_intelligence)
       `)
       .eq('license_type', 'whitelabel')
       .order('created_at', { ascending: false });
@@ -649,6 +664,20 @@ function CreateWhitelabelModal({
     extra_web: 0,
     extra_meta: 0,
     has_ai: false,
+    // Pool quotas (Nexus sets these limits for the WL)
+    pool_max_attendants: 30,
+    pool_max_devices_web: 20,
+    pool_max_devices_meta: 10,
+    pool_max_messages: 100000,
+    pool_max_storage_gb: 10,
+    pool_max_ai_agents: 10,
+    // Module toggles
+    modules_crm: true,
+    modules_financeiro: true,
+    modules_mensageria: true,
+    modules_ia: false,
+    modules_pzaafi: false,
+    modules_intelligence: false,
   });
 
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -677,6 +706,10 @@ function CreateWhitelabelModal({
         display_name: '', slug: '', primary_color: '#11BC76',
         support_email: '', support_whatsapp: '',
         max_sub_licenses: 50, extra_attendants: 0, extra_web: 0, extra_meta: 0, has_ai: false,
+        pool_max_attendants: 30, pool_max_devices_web: 20, pool_max_devices_meta: 10,
+        pool_max_messages: 100000, pool_max_storage_gb: 10, pool_max_ai_agents: 10,
+        modules_crm: true, modules_financeiro: true, modules_mensageria: true,
+        modules_ia: false, modules_pzaafi: false, modules_intelligence: false,
       });
       setLogoFile(null);
       setLogoPreview(null);
@@ -711,7 +744,7 @@ function CreateWhitelabelModal({
         .single();
       if (tErr) throw new Error(`Erro ao criar tenant: ${tErr.message}`);
 
-      // 2. License
+      // 2. License (with pool quotas)
       const { data: license, error: lErr } = await supabase
         .from('licenses')
         .insert({
@@ -728,6 +761,12 @@ function CreateWhitelabelModal({
           base_devices_meta: 1,
           extra_devices_meta: form.extra_meta,
           has_ai_module: form.has_ai,
+          pool_max_attendants: form.pool_max_attendants,
+          pool_max_devices_web: form.pool_max_devices_web,
+          pool_max_devices_meta: form.pool_max_devices_meta,
+          pool_max_messages: form.pool_max_messages,
+          pool_max_storage_gb: form.pool_max_storage_gb,
+          pool_max_ai_agents: form.has_ai ? form.pool_max_ai_agents : 0,
         })
         .select()
         .single();
@@ -750,7 +789,7 @@ function CreateWhitelabelModal({
         }
       }
 
-      // 4. WhiteLabel config (sem billing_email — coluna não existe no schema atual)
+      // 4. WhiteLabel config (with module toggles)
       const { error: cErr } = await supabase
         .from('whitelabel_config')
         .insert({
@@ -763,6 +802,12 @@ function CreateWhitelabelModal({
           max_sub_licenses: form.max_sub_licenses,
           can_create_licenses: true,
           logo_url,
+          modules_crm: form.modules_crm,
+          modules_financeiro: form.modules_financeiro,
+          modules_mensageria: form.modules_mensageria,
+          modules_ia: form.modules_ia,
+          modules_pzaafi: form.modules_pzaafi,
+          modules_intelligence: form.modules_intelligence,
         });
       if (cErr) throw new Error(`Erro ao criar configuração: ${cErr.message}`);
 
@@ -1004,9 +1049,53 @@ function CreateWhitelabelModal({
             </p>
           </Section>
 
+          {/* Pool Quotas */}
+          <Section title="Pool de Recursos (teto para distribuir aos clientes)">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <Field label="Atendentes">
+                <Input type="number" min={0} value={form.pool_max_attendants} onChange={(e) => set('pool_max_attendants', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Dispositivos Web">
+                <Input type="number" min={0} value={form.pool_max_devices_web} onChange={(e) => set('pool_max_devices_web', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Dispositivos Meta">
+                <Input type="number" min={0} value={form.pool_max_devices_meta} onChange={(e) => set('pool_max_devices_meta', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Mensagens/mes">
+                <Input type="number" min={0} step={10000} value={form.pool_max_messages} onChange={(e) => set('pool_max_messages', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Storage (GB)">
+                <Input type="number" min={0} value={form.pool_max_storage_gb} onChange={(e) => set('pool_max_storage_gb', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Agentes I.A.">
+                <Input type="number" min={0} value={form.pool_max_ai_agents} onChange={(e) => set('pool_max_ai_agents', Number(e.target.value))} className="text-xs h-8" disabled={!form.has_ai} />
+              </Field>
+            </div>
+            <p className="text-xs text-muted-foreground">O WL podera distribuir ate este limite total entre todos os seus clientes. 0 = sem limite.</p>
+          </Section>
+
+          {/* Modules */}
+          <Section title="Modulos Habilitados">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {([
+                ['modules_crm', 'CRM / Clientes'],
+                ['modules_financeiro', 'Financeiro'],
+                ['modules_mensageria', 'Mensageria'],
+                ['modules_ia', 'Inteligencia Artificial'],
+                ['modules_pzaafi', 'Pzaafi (Checkout)'],
+                ['modules_intelligence', 'Intelligence Digital'],
+              ] as const).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between gap-2 bg-background/50 rounded-md px-3 py-2">
+                  <span className="text-xs text-foreground">{label}</span>
+                  <Switch checked={form[key]} onCheckedChange={(v) => set(key, v)} />
+                </div>
+              ))}
+            </div>
+          </Section>
+
           {/* Config */}
           <Section title="Limites">
-            <Field label="Máx. sub-licenças">
+            <Field label="Max. sub-licencas">
               <Input type="number" min={1} value={form.max_sub_licenses} onChange={(e) => set('max_sub_licenses', Number(e.target.value))} />
             </Field>
           </Section>
@@ -1051,6 +1140,20 @@ function EditWhitelabelModal({
     extra_web: row.extra_devices_web,
     extra_meta: row.extra_devices_meta,
     has_ai: row.has_ai_module,
+    // Pool quotas
+    pool_max_attendants: (row as any).pool_max_attendants ?? 30,
+    pool_max_devices_web: (row as any).pool_max_devices_web ?? 20,
+    pool_max_devices_meta: (row as any).pool_max_devices_meta ?? 10,
+    pool_max_messages: (row as any).pool_max_messages ?? 100000,
+    pool_max_storage_gb: (row as any).pool_max_storage_gb ?? 10,
+    pool_max_ai_agents: (row as any).pool_max_ai_agents ?? 10,
+    // Modules
+    modules_crm: (row.whitelabel_config as any)?.modules_crm ?? true,
+    modules_financeiro: (row.whitelabel_config as any)?.modules_financeiro ?? true,
+    modules_mensageria: (row.whitelabel_config as any)?.modules_mensageria ?? true,
+    modules_ia: (row.whitelabel_config as any)?.modules_ia ?? false,
+    modules_pzaafi: (row.whitelabel_config as any)?.modules_pzaafi ?? false,
+    modules_intelligence: (row.whitelabel_config as any)?.modules_intelligence ?? false,
   });
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
@@ -1089,13 +1192,19 @@ function EditWhitelabelModal({
         }
       }
 
-      // 2. Update license
+      // 2. Update license (with pool quotas)
       const { error: lErr } = await supabase.from('licenses').update({
         extra_attendants: form.extra_attendants,
         extra_devices_web: form.extra_web,
         extra_devices_meta: form.extra_meta,
         has_ai_module: form.has_ai,
         monthly_value,
+        pool_max_attendants: form.pool_max_attendants,
+        pool_max_devices_web: form.pool_max_devices_web,
+        pool_max_devices_meta: form.pool_max_devices_meta,
+        pool_max_messages: form.pool_max_messages,
+        pool_max_storage_gb: form.pool_max_storage_gb,
+        pool_max_ai_agents: form.has_ai ? form.pool_max_ai_agents : 0,
       }).eq('id', row.id);
       if (lErr) throw new Error(`Erro ao atualizar licença: ${lErr.message}`);
 
@@ -1113,7 +1222,7 @@ function EditWhitelabelModal({
         }
       }
 
-      // 4. Update whitelabel_config
+      // 4. Update whitelabel_config (with module toggles)
       const { error: cErr } = await supabase.from('whitelabel_config').update({
         display_name: form.display_name,
         primary_color: form.primary_color,
@@ -1121,6 +1230,12 @@ function EditWhitelabelModal({
         support_whatsapp: form.support_whatsapp || null,
         max_sub_licenses: form.max_sub_licenses,
         logo_url,
+        modules_crm: form.modules_crm,
+        modules_financeiro: form.modules_financeiro,
+        modules_mensageria: form.modules_mensageria,
+        modules_ia: form.modules_ia,
+        modules_pzaafi: form.modules_pzaafi,
+        modules_intelligence: form.modules_intelligence,
       }).eq('license_id', row.id);
       if (cErr) throw new Error(`Erro ao atualizar configuração: ${cErr.message}`);
 
@@ -1288,9 +1403,55 @@ function EditWhitelabelModal({
             </div>
           </Section>
 
+          {/* Pool Quotas */}
+          <Section title="Pool de Recursos (teto para distribuir)">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <Field label="Atendentes">
+                <Input type="number" min={0} value={form.pool_max_attendants} onChange={(e) => set('pool_max_attendants', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Dispositivos Web">
+                <Input type="number" min={0} value={form.pool_max_devices_web} onChange={(e) => set('pool_max_devices_web', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Dispositivos Meta">
+                <Input type="number" min={0} value={form.pool_max_devices_meta} onChange={(e) => set('pool_max_devices_meta', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Mensagens/mes">
+                <Input type="number" min={0} step={10000} value={form.pool_max_messages} onChange={(e) => set('pool_max_messages', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Storage (GB)">
+                <Input type="number" min={0} value={form.pool_max_storage_gb} onChange={(e) => set('pool_max_storage_gb', Number(e.target.value))} className="text-xs h-8" />
+              </Field>
+              <Field label="Agentes I.A.">
+                <Input type="number" min={0} value={form.pool_max_ai_agents} onChange={(e) => set('pool_max_ai_agents', Number(e.target.value))} className="text-xs h-8" disabled={!form.has_ai} />
+              </Field>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Consumo atual: {row.sub_attendants} atend. · {row.sub_devices_web}w/{row.sub_devices_meta}m disp.
+            </p>
+          </Section>
+
+          {/* Modules */}
+          <Section title="Modulos Habilitados">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {([
+                ['modules_crm', 'CRM / Clientes'],
+                ['modules_financeiro', 'Financeiro'],
+                ['modules_mensageria', 'Mensageria'],
+                ['modules_ia', 'Inteligencia Artificial'],
+                ['modules_pzaafi', 'Pzaafi (Checkout)'],
+                ['modules_intelligence', 'Intelligence Digital'],
+              ] as [string, string][]).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between gap-2 bg-background/50 rounded-md px-3 py-2">
+                  <span className="text-xs text-foreground">{label}</span>
+                  <Switch checked={(form as any)[key]} onCheckedChange={(v) => set(key, v)} />
+                </div>
+              ))}
+            </div>
+          </Section>
+
           {/* Limites */}
           <Section title="Limites">
-            <Field label="Máx. sub-licenças">
+            <Field label="Max. sub-licencas">
               <Input type="number" min={1} value={form.max_sub_licenses} onChange={(e) => set('max_sub_licenses', Number(e.target.value))} />
             </Field>
           </Section>
@@ -1300,7 +1461,7 @@ function EditWhitelabelModal({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Salvar alterações
+            Salvar alteracoes
           </Button>
         </DialogFooter>
       </DialogContent>
