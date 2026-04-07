@@ -21,13 +21,24 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
+    const search = window.location.search;
+    const fullUrl = hash + search;
+
+    if (fullUrl.includes("type=recovery") || fullUrl.includes("type=signup")) {
       setTokenType("recovery");
-    } else if (hash.includes("type=invite")) {
+    } else if (fullUrl.includes("type=invite") || fullUrl.includes("type=magiclink")) {
       setTokenType("invite");
     } else {
-      toast.error("Link inválido ou expirado");
-      navigate("/login");
+      // Check if user is already authenticated (token was auto-consumed by Supabase)
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          // User is authenticated — show password form anyway
+          setTokenType("recovery");
+        } else {
+          toast.error("Link invalido ou expirado");
+          navigate("/login");
+        }
+      });
     }
   }, [navigate]);
 
