@@ -27,6 +27,7 @@ import campaignsRouter from "./routes/campaigns.js";
 import googleAuthRouter from "./routes/googleAuth.js";
 import quotasRouter from "./routes/quotas.js";
 import gcalWebhookRouter from "./routes/webhooks/googleCalendar.js";
+import reportsRouter from "./routes/reports.js";
 import { setSocketIO } from "./services/realtimeEmitter.js";
 
 dotenv.config();
@@ -72,6 +73,7 @@ app.use("/api/campaigns", campaignsRouter);
 app.use("/auth/google", googleAuthRouter);
 app.use("/api/quotas", quotasRouter);
 app.use("/api/webhooks/google-calendar", gcalWebhookRouter);
+app.use("/api/reports", reportsRouter);
 
 // ── Health Check ──
 app.get("/health", async (_req, res) => {

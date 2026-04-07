@@ -1,114 +1,177 @@
 /**
- * Campaigns API — Bulk operations via BullMQ
+ * Campaigns API v2 — Bulk operations via BullMQ + new campaigns table
  *
- * POST /api/campaigns       → create campaign + enqueue jobs → 202
- * GET  /api/campaigns       → list campaigns (RLS-scoped)
- * POST /api/campaigns/:id/control → stop/continue/delete
+ * POST /api/campaigns           → Create campaign + enqueue → 202
+ * GET  /api/campaigns           → List campaigns (RLS-scoped)
+ * GET  /api/campaigns/:id       → Campaign detail with logs
+ * POST /api/campaigns/:id/control → pause/resume/cancel
  */
 import { Router, Request, Response } from "express";
 import { authMiddleware } from "../middleware/auth.js";
 import { getQueueManager } from "../queues/queueManager.js";
+import { createServiceClient } from "../config/supabase.js";
 
 const router = Router();
 router.use(authMiddleware);
 
 /**
  * POST /api/campaigns
- * Creates a campaign and enqueues individual message jobs.
- * Returns 202 immediately — Redis Campaign queue processes bulk.
+ * Creates campaign record + enqueues worker job.
  */
 router.post("/", async (req: Request, res: Response) => {
-  const { name, instanceName, numbers, message, delayMin, delayMax, provider, templateId } = req.body;
+  const {
+    name, instanceName, recipients, message, mediaUrl,
+    delayMin, delayMax, channel, templateId, templateParams,
+    scheduledAt,
+  } = req.body;
 
-  if (!instanceName || !numbers?.length) {
-    return res.status(400).json({ error: "instanceName and numbers[] are required" });
+  if (!instanceName || !recipients?.length) {
+    return res.status(400).json({ error: "instanceName and recipients[] are required" });
   }
-
   if (!req.supabase || !req.tenantId) {
     return res.status(500).json({ error: "Auth context missing" });
   }
 
-  // 1. Save campaign record to DB (user-scoped)
-  const { data: campaign, error } = await req.supabase
-    .from("whatsapp_campaigns")
+  const resolvedChannel = channel || (instanceName.startsWith("meta:") ? "meta" : "uazapi");
+  const delayMinMs = (delayMin || 5) * 1000;
+  const delayMaxMs = (delayMax || 15) * 1000;
+
+  // 1. Create campaign in new table
+  const adminDb = createServiceClient();
+  const { data: campaign, error } = await adminDb
+    .from("campaigns")
     .insert({
-      name: name || `Campanha ${new Date().toLocaleDateString("pt-BR")}`,
-      instance_name: instanceName,
-      type: provider === "meta" ? "template" : "simple",
-      status: "scheduled",
-      total_contacts: numbers.length,
-      delay_min: delayMin || 10,
-      delay_max: delayMax || 30,
-      message_type: provider === "meta" ? "hsm" : "text",
       tenant_id: req.tenantId,
+      name: name || `Campanha ${new Date().toLocaleDateString("pt-BR")}`,
+      channel: resolvedChannel,
+      instance_name: instanceName,
+      type: templateId ? "template" : "simple",
+      status: scheduledAt ? "scheduled" : "pending",
+      message_type: templateId ? "hsm" : mediaUrl ? "media" : "text",
+      message_body: message || null,
+      media_url: mediaUrl || null,
+      template_id: templateId || null,
+      template_params: templateParams || {},
+      total_recipients: recipients.length,
+      delay_min_ms: delayMinMs,
+      delay_max_ms: delayMaxMs,
+      scheduled_at: scheduledAt || null,
+      created_by: req.userId,
     })
     .select()
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
 
-  // 2. Enqueue bulk job in Campaign Redis (separate from fast-messages)
-  const qm = getQueueManager();
-  await qm.campaigns.add("bulk-send", {
-    campaignId: campaign.id,
-    instanceName,
-    numbers,
-    message: message || null,
-    templateId: templateId || null,
-    provider: provider || "uazapi",
-    delayMin: delayMin || 10,
-    delayMax: delayMax || 30,
-    tenantId: req.tenantId,
-    jwt: req.jwt,
-  }, {
-    attempts: 1, // Campaigns don't retry the whole batch
-    removeOnComplete: true,
-  });
+  // 2. Pre-create pending logs for all recipients (batch insert)
+  const logs = recipients.map((r: any) => ({
+    campaign_id: campaign.id,
+    tenant_id: req.tenantId,
+    recipient_phone: typeof r === "string" ? r : r.phone,
+    recipient_name: typeof r === "string" ? null : r.name || null,
+    channel: resolvedChannel,
+    status: "pending",
+  }));
 
-  // 3. Return 202 Accepted (processing is async)
+  // Insert in batches of 500 to avoid payload limits
+  for (let i = 0; i < logs.length; i += 500) {
+    await adminDb.from("campaign_logs").insert(logs.slice(i, i + 500));
+  }
+
+  // 3. Enqueue worker job
+  const qm = getQueueManager();
+  const jobDelay = scheduledAt ? Math.max(0, new Date(scheduledAt).getTime() - Date.now()) : 0;
+
+  await qm.campaigns.add(
+    "campaign-send",
+    {
+      campaignId: campaign.id,
+      tenantId: req.tenantId,
+      channel: resolvedChannel,
+      instanceName,
+      recipients: recipients.map((r: any) => typeof r === "string" ? { phone: r } : r),
+      messageBody: message || null,
+      mediaUrl: mediaUrl || null,
+      templateId: templateId || null,
+      templateParams: templateParams || null,
+      delayMinMs,
+      delayMaxMs,
+    },
+    {
+      delay: jobDelay,
+      attempts: 1, // Don't retry entire campaign — individual messages have their own retries
+      removeOnComplete: { count: 50 },
+      removeOnFail: { count: 200 },
+    },
+  );
+
   res.status(202).json({
     accepted: true,
     campaignId: campaign.id,
-    totalContacts: numbers.length,
-    estimatedTime: `${Math.ceil((numbers.length * ((delayMin || 10) + (delayMax || 30)) / 2) / 60)} min`,
+    totalRecipients: recipients.length,
+    channel: resolvedChannel,
+    scheduled: !!scheduledAt,
+    estimatedMinutes: Math.ceil((recipients.length * ((delayMinMs + delayMaxMs) / 2)) / 60000),
   });
 });
 
 /**
  * GET /api/campaigns
- * List all campaigns for the authenticated tenant.
  */
 router.get("/", async (req: Request, res: Response) => {
-  if (!req.supabase) return res.status(500).json({ error: "Database not available" });
+  if (!req.supabase) return res.status(500).json({ error: "DB unavailable" });
 
   const { data, error } = await req.supabase
-    .from("whatsapp_campaigns")
+    .from("campaigns")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (error) return res.status(500).json({ error: error.message });
   res.json({ data: data || [] });
 });
 
 /**
- * POST /api/campaigns/:id/control
- * Stop, continue, or delete a campaign.
+ * GET /api/campaigns/:id
  */
-router.post("/:id/control", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { action } = req.body; // "stop" | "continue" | "delete"
+router.get("/:id", async (req: Request, res: Response) => {
+  if (!req.supabase) return res.status(500).json({ error: "DB unavailable" });
 
-  if (!["stop", "continue", "delete"].includes(action)) {
-    return res.status(400).json({ error: "action must be stop, continue, or delete" });
+  const [{ data: campaign }, { data: logs }] = await Promise.all([
+    req.supabase.from("campaigns").select("*").eq("id", req.params.id).single(),
+    req.supabase.from("campaign_logs").select("*").eq("campaign_id", req.params.id).order("created_at"),
+  ]);
+
+  if (!campaign) return res.status(404).json({ error: "Campaign not found" });
+
+  const summary = {
+    pending: 0, processing: 0, sent: 0, delivered: 0, read: 0, failed: 0,
+  };
+  for (const log of logs || []) {
+    if (log.status in summary) (summary as any)[log.status]++;
   }
 
-  if (!req.supabase) return res.status(500).json({ error: "Database not available" });
+  res.json({ campaign, logs: logs || [], summary });
+});
+
+/**
+ * POST /api/campaigns/:id/control
+ */
+router.post("/:id/control", async (req: Request, res: Response) => {
+  const { action } = req.body;
+  if (!["pause", "resume", "cancel", "delete"].includes(action)) {
+    return res.status(400).json({ error: "action must be pause, resume, cancel, or delete" });
+  }
+  if (!req.supabase) return res.status(500).json({ error: "DB unavailable" });
 
   if (action === "delete") {
-    await req.supabase.from("whatsapp_campaigns").delete().eq("id", id);
+    await req.supabase.from("campaigns").delete().eq("id", req.params.id);
   } else {
-    const statusMap: Record<string, string> = { stop: "stopped", continue: "running" };
-    await req.supabase.from("whatsapp_campaigns").update({ status: statusMap[action] }).eq("id", id);
+    const statusMap: Record<string, string> = { pause: "paused", resume: "running", cancel: "cancelled" };
+    await req.supabase
+      .from("campaigns")
+      .update({ status: statusMap[action], updated_at: new Date().toISOString() })
+      .eq("id", req.params.id);
   }
 
   res.json({ ok: true, action });
