@@ -218,6 +218,14 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     msg?.status ?? msg?.ack ?? msg?.chatMessageStatusCode ?? msg?.messageStatus ?? msg?.content?.status ?? null
   );
 
+  // Extract quoted message ID from contextInfo (for reply threading)
+  const quotedMessageId =
+    msg?.quoted ??
+    msg?.content?.contextInfo?.stanzaID ??
+    msg?.message?.extendedTextMessage?.contextInfo?.stanzaId ??
+    msg?.contextInfo?.stanzaID ??
+    null;
+
   return {
     instance_name: instance,
     remote_jid: remoteJid,
@@ -231,6 +239,7 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     track_source: msg?.trackSource ?? msg?.track_source ?? null,
     track_id: msg?.trackId ?? msg?.track_id ?? null,
     raw_payload: enrichedPayload,
+    quoted_message_id: quotedMessageId ? normalizeMessageId(quotedMessageId) : null,
     created_at: toIso(msg?.messageTimestamp ?? msg?.timestamp ?? chatPayload?.wa_lastMsgTimestamp),
   };
 };

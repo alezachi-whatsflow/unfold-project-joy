@@ -88,6 +88,33 @@ export function useMessages() {
       }
 
       const createdAt = new Date(row.created_at);
+      // Resolve replyTo from quoted_message_id or raw_payload contextInfo
+      let replyTo: { id: string; content: string; senderName: string } | undefined;
+      const quotedId = row.quoted_message_id
+        || rawPayload?.contextInfo?.stanzaID
+        || rawPayload?.content?.contextInfo?.stanzaID
+        || null;
+
+      if (quotedId) {
+        // Try to find the quoted message in raw_payload first (fastest)
+        const quotedText = rawPayload?.contextInfo?.quotedMessage?.conversation
+          || rawPayload?.contextInfo?.quotedMessage?.extendedTextMessage?.text
+          || rawPayload?.content?.contextInfo?.quotedMessage?.conversation
+          || rawPayload?.content?.contextInfo?.quotedMessage?.extendedTextMessage?.text
+          || null;
+        const quotedSender = rawPayload?.contextInfo?.participant
+          || rawPayload?.content?.contextInfo?.remoteJID
+          || "Mensagem";
+
+        if (quotedText) {
+          replyTo = {
+            id: quotedId,
+            content: quotedText.substring(0, 200),
+            senderName: quotedSender?.replace(/@.*$/, "") || "Mensagem",
+          };
+        }
+      }
+
       return {
         id: row.id,
         providerMessageId: row.message_id || null,
@@ -101,6 +128,7 @@ export function useMessages() {
         senderName,
         mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
         caption: row.caption || null,
+        replyTo,
       };
     },
     []

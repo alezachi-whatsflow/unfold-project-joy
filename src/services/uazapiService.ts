@@ -1,7 +1,6 @@
 /**
  * Direct uazapi API calls from frontend.
  * Fetches instance token from DB, calls uazapi API directly.
- * Replaces dependency on uazapi-proxy Edge Function.
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,7 +13,7 @@ interface InstanceInfo {
 }
 
 let _instanceCache: Record<string, { info: InstanceInfo; ts: number }> = {};
-const CACHE_TTL = 5 * 60 * 1000; // 5 min
+const CACHE_TTL = 5 * 60 * 1000;
 
 async function getInstanceInfo(instanceName: string): Promise<InstanceInfo> {
   const cached = _instanceCache[instanceName];
@@ -50,6 +49,11 @@ export async function callUazapi(
   const baseUrl = inst.server_url || UAZAPI_BASE_URL;
   const url = `${baseUrl}${path}`;
 
+  // Log payload for debugging replies
+  if (body?.replyid) {
+    console.log(`[uazapi] REPLY SEND → number: ${body.number}, replyid: ${body.replyid}, text: ${body.text?.substring(0, 50)}`);
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     token: inst.instance_token,
@@ -68,7 +72,7 @@ export async function callUazapi(
     throw new Error(data?.error || data?.message || `uazapi error ${res.status}`);
   }
 
-  // Auto-save outgoing message to DB if it's a send action
+  // Auto-save outgoing message to DB
   if (path.startsWith("/send/") && data) {
     try {
       await saveOutgoingMessage(inst.instance_name, body, data, path);
@@ -91,7 +95,10 @@ async function saveOutgoingMessage(
     rd?.messageid ?? rd?.messageId ?? rd?.id ?? rd?.key?.id ?? null
   );
 
-  if (!messageId) return;
+  if (!messageId) {
+    console.warn("[uazapi] No message_id in response, skipping save");
+    return;
+  }
 
   const remoteJid = requestBody?.number
     ? requestBody.number.includes("@")
@@ -101,7 +108,7 @@ async function saveOutgoingMessage(
 
   if (!remoteJid) return;
 
-  // Detect actual type from file URL/name instead of generic "media"
+  // Detect type
   let type = "text";
   if (path.includes("/media")) {
     const fileUrl = (requestBody?.file || requestBody?.url || "").toLowerCase();
@@ -127,7 +134,10 @@ async function saveOutgoingMessage(
 
   const fileUrl = requestBody?.file || requestBody?.url || null;
 
-  await (supabase as any).from("whatsapp_messages").insert({
+  // Extract quoted_message_id from request (replyid) or response (quoted)
+  const quotedMessageId = requestBody?.replyid || rd?.quoted || null;
+
+  const insertData: Record<string, any> = {
     instance_name: instanceName,
     remote_jid: remoteJid,
     message_id: messageId,
@@ -139,7 +149,17 @@ async function saveOutgoingMessage(
     status: 2,
     tenant_id: tenantId || null,
     raw_payload: rd,
-  }).then(({ error }: any) => {
+  };
+
+  // Save quoted_message_id if this is a reply
+  if (quotedMessageId) {
+    insertData.quoted_message_id = quotedMessageId;
+    console.log(`[uazapi] REPLY SAVED → msg: ${messageId}, quoted: ${quotedMessageId}`);
+  }
+
+  console.log(`[uazapi] SAVE → msg: ${messageId}, jid: ${remoteJid}, type: ${type}${quotedMessageId ? `, reply_to: ${quotedMessageId}` : ""}`);
+
+  await (supabase as any).from("whatsapp_messages").insert(insertData).then(({ error }: any) => {
     if (error && !error.message?.includes("duplicate")) {
       console.warn("[uazapi] Save outgoing error:", error.message);
     }
