@@ -22,26 +22,26 @@ export default function Index() {
 
   /* First access detection — redirect to Wizard (company setup) */
   useEffect(() => {
-    if (!user?.id || !tenantId) return;
+    if (!user?.id) return;
     const key = `pzaafi_wizard_done_${user.id}`;
     if (localStorage.getItem(key)) return;
 
     (async () => {
-      // Check if company_profile exists and wizard is completed
-      const { data: profile } = await supabase
+      // Check if company_profile exists and wizard is completed (RLS filters by tenant)
+      const { data: profiles } = await supabase
         .from("company_profile")
         .select("wizard_completed")
-        .eq("tenant_id", tenantId)
-        .maybeSingle();
+        .limit(1);
+
+      const profile = profiles?.[0];
 
       if (!profile || !profile.wizard_completed) {
-        // First access — go to Wizard (Vendas page shows wizard automatically)
         navigate(`/app/${slug || "whatsflow"}/vendas`, { replace: true });
       } else {
         localStorage.setItem(key, "true");
       }
     })();
-  }, [user?.id, tenantId, slug, navigate]);
+  }, [user?.id, slug, navigate]);
   const { data: license } = useLicenseLimits(tenantId);
 
   // Real KPI data from database
