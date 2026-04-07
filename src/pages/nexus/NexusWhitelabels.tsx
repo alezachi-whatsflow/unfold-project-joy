@@ -76,8 +76,8 @@ const STATUS_LABEL: Record<string, string> = {
   active: 'Ativo', inactive: 'Inativo', blocked: 'Bloqueado', suspended: 'Suspenso', trial: 'Trial',
 };
 
-function fmt(n: number) {
-  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function fmt(n: number | null | undefined) {
+  return (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -290,7 +290,7 @@ export default function NexusWhitelabels() {
     avg_ticket:     rows.length ? rows.reduce((a, r) => a + (r.monthly_value || 0), 0) / rows.length : 0,
     sub_active:     rows.reduce((a, r) => a + r.sub_active, 0),
     sub_inactive:   rows.reduce((a, r) => a + r.sub_inactive, 0),
-    sub_mrr:        rows.reduce((a, r) => a + r.sub_mrr, 0),
+    sub_mrr:        rows.reduce((a, r) => a + (r.sub_mrr || 0), 0),
     devices_web:    rows.reduce((a, r) => a + r.sub_devices_web, 0),
     devices_meta:   rows.reduce((a, r) => a + r.sub_devices_meta, 0),
     attendants:     rows.reduce((a, r) => a + r.sub_attendants, 0),
