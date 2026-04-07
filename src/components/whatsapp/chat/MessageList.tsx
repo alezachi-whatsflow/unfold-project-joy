@@ -30,31 +30,48 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
   const prevConversationRef = useRef<string | undefined>(undefined);
   const scrollHeightBeforeLoadRef = useRef<number>(0);
 
-  const initialScrollDoneRef = useRef(false);
+  const initialLoadTimeRef = useRef(0);
 
   // Reset when conversation changes
   useEffect(() => {
     if (conversationId !== prevConversationRef.current) {
       prevConversationRef.current = conversationId;
       prevLengthRef.current = 0;
-      initialScrollDoneRef.current = false;
+      initialLoadTimeRef.current = 0;
       setIsAtBottom(true);
       setLoadingMore(false);
     }
   }, [conversationId]);
 
+  // Force scroll to absolute bottom
+  const scrollToBottom = useCallback((smooth = false) => {
+    const el = containerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+    // Belt-and-suspenders: also use endRef
+    endRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+  }, []);
+
   // Scroll to bottom when messages load or change
   useEffect(() => {
     if (messages.length === 0) return;
 
-    // First load for this conversation — instant scroll to bottom
-    if (!initialScrollDoneRef.current) {
-      initialScrollDoneRef.current = true;
+    const now = Date.now();
+
+    // Within first 3 seconds of conversation load — always scroll to bottom
+    // This handles async batch loads (messages arrive in waves)
+    if (initialLoadTimeRef.current === 0) {
+      initialLoadTimeRef.current = now;
+    }
+    const isInitialLoadWindow = now - initialLoadTimeRef.current < 3000;
+
+    if (isInitialLoadWindow && !loadingMore) {
       prevLengthRef.current = messages.length;
-      // Double rAF ensures DOM is painted before scrolling
+      // Use setTimeout to ensure images/media have rendered
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          endRef.current?.scrollIntoView({ behavior: "auto" });
+          scrollToBottom(false);
         });
       });
       return;
@@ -82,12 +99,12 @@ export default function MessageList({ messages, conversationId, onLoadMore, hasM
       const isNewOutgoing = lastMsg?.direction === "outgoing";
 
       if (isNewOutgoing || isAtBottom) {
-        endRef.current?.scrollIntoView({ behavior: "smooth" });
+        scrollToBottom(true);
       }
     }
 
     prevLengthRef.current = newCount;
-  }, [messages, isAtBottom, loadingMore]);
+  }, [messages, isAtBottom, loadingMore, scrollToBottom]);
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
