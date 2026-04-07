@@ -96,23 +96,34 @@ export function useMessages() {
         || null;
 
       if (quotedId) {
-        // Try to find the quoted message in raw_payload first (fastest)
-        const quotedText = rawPayload?.contextInfo?.quotedMessage?.conversation
-          || rawPayload?.contextInfo?.quotedMessage?.extendedTextMessage?.text
-          || rawPayload?.content?.contextInfo?.quotedMessage?.conversation
-          || rawPayload?.content?.contextInfo?.quotedMessage?.extendedTextMessage?.text
-          || null;
-        const quotedSender = rawPayload?.contextInfo?.participant
-          || rawPayload?.content?.contextInfo?.remoteJID
+        // Extract quoted message content from raw_payload contextInfo
+        const ci = rawPayload?.content?.contextInfo || rawPayload?.contextInfo || {};
+        const qm = ci?.quotedMessage || {};
+
+        // Try text from all possible message types
+        const quotedText = qm?.conversation
+          || qm?.extendedTextMessage?.text
+          || qm?.imageMessage?.caption
+          || qm?.videoMessage?.caption
+          || qm?.documentMessage?.caption
+          || (qm?.imageMessage ? "[Foto]" : null)
+          || (qm?.videoMessage ? "[Video]" : null)
+          || (qm?.audioMessage || qm?.pttMessage ? "[Audio]" : null)
+          || (qm?.documentMessage ? "[Documento]" : null)
+          || (qm?.stickerMessage ? "[Sticker]" : null)
+          || (qm?.contactMessage || qm?.contactsArrayMessage ? "[Contato]" : null)
+          || (qm?.locationMessage ? "[Localizacao]" : null)
           || "Mensagem";
 
-        if (quotedText) {
-          replyTo = {
-            id: quotedId,
-            content: quotedText.substring(0, 200),
-            senderName: quotedSender?.replace(/@.*$/, "") || "Mensagem",
-          };
-        }
+        const quotedSender = ci?.participant?.replace(/@.*$/, "")
+          || ci?.remoteJID?.replace(/@.*$/, "")
+          || "";
+
+        replyTo = {
+          id: quotedId,
+          content: String(quotedText).substring(0, 200),
+          senderName: quotedSender || "Mensagem",
+        };
       }
 
       return {
