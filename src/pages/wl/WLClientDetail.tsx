@@ -137,7 +137,7 @@ export default function WLClientDetail() {
         variant="ghost"
         size="sm"
         className="text-muted-foreground hover:text-foreground hover:bg-muted -ml-1"
-        onClick={() => navigate(`/wl/${slug}/clientes`)}
+        onClick={() => navigate(`/partners/${slug}/clientes`)}
       >
         <ArrowLeft className="h-4 w-4 mr-1" />
         Voltar aos clientes

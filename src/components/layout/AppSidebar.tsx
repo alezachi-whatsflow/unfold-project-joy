@@ -164,7 +164,7 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
         <DropdownMenuContent align="end" side="right" sideOffset={12} className="w-48 mb-2">
           <DropdownMenuItem onClick={() => navigate(slug ? `/app/${slug}/perfil` : "/perfil")}><User className="mr-2 h-4 w-4" /> Meu Perfil</DropdownMenuItem>
           {isNexusUser && (
-            <DropdownMenuItem onClick={() => navigate("/nexus")}>
+            <DropdownMenuItem onClick={() => navigate("/admin-core")}>
               <Shield className="mr-2 h-4 w-4 text-emerald-400" /> Nexus Admin
             </DropdownMenuItem>
           )}

@@ -180,7 +180,7 @@ export default function NexusLicenseDetail() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/nexus/licencas')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin-core/licencas')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -232,7 +232,7 @@ export default function NexusLicenseDetail() {
               <FileText className="h-3.5 w-3.5 mr-1" /> Gerar Fatura
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => navigate(`/nexus/tickets?license=${id}`)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/admin-core/tickets?license=${id}`)}>
             <Ticket className="h-3.5 w-3.5 mr-1" /> Novo Ticket
           </Button>
         </div>
@@ -254,7 +254,7 @@ export default function NexusLicenseDetail() {
           {parentLicense && (
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
               <Shield className="h-3.5 w-3.5 text-purple-400" />
-              Gerenciada por: <button className="text-purple-400 hover:underline font-medium" onClick={() => navigate(`/nexus/licencas/${parentLicense.id}`)}>{parentLicense.tenants?.name}</button>
+              Gerenciada por: <button className="text-purple-400 hover:underline font-medium" onClick={() => navigate(`/admin-core/licencas/${parentLicense.id}`)}>{parentLicense.tenants?.name}</button>
             </div>
           )}
         </CardContent>
@@ -286,7 +286,7 @@ export default function NexusLicenseDetail() {
                 </TableHeader>
                 <TableBody>
                   {subLicenses.map((sub: any) => (
-                    <TableRow key={sub.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => navigate(`/nexus/licencas/${sub.id}`)}>
+                    <TableRow key={sub.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => navigate(`/admin-core/licencas/${sub.id}`)}>
                       <TableCell>
                         <div>
                           <p className="text-sm font-medium text-foreground">{sub.tenants?.name || '—'}</p>
@@ -305,7 +305,7 @@ export default function NexusLicenseDetail() {
                         R$ {Number(sub.monthly_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); navigate(`/nexus/licencas/${sub.id}`); }}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); navigate(`/admin-core/licencas/${sub.id}`); }}>
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Button>
                       </TableCell>

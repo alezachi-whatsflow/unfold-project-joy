@@ -230,7 +230,7 @@ export default function NexusWhitelabels() {
           role: 'wl_admin',
           tenant_id: resetTarget.tenant_id,
           license_id: resetTarget.id,
-          redirect_to: `/wl/${resetTarget.whitelabel_slug}`,
+          redirect_to: `/partners/${resetTarget.whitelabel_slug}`,
         },
       });
       if (error) throw new Error(error.message);
@@ -368,7 +368,7 @@ export default function NexusWhitelabels() {
                   <TableRow
                     key={row.id}
                     className="cursor-pointer hover:bg-accent/30"
-                    onClick={() => navigate(`/nexus/licencas/${row.id}`)}
+                    onClick={() => navigate(`/admin-core/licencas/${row.id}`)}
                   >
                     {/* Parceiro */}
                     <TableCell>
@@ -449,7 +449,7 @@ export default function NexusWhitelabels() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(`/nexus/licencas/${row.id}`)}>
+                          <DropdownMenuItem onClick={() => navigate(`/admin-core/licencas/${row.id}`)}>
                             Ver detalhes
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setEditTarget(row)}>
@@ -462,7 +462,7 @@ export default function NexusWhitelabels() {
                                 if (row.tenants?.slug) {
                                   localStorage.setItem('whatsflow_default_tenant_id', row.tenants.slug);
                                 }
-                                navigate(`/wl/${row.whitelabel_slug}`);
+                                navigate(`/partners/${row.whitelabel_slug}`);
                               }}
                             >
                               <ExternalLink className="h-3.5 w-3.5 mr-2" />
@@ -829,7 +829,7 @@ function CreateWhitelabelModal({
             role: 'wl_admin',
             tenant_id: tenant.id,
             license_id: license.id,
-            redirect_to: `/wl/${form.slug}`,
+            redirect_to: `/partners/${form.slug}`,
           },
         });
         if (inviteErr) {
@@ -891,7 +891,7 @@ function CreateWhitelabelModal({
             </Field>
             <Field label="Slug (URL) *">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">/wl/</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">/partners/</span>
                 <Input placeholder="acme-chat" value={form.slug} onChange={(e) => set('slug', slugify(e.target.value))} />
               </div>
               <p className="text-xs text-muted-foreground">Gerado automaticamente pelo nome.</p>
@@ -1293,7 +1293,7 @@ function EditWhitelabelModal({
             </Field>
             <Field label="Slug (URL)">
               <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-                <span>/wl/</span><span className="font-mono font-medium text-foreground">{row.whitelabel_slug}</span>
+                <span>/partners/</span><span className="font-mono font-medium text-foreground">{row.whitelabel_slug}</span>
               </div>
               <p className="text-xs text-muted-foreground">O slug não pode ser alterado após a criação.</p>
             </Field>

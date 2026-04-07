@@ -115,7 +115,7 @@ export default function WLClients() {
                     <tr
                       key={c.id}
                       className="border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => navigate(`/wl/${slug}/clientes/${c.id}`)}
+                      onClick={() => navigate(`/partners/${slug}/clientes/${c.id}`)}
                     >
                       <td className="px-5 py-3">
                         <div>

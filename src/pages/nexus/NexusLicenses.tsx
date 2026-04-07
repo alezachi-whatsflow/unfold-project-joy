@@ -511,7 +511,7 @@ export default function NexusLicenses() {
                     <Card
                       key={l.id}
                       className="bg-card/50 border-border/50 hover:border-primary/40 cursor-pointer transition-colors group"
-                      onClick={() => navigate(`/nexus/licencas/${l.id}`)}
+                      onClick={() => navigate(`/admin-core/licencas/${l.id}`)}
                     >
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-start justify-between gap-2">
@@ -690,7 +690,7 @@ export default function NexusLicenses() {
                         <TableRow
                           key={l.id}
                           className={`hover:bg-accent/30 cursor-pointer text-xs ${selectedIds.has(l.id) ? 'bg-accent/20' : ''}`}
-                          onClick={() => navigate(`/nexus/licencas/${l.id}`)}
+                          onClick={() => navigate(`/admin-core/licencas/${l.id}`)}
                         >
                           {/* Checkbox */}
                           <TableCell className="sticky left-0 bg-card z-10 w-10" onClick={(e) => e.stopPropagation()}>
@@ -817,7 +817,7 @@ export default function NexusLicenses() {
                                 <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => navigate(`/nexus/licencas/${l.id}`)}>
+                                <DropdownMenuItem onClick={() => navigate(`/admin-core/licencas/${l.id}`)}>
                                   <Eye className="h-3.5 w-3.5 mr-2" /> Ver detalhes
                                 </DropdownMenuItem>
                                 {can(['nexus_superadmin', 'nexus_suporte_senior']) && (

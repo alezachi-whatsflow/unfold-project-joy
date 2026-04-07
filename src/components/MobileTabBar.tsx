@@ -14,21 +14,21 @@ interface TabItem {
 type Portal = "finance" | "nexus" | "wl";
 
 function getPortal(pathname: string): Portal {
-  if (pathname.startsWith("/nexus")) return "nexus";
-  if (pathname.startsWith("/wl/")) return "wl";
+  if (pathname.startsWith("/admin-core")) return "nexus";
+  if (pathname.startsWith("/partners/")) return "wl";
   return "finance";
 }
 
 function getTabs(portal: Portal, slug?: string): TabItem[] {
-  const base = portal === "finance" ? `/app/${slug || "whatsflow"}` : portal === "nexus" ? "/nexus" : `/wl/${slug}`;
+  const base = portal === "finance" ? `/app/${slug || "whatsflow"}` : portal === "nexus" ? "/admin-core" : `/partners/${slug}`;
 
   if (portal === "nexus") {
     return [
-      { icon: LayoutDashboard, label: "Dashboard", route: "/nexus" },
-      { icon: CreditCard, label: "Licenças", route: "/nexus/licencas" },
-      { icon: Ticket, label: "Tickets", route: "/nexus/tickets" },
-      { icon: Bell, label: "Alertas", route: "/nexus/auditoria" },
-      { icon: User, label: "Eu", route: "/nexus/configuracoes" },
+      { icon: LayoutDashboard, label: "Dashboard", route: "/admin-core" },
+      { icon: CreditCard, label: "Licenças", route: "/admin-core/licencas" },
+      { icon: Ticket, label: "Tickets", route: "/admin-core/tickets" },
+      { icon: Bell, label: "Alertas", route: "/admin-core/auditoria" },
+      { icon: User, label: "Eu", route: "/admin-core/configuracoes" },
     ];
   }
 
@@ -79,7 +79,7 @@ export function MobileTabBar() {
   if (location.pathname === "/") return null;
 
   const isActive = (route: string) => {
-    if (route === `/app/${slug}` || route === "/nexus" || route === `/wl/${slug}`) {
+    if (route === `/app/${slug}` || route === "/admin-core" || route === `/partners/${slug}`) {
       return location.pathname === route;
     }
     return location.pathname.startsWith(route);

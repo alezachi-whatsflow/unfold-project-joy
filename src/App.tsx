@@ -121,6 +121,13 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const queryClient = new QueryClient();
 
+/** Legacy /wl/:slug → /partners/:slug redirect */
+function WLRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  const rest = window.location.pathname.replace(`/wl/${slug}`, '');
+  return <Navigate to={`/partners/${slug}${rest}`} replace />;
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -152,13 +159,13 @@ const AppRoutes = () => (
     {/* Pzaafi — Public checkout page (no auth required) */}
     <Route path="/pay/:slug" element={<PzaafiPublicCheckout />} />
 
-    {/* Nexus Portal */}
-    <Route path="/nexus/login" element={<NexusLogin />} />
-    <Route path="/nexus" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
+    {/* ═══ Admin Core (formerly Nexus) ═══ */}
+    <Route path="/admin-core/login" element={<NexusLogin />} />
+    <Route path="/admin-core" element={<AuthGuard><NexusProvider><NexusLayout /></NexusProvider></AuthGuard>}>
       <Route index element={<NexusDashboard />} />
       <Route path="licencas" element={<NexusLicenses />} />
       <Route path="licencas/:id" element={<NexusLicenseDetail />} />
-      <Route path="whitelabels" element={<NexusWhitelabels />} />
+      <Route path="partners" element={<NexusWhitelabels />} />
       <Route path="lifecycle" element={<NexusLifecycle />} />
       <Route path="checkouts" element={<NexusCheckouts />} />
       <Route path="financeiro" element={<NexusFinanceiro />} />
@@ -170,9 +177,13 @@ const AppRoutes = () => (
       <Route path="configuracoes/integracoes" element={<NexusIntegracoes />} />
       <Route path="ia" element={<NexusAIConfig />} />
     </Route>
+    {/* Legacy /nexus → /admin-core redirects */}
+    <Route path="/nexus/login" element={<Navigate to="/admin-core/login" replace />} />
+    <Route path="/nexus/*" element={<Navigate to="/admin-core" replace />} />
+    <Route path="/nexus" element={<Navigate to="/admin-core" replace />} />
 
-    {/* WhiteLabel Portal - Phase 3 */}
-    <Route path="/wl/:slug" element={<AuthGuard><WLLayout /></AuthGuard>}>
+    {/* ═══ Pzaafi Partners (formerly WhiteLabel) ═══ */}
+    <Route path="/partners/:slug" element={<AuthGuard><WLLayout /></AuthGuard>}>
       <Route index element={<WLDashboard />} />
       <Route path="clientes" element={<WLClients />} />
       <Route path="clientes/:clientId" element={<WLClientDetail />} />
@@ -181,6 +192,9 @@ const AppRoutes = () => (
       <Route path="suporte" element={<WLAudit />} />
       <Route path="config" element={<WLConfig />} />
     </Route>
+    {/* Legacy /wl → /partners redirects */}
+    <Route path="/wl/:slug/*" element={<WLRedirect />} />
+    <Route path="/wl/:slug" element={<WLRedirect />} />
 
     {/* SuperAdmin Portal */}
     <Route path="/superadmin" element={<AuthGuard><SuperAdminLayout /></AuthGuard>}>

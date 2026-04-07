@@ -143,7 +143,7 @@ export default function WLLayout() {
 
         <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto">
           {NAV.map((item) => {
-            const path = `/wl/${slug}${item.to ? '/' + item.to : ''}`;
+            const path = `/partners/${slug}${item.to ? '/' + item.to : ''}`;
             return (
               <NavLink
                 key={item.to}

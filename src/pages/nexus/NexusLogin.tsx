@@ -56,7 +56,7 @@ export default function NexusLogin() {
       });
 
       toast.success('Bem-vindo ao Nexus');
-      navigate('/nexus');
+      navigate('/admin-core');
     } catch {
       toast.error('Erro ao conectar');
     } finally {
