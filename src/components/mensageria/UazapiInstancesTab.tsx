@@ -183,7 +183,7 @@ export default function UazapiInstancesTab() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={creating} className="bg-emerald-600 hover:bg-emerald-700">
-              {creating && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Criar e Conectar
+              {creating && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Criar
             </Button>
           </DialogFooter>
         </DialogContent>
