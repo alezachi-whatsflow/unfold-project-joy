@@ -68,7 +68,7 @@ interface ConversationNote {
 }
 
 export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation, onAssign, onResolve, activeFilter, onLoadMore, hasMore }: ChatPanelProps) {
-  const [replyTo, setReplyTo] = useState<{ senderName: string; content: string } | null>(null);
+  const [replyTo, setReplyTo] = useState<{ senderName: string; content: string; messageId?: string } | null>(null);
   const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
 
   const tenantId = useTenantId();
@@ -491,7 +491,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
         conversationId={conversation?.id}
         onLoadMore={onLoadMore}
         hasMore={hasMore}
-        onReply={(msg) => setReplyTo({ senderName: msg.senderName || "Desconhecido", content: msg.content || "" })}
+        onReply={(msg) => setReplyTo({ senderName: msg.senderName || "Voce", content: msg.content || (msg.type !== "text" ? `[${msg.type}]` : ""), messageId: msg.id })}
         onReact={(msgId, emoji) => {
           // React via uazapi/meta
           import("@/services/messageService").then(({ messageService }) => {

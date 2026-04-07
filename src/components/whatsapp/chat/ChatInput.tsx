@@ -271,6 +271,8 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     if (!text.trim()) return;
     onSend(text.trim());
     setText("");
+    // Clear reply after sending
+    onCancelReply?.();
   };
 
   const resetAttach = () => {
