@@ -258,6 +258,25 @@ export default function NexusLicenses() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
+      // 0. Disconnect and remove WhatsApp instances for this tenant
+      if (deleteTarget.tenant_id) {
+        const { data: instances } = await supabase
+          .from('whatsapp_instances')
+          .select('instance_name')
+          .eq('tenant_id', deleteTarget.tenant_id);
+
+        for (const inst of instances || []) {
+          try {
+            // Disconnect from uazapi
+            await supabase.functions.invoke('uazapi-proxy', {
+              body: { path: '/instance/disconnect', method: 'POST', body: {}, instanceName: inst.instance_name },
+            });
+          } catch { /* best-effort */ }
+        }
+        // Remove instances from DB
+        await supabase.from('whatsapp_instances').delete().eq('tenant_id', deleteTarget.tenant_id).then(() => {});
+      }
+
       // 1. Delete sub-licenses first (no cascade on parent_license_id)
       const { error: subErr } = await supabase.from('licenses').delete().eq('parent_license_id', deleteTarget.id);
       if (subErr) console.warn('Sub-license delete warning:', subErr.message);
@@ -266,7 +285,7 @@ export default function NexusLicenses() {
       const { error: licErr } = await supabase.from('licenses').delete().eq('id', deleteTarget.id);
       if (licErr) throw new Error(`Erro ao excluir licenca: ${licErr.message}`);
 
-      // 3. Delete tenant (only if not the current user's tenant)
+      // 3. Delete tenant
       if (deleteTarget.tenant_id) {
         const { error: tenErr } = await supabase.from('tenants').delete().eq('id', deleteTarget.tenant_id);
         if (tenErr) console.warn('Tenant delete warning:', tenErr.message);
