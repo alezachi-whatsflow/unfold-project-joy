@@ -491,7 +491,11 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
         conversationId={conversation?.id}
         onLoadMore={onLoadMore}
         hasMore={hasMore}
-        onReply={(msg) => setReplyTo({ senderName: msg.senderName || "Voce", content: msg.content || (msg.type !== "text" ? `[${msg.type}]` : ""), messageId: msg.providerMessageId || msg.id })}
+        onReply={(msg) => {
+          // Use WhatsApp provider message ID for reply quoting
+          const replyMsgId = msg.providerMessageId || msg.id;
+          setReplyTo({ senderName: msg.senderName || "Voce", content: msg.content || (msg.type !== "text" ? `[${msg.type}]` : ""), messageId: replyMsgId });
+        }}
         onReact={(msgId, emoji) => {
           // React via uazapi/meta
           import("@/services/messageService").then(({ messageService }) => {

@@ -88,7 +88,7 @@ export default function MessageContextMenu({
             {QUICK_EMOJIS.map(emoji => (
               <button
                 key={emoji}
-                onClick={() => handleAction("react", () => onReact?.(message.id, emoji))}
+                onClick={() => handleAction("react", () => onReact?.(message.providerMessageId || message.id, emoji))}
                 className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-[rgba(255,255,255,0.1)] transition-colors text-lg"
               >
                 {emoji}
@@ -115,7 +115,7 @@ export default function MessageContextMenu({
           <div className="my-1 border-t" style={{ borderColor: "var(--wa-border, hsl(var(--border)))" }} />
 
           <MenuItem icon={Flag} label="Denunciar" onClick={() => { toast.info("Mensagem denunciada"); setOpen(false) }} />
-          <MenuItem icon={Trash2} label="Apagar" danger onClick={() => handleAction("delete", () => onDelete?.(message.id))} />
+          <MenuItem icon={Trash2} label="Apagar" danger onClick={() => handleAction("delete", () => onDelete?.(message.providerMessageId || message.id))} />
         </div>
       )}
     </div>

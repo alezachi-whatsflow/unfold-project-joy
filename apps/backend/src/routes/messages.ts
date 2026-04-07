@@ -20,7 +20,7 @@ router.use(authMiddleware);
  * Returns 202 immediately — worker processes asynchronously.
  */
 router.post("/send", async (req: Request, res: Response) => {
-  const { instanceName, recipientJid, text, isGroup } = req.body;
+  const { instanceName, recipientJid, text, isGroup, replyid } = req.body;
 
   if (!instanceName || !recipientJid || !text?.trim()) {
     return res.status(400).json({ error: "instanceName, recipientJid and text are required" });
@@ -35,8 +35,9 @@ router.post("/send", async (req: Request, res: Response) => {
       recipientJid,
       text: text.trim(),
       isGroup: isGroup || false,
+      replyid: replyid || null,
       userId: req.userId,
-      jwt: req.jwt, // Worker will use this to create scoped Supabase client
+      jwt: req.jwt,
     },
     timestamp: Date.now(),
   });
