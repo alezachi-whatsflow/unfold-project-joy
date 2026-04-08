@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useChannelIntegrations, type ChannelIntegration } from "@/hooks/useChannelIntegrations";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -20,6 +21,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 
 export default function MetaChannelsTab() {
   const { data: integrations = [], isLoading, tenantId, invalidate } = useChannelIntegrations();
+  const queryClient = useQueryClient();
   const [connecting, setConnecting] = useState<string | null>(null);
   const [messengerModalOpen, setMessengerModalOpen] = useState(false);
   const [messengerForm, setMessengerForm] = useState({ pageId: "", pageToken: "", pageName: "" });
@@ -58,7 +60,7 @@ export default function MetaChannelsTab() {
   }
 
   async function startOAuth(provider: "WABA" | "INSTAGRAM") {
-    if (!tenantId) { toast.error("Tenant não identificado"); return; }
+    if (!tenantId) { toast.error("Tenant nao identificado"); return; }
     setConnecting(provider);
     try {
       const { data, error } = await supabase.functions.invoke("meta-oauth-start", {
@@ -66,12 +68,31 @@ export default function MetaChannelsTab() {
       });
       if (error) throw error;
       if (data?.auth_url) {
-        window.location.href = data.auth_url;
+        // Open OAuth in popup window (don't lose current page)
+        const w = 600, h = 700;
+        const left = window.screenX + (window.innerWidth - w) / 2;
+        const top = window.screenY + (window.innerHeight - h) / 2;
+        const popup = window.open(
+          data.auth_url,
+          "meta_oauth",
+          `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`
+        );
+
+        // Listen for popup close or success message
+        const checkClosed = setInterval(() => {
+          if (!popup || popup.closed) {
+            clearInterval(checkClosed);
+            setConnecting(null);
+            // Refresh integrations list after popup closes
+            queryClient.invalidateQueries({ queryKey: ["channel-integrations"] });
+            toast.success("Verifique se a conexao foi concluida com sucesso");
+          }
+        }, 1000);
       } else {
-        throw new Error("URL de autorização não retornada");
+        throw new Error("URL de autorizacao nao retornada");
       }
     } catch (err: any) {
-      toast.error(err.message || "Erro ao iniciar conexão");
+      toast.error(err.message || "Erro ao iniciar conexao");
       setConnecting(null);
     }
   }
