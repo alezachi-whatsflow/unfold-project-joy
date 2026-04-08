@@ -4,11 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Negocio, NegocioStatus, HistoricoItem } from '@/types/vendas';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useSectorAccess } from '@/hooks/useSectorAccess';
 
 export function useNegocios(tenantId?: string, pipelineId?: string | null) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { isOwnedOnly, userId } = usePermissions();
+  const { filterBySector } = useSectorAccess();
   const viewOwnedOnly = isOwnedOnly('vendas');
 
   const { data: negocios = [], isLoading } = useQuery({
@@ -40,6 +42,9 @@ export function useNegocios(tenantId?: string, pipelineId?: string | null) {
       })) as Negocio[];
     },
   });
+
+  // Apply sector-based filtering
+  const filteredNegocios = useMemo(() => filterBySector(negocios as any[]) as Negocio[], [negocios, filterBySector]);
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['negocios'] });
@@ -141,7 +146,7 @@ export function useNegocios(tenantId?: string, pipelineId?: string | null) {
   }, [negocios]);
 
   return {
-    negocios,
+    negocios: filteredNegocios,
     isLoading,
     createNegocio,
     updateNegocio,

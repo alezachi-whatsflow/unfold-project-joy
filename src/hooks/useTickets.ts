@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "@/hooks/useTenantId";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useSectorAccess } from "@/hooks/useSectorAccess";
 import { toast } from "sonner";
 
 export interface Ticket {
@@ -41,6 +43,7 @@ export interface TicketMessage {
 }
 
 export function useTickets() {
+  const { filterBySector } = useSectorAccess();
   const tenantId = useTenantId();
   const queryClient = useQueryClient();
   const { isOwnedOnly, userId } = usePermissions();
@@ -111,7 +114,9 @@ export function useTickets() {
     onError: (err: any) => toast.error("Erro ao atualizar ticket: " + err.message),
   });
 
-  return { tickets, isLoading, createTicket, updateTicket };
+  const filteredTickets = useMemo(() => filterBySector(tickets as any[]) as Ticket[], [tickets, filterBySector]);
+
+  return { tickets: filteredTickets, isLoading, createTicket, updateTicket };
 }
 
 export function useTicketMessages(ticketId: string | null) {

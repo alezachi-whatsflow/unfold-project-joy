@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserTenants } from "@/hooks/useUserTenants";
+import { useSectorAccess } from "@/hooks/useSectorAccess";
 import { toast } from "sonner";
 
 export interface Activity {
@@ -26,6 +28,7 @@ export function useActivities() {
   const { user } = useAuth();
   const { data: tenants } = useUserTenants();
   const tenantId = tenants?.[0]?.tenant_id;
+  const { filterBySector } = useSectorAccess();
 
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ["activities", tenantId],
@@ -80,8 +83,10 @@ export function useActivities() {
     onError: () => toast.error("Erro ao remover atividade"),
   });
 
+  const filteredActivities = useMemo(() => filterBySector(activities as any[]) as Activity[], [activities, filterBySector]);
+
   return {
-    activities,
+    activities: filteredActivities,
     isLoading,
     createActivity: createActivity.mutate,
     updateActivity: updateActivity.mutate,

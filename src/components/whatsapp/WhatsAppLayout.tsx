@@ -8,6 +8,7 @@ import { useConversations } from "@/hooks/whatsapp/useConversations";
 import { useMessages } from "@/hooks/whatsapp/useMessages";
 import { useRealtimeSync } from "@/hooks/whatsapp/useRealtimeSync";
 import { useMessageSender } from "@/hooks/whatsapp/useMessageSender";
+import { useSectorAccess } from "@/hooks/useSectorAccess";
 
 /* ── main component ────────────────────────────────── */
 interface WhatsAppLayoutProps {
@@ -16,9 +17,11 @@ interface WhatsAppLayoutProps {
 
 export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = {}) {
   const {
-    conversations, fetchConversations,
+    conversations: allConversations, fetchConversations,
     assignConversation, resolveConversation,
   } = useConversations();
+  const { filterBySector } = useSectorAccess();
+  const conversations = filterBySector(allConversations as any[]) as typeof allConversations;
 
   const {
     messages, messageLimit,
