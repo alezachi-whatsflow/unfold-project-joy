@@ -122,7 +122,7 @@ export default function UazapiInstancesTab() {
     setLoading(true);
     try {
       await instanceService.syncAll();
-      toast.success("Instâncias sincronizadas!");
+      toast.success("Sincronizacao iniciada! Os dados serao atualizados em ate 10 minutos conforme as regras da Meta.", { duration: 8000 });
     } catch {
       toast.error("Erro ao sincronizar.");
     }

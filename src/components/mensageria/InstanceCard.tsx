@@ -133,7 +133,7 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
           {/* Connection/Disconnection info */}
           <div style={{ display: "flex", gap: 12, fontSize: 10, color: "var(--text-muted)", flexWrap: "wrap" }}>
             {instance.api_created_at && (
-              <span>📅 Criado: {fmtDate(instance.api_created_at)}</span>
+              <span>📅 Criado: {fmtDateTime(instance.api_created_at)}</span>
             )}
             {instance.status === "connected" && instance.ultimo_ping && (
               <span style={{ color: "var(--inbox-active-color, #0E8A5C)" }}>
