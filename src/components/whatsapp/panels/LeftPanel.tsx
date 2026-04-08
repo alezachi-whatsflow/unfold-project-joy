@@ -184,8 +184,8 @@ export default function LeftPanel({
               conversation={c}
               isSelected={selectedId === c.id}
               onClick={() => onSelect(c.id)}
-              isQueueMode={filter === "queue" || !c.assignedTo}
-              onAssign={onAssignConversation ? () => onAssignConversation(c.id) : undefined}
+              isQueueMode={!c.isGroup && (filter === "queue" || !c.assignedTo)}
+              onAssign={!c.isGroup && onAssignConversation ? () => onAssignConversation(c.id) : undefined}
               searchQuery={search.length >= 3 ? search : undefined}
             />
           ))
