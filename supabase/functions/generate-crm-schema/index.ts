@@ -1,16 +1,16 @@
 /**
- * generate-crm-schema — Onboarding Zero Fricção
+ * generate-crm-schema — Onboarding Zero Friccao
  *
- * Receives onboarding answers, sends to OpenAI Assistant,
- * returns a tailored pipeline config (name, stages, card_schema).
+ * Receives onboarding answers, calls OpenAI to generate
+ * a tailored pipeline config (name, stages, card_schema, extras).
+ * Uses callAI (chat completions) — no Assistant ID needed.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { callAssistant } from "../_shared/ai.ts";
+import { callAI } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -21,175 +21,124 @@ function json(data: unknown, status = 200) {
   });
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+const SYSTEM_PROMPT = `Voce e um especialista em CRM e vendas B2B/B2C para empresas brasileiras.
 
-  if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
-  }
+Com base nas informacoes do negocio fornecidas, gere um JSON com EXATAMENTE esta estrutura:
+
+{
+  "pipeline_name": "Nome do pipeline (ex: Vendas Clinica, Pipeline Consultoria)",
+  "stages": [
+    { "name": "Prospeccao", "color": "#60a5fa", "order": 1 },
+    { "name": "Qualificado", "color": "#a78bfa", "order": 2 },
+    { "name": "Proposta Enviada", "color": "#f59e0b", "order": 3 },
+    { "name": "Negociacao", "color": "#fb923c", "order": 4 },
+    { "name": "Fechado Ganho", "color": "#4ade80", "order": 5 },
+    { "name": "Fechado Perdido", "color": "#f87171", "order": 6 }
+  ],
+  "card_schema": [
+    { "key": "orcamento", "label": "Orcamento", "type": "currency", "required": true },
+    { "key": "prazo_decisao", "label": "Prazo de Decisao", "type": "date", "required": false },
+    { "key": "origem_lead", "label": "Origem do Lead", "type": "select", "options": ["Google", "Instagram", "Indicacao"], "required": true }
+  ],
+  "departments": [
+    { "name": "Comercial", "color": "#478BFF", "description": "Equipe de vendas" }
+  ],
+  "tags": [
+    { "name": "Lead Quente", "color": "#ef4444", "category": "lead_status" }
+  ],
+  "quick_replies": [
+    { "title": "Boas-vindas", "shortcut": "/ola", "body": "Ola! Tudo bem? Como posso ajudar?" }
+  ],
+  "welcome_message": "Ola! Seja bem-vindo. Como posso ajudar?",
+  "away_message": "No momento estamos fora do horario. Retornaremos em breve!",
+  "business_hours": "Seg-Sex 08:00-18:00",
+  "follow_ups": [
+    { "title": "Follow-up 1", "body": "Ola! Gostaria de saber se teve alguma duvida sobre nossa proposta." }
+  ]
+}
+
+Regras:
+- stages DEVE ter pelo menos 4 etapas + "Fechado Ganho" + "Fechado Perdido"
+- card_schema deve ter 3-6 campos relevantes para o tipo de negocio
+- types permitidos: text, number, currency, date, select, boolean, url, email, phone
+- tags deve ter 8-12 itens com categorias: lead_status, priority, source, general
+- quick_replies deve ter exatamente 5 respostas praticas
+- follow_ups deve ter 3 templates
+- Personalize TUDO para o segmento especifico do negocio
+- Retorne APENAS JSON valido, sem markdown, sem explicacoes`;
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
-    // 1. Authenticate user via JWT
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return json({ error: "Unauthorized" }, 401);
-    }
+    if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return json({ error: "Unauthorized" }, 401);
-    }
+    // Validate JWT
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return json({ error: "Unauthorized" }, 401);
 
-    // 2. Parse request body
     const { answers } = await req.json();
     if (!answers || typeof answers !== "string") {
-      return json({ error: "Campo 'answers' (string) é obrigatório" }, 400);
+      return json({ error: "Campo 'answers' (string) e obrigatorio" }, 400);
     }
 
-    // 3. Get Assistant ID from secrets or DB
-    let assistantId = Deno.env.get("OPENAI_CRM_ASSISTANT_ID");
-    if (!assistantId) {
-      // Fallback: fetch from ai_configurations
-      const { data: aiConf } = await createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
-        .from("ai_configurations")
-        .select("project_id")
-        .eq("provider", "openai_crm_assistant")
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle();
-      if (aiConf?.project_id) assistantId = aiConf.project_id;
-    }
-    if (!assistantId) {
-      return json({ error: "OPENAI_CRM_ASSISTANT_ID not configured" }, 500);
-    }
+    console.log("[generate-crm-schema] Generating for user:", user.id, "answers length:", answers.length);
 
-    // 4. Call OpenAI Assistant for pipeline + card schema
-    console.log("generate-crm-schema: calling assistant for user", user.id);
-
-    const rawResponse = await callAssistant({
-      assistantId,
-      message: answers,
-      maxWaitMs: 90000,
-      pollIntervalMs: 2000,
+    // Single AI call with structured prompt
+    const rawResponse = await callAI({
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: answers },
+      ],
+      temperature: 0.3,
+      max_tokens: 3000,
     });
 
-    console.log("generate-crm-schema: raw response length:", rawResponse.length);
+    console.log("[generate-crm-schema] Response length:", rawResponse.length);
 
-    // 5. Parse pipeline JSON from assistant
-    let parsed: {
-      pipeline_name: string;
-      stages: Array<{ name: string; color?: string; order: number }>;
-      card_schema: Array<{ key: string; label: string; type: string; options?: string[]; required: boolean }>;
-    };
+    // Parse JSON response
+    const cleaned = rawResponse
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
 
+    let parsed: any;
     try {
-      const cleaned = rawResponse
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
-        .trim();
       parsed = JSON.parse(cleaned);
     } catch {
-      console.error("generate-crm-schema: failed to parse assistant response:", rawResponse.substring(0, 500));
-      return json({ error: "Falha ao interpretar resposta da I.A.", raw: rawResponse.substring(0, 1000) }, 502);
+      console.error("[generate-crm-schema] Failed to parse:", cleaned.substring(0, 500));
+      return json({ error: "Falha ao interpretar resposta da I.A.", raw: cleaned.substring(0, 500) }, 502);
     }
 
-    if (!parsed.pipeline_name || !Array.isArray(parsed.stages) || !Array.isArray(parsed.card_schema)) {
-      return json({ error: "Resposta da I.A. incompleta — faltam pipeline_name, stages ou card_schema", parsed }, 502);
+    if (!parsed.pipeline_name || !Array.isArray(parsed.stages)) {
+      return json({ error: "Resposta incompleta — faltam pipeline_name ou stages" }, 502);
     }
 
-    // 6. Generate extras via chat completions (departments, tags, quick replies, etc.)
-    let extras: {
-      departments: Array<{ name: string; color: string; description: string }>;
-      tags: Array<{ name: string; color: string; category: string }>;
-      quick_replies: Array<{ title: string; shortcut: string; body: string }>;
-      welcome_message: string;
-      away_message: string;
-      business_hours: string;
-      follow_ups: Array<{ title: string; body: string }>;
-    } = {
-      departments: [],
-      tags: [],
-      quick_replies: [],
-      welcome_message: "",
-      away_message: "",
-      business_hours: "",
-      follow_ups: [],
-    };
-
-    try {
-      const { callAI } = await import("../_shared/ai.ts");
-
-      const extrasPrompt = `Com base nas informações do negócio abaixo, gere um JSON com as seguintes chaves:
-
-1. "departments": array com 3-5 setores/departamentos relevantes para este tipo de negócio. Cada item: { "name": string, "color": hex string, "description": breve descrição }.
-2. "tags": array com 8-12 tags úteis para classificar leads/contatos. Cada item: { "name": string, "color": hex string, "category": "lead_status" | "priority" | "source" | "general" }.
-3. "quick_replies": array com exatamente 5 respostas rápidas prontas para uso no WhatsApp. Cada item: { "title": nome curto, "shortcut": atalho com / (ex: "/ola"), "body": texto completo da mensagem }.
-4. "welcome_message": mensagem de boas-vindas para o Webchat/WhatsApp (1-2 frases, profissional).
-5. "away_message": mensagem de ausência fora do horário (1-2 frases).
-6. "business_hours": horário de funcionamento sugerido (ex: "Seg-Sex 08:00-18:00, Sáb 08:00-12:00").
-7. "follow_ups": array com 3 templates de follow-up pós-contato. Cada item: { "title": nome curto, "body": texto completo }.
-
-Informações do negócio:
-${answers}
-
-Pipeline gerado: ${parsed.pipeline_name} com etapas: ${parsed.stages.map(s => s.name).join(', ')}
-
-Retorne APENAS JSON válido, sem markdown, sem explicações.`;
-
-      const extrasRaw = await callAI({
-        messages: [
-          { role: "system", content: "Você é um configurador de CRM especializado. Gera configurações práticas e profissionais para empresas brasileiras. Sempre retorna JSON puro sem markdown." },
-          { role: "user", content: extrasPrompt },
-        ],
-        temperature: 0.4,
-        max_tokens: 2048,
-      });
-
-      const extrasClean = extrasRaw
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
-        .trim();
-
-      const extrasParsed = JSON.parse(extrasClean);
-      extras = {
-        departments: Array.isArray(extrasParsed.departments) ? extrasParsed.departments : [],
-        tags: Array.isArray(extrasParsed.tags) ? extrasParsed.tags : [],
-        quick_replies: Array.isArray(extrasParsed.quick_replies) ? extrasParsed.quick_replies.slice(0, 5) : [],
-        welcome_message: extrasParsed.welcome_message || "",
-        away_message: extrasParsed.away_message || "",
-        business_hours: extrasParsed.business_hours || "",
-        follow_ups: Array.isArray(extrasParsed.follow_ups) ? extrasParsed.follow_ups.slice(0, 3) : [],
-      };
-
-      console.log("generate-crm-schema: extras generated —", extras.departments.length, "departments,", extras.tags.length, "tags,", extras.quick_replies.length, "quick_replies");
-    } catch (extrasErr: any) {
-      console.warn("generate-crm-schema: extras generation failed (non-fatal):", extrasErr.message);
-      // Non-fatal: pipeline is still valid without extras
-    }
-
-    console.log("generate-crm-schema: success —", parsed.pipeline_name, "with", parsed.stages.length, "stages and", parsed.card_schema.length, "fields");
+    console.log("[generate-crm-schema] Success:", parsed.pipeline_name, "-", parsed.stages?.length, "stages,", parsed.card_schema?.length, "fields");
 
     return json({
       pipeline_name: parsed.pipeline_name,
-      stages: parsed.stages,
-      card_schema: parsed.card_schema,
-      ...extras,
+      stages: parsed.stages || [],
+      card_schema: parsed.card_schema || [],
+      departments: parsed.departments || [],
+      tags: parsed.tags || [],
+      quick_replies: (parsed.quick_replies || []).slice(0, 5),
+      welcome_message: parsed.welcome_message || "",
+      away_message: parsed.away_message || "",
+      business_hours: parsed.business_hours || "",
+      follow_ups: (parsed.follow_ups || []).slice(0, 3),
     });
   } catch (err) {
-    console.error("generate-crm-schema error:", err);
-    return json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      500
-    );
+    console.error("[generate-crm-schema] Error:", err);
+    return json({ error: err instanceof Error ? err.message : "Unknown error" }, 500);
   }
 });
