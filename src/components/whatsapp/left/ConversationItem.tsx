@@ -41,7 +41,8 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
     system: "",
   };
   const prefix = prefixMap[c.lastMessageType] || "";
-  const previewText = prefix ? `${prefix} ${c.lastMessage}` : c.lastMessage;
+  const rawPreview = prefix ? `${prefix} ${c.lastMessage}` : c.lastMessage;
+  const previewText = rawPreview && rawPreview.length > 25 ? rawPreview.slice(0, 25) + "..." : rawPreview;
 
   const unreadDisplay = c.unreadCount > 99 ? "99+" : c.unreadCount;
 
