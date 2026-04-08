@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Inbox, Send, Kanban, Users, UsersRound, Receipt, ScrollText,
+  Inbox, Send, Kanban, Users, Receipt, ScrollText,
   UserCog, Building2, MessageSquareText, Tag, Bot, FileText, Zap,
   BarChart3, Menu, Clock,
 } from "lucide-react";
@@ -40,7 +40,6 @@ const NAV_ITEMS: NavItem[] = [
   // Group 2 — Tools
   { id: "enviar",    label: "Envios em Massa",    icon: Send,             group: "tools" },
   { id: "leads",     label: "Leads",               icon: Kanban,           group: "tools" },
-  { id: "grupos",    label: "Grupos",               icon: UsersRound,       group: "tools" },
   { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
   { id: "templates",  label: "Templates HSM",        icon: FileText,         group: "tools" },
   { id: "cobranca",  label: "Cobrança",              icon: Receipt,          group: "tools" },
@@ -70,7 +69,7 @@ const MensageriaPage = () => {
       // Tools
       case "enviar":          return <MassSendHub onClose={() => setActiveTab("inbox")} />;
       case "leads":           return <LeadKanban />;
-      case "grupos":          return <div className="h-full overflow-hidden"><GroupDashboard /></div>;
+      // Grupos: managed via top tabs in InboxTab (Em atendimento > Grupos)
       case "contatos":        return <ContactChecker />;
       case "templates":       return <HSMTemplateManager />;
       case "cobranca":        return <BillingRulesTab />;
