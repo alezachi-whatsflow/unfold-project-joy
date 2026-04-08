@@ -205,13 +205,22 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     payload?.groupSubject ||
     null;
 
+  // Extract sender name (pushName / senderName / verifiedBizName)
+  const senderName =
+    msg?.senderName ||
+    msg?.pushName ||
+    msg?.verifiedBizName ||
+    payload?.senderName ||
+    payload?.pushName ||
+    null;
+
   // Enrich raw_payload with group metadata for UI consumption
   const enrichedPayload = {
     ...msg,
     ...(isGroup && participant ? { participant } : {}),
     ...(isGroup && groupSubject ? { groupSubject } : {}),
     ...(msg?.pushName ? { pushName: msg.pushName } : {}),
-    ...(msg?.senderName ? { senderName: msg.senderName } : {}),
+    ...(senderName ? { senderName } : {}),
   };
 
   const parsedStatus = toMessageStatus(
@@ -245,6 +254,7 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     body: body || captionVal,
     media_url: mediaUrl,
     caption: captionVal,
+    sender_name: fromMe ? null : senderName,
     status: parsedStatus ?? (fromMe ? 2 : 4),
     track_source: msg?.trackSource ?? msg?.track_source ?? null,
     track_id: msg?.trackId ?? msg?.track_id ?? null,
@@ -840,9 +850,10 @@ Deno.serve(async (req) => {
         if (chat?.wa_chatid) {
           const leadName = chat.lead_name || chat.lead_fullName || null;
           // Only use pushName from incoming messages to avoid saving device owner's name
-          const hasIncoming = msgs.some((m: AnyRecord) => !Boolean(m?.key?.fromMe ?? m?.fromMe ?? m?.sentByMe));
-          const pushName = hasIncoming ? (msgs[0]?.senderName || msgs[0]?.pushName || null) : null;
-          const contactName = leadName || pushName || null;
+          const incomingMsg = msgs.find((m: AnyRecord) => !Boolean(m?.key?.fromMe ?? m?.fromMe ?? m?.sentByMe));
+          const pushName = incomingMsg ? (incomingMsg.senderName || incomingMsg.pushName || null) : null;
+          // Also check payload-level fields
+          const contactName = leadName || pushName || payload?.senderName || payload?.pushName || chat.name || null;
 
           // ── TRAVA DE SESSÃO: buscar lead existente pelo chat_id + instance ──
           const { data: existingLead } = await supabase
@@ -886,8 +897,9 @@ Deno.serve(async (req) => {
               tenant_id: existingLead?.tenant_id || undefined,
               // Auto-assign department from instance if not already set
               department_id: existingLead?.department_id || instanceDeptId || undefined,
-              lead_name: chat.lead_name || contactName || undefined,
-              lead_full_name: chat.lead_fullName || contactName || undefined,
+              // Prefer real name (pushName) over phone-number-as-name from uazapi
+              lead_name: (pushName && !/^\d+$/.test(pushName)) ? pushName : (chat.lead_name && !/^\d+$/.test(chat.lead_name)) ? chat.lead_name : contactName || undefined,
+              lead_full_name: (pushName && !/^\d+$/.test(pushName)) ? pushName : (chat.lead_fullName && !/^\d+$/.test(chat.lead_fullName)) ? chat.lead_fullName : contactName || undefined,
               // REGRA DE OURO: atendente no banco → MANTÉM. Sem atendente → null.
               assigned_attendant_id: isActiveSession
                 ? existingLead.assigned_attendant_id
