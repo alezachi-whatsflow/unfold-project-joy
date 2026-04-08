@@ -129,34 +129,35 @@
    Off-white quente elimina glare
    ─────────────────────────────────────────── */
 [data-theme="pacifico"] {
-  --bg-base: #f5f2ed;
-  --bg-surface: #faf8f5;
-  --bg-card: #edeae4;
-  --bg-active: #e8f4ef;
-  --bg-hover: #eeece8;
-  --bg-input: #edeae4;
-  --border-soft: #d8d2c822;
-  --border: #d8d2c8;
-  --border-strong: #c8c0b4;
+  /* Dark variant — Pzaafi Brand Kit v5.0 compliance */
+  --bg-base: #0a1410;
+  --bg-surface: #0f1e16;
+  --bg-card: #142820;
+  --bg-active: #1a3828;
+  --bg-hover: #183020;
+  --bg-input: #142820;
+  --border-soft: #1e3e2a22;
+  --border: #1e3e2a;
+  --border-strong: #2a5438;
   --acc: #0e8a5c;
   --acc-bg: #0e8a5c15;
   --acc-border: #0e8a5c28;
   --acc-dark: #0a6844;
-  --text-primary: #2a2520;
-  --text-secondary: #7a6e62;
-  --text-muted: #b0a494;
+  --text-primary: #e5ede8;
+  --text-secondary: #8aa898;
+  --text-muted: #5a7a68;
   --unread-bg: #0e8a5c;
   --unread-text: #ffffff;
-  --sent-bg: #e0f4ec;
-  --sent-border: #b4dfc8;
+  --sent-bg: #1a3828;
+  --sent-border: #2a5438;
   --tag-bg: #0e8a5c18;
-  --tag-text: #0a6844;
+  --tag-text: #39f7b2;
   --logo-accent: #0e8a5c;
   --danger: #d63031;
   --success: #0e8a5c;
   --warning: #e17055;
-  --scrollbar: #d8d2c8;
-  --shadow: 0 2px 12px #00000015;
+  --scrollbar: #1e3e2a;
+  --shadow: 0 2px 12px #00000030;
 
   /* Shadcn/UI mapping */
   --sidebar-glass-rgb: 245,242,237;
