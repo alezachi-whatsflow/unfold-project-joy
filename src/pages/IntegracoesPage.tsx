@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Plus, CreditCard } from "lucide-react";
 import { ChannelIcon } from "@/components/ui/ChannelIcon";
 import { MetaBusinessPartnerBadge } from "@/components/ui/MetaBusinessPartnerBadge";
@@ -25,6 +26,8 @@ const CATEGORIES = [
 
 const IntegracoesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const [expandedSection, setExpandedSection] = useState<string | null>("uazapi");
   const [codeCopied, setCodeCopied] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('canais');
@@ -80,9 +83,19 @@ const IntegracoesPage = () => {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Integrações</h1>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Gerencie todas as suas conexões em um só lugar.</p>
+      <div style={{ marginBottom: 24 }} className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Integracoes</h1>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>Gerencie todas as suas conexoes em um so lugar.</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5 text-xs"
+          onClick={() => navigate(`/app/${slug || "whatsflow"}/vendas`)}
+        >
+          Continuar configuracao →
+        </Button>
       </div>
 
       {/* Category Tabs */}
