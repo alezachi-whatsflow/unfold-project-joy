@@ -438,65 +438,34 @@ export default function WizardLayout({ onComplete }: Props) {
   }
 
   async function handleFinish() {
-    if (!tenantId) return;
     setIsSaving(true);
 
-    try {
-      // Save edited departments
-      if (editDepartments.length) {
-        for (const dept of editDepartments) {
-          await supabase.from('departments').upsert({
-            tenant_id: tenantId,
-            name: dept.name,
-            color: dept.color || '#6366f1',
-            description: dept.description || '',
-          }, { onConflict: 'tenant_id,name' }).catch(() => {});
-        }
+    // Save everything best-effort — never block completion
+    if (tenantId) {
+      // Departments
+      for (const dept of editDepartments) {
+        try { await supabase.from('departments').upsert({ tenant_id: tenantId, name: dept.name, color: dept.color || '#6366f1', description: dept.description || '' }, { onConflict: 'tenant_id,name' }); } catch {}
       }
-
-      // Save edited tags
-      if (editTags.length) {
-        for (const tag of editTags) {
-          await supabase.from('tenant_tags').upsert({
-            tenant_id: tenantId,
-            name: tag.name,
-            color: tag.color || '#6366f1',
-            category: tag.category || 'general',
-          }, { onConflict: 'tenant_id,name' }).catch(() => {});
-        }
+      // Tags
+      for (const tag of editTags) {
+        try { await supabase.from('tenant_tags').upsert({ tenant_id: tenantId, name: tag.name, color: tag.color || '#6366f1', category: tag.category || 'general' }, { onConflict: 'tenant_id,name' }); } catch {}
       }
-
-      // Save edited quick replies (delete old AI-generated ones first, then insert fresh)
+      // Quick replies
       if (editQuickReplies.length) {
-        // Only insert; existing ones from handleGenerate are already there but we re-insert edited versions
-        await supabase.from('quick_replies').delete().eq('tenant_id', tenantId);
+        try { await supabase.from('quick_replies').delete().eq('tenant_id', tenantId); } catch {}
         for (const qr of editQuickReplies) {
-          await supabase.from('quick_replies').insert({
-            tenant_id: tenantId,
-            title: qr.title,
-            shortcut: qr.shortcut,
-            body: qr.body,
-          }).catch(() => {});
+          try { await supabase.from('quick_replies').insert({ tenant_id: tenantId, title: qr.title, shortcut: qr.shortcut, body: qr.body }); } catch {}
         }
       }
-
-      try {
-        await upsertProfile({ wizard_completed: true, wizard_step: 6 } as any);
-      } catch (profileErr) {
-        console.warn('Wizard: profile update failed (non-fatal):', profileErr);
-      }
-
-      // Mark as done in localStorage even if DB fails
-      if (user?.id) localStorage.setItem(`pzaafi_wizard_done_${user.id}`, 'true');
-
-      toast.success('CRM personalizado ativado!');
-      onComplete();
-    } catch (err) {
-      console.error('handleFinish error:', err);
-      toast.error('Erro ao salvar configuracoes. Tente novamente.');
-    } finally {
-      setIsSaving(false);
+      // Profile
+      try { await upsertProfile({ wizard_completed: true, wizard_step: 6 } as any); } catch (e) { console.warn('Wizard profile save:', e); }
     }
+
+    // Always mark as done and proceed
+    if (user?.id) localStorage.setItem(`pzaafi_wizard_done_${user.id}`, 'true');
+    setIsSaving(false);
+    toast.success('CRM personalizado ativado!');
+    onComplete();
   }
 
   // ── Loading State (step 5) ──
