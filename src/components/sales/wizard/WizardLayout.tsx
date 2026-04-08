@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useTenantId } from '@/hooks/useTenantId';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -93,6 +94,7 @@ interface ChannelStatus {
 
 export default function WizardLayout({ onComplete }: Props) {
   const tenantId = useTenantId();
+  const { user } = useAuth();
   const { slug } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
   const { profile, upsertProfile } = useCompanyProfile(tenantId);
@@ -472,12 +474,20 @@ export default function WizardLayout({ onComplete }: Props) {
         }
       }
 
-      await upsertProfile({ wizard_completed: true, wizard_step: 6 } as any);
+      try {
+        await upsertProfile({ wizard_completed: true, wizard_step: 6 } as any);
+      } catch (profileErr) {
+        console.warn('Wizard: profile update failed (non-fatal):', profileErr);
+      }
+
+      // Mark as done in localStorage even if DB fails
+      if (user?.id) localStorage.setItem(`pzaafi_wizard_done_${user.id}`, 'true');
+
       toast.success('CRM personalizado ativado!');
       onComplete();
     } catch (err) {
       console.error('handleFinish error:', err);
-      toast.error('Erro ao salvar configurações');
+      toast.error('Erro ao salvar configuracoes. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
