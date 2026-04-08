@@ -449,17 +449,6 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
 
         {/* Quick Actions Bar */}
         <div className="flex items-center gap-2 px-4 py-1.5 overflow-x-auto border-t border-white/[0.04]" style={{ height: 36 }}>
-          {/* "Iniciar Atendimento" */}
-          {onAssign && (
-            <button
-              onClick={onAssign}
-              className="msg-pill flex items-center gap-1.5 shrink-0 pill-green"
-              style={{ fontWeight: 600 }}
-            >
-              <Headphones size={13} />
-              Iniciar Atendimento
-            </button>
-          )}
           {quickActions.map((a) => {
             // Replace "Resolver" label with "Finalizar" when in atendimento
             let label = a.id === "resolve" ? "Finalizar" : a.label;
