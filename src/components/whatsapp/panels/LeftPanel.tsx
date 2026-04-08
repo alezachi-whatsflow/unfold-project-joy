@@ -120,20 +120,20 @@ export default function LeftPanel({
         }
       }
     }
-    // Queue-based flow:
-    // "inbox" (Em atendimento) → assigned to current user & not resolved & not group
-    if (filter === "inbox") list = list.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved");
-    // "queue" (Fila) → unassigned & not resolved & not group
-    if (filter === "queue") list = list.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved");
-    // "groups" (Grupos) → groups only
+    // Queue-based flow (groups included in all tabs):
+    // "inbox" (Em atendimento) → assigned & not resolved (includes groups)
+    if (filter === "inbox") list = list.filter((c) => !!c.assignedTo && c.status !== "resolved");
+    // "queue" (Fila) → unassigned & not resolved (includes groups)
+    if (filter === "queue") list = list.filter((c) => !c.assignedTo && c.status !== "resolved");
+    // "groups" (Grupos) → groups only (dedicated view)
     if (filter === "groups") list = list.filter((c) => c.isGroup);
-    // "resolved" (Finalizados) → resolved
+    // "resolved" (Finalizados) → resolved (includes groups)
     if (filter === "resolved") list = list.filter((c) => c.status === "resolved");
     return list;
   }, [conversations, search, filter, deepSearchSnippets]);
 
-  const inboxCount = conversations.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved").length;
-  const queueCount = conversations.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved").length;
+  const inboxCount = conversations.filter((c) => !!c.assignedTo && c.status !== "resolved").length;
+  const queueCount = conversations.filter((c) => !c.assignedTo && c.status !== "resolved").length;
   const groupCount = conversations.filter((c) => c.isGroup).length;
   const resolvedCount = conversations.filter((c) => c.status === "resolved").length;
 

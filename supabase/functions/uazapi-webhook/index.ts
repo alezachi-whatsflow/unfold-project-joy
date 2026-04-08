@@ -226,6 +226,16 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     msg?.contextInfo?.stanzaID ??
     null;
 
+  // Community detection
+  const isCommunity = Boolean(
+    msg?.isCommunity ??
+    msg?.linkedParentId ??
+    payload?.isCommunity ??
+    chatPayload?.isCommunity ??
+    false
+  );
+  const parentGroupId = msg?.linkedParentId ?? chatPayload?.linkedParentId ?? null;
+
   return {
     instance_name: instance,
     remote_jid: remoteJid,
@@ -240,6 +250,9 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
     track_id: msg?.trackId ?? msg?.track_id ?? null,
     raw_payload: enrichedPayload,
     quoted_message_id: quotedMessageId ? normalizeMessageId(quotedMessageId) : null,
+    is_group: isGroup,
+    is_community: isCommunity,
+    parent_group_id: parentGroupId,
     created_at: toIso(msg?.messageTimestamp ?? msg?.timestamp ?? chatPayload?.wa_lastMsgTimestamp),
   };
 };
@@ -857,9 +870,17 @@ Deno.serve(async (req) => {
             instanceDeptId = instDept?.department_id || null;
           }
 
+          // Detect if this chat is a group/community
+          const chatIsGroup = String(chat.wa_chatid || "").endsWith("@g.us");
+          const chatIsCommunity = Boolean(chat.isCommunity || chat.linkedParentId);
+
           // ── PAYLOAD BLINDADO: NUNCA sobrescrever assignment com null ──
           await supabase.from("whatsapp_leads").upsert(
             {
+              is_group: chatIsGroup,
+              is_community: chatIsCommunity,
+              parent_group_id: chat.linkedParentId || null,
+              group_subject: chatIsGroup ? (chat.name || chat.subject || chat.wa_groupSubject || null) : null,
               instance_name: instance,
               chat_id: chat.wa_chatid,
               tenant_id: existingLead?.tenant_id || undefined,
@@ -895,7 +916,8 @@ Deno.serve(async (req) => {
         // ── Track conversation metrics (first_response_at, claimed_at) ──
         for (const msg of msgs) {
           const normalized = normalizeMessage(msg, payload, instance);
-          if (!normalized?.remote_jid || String(normalized.remote_jid).endsWith("@g.us")) continue;
+          if (!normalized?.remote_jid) continue;
+          // Groups and communities are now tracked (no longer skipped)
 
           const isOutgoing = normalized.direction === "outgoing";
           const jid = normalized.remote_jid;
