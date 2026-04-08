@@ -431,6 +431,12 @@ export default function WizardLayout({ onComplete }: Props) {
     }
   }, [result, step]);
 
+  function handleSkipWizard() {
+    if (user?.id) localStorage.setItem(`pzaafi_wizard_done_${user.id}`, "true");
+    toast.success("Voce pode configurar a qualquer momento em Vendas > Configuracoes");
+    onComplete();
+  }
+
   async function handleFinish() {
     if (!tenantId) return;
     setIsSaving(true);
@@ -858,9 +864,11 @@ export default function WizardLayout({ onComplete }: Props) {
 
             {/* Navigation */}
             <div className="flex items-center justify-between pt-2">
-              <div />
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleSkipWizard}>
+                Configurar depois
+              </Button>
               <Button onClick={handleSaveCompany} disabled={!canAdvanceCompany}>
-                Próxima <ArrowRight className="h-4 w-4 ml-1" />
+                Proxima <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </CardContent>
@@ -952,14 +960,19 @@ export default function WizardLayout({ onComplete }: Props) {
 
             {/* Navigation */}
             <div className="flex items-center justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep(0)}>
-                <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" onClick={() => setStep(0)}>
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+                </Button>
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleSkipWizard}>
+                  Configurar depois
+                </Button>
+              </div>
               <Button
                 onClick={() => setStep(2)}
                 disabled={!hasAnyIntegration}
               >
-                Próxima <ArrowRight className="h-4 w-4 ml-1" />
+                Proxima <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </CardContent>
@@ -1001,12 +1014,14 @@ export default function WizardLayout({ onComplete }: Props) {
 
           {/* Navigation */}
           <div className="flex items-center justify-between pt-2">
-            <Button
-              variant="ghost"
-              onClick={() => setStep(step - 1)}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" onClick={() => setStep(step - 1)}>
+                <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+              </Button>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleSkipWizard}>
+                Configurar depois
+              </Button>
+            </div>
 
             {isLastQuestion ? (
               <Button
