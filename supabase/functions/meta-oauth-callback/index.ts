@@ -12,7 +12,7 @@ const corsHeaders = {
 };
 
 const META_APP_ID = Deno.env.get("META_APP_ID") || "440046068424112";
-const META_CLIENT_SECRET = Deno.env.get("META_CLIENT_SECRET") || "";
+const META_CLIENT_SECRET = Deno.env.get("META_CLIENT_SECRET") || Deno.env.get("META_APP_SECRET") || "";
 const FRONTEND_URL = Deno.env.get("APP_URL") || "https://unfold-project-joy-production.up.railway.app";
 
 async function graphGet(path: string, token: string): Promise<any> {
