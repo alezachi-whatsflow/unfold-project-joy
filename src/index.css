@@ -228,6 +228,13 @@ main::-webkit-scrollbar-corner,
     font-size: clamp(1.875rem, 1.5rem + 1.25vw, 2.25rem);
   }
 
+  /* User-generated text — prevents overflow everywhere */
+  .text-user-content {
+    @apply whitespace-pre-wrap break-words leading-relaxed;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   /* Pzaafi brand utilities */
   .pz-glow-blue {
     box-shadow: 0 0 20px rgba(71, 139, 255, 0.15);

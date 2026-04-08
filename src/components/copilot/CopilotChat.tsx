@@ -359,7 +359,7 @@ export function CopilotChat() {
                   <Bot className="h-3.5 w-3.5 text-primary" />
                 </div>
               )}
-              <div className={`max-w-[80%] rounded-lg px-3.5 py-2.5 text-sm ${
+              <div className={`max-w-[80%] rounded-lg px-3.5 py-2.5 text-sm min-w-0 break-words ${
                 msg.role === "user"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-foreground"

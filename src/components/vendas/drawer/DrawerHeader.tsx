@@ -47,7 +47,7 @@ export default function DrawerHeader({
           )}
 
           {(negocio.cliente_nome || phoneLead) && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground font-medium">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground font-medium min-w-0">
               {negocio.cliente_nome && (
                 <span className="flex items-center gap-1">
                   <User className="h-3 w-3" />

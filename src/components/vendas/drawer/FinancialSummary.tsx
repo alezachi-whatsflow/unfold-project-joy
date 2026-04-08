@@ -99,8 +99,8 @@ export default function FinancialSummary({
         {negocio.produtos.length > 0 && (
           <div className="space-y-1">
             {negocio.produtos.map((p: any, i: number) => (
-              <div key={i} className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{p.nome} ({p.quantidade}x)</span>
+              <div key={i} className="flex justify-between text-xs gap-2 min-w-0">
+                <span className="text-muted-foreground break-words min-w-0 flex-1">{p.nome} ({p.quantidade}x)</span>
                 <span className="font-mono text-foreground">{fmt(p.valorTotal)}</span>
               </div>
             ))}

@@ -35,10 +35,10 @@ export default function NegocioTimeline({ negocio, onAddHistoricoItem }: Negocio
         <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Historico</h3>
         <div className="space-y-3">
           {negocio.historico.slice().reverse().map((h: any) => (
-            <div key={h.id} className="flex gap-2">
+            <div key={h.id} className="flex gap-2 min-w-0">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-              <div>
-                <p className="text-xs text-foreground">{h.descricao}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed">{h.descricao}</p>
                 <p className="text-[10px] text-muted-foreground">
                   {fmtDate(h.data)} {fmtTime(h.data)}
                   {h.usuarioNome && ` \u2014 ${h.usuarioNome}`}

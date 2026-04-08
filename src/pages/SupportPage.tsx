@@ -409,7 +409,7 @@ function TicketChat({ ticket }: { ticket: Ticket }) {
         {messages.map((m) => (
           <div key={m.id} className={cn("flex", m.sender_id ? "justify-end" : "justify-start")}>
             <div
-              className={cn("max-w-[70%] px-3 py-2 rounded-lg text-sm", m.is_internal
+              className={cn("max-w-[70%] px-3 py-2 rounded-lg text-sm min-w-0 break-words", m.is_internal
                 ? "bg-amber-500/10 border border-amber-500/30"
                 : m.sender_id ? "bg-primary/10" : "bg-muted"
               )}
