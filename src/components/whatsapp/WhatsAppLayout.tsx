@@ -12,7 +12,9 @@ import { useSectorAccess } from "@/hooks/useSectorAccess";
 
 /* ── main component ────────────────────────────────── */
 interface WhatsAppLayoutProps {
-  initialFilter?: "inbox" | "queue" | "groups" | "resolved";
+  initialFilter?: "inbox" | "queue" | "groups" | "groups_inbox" | "groups_queue" | "groups_resolved" | "resolved";
+  /** When 'groups', the entire layout only shows group conversations */
+  mode?: "direct" | "groups";
 }
 
 export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = {}) {

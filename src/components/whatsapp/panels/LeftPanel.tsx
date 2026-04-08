@@ -120,20 +120,21 @@ export default function LeftPanel({
         }
       }
     }
-    // Queue-based flow (groups included in all tabs):
-    // "inbox" (Em atendimento) → assigned & not resolved (includes groups)
-    if (filter === "inbox") list = list.filter((c) => !!c.assignedTo && c.status !== "resolved");
-    // "queue" (Fila) → unassigned & not resolved (includes groups)
-    if (filter === "queue") list = list.filter((c) => !c.assignedTo && c.status !== "resolved");
-    // "groups" (Grupos) → groups only (dedicated view)
+    // Queue-based flow (1:1 contacts only in inbox/queue):
+    if (filter === "inbox") list = list.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved");
+    if (filter === "queue") list = list.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved");
+    // Groups-only filters (used by dedicated Groups area — same layout, filtered data)
     if (filter === "groups") list = list.filter((c) => c.isGroup);
-    // "resolved" (Finalizados) → resolved (includes groups)
-    if (filter === "resolved") list = list.filter((c) => c.status === "resolved");
+    if (filter === "groups_inbox") list = list.filter((c) => c.isGroup && !!c.assignedTo && c.status !== "resolved");
+    if (filter === "groups_queue") list = list.filter((c) => c.isGroup && !c.assignedTo && c.status !== "resolved");
+    if (filter === "groups_resolved") list = list.filter((c) => c.isGroup && c.status === "resolved");
+    // Resolved (1:1 only)
+    if (filter === "resolved") list = list.filter((c) => !c.isGroup && c.status === "resolved");
     return list;
   }, [conversations, search, filter, deepSearchSnippets]);
 
-  const inboxCount = conversations.filter((c) => !!c.assignedTo && c.status !== "resolved").length;
-  const queueCount = conversations.filter((c) => !c.assignedTo && c.status !== "resolved").length;
+  const inboxCount = conversations.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved").length;
+  const queueCount = conversations.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved").length;
   const groupCount = conversations.filter((c) => c.isGroup).length;
   const resolvedCount = conversations.filter((c) => c.status === "resolved").length;
 

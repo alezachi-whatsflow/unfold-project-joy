@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Inbox, Send, Kanban, Users, Receipt, ScrollText,
+  Inbox, Send, Kanban, Users, UsersRound, Receipt, ScrollText,
   UserCog, Building2, MessageSquareText, Tag, Bot, FileText, Zap,
   BarChart3, Menu, Clock,
 } from "lucide-react";
@@ -16,6 +16,7 @@ import MessageComposer from "@/components/mensageria/MessageComposer";
 import ContactChecker from "@/components/mensageria/ContactChecker";
 import LeadKanban from "@/components/mensageria/LeadKanban";
 import MassSendHub from "@/components/mensageria/MassSendHub";
+import GroupsInboxView from "@/components/mensageria/GroupsInboxView";
 import GroupDashboard from "@/components/whatsapp/groups/GroupDashboard";
 import QuickReplyManager from "@/components/mensageria/quick-replies/QuickReplyManager";
 import AgentDashboard from "@/components/mensageria/agents/AgentDashboard";
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   // Group 2 — Tools
   { id: "enviar",    label: "Envios em Massa",    icon: Send,             group: "tools" },
   { id: "leads",     label: "Leads",               icon: Kanban,           group: "tools" },
+  { id: "grupos",    label: "Grupos",              icon: UsersRound,       group: "tools" },
   { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
   { id: "templates",  label: "Templates HSM",        icon: FileText,         group: "tools" },
   { id: "cobranca",  label: "Cobrança",              icon: Receipt,          group: "tools" },
@@ -69,7 +71,7 @@ const MensageriaPage = () => {
       // Tools
       case "enviar":          return <MassSendHub onClose={() => setActiveTab("inbox")} />;
       case "leads":           return <LeadKanban />;
-      // Grupos: managed via top tabs in InboxTab (Em atendimento > Grupos)
+      case "grupos":          return <GroupsInboxView />;
       case "contatos":        return <ContactChecker />;
       case "templates":       return <HSMTemplateManager />;
       case "cobranca":        return <BillingRulesTab />;
