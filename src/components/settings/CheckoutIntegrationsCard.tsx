@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ import {
   ExternalLink, Copy, Eye, EyeOff, Loader2, Webhook, Globe, Shield,
   ArrowRight, Trash2, ToggleLeft
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
 
 // ── Provider Registry ──
 
@@ -150,18 +152,20 @@ function saveConnections(conns: Record<string, ProviderConnection>) {
 // ── Sub-Components ──
 
 function ProviderCard({
-  provider, connection, onConfigure,
+  provider, connection, onConfigure, asaasConnected = false,
 }: {
   provider: CheckoutProvider;
   connection?: ProviderConnection;
   onConfigure: () => void;
+  asaasConnected?: boolean;
 }) {
   const isConnected = connection?.status === "connected";
   const isAsaas = provider.id === "asaas";
+  const isAsaasActive = isAsaas && asaasConnected;
 
   return (
-    <Card className={`relative overflow-hidden transition-all hover:${isConnected ? "ring-2 ring-primary/40" : ""}`}>
-      {isAsaas && (
+    <Card className={`relative overflow-hidden transition-all hover:${isConnected || isAsaasActive ? "ring-2 ring-primary/40" : ""}`}>
+      {isAsaasActive && (
         <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">
           INTEGRADO
         </div>
@@ -218,7 +222,7 @@ function ProviderCard({
         {/* Status + Actions */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-1.5">
-            {isAsaas ? (
+            {isAsaasActive ? (
               <Badge className="bg-green-600/90 text-[10px]"><CheckCircle className="mr-1 h-3 w-3" />Ativo</Badge>
             ) : isConnected ? (
               <Badge className="bg-green-600/90 text-[10px]"><CheckCircle className="mr-1 h-3 w-3" />Conectado</Badge>
@@ -234,7 +238,7 @@ function ProviderCard({
                 <ExternalLink className="h-3 w-3 mr-1" />Docs
               </a>
             </Button>
-            {!isAsaas && (
+            {!isAsaasActive && !isAsaas && (
               <Button size="sm" className="h-7 text-xs" onClick={onConfigure}>
                 <Settings className="h-3 w-3 mr-1" />
                 {isConnected ? "Editar" : "Conectar"}
@@ -477,13 +481,28 @@ function ConfigureProviderDialog({
 // ── Main Component ──
 
 export function CheckoutIntegrationsCard() {
+  const tenantId = useTenantId();
   const [connections, setConnections] = useState<Record<string, ProviderConnection>>(loadConnections);
   const [configuring, setConfiguring] = useState<string | null>(null);
+  const [asaasConnected, setAsaasConnected] = useState(false);
+
+  // Check if Asaas is actually connected for this tenant
+  useEffect(() => {
+    if (!tenantId) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("asaas_connections")
+        .select("is_active")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      setAsaasConnected(!!data?.is_active);
+    })();
+  }, [tenantId]);
 
   const activeProvider = PROVIDERS.find((p) => p.id === configuring) || null;
   const activeConnection = configuring ? connections[configuring] || null : null;
 
-  const connectedCount = Object.values(connections).filter((c) => c.status === "connected").length + 1; // +1 for Asaas
+  const connectedCount = Object.values(connections).filter((c) => c.status === "connected").length + (asaasConnected ? 1 : 0);
 
   const handleSave = (conn: ProviderConnection) => {
     const updated = { ...connections, [conn.providerId]: conn };
@@ -548,6 +567,7 @@ export function CheckoutIntegrationsCard() {
                 provider={provider}
                 connection={connections[provider.id]}
                 onConfigure={() => setConfiguring(provider.id)}
+                asaasConnected={asaasConnected}
               />
             ))}
           </div>
