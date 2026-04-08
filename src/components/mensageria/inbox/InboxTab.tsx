@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Headphones, ListOrdered, UsersRound, CheckCircle2, Filter } from "lucide-react";
 import WhatsAppLayout from "@/components/whatsapp/WhatsAppLayout";
-import GroupDashboard from "@/components/whatsapp/groups/GroupDashboard";
 
 type InboxFilter = "atendimento" | "fila" | "grupos" | "finalizados";
 
@@ -49,8 +48,8 @@ export default function InboxTab() {
           );
         })}
 
-        {/* Filter button — hidden on Grupos since dashboard has its own search */}
-        {activeFilter !== "grupos" && (
+        {/* Filter button */}
+        {(
           <button style={{
             marginLeft: "auto",
             display: "flex", alignItems: "center", gap: 4,
@@ -66,17 +65,14 @@ export default function InboxTab() {
 
       {/* Content */}
       <div style={{ flex: 1, overflow: "hidden" }}>
-        {activeFilter === "grupos" ? (
-          <GroupDashboard />
-        ) : (
-          <WhatsAppLayout
-            initialFilter={
-              activeFilter === "finalizados" ? "resolved"
-              : activeFilter === "fila" ? "queue"
-              : "inbox"
-            }
-          />
-        )}
+        <WhatsAppLayout
+          initialFilter={
+            activeFilter === "grupos" ? "groups"
+            : activeFilter === "finalizados" ? "resolved"
+            : activeFilter === "fila" ? "queue"
+            : "inbox"
+          }
+        />
       </div>
     </div>
   );
