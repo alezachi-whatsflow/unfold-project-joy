@@ -3,6 +3,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# Force correct Supabase self-hosted URL at build time
+ENV VITE_SUPABASE_URL="https://supabase.whatsflow.com.br"
+ENV VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc0MDI5ODAwLCJleHAiOjE5MzE3MDk4MDB9.nGuFy4XjBPEkzvfxaM9P_NH5zj9Fq2VSMQMIaDOGhoc"
 RUN npm run build
 
 FROM node:20-alpine
