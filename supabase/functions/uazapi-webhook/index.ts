@@ -399,11 +399,19 @@ Deno.serve(async (req) => {
       }
 
       case "messages":
-      case "messages.upsert": {
+      case "messages.upsert":
+      case "messages.history":
+      case "history": {
         const msgs = asArray(data).flatMap((item) => {
           if (item?.message) return asArray(item.message);
           return [item];
         });
+
+        // Sort by timestamp for history events (oldest first)
+        if (event === "messages.history" || event === "history") {
+          msgs.sort((a: any, b: any) => (a?.messageTimestamp || 0) - (b?.messageTimestamp || 0));
+          console.log(`[uazapi-webhook] Processing history: ${msgs.length} messages for ${instance}`);
+        }
 
         let saved = 0;
 
