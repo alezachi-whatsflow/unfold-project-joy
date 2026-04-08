@@ -12,6 +12,8 @@ export interface ChannelIntegration {
   display_phone_number: string | null;
   verified_name: string | null;
   waba_id: string | null;
+  waba_name: string | null;
+  quality_rating: string | null;
   instagram_business_account_id: string | null;
   facebook_page_id: string | null;
   instagram_username: string | null;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChannelIntegrations, type ChannelIntegration } from "@/hooks/useChannelIntegrations";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Instagram, CheckCircle2, XCircle, Clock, Trash2, RefreshCw, ExternalLink, Phone, Hash, Facebook } from "lucide-react";
+import { Loader2, MessageSquare, Instagram, CheckCircle2, XCircle, Clock, Trash2, RefreshCw, ExternalLink, Phone, Hash, Facebook, Shield, Star, Building2, CalendarClock } from "lucide-react";
 import { ChannelIcon } from "@/components/ui/ChannelIcon";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
@@ -26,6 +26,24 @@ export default function MetaChannelsTab() {
   const [messengerModalOpen, setMessengerModalOpen] = useState(false);
   const [messengerForm, setMessengerForm] = useState({ pageId: "", pageToken: "", pageName: "" });
   const [savingMessenger, setSavingMessenger] = useState(false);
+
+  // Listen for postMessage from OAuth popup
+  const handleOAuthMessage = useCallback((event: MessageEvent) => {
+    if (!event.data || typeof event.data !== "object" || !("success" in event.data)) return;
+    const { success, message, provider } = event.data;
+    if (success) {
+      toast.success(message || "Conexão realizada!");
+    } else {
+      toast.error(message || "Erro na conexão");
+    }
+    setConnecting(null);
+    queryClient.invalidateQueries({ queryKey: ["channel-integrations"] });
+  }, [queryClient]);
+
+  useEffect(() => {
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
+  }, [handleOAuthMessage]);
 
   const whatsappIntegrations = integrations.filter(i => i.provider === "WABA");
   const instagramIntegrations = integrations.filter(i => i.provider === "INSTAGRAM");
@@ -78,14 +96,12 @@ export default function MetaChannelsTab() {
           `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`
         );
 
-        // Listen for popup close or success message
+        // Fallback: detect popup close if postMessage didn't fire
         const checkClosed = setInterval(() => {
           if (!popup || popup.closed) {
             clearInterval(checkClosed);
             setConnecting(null);
-            // Refresh integrations list after popup closes
             queryClient.invalidateQueries({ queryKey: ["channel-integrations"] });
-            toast.success("Verifique se a conexao foi concluida com sucesso");
           }
         }, 1000);
       } else {
@@ -282,6 +298,33 @@ export default function MetaChannelsTab() {
   );
 }
 
+// ─── Quality badge color helper ──────────────────────────────────────────────
+function qualityColor(rating: string | null | undefined) {
+  if (!rating) return "text-muted-foreground";
+  const r = rating.toUpperCase();
+  if (r === "GREEN") return "text-emerald-400";
+  if (r === "YELLOW") return "text-amber-400";
+  return "text-rose-400"; // RED or unknown
+}
+
+function qualityLabel(rating: string | null | undefined) {
+  if (!rating) return "—";
+  const r = rating.toUpperCase();
+  if (r === "GREEN") return "Alta";
+  if (r === "YELLOW") return "Média";
+  if (r === "RED") return "Baixa";
+  return rating;
+}
+
+function formatDate(dateStr: string | null | undefined) {
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+      " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  } catch { return null; }
+}
+
 // ─── INTEGRATION CARD ────────────────────────────────────────────────────────
 function IntegrationCard({
   integration: i,
@@ -299,66 +342,107 @@ function IntegrationCard({
   const isWhatsApp = i.provider === "WABA";
   const isMessenger = i.provider === "MESSENGER";
   const isInstagram = i.provider === "INSTAGRAM";
+  const connectedAt = formatDate(i.created_at);
 
   return (
     <Card className="p-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         {/* Icon */}
-        <ChannelIcon
-          channel={isWhatsApp ? "whatsapp_meta" : isMessenger ? "facebook" : "instagram"}
-          size="lg"
-          variant="icon"
-        />
+        <div className="pt-0.5">
+          <ChannelIcon
+            channel={isWhatsApp ? "whatsapp_meta" : isMessenger ? "facebook" : "instagram"}
+            size="lg"
+            variant="icon"
+          />
+        </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-2">
             <span className="font-semibold text-sm truncate">{i.name}</span>
             <Badge className={`text-[10px] font-bold border ${status.color}`}>
               <StatusIcon className="h-3 w-3 mr-1" />
               {status.label}
             </Badge>
           </div>
-          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-            {isWhatsApp ? (
+
+          {/* Detail grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">
+            {isWhatsApp && (
               <>
                 {i.display_phone_number && (
-                  <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {i.display_phone_number}</span>
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Phone className="h-3 w-3 shrink-0" />
+                    <span className="text-foreground font-medium">{i.display_phone_number}</span>
+                  </div>
                 )}
-                {i.phone_number_id && (
-                  <span className="flex items-center gap-1"><Hash className="h-3 w-3" /> {i.phone_number_id}</span>
+                {i.verified_name && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Shield className="h-3 w-3 shrink-0" />
+                    <span className="text-foreground font-medium">{i.verified_name}</span>
+                  </div>
                 )}
-                {i.waba_id && (
-                  <span className="flex items-center gap-1">WABA: {i.waba_id}</span>
+                {(i.waba_name || i.waba_id) && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Building2 className="h-3 w-3 shrink-0" />
+                    <span title={i.waba_id || undefined}>{i.waba_name || `WABA ${i.waba_id}`}</span>
+                  </div>
                 )}
-              </>
-            ) : isMessenger ? (
-              <>
-                {i.facebook_page_id && (
-                  <span className="flex items-center gap-1"><Hash className="h-3 w-3" /> Page: {i.facebook_page_id}</span>
-                )}
-                {(i as any).page_name && (
-                  <span className="flex items-center gap-1">{(i as any).page_name}</span>
-                )}
-              </>
-            ) : (
-              <>
-                {i.instagram_username && (
-                  <span className="flex items-center gap-1">@{i.instagram_username}</span>
-                )}
-                {i.facebook_page_id && (
-                  <span className="flex items-center gap-1">Page: {i.facebook_page_id}</span>
+                {i.quality_rating && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Star className={`h-3 w-3 shrink-0 ${qualityColor(i.quality_rating)}`} />
+                    <span className={qualityColor(i.quality_rating)}>Qualidade: {qualityLabel(i.quality_rating)}</span>
+                  </div>
                 )}
               </>
             )}
+            {isInstagram && (
+              <>
+                {i.instagram_username && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Instagram className="h-3 w-3 shrink-0" />
+                    <span className="text-foreground font-medium">@{i.instagram_username}</span>
+                  </div>
+                )}
+                {i.facebook_page_id && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Facebook className="h-3 w-3 shrink-0" />
+                    <span>Page: {i.facebook_page_id}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {isMessenger && (
+              <>
+                {i.facebook_page_id && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Hash className="h-3 w-3 shrink-0" />
+                    <span>Page: {i.facebook_page_id}</span>
+                  </div>
+                )}
+                {(i as any).page_name && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Facebook className="h-3 w-3 shrink-0" />
+                    <span>{(i as any).page_name}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {connectedAt && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <CalendarClock className="h-3 w-3 shrink-0" />
+                <span>Conectado em {connectedAt}</span>
+              </div>
+            )}
           </div>
+
           {i.error_message && (
-            <p className="text-xs text-rose-400 mt-1">{i.error_message}</p>
+            <p className="text-xs text-rose-400 mt-2">{i.error_message}</p>
           )}
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" onClick={() => onToggle(i)} title={i.status === "active" ? "Desativar" : "Ativar"}>
             {i.status === "active"
               ? <XCircle className="h-4 w-4 text-muted-foreground" />

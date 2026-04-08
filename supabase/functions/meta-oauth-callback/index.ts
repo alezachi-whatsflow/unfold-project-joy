@@ -15,6 +15,39 @@ const META_APP_ID = Deno.env.get("META_APP_ID") || "440046068424112";
 const META_CLIENT_SECRET = Deno.env.get("META_CLIENT_SECRET") || Deno.env.get("META_APP_SECRET") || "";
 const FRONTEND_URL = Deno.env.get("APP_URL") || "https://unfold-project-joy-production.up.railway.app";
 
+/** Returns an HTML page that posts a message to the opener and closes the popup */
+function popupResponse(result: { success: boolean; message: string; provider?: string; details?: Record<string, any> }) {
+  const payload = JSON.stringify(result);
+  const isSuccess = result.success;
+  const icon = isSuccess ? "✅" : "❌";
+  const title = isSuccess ? "Conexão realizada!" : "Erro na conexão";
+  const detailsHtml = result.details
+    ? Object.entries(result.details)
+        .filter(([, v]) => v)
+        .map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222"><span style="color:#888">${k}</span><span style="color:#e0e0e0;font-weight:500">${v}</span></div>`)
+        .join("")
+    : "";
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head>
+<body style="margin:0;background:#0D0E14;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh">
+<div style="text-align:center;max-width:420px;padding:32px">
+  <div style="font-size:48px;margin-bottom:16px">${icon}</div>
+  <h2 style="margin:0 0 8px;font-size:20px;color:${isSuccess ? '#39F7B2' : '#f87171'}">${title}</h2>
+  <p style="margin:0 0 20px;color:#888;font-size:14px">${result.message}</p>
+  ${detailsHtml ? `<div style="background:#161820;border-radius:8px;padding:12px 16px;text-align:left;font-size:13px;margin-bottom:20px">${detailsHtml}</div>` : ""}
+  <p style="color:#555;font-size:12px">Esta janela fechará automaticamente...</p>
+</div>
+<script>
+  try { window.opener && window.opener.postMessage(${payload}, "*"); } catch(e) {}
+  setTimeout(function() { window.close(); }, 2500);
+</script>
+</body></html>`;
+
+  return new Response(html, {
+    headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
 async function graphGet(path: string, token: string): Promise<any> {
   const res = await fetch(`https://graph.facebook.com/v21.0/${path}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -43,11 +76,11 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error(`[meta-oauth-callback] OAuth error: ${error} — ${errorReason}`);
-      return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?error=${encodeURIComponent(errorReason || error)}`, 302);
+      return popupResponse({ success: false, message: errorReason || error });
     }
 
     if (!code || !state) {
-      return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?error=missing_code_or_state`, 302);
+      return popupResponse({ success: false, message: "Código ou estado ausente na resposta do Meta" });
     }
 
     // 1. Validate state (anti-CSRF)
@@ -61,7 +94,7 @@ Deno.serve(async (req) => {
 
     if (!oauthState) {
       console.error("[meta-oauth-callback] Invalid or expired state");
-      return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?error=invalid_state`, 302);
+      return popupResponse({ success: false, message: "Estado OAuth inválido ou expirado. Tente novamente." });
     }
 
     // Mark state as used
@@ -86,7 +119,7 @@ Deno.serve(async (req) => {
       console.error("[meta-oauth-callback] Token exchange failed:", detail);
       console.error("[meta-oauth-callback] redirect_uri used:", redirect_uri);
       console.error("[meta-oauth-callback] code length:", code?.length);
-      return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?error=${encodeURIComponent(msg)}`, 302);
+      return popupResponse({ success: false, message: msg });
     }
 
     const accessToken = tokenData.access_token;
@@ -118,7 +151,17 @@ Deno.serve(async (req) => {
           error_message: null,
         }).eq("id", existing.id);
         console.log(`[meta-oauth-callback] Updated existing WABA integration ${existing.id}`);
-        return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?success=whatsapp_updated`, 302);
+        return popupResponse({
+          success: true,
+          message: "WhatsApp reconectado com sucesso!",
+          provider: "WABA",
+          details: {
+            "Telefone": integrationData.display_phone_number || "—",
+            "Nome verificado": integrationData.verified_name || "—",
+            "WABA": integrationData.waba_name || integrationData.waba_id || "—",
+            "Qualidade": integrationData.quality_rating || "—",
+          },
+        });
       }
     }
 
@@ -137,7 +180,15 @@ Deno.serve(async (req) => {
           error_message: null,
         }).eq("id", existing.id);
         console.log(`[meta-oauth-callback] Updated existing Instagram integration ${existing.id}`);
-        return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?success=instagram_updated`, 302);
+        return popupResponse({
+          success: true,
+          message: "Instagram reconectado com sucesso!",
+          provider: "INSTAGRAM",
+          details: {
+            "Usuário": integrationData.instagram_username ? `@${integrationData.instagram_username}` : "—",
+            "Página Facebook": integrationData.facebook_page_id || "—",
+          },
+        });
       }
     }
 
@@ -158,16 +209,33 @@ Deno.serve(async (req) => {
 
     if (insertErr) {
       console.error("[meta-oauth-callback] Insert error:", insertErr);
-      return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?error=${encodeURIComponent(insertErr.message)}`, 302);
+      return popupResponse({ success: false, message: insertErr.message });
     }
 
-    const successParam = provider === "WABA" ? "whatsapp_connected" : "instagram_connected";
     console.log(`[meta-oauth-callback] ${provider} integration created for tenant ${tenant_id}`);
-    return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?success=${successParam}`, 302);
+    const details = provider === "WABA"
+      ? {
+          "Telefone": integrationData.display_phone_number || "—",
+          "Nome verificado": integrationData.verified_name || "—",
+          "WABA": integrationData.waba_name || integrationData.waba_id || "—",
+          "Qualidade": integrationData.quality_rating || "—",
+        }
+      : {
+          "Usuário": integrationData.instagram_username ? `@${integrationData.instagram_username}` : "—",
+          "Nome": integrationData.name || "—",
+          "Página Facebook": integrationData.facebook_page_id || "—",
+        };
+
+    return popupResponse({
+      success: true,
+      message: provider === "WABA" ? "WhatsApp conectado com sucesso!" : "Instagram conectado com sucesso!",
+      provider,
+      details,
+    });
 
   } catch (e: any) {
     console.error("[meta-oauth-callback] Error:", e);
-    return Response.redirect(`${FRONTEND_URL}/app/whatsflow/integracoes?error=${encodeURIComponent(e.message)}`, 302);
+    return popupResponse({ success: false, message: e.message || "Erro inesperado na conexão" });
   }
 });
 
@@ -280,15 +348,53 @@ async function discoverWhatsApp(token: string, tenantId: string) {
     }
   }
 
-  name = verifiedName || (displayPhoneNumber ? `WhatsApp ${displayPhoneNumber}` : "WhatsApp (pendente)");
+  // Fetch WABA name and quality rating
+  let wabaName = "";
+  let qualityRating = "";
+  if (wabaId) {
+    try {
+      const wabaInfo = await graphGet(`${wabaId}?fields=name,account_review_status`, token);
+      wabaName = wabaInfo?.name || "";
+      console.log("[discoverWhatsApp] WABA info:", wabaInfo?.name, wabaInfo?.account_review_status);
+    } catch (e: any) {
+      console.warn("[discoverWhatsApp] WABA info fetch failed:", e.message);
+      // Try with system token
+      const sysToken = Deno.env.get("META_SYSTEM_USER_TOKEN");
+      if (sysToken) {
+        try {
+          const wabaInfo = await graphGet(`${wabaId}?fields=name`, sysToken);
+          wabaName = wabaInfo?.name || "";
+        } catch (_) { /* skip */ }
+      }
+    }
+  }
 
-  console.log(`[discoverWhatsApp] Final result: wabaId=${wabaId}, phoneNumberId=${phoneNumberId}, phone=${displayPhoneNumber}, name=${name}`);
+  if (phoneNumberId) {
+    try {
+      const phoneInfo = await graphGet(`${phoneNumberId}?fields=quality_rating`, token);
+      qualityRating = phoneInfo?.quality_rating || "";
+    } catch (_) {
+      const sysToken = Deno.env.get("META_SYSTEM_USER_TOKEN");
+      if (sysToken) {
+        try {
+          const phoneInfo = await graphGet(`${phoneNumberId}?fields=quality_rating`, sysToken);
+          qualityRating = phoneInfo?.quality_rating || "";
+        } catch (_) { /* skip */ }
+      }
+    }
+  }
+
+  name = verifiedName || wabaName || (displayPhoneNumber ? `WhatsApp ${displayPhoneNumber}` : "WhatsApp (pendente)");
+
+  console.log(`[discoverWhatsApp] Final result: wabaId=${wabaId}, wabaName=${wabaName}, phoneNumberId=${phoneNumberId}, phone=${displayPhoneNumber}, quality=${qualityRating}, name=${name}`);
 
   return {
     waba_id: wabaId,
+    waba_name: wabaName || null,
     phone_number_id: phoneNumberId || null,
     display_phone_number: displayPhoneNumber || null,
     verified_name: verifiedName || null,
+    quality_rating: qualityRating || null,
     name,
   };
 }
