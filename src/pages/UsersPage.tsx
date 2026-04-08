@@ -292,12 +292,12 @@ function InviteUserForm({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("consultor");
   const [loading, setLoading] = useState(false);
+  const tenantId = useTenantId();
 
   const handleInvite = async () => {
     if (!name || !email) { toast.error("Preencha nome e e-mail."); return; }
     setLoading(true);
     try {
-      // Use resolved tenantId from hook (not localStorage which may be stale)
       const resolvedTenantId = tenantId || localStorage.getItem("whatsflow_default_tenant_id") || undefined;
 
       const { data: result, error } = await supabase.functions.invoke('invite-user', {
