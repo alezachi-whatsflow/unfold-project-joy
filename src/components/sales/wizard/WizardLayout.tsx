@@ -365,7 +365,7 @@ export default function WizardLayout({ onComplete }: Props) {
 
       setResult(data);
 
-      // Save pipeline to database
+      // Save pipeline to database (update existing default or create new)
       if (tenantId) {
         const stagesForDb = data.stages.map((s: any, i: number) => ({
           name: s.name,
@@ -373,28 +373,43 @@ export default function WizardLayout({ onComplete }: Props) {
           order: s.order ?? i + 1,
         }));
 
-        const { error: pipelineError } = await supabase
+        // Check if a default pipeline already exists for this tenant
+        const { data: existingPipeline } = await supabase
           .from('sales_pipelines')
-          .insert({
-            tenant_id: tenantId,
-            name: data.pipeline_name,
-            description: `Gerado por IA — ${new Date().toLocaleDateString('pt-BR')}`,
-            stages: stagesForDb,
-            card_schema: data.card_schema,
-            is_default: true,
-          });
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .eq('is_default', true)
+          .eq('is_active', true)
+          .maybeSingle();
 
-        if (pipelineError) {
-          console.error('Pipeline insert error:', pipelineError);
+        if (existingPipeline) {
+          // Update existing pipeline
           await supabase
             .from('sales_pipelines')
             .update({
               name: data.pipeline_name,
+              description: `Gerado por IA — ${new Date().toLocaleDateString('pt-BR')}`,
               stages: stagesForDb,
               card_schema: data.card_schema,
+              updated_at: new Date().toISOString(),
             })
-            .eq('tenant_id', tenantId)
-            .eq('is_default', true);
+            .eq('id', existingPipeline.id);
+        } else {
+          // Create new pipeline
+          const { error: pipelineError } = await supabase
+            .from('sales_pipelines')
+            .insert({
+              tenant_id: tenantId,
+              name: data.pipeline_name,
+              description: `Gerado por IA — ${new Date().toLocaleDateString('pt-BR')}`,
+              stages: stagesForDb,
+              card_schema: data.card_schema,
+              is_default: true,
+            });
+
+          if (pipelineError) {
+            console.error('Pipeline insert error:', pipelineError);
+          }
         }
 
         // Departments, tags, quick replies are saved in handleFinish after user review
