@@ -846,12 +846,25 @@ Deno.serve(async (req) => {
           // Sessão resolvida que recebe nova msg = reabertura → vai pra fila
           const isReopening = existingLead?.lead_status === "resolved";
 
+          // Resolve department from instance (device → sector mapping)
+          let instanceDeptId: string | null = null;
+          if (!existingLead?.department_id) {
+            const { data: instDept } = await supabase
+              .from("whatsapp_instances")
+              .select("department_id")
+              .eq("instance_name", instance)
+              .maybeSingle();
+            instanceDeptId = instDept?.department_id || null;
+          }
+
           // ── PAYLOAD BLINDADO: NUNCA sobrescrever assignment com null ──
           await supabase.from("whatsapp_leads").upsert(
             {
               instance_name: instance,
               chat_id: chat.wa_chatid,
               tenant_id: existingLead?.tenant_id || undefined,
+              // Auto-assign department from instance if not already set
+              department_id: existingLead?.department_id || instanceDeptId || undefined,
               lead_name: chat.lead_name || contactName || undefined,
               lead_full_name: chat.lead_fullName || contactName || undefined,
               // REGRA DE OURO: atendente no banco → MANTÉM. Sem atendente → null.

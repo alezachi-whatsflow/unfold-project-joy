@@ -9,8 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit2, Trash2, Users, RotateCcw, UserMinus, Hand } from "lucide-react";
+import { Plus, Edit2, Trash2, Users, RotateCcw, UserMinus, Hand, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+
+interface WhatsAppInstance {
+  instance_name: string;
+  label: string | null;
+  status: string;
+  department_id: string | null;
+}
 
 interface Department {
   id: string;
@@ -44,6 +51,37 @@ export default function DepartmentManager() {
       return data as Department[];
     },
     enabled: !!tenantId,
+  });
+
+  // Fetch WhatsApp instances for device-to-department linking
+  const { data: instances = [] } = useQuery({
+    queryKey: ["wa-instances-dept", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return [];
+      const { data } = await supabase
+        .from("whatsapp_instances")
+        .select("instance_name, label, status, department_id")
+        .eq("tenant_id", tenantId)
+        .order("instance_name");
+      return (data || []) as WhatsAppInstance[];
+    },
+    enabled: !!tenantId,
+  });
+
+  // Assign instance to department
+  const assignInstance = useMutation({
+    mutationFn: async ({ instanceName, deptId }: { instanceName: string; deptId: string | null }) => {
+      const { error } = await supabase
+        .from("whatsapp_instances")
+        .update({ department_id: deptId })
+        .eq("instance_name", instanceName);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wa-instances-dept"] });
+      toast.success("Dispositivo vinculado ao setor");
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const saveMutation = useMutation({
@@ -127,10 +165,25 @@ export default function DepartmentManager() {
                   </div>
                 </div>
                 {d.description && <p className="text-xs mb-2" style={{ color: "var(--text-secondary)" }}>{d.description}</p>}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className="text-[10px] gap-1"><DistIcon size={10} /> {dist.label}</Badge>
                   <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{dist.desc}</span>
                 </div>
+                {/* Linked devices */}
+                {(() => {
+                  const linked = instances.filter(i => i.department_id === d.id);
+                  return linked.length > 0 ? (
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      <Smartphone size={11} style={{ color: "var(--text-muted)" }} />
+                      {linked.map(i => (
+                        <Badge key={i.instance_name} variant="secondary" className="text-[9px] gap-1">
+                          <span className={`w-1.5 h-1.5 rounded-full ${i.status === "connected" ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+                          {i.label || i.instance_name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
               </Card>
             );
           })
@@ -165,9 +218,54 @@ export default function DepartmentManager() {
                 </SelectContent>
               </Select>
             </div>
+            {/* Device linking */}
+            {instances.length > 0 && (
+              <div>
+                <label className="text-xs font-medium mb-1.5 block" style={{ color: "var(--text-secondary)" }}>
+                  <Smartphone size={12} className="inline mr-1" />
+                  Dispositivos vinculados
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {instances.map(inst => {
+                    const isLinked = editing ? inst.department_id === editing.id : false;
+                    const isLinkedToOther = inst.department_id && inst.department_id !== editing?.id;
+                    const otherDept = isLinkedToOther ? departments.find(d => d.id === inst.department_id) : null;
+                    return (
+                      <button
+                        key={inst.instance_name}
+                        onClick={() => {
+                          if (!editing?.id) return;
+                          assignInstance.mutate({
+                            instanceName: inst.instance_name,
+                            deptId: isLinked ? null : editing.id,
+                          });
+                        }}
+                        disabled={!editing?.id || (!!isLinkedToOther && !isLinked)}
+                        className={`text-[10px] px-2 py-1 rounded-full border transition-colors flex items-center gap-1 ${
+                          isLinked
+                            ? "border-primary bg-primary/15 text-primary font-medium"
+                            : isLinkedToOther
+                            ? "border-border text-muted-foreground/50 cursor-not-allowed"
+                            : "border-border text-muted-foreground hover:border-primary/30"
+                        }`}
+                        title={isLinkedToOther ? `Vinculado a: ${otherDept?.name || "outro setor"}` : ""}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${inst.status === "connected" ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+                        {inst.label || inst.instance_name}
+                        {isLinkedToOther && <span className="text-[8px] opacity-60">({otherDept?.name})</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[9px] mt-1" style={{ color: "var(--text-muted)" }}>
+                  {editing ? "Clique para vincular/desvincular dispositivos" : "Salve o setor primeiro para vincular dispositivos"}
+                </p>
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <Switch checked={form.is_default} onCheckedChange={(v) => setForm({ ...form, is_default: v })} />
-              <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Setor padrão (novas conversas caem aqui)</span>
+              <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Setor padrao (novas conversas caem aqui)</span>
             </div>
             <Button onClick={() => saveMutation.mutate({ ...form, id: editing?.id })} disabled={!form.name || saveMutation.isPending} className="w-full">
               {saveMutation.isPending ? "Salvando..." : editing ? "Salvar" : "Criar Setor"}
