@@ -864,8 +864,8 @@ export default function WizardLayout({ onComplete }: Props) {
 
             {/* Navigation */}
             <div className="flex items-center justify-between pt-2">
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleSkipWizard}>
-                Configurar depois
+              <Button variant="link" size="sm" className="text-xs text-muted-foreground hover:text-foreground px-0" onClick={handleSkipWizard}>
+                Pular etapa
               </Button>
               <Button onClick={handleSaveCompany} disabled={!canAdvanceCompany}>
                 Proxima <ArrowRight className="h-4 w-4 ml-1" />
@@ -964,8 +964,8 @@ export default function WizardLayout({ onComplete }: Props) {
                 <Button variant="ghost" onClick={() => setStep(0)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
                 </Button>
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleSkipWizard}>
-                  Configurar depois
+                <Button variant="link" size="sm" className="text-xs text-muted-foreground hover:text-foreground px-0" onClick={handleSkipWizard}>
+                  Pular etapa
                 </Button>
               </div>
               <Button
@@ -1018,8 +1018,8 @@ export default function WizardLayout({ onComplete }: Props) {
               <Button variant="ghost" onClick={() => setStep(step - 1)}>
                 <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
               </Button>
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleSkipWizard}>
-                Configurar depois
+              <Button variant="link" size="sm" className="text-xs text-muted-foreground hover:text-foreground px-0" onClick={handleSkipWizard}>
+                Pular etapa
               </Button>
             </div>
 
