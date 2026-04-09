@@ -250,8 +250,8 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         return;
       }
 
-      const ext = blob.type.includes("ogg") ? "ogg" : "webm";
-      const file = new File([blob], `audio_${Date.now()}.${ext}`, { type: blob.type });
+      // Always save as .ogg with audio/ogg mime — Meta Cloud API requires it
+      const file = new File([blob], `audio_${Date.now()}.ogg`, { type: "audio/ogg" });
       const url = await uploadFileAndGetUrl(file);
 
       await onSendAttachment({
