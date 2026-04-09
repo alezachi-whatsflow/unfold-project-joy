@@ -70,10 +70,24 @@ Deno.serve(async (req) => {
     } else if (type === "audio" && media_url) {
       msgType = "audio";
       msgBody = "[Áudio]";
-      // Send as audio via link. If the file is WebM (Chrome), Meta may reject silently.
-      // In that case, resend as document which WhatsApp renders as playable audio.
+      // Convert webm→ogg via ffmpeg audio-converter service, then send via link
+      let audioLink = media_url;
+      try {
+        const convertRes = await fetch("http://audio-converter:3200/convert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: media_url }),
+        });
+        const convertData = await convertRes.json();
+        if (convertData?.url) {
+          audioLink = convertData.url;
+          console.log(`[meta-send-message] Audio converted: ${audioLink}`);
+        }
+      } catch (err: any) {
+        console.warn("[meta-send-message] Audio convert failed, using original:", err.message);
+      }
       messageBody.type = "audio";
-      messageBody.audio = { link: media_url };
+      messageBody.audio = { link: audioLink };
     } else if (type && media_url && ["image", "video", "document"].includes(type)) {
       msgType = type;
       msgBody = caption || `[${type}]`;

@@ -176,14 +176,10 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
       streamRef.current = stream;
       audioChunksRef.current = [];
 
-      // Use MP4/AAC which Meta Cloud API accepts natively
-      // Chrome: audio/mp4 not supported, use webm then convert server-side
-      // Safari: audio/mp4 supported natively
-      const mimeType = MediaRecorder.isTypeSupported("audio/mp4")
-        ? "audio/mp4"
-        : MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-          ? "audio/webm;codecs=opus"
-          : "audio/webm";
+      // Record as webm/opus (universally supported in Chrome/Firefox/Edge)
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
       const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = recorder;
 
@@ -217,8 +213,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
     return new Promise<Blob>((resolve) => {
       recorder.onstop = () => {
-        const recMime = recorder.mimeType || "audio/ogg";
-        const blob = new Blob(audioChunksRef.current, { type: recMime });
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         resolve(blob);
       };
       recorder.stop();
@@ -252,11 +247,7 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         return;
       }
 
-      // Save with correct extension matching actual format
-      const isMp4 = blob.type.includes("mp4");
-      const ext = isMp4 ? "m4a" : "webm";
-      const mime = isMp4 ? "audio/mp4" : "audio/webm";
-      const file = new File([blob], `audio_${Date.now()}.${ext}`, { type: mime });
+      const file = new File([blob], `audio_${Date.now()}.webm`, { type: "audio/webm" });
       const url = await uploadFileAndGetUrl(file);
 
       await onSendAttachment({
