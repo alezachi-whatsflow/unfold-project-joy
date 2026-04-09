@@ -9,9 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Instagram, CheckCircle2, XCircle, Clock, Trash2, RefreshCw, ExternalLink, Phone, Hash, Facebook, Shield, Star, Building2, CalendarClock } from "lucide-react";
+import {
+  Loader2, MessageSquare, Instagram, CheckCircle2, XCircle, Clock, Trash2,
+  RefreshCw, Phone, Hash, Facebook, Shield, Star, Building2,
+  CalendarClock, AlertTriangle, RotateCcw, Smartphone, ShieldOff, Info,
+} from "lucide-react";
 import { ChannelIcon } from "@/components/ui/ChannelIcon";
 
+// ─── Status Config ───────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
   active: { label: "Ativo", color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", icon: CheckCircle2 },
   pending: { label: "Pendente", color: "text-amber-400 bg-amber-400/10 border-amber-400/20", icon: Clock },
@@ -19,10 +24,67 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
   error: { label: "Erro", color: "text-rose-400 bg-rose-400/10 border-rose-400/20", icon: XCircle },
 };
 
+// ─── Error State Definitions ─────────────────────────────────────────────────
+interface OAuthError {
+  error_code: string;
+  message: string;
+  provider?: string;
+  details?: Record<string, any>;
+}
+
+const ERROR_CARD_CONFIG: Record<string, {
+  icon: typeof AlertTriangle;
+  title: string;
+  description: string;
+  actionLabel: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}> = {
+  INCOMPLETE_SIGNUP: {
+    icon: Info,
+    title: "Quase lá!",
+    description: "Precisamos que você escolha o número de telefone na tela do Facebook. O processo não foi finalizado.",
+    actionLabel: "Retomar Configuração",
+    color: "text-amber-400",
+    bgColor: "bg-amber-400/5",
+    borderColor: "border-amber-400/20",
+  },
+  NUMBER_IN_OTHER_WABA_OR_APP: {
+    icon: Smartphone,
+    title: "Número em uso",
+    description: "Este número já está registrado no WhatsApp pessoal ou em outro WhatsApp Business. Exclua a conta WhatsApp do celular para liberar o número.",
+    actionLabel: "Tentar Novamente",
+    color: "text-rose-400",
+    bgColor: "bg-rose-400/5",
+    borderColor: "border-rose-400/20",
+  },
+  NUMBER_IN_OTHER_BSP: {
+    icon: ShieldOff,
+    title: "Número retido por outro provedor",
+    description: "Desative a Verificação em Duas Etapas (2FA) no seu provedor antigo para forçar a migração do número para esta plataforma.",
+    actionLabel: "Tentar Novamente",
+    color: "text-orange-400",
+    bgColor: "bg-orange-400/5",
+    borderColor: "border-orange-400/20",
+  },
+  USER_CANCELLED: {
+    icon: XCircle,
+    title: "Autorização cancelada",
+    description: "Você fechou a janela do Facebook antes de completar. Nenhuma alteração foi feita.",
+    actionLabel: "Tentar Novamente",
+    color: "text-muted-foreground",
+    bgColor: "bg-muted/30",
+    borderColor: "border-border",
+  },
+};
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 export default function MetaChannelsTab() {
   const { data: integrations = [], isLoading, tenantId, invalidate } = useChannelIntegrations();
   const queryClient = useQueryClient();
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<OAuthError | null>(null);
   const [messengerModalOpen, setMessengerModalOpen] = useState(false);
   const [messengerForm, setMessengerForm] = useState({ pageId: "", pageToken: "", pageName: "" });
   const [savingMessenger, setSavingMessenger] = useState(false);
@@ -30,14 +92,21 @@ export default function MetaChannelsTab() {
   // Listen for postMessage from OAuth popup
   const handleOAuthMessage = useCallback((event: MessageEvent) => {
     if (!event.data || typeof event.data !== "object" || !("success" in event.data)) return;
-    const { success, message, provider } = event.data;
-    if (success) {
-      toast.success(message || "Conexão realizada!");
-    } else {
-      toast.error(message || "Erro na conexão");
-    }
+    const { success, message, error_code, provider, details } = event.data;
+
     setConnecting(null);
     queryClient.invalidateQueries({ queryKey: ["channel-integrations"] });
+
+    if (success) {
+      setOauthError(null);
+      toast.success(message || "Conexão realizada!");
+    } else if (error_code && ERROR_CARD_CONFIG[error_code]) {
+      // Known error → show Error Card (suppress generic toast)
+      setOauthError({ error_code, message, provider, details });
+    } else {
+      // Unknown error → toast fallback
+      toast.error(message || "Erro na conexão");
+    }
   }, [queryClient]);
 
   useEffect(() => {
@@ -80,13 +149,13 @@ export default function MetaChannelsTab() {
   async function startOAuth(provider: "WABA" | "INSTAGRAM") {
     if (!tenantId) { toast.error("Tenant nao identificado"); return; }
     setConnecting(provider);
+    setOauthError(null); // Clear previous error card
     try {
       const { data, error } = await supabase.functions.invoke("meta-oauth-start", {
         body: { provider, tenant_id: tenantId },
       });
       if (error) throw error;
       if (data?.auth_url) {
-        // Open OAuth in popup window (don't lose current page)
         const w = 600, h = 700;
         const left = window.screenX + (window.innerWidth - w) / 2;
         const top = window.screenY + (window.innerHeight - h) / 2;
@@ -96,7 +165,6 @@ export default function MetaChannelsTab() {
           `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`
         );
 
-        // Fallback: detect popup close if postMessage didn't fire
         const checkClosed = setInterval(() => {
           if (!popup || popup.closed) {
             clearInterval(checkClosed);
@@ -171,7 +239,16 @@ export default function MetaChannelsTab() {
           </Button>
         </div>
 
-        {whatsappIntegrations.length === 0 ? (
+        {/* Error Card — shown when OAuth returns a classified error */}
+        {oauthError && (oauthError.provider === "WABA" || !oauthError.provider) && (
+          <ErrorActionCard
+            error={oauthError}
+            onRetry={() => startOAuth("WABA")}
+            onDismiss={() => setOauthError(null)}
+          />
+        )}
+
+        {whatsappIntegrations.length === 0 && !oauthError ? (
           <Card className="p-6 text-center">
             <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">Nenhum número WhatsApp conectado</p>
@@ -207,7 +284,16 @@ export default function MetaChannelsTab() {
           </Button>
         </div>
 
-        {instagramIntegrations.length === 0 ? (
+        {/* Instagram Error Card */}
+        {oauthError && oauthError.provider === "INSTAGRAM" && (
+          <ErrorActionCard
+            error={oauthError}
+            onRetry={() => startOAuth("INSTAGRAM")}
+            onDismiss={() => setOauthError(null)}
+          />
+        )}
+
+        {instagramIntegrations.length === 0 && !(oauthError?.provider === "INSTAGRAM") ? (
           <Card className="p-6 text-center">
             <Instagram className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">Nenhuma conta Instagram conectada</p>
@@ -298,13 +384,82 @@ export default function MetaChannelsTab() {
   );
 }
 
-// ─── Quality badge color helper ──────────────────────────────────────────────
+// ─── ERROR ACTION CARD ───────────────────────────────────────────────────────
+function ErrorActionCard({
+  error,
+  onRetry,
+  onDismiss,
+}: {
+  error: OAuthError;
+  onRetry: () => void;
+  onDismiss: () => void;
+}) {
+  const config = ERROR_CARD_CONFIG[error.error_code] || {
+    icon: AlertTriangle,
+    title: "Erro na conexão",
+    description: error.message,
+    actionLabel: "Tentar Novamente",
+    color: "text-rose-400",
+    bgColor: "bg-rose-400/5",
+    borderColor: "border-rose-400/20",
+  };
+  const Icon = config.icon;
+
+  return (
+    <Card className={`p-5 border ${config.borderColor} ${config.bgColor} animate-in fade-in slide-in-from-top-2 duration-300`}>
+      <div className="flex gap-4">
+        <div className={`shrink-0 mt-0.5 ${config.color}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-semibold text-sm ${config.color}`}>{config.title}</h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            {config.description}
+          </p>
+
+          {/* Extra details from the server (phone, WABA, etc.) */}
+          {error.details && Object.keys(error.details).length > 0 && (
+            <div className="flex flex-wrap gap-3 mt-2.5 text-[11px] text-muted-foreground">
+              {Object.entries(error.details).filter(([, v]) => v && v !== "—").map(([k, v]) => (
+                <span key={k} className="flex items-center gap-1">
+                  <span className="text-muted-foreground/60">{k}:</span>
+                  <span className="text-foreground font-medium">{v}</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 mt-4">
+            <Button
+              onClick={onRetry}
+              size="sm"
+              className="gap-1.5 h-8"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {config.actionLabel}
+            </Button>
+            <Button
+              onClick={onDismiss}
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-muted-foreground"
+            >
+              Dispensar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function qualityColor(rating: string | null | undefined) {
   if (!rating) return "text-muted-foreground";
   const r = rating.toUpperCase();
   if (r === "GREEN") return "text-emerald-400";
   if (r === "YELLOW") return "text-amber-400";
-  return "text-rose-400"; // RED or unknown
+  return "text-rose-400";
 }
 
 function qualityLabel(rating: string | null | undefined) {
@@ -347,7 +502,6 @@ function IntegrationCard({
   return (
     <Card className="p-4">
       <div className="flex items-start gap-4">
-        {/* Icon */}
         <div className="pt-0.5">
           <ChannelIcon
             channel={isWhatsApp ? "whatsapp_meta" : isMessenger ? "facebook" : "instagram"}
@@ -356,7 +510,6 @@ function IntegrationCard({
           />
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <span className="font-semibold text-sm truncate">{i.name}</span>
@@ -366,7 +519,6 @@ function IntegrationCard({
             </Badge>
           </div>
 
-          {/* Detail grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">
             {isWhatsApp && (
               <>
@@ -441,7 +593,6 @@ function IntegrationCard({
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" onClick={() => onToggle(i)} title={i.status === "active" ? "Desativar" : "Ativar"}>
             {i.status === "active"

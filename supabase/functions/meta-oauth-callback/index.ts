@@ -15,8 +15,47 @@ const META_APP_ID = Deno.env.get("META_APP_ID") || "440046068424112";
 const META_CLIENT_SECRET = Deno.env.get("META_CLIENT_SECRET") || Deno.env.get("META_APP_SECRET") || "";
 const FRONTEND_URL = Deno.env.get("APP_URL") || "https://unfold-project-joy-production.up.railway.app";
 
-/** Returns an HTML page that posts a message to the opener and closes the popup */
-function popupResponse(result: { success: boolean; message: string; provider?: string; details?: Record<string, any> }) {
+// ─── Error Code Mapping ─────────────────────────────────────────────────────
+const META_ERROR_MAP: Record<string, { code: string; message: string }> = {
+  // Number conflicts
+  "already registered": {
+    code: "NUMBER_IN_OTHER_WABA_OR_APP",
+    message: "Este número já está registrado em outro WhatsApp Business ou no app pessoal. Exclua a conta WhatsApp do celular para liberar o número.",
+  },
+  "phone number is already being used": {
+    code: "NUMBER_IN_OTHER_WABA_OR_APP",
+    message: "Este número já está registrado em outro WhatsApp Business ou no app pessoal. Exclua a conta WhatsApp do celular para liberar o número.",
+  },
+  "currently being migrated": {
+    code: "NUMBER_IN_OTHER_BSP",
+    message: "Este número está retido por outro provedor (BSP). Desative a Verificação em Duas Etapas (2FA) no provedor antigo para forçar a migração.",
+  },
+  "two step verification": {
+    code: "NUMBER_IN_OTHER_BSP",
+    message: "A Verificação em Duas Etapas está ativa no provedor antigo. Desative o 2FA para liberar o número para migração.",
+  },
+  "another business service provider": {
+    code: "NUMBER_IN_OTHER_BSP",
+    message: "Este número está registrado com outro BSP (Business Service Provider). Solicite a desvinculação no provedor antigo.",
+  },
+};
+
+function classifyGraphError(errorMessage: string): { code: string; message: string } | null {
+  const lower = errorMessage.toLowerCase();
+  for (const [pattern, mapped] of Object.entries(META_ERROR_MAP)) {
+    if (lower.includes(pattern)) return mapped;
+  }
+  return null;
+}
+
+/** Returns an HTML page that posts a structured message to the opener and closes the popup */
+function popupResponse(result: {
+  success: boolean;
+  message: string;
+  error_code?: string;
+  provider?: string;
+  details?: Record<string, any>;
+}) {
   const payload = JSON.stringify(result);
   const isSuccess = result.success;
   const icon = isSuccess ? "✅" : "❌";
@@ -27,6 +66,9 @@ function popupResponse(result: { success: boolean; message: string; provider?: s
         .map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222"><span style="color:#888">${k}</span><span style="color:#e0e0e0;font-weight:500">${v}</span></div>`)
         .join("")
     : "";
+
+  // For errors, don't auto-close — let user read
+  const autoClose = isSuccess ? `setTimeout(function() { window.close(); }, 2500);` : `setTimeout(function() { window.close(); }, 4000);`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head>
 <body style="margin:0;background:#0D0E14;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh">
@@ -39,7 +81,7 @@ function popupResponse(result: { success: boolean; message: string; provider?: s
 </div>
 <script>
   try { window.opener && window.opener.postMessage(${payload}, "*"); } catch(e) {}
-  setTimeout(function() { window.close(); }, 2500);
+  ${autoClose}
 </script>
 </body></html>`;
 
@@ -57,10 +99,43 @@ async function graphGet(path: string, token: string): Promise<any> {
   return data;
 }
 
-Deno.serve(async (req) => {
-  // Handle both GET (Meta redirect) and POST (frontend call)
-  const url = new URL(req.url);
+/** Attempt to register a phone number with the WABA (required for Cloud API) */
+async function registerPhoneNumber(phoneNumberId: string, token: string): Promise<{ ok: boolean; error_code?: string; message?: string }> {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/register`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        pin: "000000", // Default 6-digit PIN for new registrations
+      }),
+    });
+    const data = await res.json();
 
+    if (data.error) {
+      const classified = classifyGraphError(data.error.message);
+      if (classified) {
+        console.warn(`[registerPhoneNumber] Classified error: ${classified.code} — ${data.error.message}`);
+        return { ok: false, error_code: classified.code, message: classified.message };
+      }
+      // Unknown Graph error — log full detail but return generic
+      console.error(`[registerPhoneNumber] Unclassified error:`, JSON.stringify(data.error));
+      return { ok: false, message: data.error.message };
+    }
+
+    console.log(`[registerPhoneNumber] Success for ${phoneNumberId}`);
+    return { ok: true };
+  } catch (e: any) {
+    console.error(`[registerPhoneNumber] Exception:`, e.message);
+    return { ok: false, message: e.message };
+  }
+}
+
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -68,19 +143,30 @@ Deno.serve(async (req) => {
   const adminClient = createClient(supabaseUrl, serviceKey);
 
   try {
-    // Extract params from query string (GET redirect from Meta)
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
     const error = url.searchParams.get("error");
     const errorReason = url.searchParams.get("error_reason");
 
+    // ── User denied/cancelled the OAuth popup ──
     if (error) {
+      const isUserCancel = error === "access_denied" || errorReason === "user_denied";
       console.error(`[meta-oauth-callback] OAuth error: ${error} — ${errorReason}`);
-      return popupResponse({ success: false, message: errorReason || error });
+      return popupResponse({
+        success: false,
+        error_code: isUserCancel ? "USER_CANCELLED" : "OAUTH_ERROR",
+        message: isUserCancel
+          ? "Você cancelou a autorização. Clique em 'Tentar Novamente' para retomar."
+          : (errorReason || error),
+      });
     }
 
     if (!code || !state) {
-      return popupResponse({ success: false, message: "Código ou estado ausente na resposta do Meta" });
+      return popupResponse({
+        success: false,
+        error_code: "MISSING_PARAMS",
+        message: "Código ou estado ausente na resposta do Meta.",
+      });
     }
 
     // 1. Validate state (anti-CSRF)
@@ -94,12 +180,14 @@ Deno.serve(async (req) => {
 
     if (!oauthState) {
       console.error("[meta-oauth-callback] Invalid or expired state");
-      return popupResponse({ success: false, message: "Estado OAuth inválido ou expirado. Tente novamente." });
+      return popupResponse({
+        success: false,
+        error_code: "EXPIRED_STATE",
+        message: "Estado OAuth inválido ou expirado. Tente novamente.",
+      });
     }
 
-    // Mark state as used
     await adminClient.from("oauth_states").update({ used: true }).eq("id", oauthState.id);
-
     const { tenant_id, provider, redirect_uri } = oauthState;
 
     // 2. Exchange code for access token
@@ -115,11 +203,12 @@ Deno.serve(async (req) => {
 
     if (tokenData.error || !tokenData.access_token) {
       const msg = tokenData.error?.message || "Falha ao trocar code por token";
-      const detail = JSON.stringify(tokenData.error || tokenData);
-      console.error("[meta-oauth-callback] Token exchange failed:", detail);
-      console.error("[meta-oauth-callback] redirect_uri used:", redirect_uri);
-      console.error("[meta-oauth-callback] code length:", code?.length);
-      return popupResponse({ success: false, message: msg });
+      console.error("[meta-oauth-callback] Token exchange failed:", JSON.stringify(tokenData.error || tokenData));
+      return popupResponse({
+        success: false,
+        error_code: "TOKEN_EXCHANGE_FAILED",
+        message: msg,
+      });
     }
 
     const accessToken = tokenData.access_token;
@@ -134,10 +223,35 @@ Deno.serve(async (req) => {
       integrationData = await discoverInstagram(accessToken, tenant_id);
     }
 
-    // 3b. Warn if no WABA/phone found but still save (token is valid)
+    // 3b. INCOMPLETE_SIGNUP: no WABA or phone discovered
     if (provider === "WABA" && !integrationData.waba_id && !integrationData.phone_number_id) {
-      console.warn("[meta-oauth-callback] No WABA or phone discovered — saving as pending. Embedded Signup may not have completed.");
-      integrationData.name = "WhatsApp (pendente)";
+      console.warn("[meta-oauth-callback] No WABA or phone discovered — INCOMPLETE_SIGNUP");
+      // Do NOT save partial data — tenant_id is preserved in the popup response
+      return popupResponse({
+        success: false,
+        error_code: "INCOMPLETE_SIGNUP",
+        message: "Quase lá! Precisamos que você escolha o número de telefone na tela do Facebook. Clique em 'Tentar Novamente' para retomar.",
+        provider: "WABA",
+      });
+    }
+
+    // 3c. Attempt phone registration (Cloud API requirement)
+    if (provider === "WABA" && integrationData.phone_number_id) {
+      const regResult = await registerPhoneNumber(integrationData.phone_number_id, accessToken);
+      if (!regResult.ok && regResult.error_code) {
+        console.error(`[meta-oauth-callback] Phone registration blocked: ${regResult.error_code}`);
+        return popupResponse({
+          success: false,
+          error_code: regResult.error_code,
+          message: regResult.message || "Erro ao registrar número.",
+          provider: "WABA",
+          details: {
+            "Telefone": integrationData.display_phone_number || "—",
+            "WABA": integrationData.waba_name || integrationData.waba_id || "—",
+          },
+        });
+      }
+      // Non-classified registration errors are non-blocking (number may already be registered)
     }
 
     // 4. Check for duplicates
@@ -149,7 +263,6 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existing) {
-        // Update existing instead of creating duplicate
         await adminClient.from("channel_integrations").update({
           ...integrationData,
           access_token: accessToken,
@@ -241,7 +354,20 @@ Deno.serve(async (req) => {
 
   } catch (e: any) {
     console.error("[meta-oauth-callback] Error:", e);
-    return popupResponse({ success: false, message: e.message || "Erro inesperado na conexão" });
+    // Try to classify unexpected Graph errors
+    const classified = classifyGraphError(e.message || "");
+    if (classified) {
+      return popupResponse({
+        success: false,
+        error_code: classified.code,
+        message: classified.message,
+      });
+    }
+    return popupResponse({
+      success: false,
+      error_code: "UNKNOWN_ERROR",
+      message: e.message || "Erro inesperado na conexão",
+    });
   }
 });
 
@@ -277,7 +403,6 @@ async function discoverWhatsApp(token: string, tenantId: string) {
       const me = await graphGet("me?fields=id,name", token);
       console.log("[discoverWhatsApp] me:", me.id, me.name);
 
-      // Try direct businesses endpoint
       const businesses = await graphGet(`${me.id}/businesses?fields=id,name`, token);
       for (const biz of businesses?.data || []) {
         const wabas = await graphGet(`${biz.id}/owned_whatsapp_business_accounts?fields=id,name`, token);
@@ -299,14 +424,11 @@ async function discoverWhatsApp(token: string, tenantId: string) {
       try {
         const bizId = Deno.env.get("META_BUSINESS_ID") || "688498549631942";
         const wabas = await graphGet(`${bizId}/owned_whatsapp_business_accounts?fields=id,name&limit=50`, sysToken);
-        // Find the most recently created WABA (likely the one just created by Embedded Signup)
         if (wabas?.data?.length > 0) {
-          // Check each WABA for the phone numbers to find the newly created one
           for (const waba of wabas.data) {
             try {
               const phones = await graphGet(`${waba.id}/phone_numbers?fields=id,display_phone_number,verified_name`, sysToken);
               for (const phone of phones?.data || []) {
-                // If this phone was just registered, it might be pending
                 if (phone.display_phone_number) {
                   wabaId = waba.id;
                   phoneNumberId = phone.id;
@@ -338,7 +460,6 @@ async function discoverWhatsApp(token: string, tenantId: string) {
       }
     } catch (e: any) {
       console.warn("[discoverWhatsApp] Phone number fetch failed with user token, trying system token");
-      // Try with system token
       const sysToken = Deno.env.get("META_SYSTEM_USER_TOKEN");
       if (sysToken) {
         try {
@@ -364,7 +485,6 @@ async function discoverWhatsApp(token: string, tenantId: string) {
       console.log("[discoverWhatsApp] WABA info:", wabaInfo?.name, wabaInfo?.account_review_status);
     } catch (e: any) {
       console.warn("[discoverWhatsApp] WABA info fetch failed:", e.message);
-      // Try with system token
       const sysToken = Deno.env.get("META_SYSTEM_USER_TOKEN");
       if (sysToken) {
         try {
@@ -407,7 +527,6 @@ async function discoverWhatsApp(token: string, tenantId: string) {
 
 // ─── INSTAGRAM DISCOVERY ─────────────────────────────────────────────────────
 async function discoverInstagram(token: string, tenantId: string) {
-  // Get user's Facebook pages
   const pages = await graphGet("me/accounts?fields=id,name,instagram_business_account{id,name,username}", token);
 
   let facebookPageId = "";
@@ -429,7 +548,6 @@ async function discoverInstagram(token: string, tenantId: string) {
     throw new Error("Nenhuma conta Instagram Business encontrada. Verifique se sua página do Facebook tem um perfil Instagram Business vinculado.");
   }
 
-  // Subscribe page to webhook for messaging
   try {
     await fetch(`https://graph.facebook.com/v21.0/${facebookPageId}/subscribed_apps`, {
       method: "POST",
