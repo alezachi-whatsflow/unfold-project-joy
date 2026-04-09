@@ -242,29 +242,22 @@ export function useConversations() {
     const tId = localStorage.getItem("whatsflow_default_tenant_id");
     const conv = conversations.find((c) => c.id === jid);
 
-    const { data: updated, error: updateErr } = await supabase
+    const instanceName = conv?.instanceName || "";
+    const { error: upsertErr } = await supabase
       .from("whatsapp_leads")
-      .update({ assigned_attendant_id: currentUserId, lead_status: "open", is_ticket_open: true, tenant_id: tId })
-      .eq("chat_id", jid)
-      .select("id");
+      .upsert({
+        chat_id: jid,
+        instance_name: instanceName,
+        lead_name: conv?.name || jid,
+        assigned_attendant_id: currentUserId,
+        lead_status: "open",
+        is_ticket_open: true,
+        tenant_id: tId,
+      }, { onConflict: "instance_name,chat_id" });
 
-    if (updateErr) {
-      toast.error(`Erro ao atender: ${updateErr.message}`);
-    }
-
-    if (!updated || updated.length === 0) {
-      const { error: insertErr } = await supabase
-        .from("whatsapp_leads")
-        .insert({
-          chat_id: jid,
-          instance_name: conv?.instanceName || "",
-          lead_name: conv?.name || jid,
-          assigned_attendant_id: currentUserId,
-          lead_status: "open",
-          is_ticket_open: true,
-          tenant_id: tId,
-        });
-      if (insertErr) { toast.error(`Erro ao criar lead: ${insertErr.message}`); return; }
+    if (upsertErr) {
+      toast.error(`Erro ao atender: ${upsertErr.message}`);
+      return;
     }
 
     toast.success(`Atendimento iniciado: ${conv?.name || jid}`);
