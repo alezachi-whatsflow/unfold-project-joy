@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 const TELEGRAM_SERVICE_URL = Deno.env.get("TELEGRAM_SERVICE_URL") || "http://whatsflow-telegram-service:3100";
-const TELEGRAM_SERVICE_API_KEY = Deno.env.get("TELEGRAM_SERVICE_API_KEY") || "";
+const TELEGRAM_SERVICE_API_KEY = Deno.env.get("TELEGRAM_SERVICE_API_KEY") || "tgsvc_k8Qm2vXr9pL4nJ7wB3yF6hD0cA5eT1";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

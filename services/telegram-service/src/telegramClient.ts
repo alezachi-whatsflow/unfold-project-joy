@@ -110,7 +110,7 @@ export async function startClient(
 ): Promise<TelegramClient> {
   // If already running, return existing
   const existing = clients.get(integrationId);
-  if (existing?.connected && existing.client.connected) {
+  if (existing?.connected && (existing.client.connected ?? false)) {
     return existing.client;
   }
 
@@ -243,7 +243,7 @@ export async function sendMessage(
   replyToMsgId?: number,
 ): Promise<{ messageId: number }> {
   const entry = clients.get(integrationId);
-  if (!entry || !entry.connected || !entry.client.connected) {
+  if (!entry || !entry.connected || !(entry.client.connected ?? false)) {
     throw new Error("Client not connected");
   }
 
@@ -260,7 +260,7 @@ export function getClientStatus(integrationId: string) {
   const entry = clients.get(integrationId);
   if (!entry) return { connected: false, exists: false };
   return {
-    connected: entry.connected && entry.client.connected,
+    connected: entry.connected && (entry.client.connected ?? false),
     exists: true,
     sessionId: entry.sessionId,
     tenantId: entry.tenantId,
@@ -340,7 +340,7 @@ export function listClients() {
       integrationId: id,
       sessionId: entry.sessionId,
       tenantId: entry.tenantId,
-      connected: entry.connected && entry.client.connected,
+      connected: entry.connected && (entry.client.connected ?? false),
     });
   }
   return result;

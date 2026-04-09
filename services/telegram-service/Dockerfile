@@ -2,18 +2,18 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --production=false
+RUN npm install
 COPY tsconfig.json ./
 COPY src/ ./src/
 RUN npx tsc
 
 # ── Production Stage ──
 FROM node:20-alpine
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini wget
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --production && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 

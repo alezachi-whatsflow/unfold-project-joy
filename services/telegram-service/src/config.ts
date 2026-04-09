@@ -25,14 +25,17 @@ export const config = {
 };
 
 export function validateConfig() {
-  const required: (keyof typeof config)[] = [
-    "internalApiKey",
-    "telegramApiId",
-    "telegramApiHash",
-    "supabaseServiceKey",
-  ];
-  const missing = required.filter((k) => !config[k]);
-  if (missing.length > 0) {
-    throw new Error(`Missing required env vars: ${missing.join(", ")}`);
+  // Hard requirements — service won't start without these
+  if (!config.internalApiKey) {
+    throw new Error("INTERNAL_API_KEY is required");
+  }
+  if (!config.supabaseServiceKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required");
+  }
+
+  // Soft requirements — service starts but Telegram won't work
+  if (!config.telegramApiId || !config.telegramApiHash) {
+    console.warn("[config] WARNING: TELEGRAM_API_ID / TELEGRAM_API_HASH not set. Telegram login will fail until configured.");
+    console.warn("[config] Get credentials from https://my.telegram.org");
   }
 }
