@@ -190,7 +190,7 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
           // 3. Upsert whatsapp_leads (creates the inbox entry)
           const { data: existingLead } = await client
             .from("whatsapp_leads")
-            .select("id, assigned_attendant_id, lead_status, is_ticket_open, department_id")
+            .select("id, assigned_attendant_id, lead_status, is_ticket_open, department_id, lead_name")
             .eq("chat_id", remoteJid)
             .eq("instance_name", instanceName)
             .maybeSingle();
@@ -199,12 +199,16 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
             && existingLead?.lead_status !== "resolved";
           const isReopening = existingLead?.lead_status === "resolved";
 
+          // Don't overwrite lead_name if already set with a real name (not just phone number)
+          const existingHasName = existingLead?.lead_name && !/^\d+$/.test(existingLead.lead_name);
+          const resolvedName = existingHasName ? existingLead.lead_name : (senderName || fromNumber);
+
           await client.from("whatsapp_leads").upsert({
             instance_name: instanceName,
             chat_id: remoteJid,
             tenant_id: tenantId,
-            lead_name: senderName || fromNumber,
-            lead_full_name: senderName || fromNumber,
+            lead_name: resolvedName,
+            lead_full_name: resolvedName,
             is_group: false,
             is_community: false,
             assigned_attendant_id: isActiveSession
