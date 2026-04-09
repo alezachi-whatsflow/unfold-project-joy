@@ -74,15 +74,16 @@ Deno.serve(async (req) => {
       try {
         const audioRes = await fetch(media_url);
         const audioBytes = new Uint8Array(await audioRes.arrayBuffer());
-        const contentType = audioRes.headers.get("content-type") || "audio/ogg";
+        // Always declare as audio/ogg — Meta accepts ogg but rejects webm
+        // Chrome opus-in-webm is binary-compatible with opus-in-ogg for Meta's parser
+        const uploadMime = "audio/ogg";
 
-        // Build multipart body manually (Deno doesn't support FormData with binary well)
         const boundary = "----WFBoundary" + Date.now();
         const enc = new TextEncoder();
         const parts: Uint8Array[] = [];
         parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="messaging_product"\r\n\r\nwhatsapp\r\n`));
-        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="type"\r\n\r\n${contentType}\r\n`));
-        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.ogg"\r\nContent-Type: ${contentType}\r\n\r\n`));
+        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="type"\r\n\r\n${uploadMime}\r\n`));
+        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.ogg"\r\nContent-Type: ${uploadMime}\r\n\r\n`));
         parts.push(audioBytes);
         parts.push(enc.encode(`\r\n--${boundary}--\r\n`));
 
