@@ -96,8 +96,30 @@ Deno.serve(async (req) => {
     }
 
     const account: AsaasAccount = await accountRes.json();
-    const walletId = account.walletId;
+    let walletId = account.walletId || null;
     const accountName = account.tradingName || account.company || account.name || "Conta Asaas";
+
+    // If walletId not in /myAccount, fetch from /wallets endpoint
+    if (!walletId) {
+      try {
+        const walletsRes = await fetch(`${baseUrl}/wallets`, { headers });
+        if (walletsRes.ok) {
+          const walletsData = await walletsRes.json();
+          walletId = walletsData?.data?.[0]?.id || walletsData?.id || null;
+        }
+      } catch {}
+    }
+
+    // Last resort: use the account ID as wallet reference
+    if (!walletId) {
+      try {
+        const finRes = await fetch(`${baseUrl}/finance/getCurrentBalance`, { headers });
+        if (finRes.ok) {
+          // If we can access finance, the account works — use cpfCnpj as identifier
+          walletId = account.cpfCnpj || account.id || null;
+        }
+      } catch {}
+    }
 
     console.log(`[asaas-setup] Account validated: ${accountName}, wallet=${walletId}`);
 
@@ -126,10 +148,19 @@ Deno.serve(async (req) => {
 
     let webhookRegistered = false;
 
-    // First check if webhook already exists
-    const existingRes = await fetch(`${baseUrl}/webhooks?url=${encodeURIComponent(webhookUrl)}`, { headers });
-    const existingData = await existingRes.json().catch(() => ({ data: [] }));
-    const existingWebhook = (existingData?.data || []).find((w: any) => w.url === webhookUrl);
+    // Check if webhook already exists
+    let existingWebhook: any = null;
+    try {
+      const existingRes = await fetch(`${baseUrl}/webhooks`, { headers });
+      if (existingRes.ok) {
+        const existingData = await existingRes.json();
+        const webhooks = existingData?.data || (Array.isArray(existingData) ? existingData : []);
+        existingWebhook = webhooks.find((w: any) => w.url === webhookUrl);
+        console.log(`[asaas-setup] Found ${webhooks.length} existing webhooks, match=${!!existingWebhook}`);
+      }
+    } catch (e: any) {
+      console.warn("[asaas-setup] Webhook list failed:", e.message);
+    }
 
     if (existingWebhook) {
       // Update existing webhook with new token

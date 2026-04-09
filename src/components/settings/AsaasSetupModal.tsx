@@ -71,10 +71,11 @@ export function AsaasSetupModal({ open, onOpenChange, onConnected }: Props) {
       }
 
       if (data?.success) {
-        setProgress((p) => [...p,
+        setProgress([
           `✓ Conta validada: ${data.account_name}`,
-          `✓ Wallet ID: ${data.wallet_id}`,
-          data.webhook_registered ? "✓ Webhook registrado automaticamente" : "⚠ Webhook não registrado",
+          data.wallet_id ? `✓ Wallet ID: ${data.wallet_id}` : "✓ Conta verificada",
+          data.webhook_registered ? "✓ Webhook registrado automaticamente" : "⚠ Webhook: configure manualmente se necessário",
+          "✓ Chave salva com segurança",
         ]);
         setResult(data);
         setStep("success");
