@@ -19,15 +19,20 @@ export function useConversations() {
 
   /* ── fetch conversations (distinct remote_jid) ──── */
   const fetchConversations = useCallback(async () => {
-    const { data: instances } = await supabase
-      .from("whatsapp_instances")
-      .select("instance_name");
+    // Get current user's tenant to enforce isolation (even for Admin Core users)
+    const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
+
+    let instQuery = supabase.from("whatsapp_instances").select("instance_name");
+    if (tenantId) instQuery = instQuery.eq("tenant_id", tenantId);
+    const { data: instances } = await instQuery;
     const instanceNames = (instances ?? []).map((i: any) => i.instance_name);
 
-    const { data: integrations } = await supabase
+    let intgQuery = supabase
       .from("channel_integrations")
-      .select("provider, bot_username, id, phone_number_id, facebook_page_id, instagram_business_account_id")
+      .select("provider, bot_username, id, phone_number_id, facebook_page_id, instagram_business_account_id, tenant_id")
       .eq("status", "active");
+    if (tenantId) intgQuery = intgQuery.eq("tenant_id", tenantId);
+    const { data: integrations } = await intgQuery;
     for (const intg of integrations ?? []) {
       const p = (intg.provider || "").toUpperCase();
       if (p === "WABA" && intg.phone_number_id) {
@@ -82,9 +87,10 @@ export function useConversations() {
       grouped.get(key)!.push(m);
     }
 
-    const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
     const [{ data: leads }, { data: contacts }, { data: slaRules }] = await Promise.all([
-      supabase.from("whatsapp_leads").select("*"),
+      tenantId
+        ? supabase.from("whatsapp_leads").select("*").eq("tenant_id", tenantId)
+        : supabase.from("whatsapp_leads").select("*"),
       supabase.from("whatsapp_contacts").select("*"),
       tenantId
         ? supabase.from("sla_rules").select("*").eq("tenant_id", tenantId).eq("is_active", true)
