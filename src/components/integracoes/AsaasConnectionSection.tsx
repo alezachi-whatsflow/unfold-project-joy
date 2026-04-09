@@ -118,7 +118,7 @@ const AsaasConnectionSection = ({ expanded, onToggle }: AsaasConnectionSectionPr
           <CreditCard size={20} color="#FFF" />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Asaas — Pagamentos & Checkout</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Pagamentos & Checkout</p>
           <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>PIX, Boleto, Cartão de Crédito, Webhooks e Links de Checkout</p>
         </div>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: expanded ? "#00A651" : "var(--border)" }} />
