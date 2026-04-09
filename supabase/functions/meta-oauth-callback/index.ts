@@ -235,23 +235,38 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3c. Attempt phone registration (Cloud API requirement)
+    // 3c. Check phone status and attempt registration only if needed
     if (provider === "WABA" && integrationData.phone_number_id) {
-      const regResult = await registerPhoneNumber(integrationData.phone_number_id, accessToken);
-      if (!regResult.ok && regResult.error_code) {
-        console.error(`[meta-oauth-callback] Phone registration blocked: ${regResult.error_code}`);
-        return popupResponse({
-          success: false,
-          error_code: regResult.error_code,
-          message: regResult.message || "Erro ao registrar número.",
-          provider: "WABA",
-          details: {
-            "Telefone": integrationData.display_phone_number || "—",
-            "WABA": integrationData.waba_name || integrationData.waba_id || "—",
-          },
-        });
+      // First check if phone is already registered (status = CONNECTED)
+      let alreadyRegistered = false;
+      try {
+        const phoneStatus = await graphGet(
+          `${integrationData.phone_number_id}?fields=id,display_phone_number,verified_name,quality_rating,code_verification_status`,
+          accessToken
+        );
+        const status = phoneStatus?.code_verification_status;
+        alreadyRegistered = status === "VERIFIED" || status === "NOT_VERIFIED";
+        // Also grab quality_rating if not already set
+        if (phoneStatus?.quality_rating && !integrationData.quality_rating) {
+          integrationData.quality_rating = phoneStatus.quality_rating;
+        }
+        console.log(`[meta-oauth-callback] Phone ${integrationData.phone_number_id} status: ${status}, alreadyRegistered: ${alreadyRegistered}`);
+      } catch (e: any) {
+        console.warn("[meta-oauth-callback] Phone status check failed:", e.message);
       }
-      // Non-classified registration errors are non-blocking (number may already be registered)
+
+      if (!alreadyRegistered) {
+        // Only attempt registration for truly new/unregistered numbers
+        const regResult = await registerPhoneNumber(integrationData.phone_number_id, accessToken);
+        if (!regResult.ok && regResult.error_code) {
+          // Registration failed with a classified error — but still save the integration
+          // The number exists in the WABA, it just can't be re-registered right now
+          console.warn(`[meta-oauth-callback] Phone registration issue: ${regResult.error_code} — saving integration anyway`);
+          integrationData.registration_warning = regResult.message;
+        }
+      } else {
+        console.log("[meta-oauth-callback] Phone already registered — skipping registration step");
+      }
     }
 
     // 4. Check for duplicates
