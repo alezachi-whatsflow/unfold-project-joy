@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import LeftPanel from "./panels/LeftPanel";
 import ChatPanel from "./panels/ChatPanel";
 import RightPanel from "./panels/RightPanel";
@@ -52,37 +52,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
   const showKanban = activeFilter === "groups" && groupViewMode === "kanban";
 
   // Resizable left panel
-  const [leftWidth, setLeftWidth] = useState(() => {
-    const saved = sessionStorage.getItem("wf_inbox_panel_w");
-    return saved ? Number(saved) : 340;
-  });
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const startW = useRef(340);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    isDragging.current = true;
-    startX.current = e.clientX;
-    startW.current = leftWidth;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-
-    const handleMouseMove = (ev: MouseEvent) => {
-      if (!isDragging.current) return;
-      const newW = Math.max(260, Math.min(600, startW.current + (ev.clientX - startX.current)));
-      setLeftWidth(newW);
-    };
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      sessionStorage.setItem("wf_inbox_panel_w", String(leftWidth));
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  }, [leftWidth]);
+  const leftWidth = 340;
 
   return (
     <div className="flex h-full overflow-hidden" style={{ background: "var(--wa-bg-deep, var(--bg-base))" }}>
@@ -106,12 +76,10 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
         />
       </div>
 
-      {/* Resize Handle */}
+      {/* Divider */}
       <div
-        onMouseDown={handleMouseDown}
-        className="shrink-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors hidden md:block"
+        className="shrink-0 w-px hidden md:block"
         style={{ background: "var(--wa-border, hsl(var(--border)))" }}
-        title="Arraste para redimensionar"
       />
 
       {/* Central panel */}
