@@ -7,7 +7,7 @@ type InboxFilter = "atendimento" | "fila" | "grupos" | "finalizados";
 const INBOX_TABS: { id: InboxFilter; label: string; icon: React.ElementType; color: string }[] = [
   { id: "atendimento", label: "Em atendimento", icon: Headphones, color: "#0E8A5C" },
   { id: "fila",        label: "Fila",           icon: ListOrdered, color: "#E8A84A" },
-  { id: "grupos",      label: "Grupos",         icon: UsersRound,  color: "#5B9EF7" },
+  { id: "grupos",      label: "Msgs Grupos",    icon: UsersRound,  color: "#5B9EF7" },
   { id: "finalizados", label: "Finalizados",    icon: CheckCircle2, color: "#A09888" },
 ];
 

@@ -41,7 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   // Group 2 — Tools
   { id: "enviar",    label: "Envios em Massa",    icon: Send,             group: "tools" },
   { id: "leads",     label: "Leads",               icon: Kanban,           group: "tools" },
-  { id: "grupos",    label: "Grupos",              icon: UsersRound,       group: "tools" },
+  { id: "grupos",    label: "ADM Grupos",           icon: UsersRound,       group: "tools" },
   { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
   { id: "templates",  label: "Templates HSM",        icon: FileText,         group: "tools" },
   { id: "cobranca",  label: "Cobrança",              icon: Receipt,          group: "tools" },
@@ -71,7 +71,7 @@ const MensageriaPage = () => {
       // Tools
       case "enviar":          return <MassSendHub onClose={() => setActiveTab("inbox")} />;
       case "leads":           return <LeadKanban />;
-      case "grupos":          return <GroupsInboxView />;
+      case "grupos":          return <GroupDashboard />;
       case "contatos":        return <ContactChecker />;
       case "templates":       return <HSMTemplateManager />;
       case "cobranca":        return <BillingRulesTab />;
