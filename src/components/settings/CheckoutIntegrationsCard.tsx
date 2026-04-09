@@ -506,17 +506,40 @@ export function CheckoutIntegrationsCard() {
 
   const connectedCount = Object.values(connections).filter((c) => c.status === "connected").length + (asaasConnected ? 1 : 0);
 
-  const handleSave = (conn: ProviderConnection) => {
+  const handleSave = async (conn: ProviderConnection) => {
     const updated = { ...connections, [conn.providerId]: conn };
     setConnections(updated);
     saveConnections(updated);
+
+    // For Asaas: also save to DB so the status badge works
+    if (conn.providerId === "asaas" && tenantId && conn.apiKey) {
+      const { error } = await (supabase as any).from("asaas_connections").upsert({
+        tenant_id: tenantId,
+        environment: conn.environment || "sandbox",
+        api_key_hint: conn.apiKey.slice(-4),
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "tenant_id" });
+      if (!error) {
+        setAsaasConnected(true);
+        // Store the full API key in Supabase Vault (secrets) via edge function
+        await supabase.functions.invoke("asaas-proxy", {
+          body: { action: "save-key", api_key: conn.apiKey, environment: conn.environment || "sandbox" },
+        }).catch(() => {});
+      }
+    }
   };
 
-  const handleDisconnect = (providerId: string) => {
+  const handleDisconnect = async (providerId: string) => {
     const updated = { ...connections };
     delete updated[providerId];
     setConnections(updated);
     saveConnections(updated);
+
+    if (providerId === "asaas" && tenantId) {
+      await (supabase as any).from("asaas_connections").update({ is_active: false }).eq("tenant_id", tenantId);
+      setAsaasConnected(false);
+    }
     toast.success("Provedor desconectado.");
   };
 
