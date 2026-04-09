@@ -26,7 +26,9 @@ export default function ProfilePage() {
   const { userRole, permissions } = usePermissions();
 
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
-  const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
+  const rawPhone = user?.user_metadata?.phone || "";
+  // Never show email in phone field (data corruption guard)
+  const [phone, setPhone] = useState(rawPhone.includes("@") ? "" : rawPhone);
   const [saving, setSaving] = useState(false);
 
   const [currentPw, setCurrentPw] = useState("");
