@@ -83,13 +83,16 @@ const AsaasConnectionSection = ({ expanded, onToggle }: AsaasConnectionSectionPr
   const registerWebhook = async () => {
     setRegistering(true);
     try {
-      await callAsaasProxy({
-        endpoint: "/webhooks", method: "POST", environment,
-        body: { url: webhookUrl, email: "", apiVersion: 3, enabled: true,
-          events: ["PAYMENT_RECEIVED","PAYMENT_CONFIRMED","PAYMENT_OVERDUE","PAYMENT_DELETED","PAYMENT_REFUNDED","PAYMENT_CREATED","PAYMENT_UPDATED"],
-        },
+      const { data, error } = await supabase.functions.invoke("asaas-proxy", {
+        body: { action: "setup-webhook", environment },
       });
-      toast.success("Webhook registrado!"); loadWebhooks();
+      if (error) throw error;
+      if (data?.success) {
+        toast.success("Webhook registrado com segurança!");
+        loadWebhooks();
+      } else {
+        toast.error(data?.error || "Erro ao registrar webhook");
+      }
     } catch (e: any) { toast.error("Erro: " + e.message); }
     finally { setRegistering(false); }
   };

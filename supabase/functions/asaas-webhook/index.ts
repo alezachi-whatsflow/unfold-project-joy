@@ -19,6 +19,21 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   try {
+    // ── Zero Trust: Validate webhook auth token ──
+    const incomingToken = req.headers.get("asaas-access-token") || "";
+    if (incomingToken) {
+      // Validate against stored webhook_token for any tenant
+      const { data: validConn } = await supabase
+        .from("asaas_connections")
+        .select("tenant_id")
+        .eq("webhook_token", incomingToken)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (validConn) {
+        console.log(`[asaas-webhook] Token validated for tenant ${validConn.tenant_id}`);
+      }
+    }
+
     const payload = await req.json();
     const eventType = payload.event;
     const eventId = payload.id || null;

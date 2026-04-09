@@ -275,6 +275,17 @@ export function AsaasBillingManagerPanel() {
 
   return (
     <div className="space-y-6">
+      {/* CIP Banner — Boleto delay warning */}
+      {(config.billingType === "BOLETO" || config.billingType === "UNDEFINED") && (
+        <div className="flex items-start gap-3 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs text-muted-foreground">
+          <FileText className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-medium text-amber-400">Sobre Boletos Bancários:</span>{" "}
+            Cobranças via boleto podem levar até 15 minutos para serem registradas na CIP e aparecerem no app do banco do cliente. Oriente o uso do <strong className="text-foreground">PIX</strong> sempre que possível para confirmação instantânea.
+          </div>
+        </div>
+      )}
+
       {/* Mode Selector */}
       <Card className="border-border">
         <CardContent className="pt-4 pb-4">

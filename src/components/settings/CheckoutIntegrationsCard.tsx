@@ -511,21 +511,31 @@ export function CheckoutIntegrationsCard() {
     setConnections(updated);
     saveConnections(updated);
 
-    // For Asaas: also save to DB so the status badge works
-    if (conn.providerId === "asaas" && tenantId && conn.apiKey) {
-      const { error } = await (supabase as any).from("asaas_connections").upsert({
-        tenant_id: tenantId,
-        environment: conn.environment || "sandbox",
-        api_key_hint: conn.apiKey.slice(-4),
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "tenant_id" });
-      if (!error) {
-        setAsaasConnected(true);
-        // Store the full API key in Supabase Vault (secrets) via edge function
-        await supabase.functions.invoke("asaas-proxy", {
-          body: { action: "save-key", api_key: conn.apiKey, environment: conn.environment || "sandbox" },
-        }).catch(() => {});
+    // For Asaas: validate + save API key via edge function (multi-tenant, KYC check)
+    if (conn.providerId === "asaas" && conn.apiKey) {
+      try {
+        const { data: result, error } = await supabase.functions.invoke("asaas-proxy", {
+          body: { action: "save-key", api_key: conn.apiKey, environment: conn.environment || "production" },
+        });
+        if (error) throw error;
+        if (result?.error_code === "KYC_PENDING") {
+          toast.error(result.message || "Conta Asaas com pendência documental");
+          return;
+        }
+        if (result?.error_code === "KYC_REJECTED") {
+          toast.error(result.message || "Conta Asaas rejeitada");
+          return;
+        }
+        if (result?.error_code === "INVALID_KEY") {
+          toast.error("API Key inválida. Verifique no painel do Asaas.");
+          return;
+        }
+        if (result?.success) {
+          setAsaasConnected(true);
+          toast.success(`Asaas conectado! Wallet: ${result.wallet_id || "—"}`);
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Erro ao validar API Key do Asaas");
       }
     }
   };
