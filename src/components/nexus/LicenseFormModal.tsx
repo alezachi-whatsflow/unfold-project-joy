@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useNexus } from '@/contexts/NexusContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Trash2, Users, AlertCircle, Info } from 'lucide-react';
+import { Loader2, Plus, Trash2, Users, AlertCircle, Info, KeyRound } from 'lucide-react';
 import { fetchSalesPeople } from '@/lib/asaasQueries';
 import type { SalesPerson } from '@/types/asaas';
 
@@ -50,6 +50,9 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   const { toast } = useToast();
   const isEdit = !!license;
   const [saving, setSaving] = useState(false);
+  const [directActivateOpen, setDirectActivateOpen] = useState(false);
+  const [directPassword, setDirectPassword] = useState('');
+  const [activating, setActivating] = useState(false);
   const [tenants, setTenants] = useState<any[]>([]);
   const [whitelabels, setWhitelabels] = useState<any[]>([]);
   const [salesPeople, setSalesPeople] = useState<SalesPerson[]>([]);
@@ -225,6 +228,129 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
 
     return { base, addons: webPrice + metaPrice + attPrice + aiPrice + facPrice, total: base + webPrice + metaPrice + attPrice + aiPrice + facPrice };
   }, [form]);
+
+  async function handleDirectActivate() {
+    if (!directPassword || directPassword.length < 6) {
+      toast({ title: 'Senha deve ter no mínimo 6 caracteres', variant: 'destructive' });
+      return;
+    }
+
+    // First save the license normally
+    setSaving(true);
+    setActivating(true);
+
+    try {
+      // Resolve email and tenant
+      let email = newTenantEmail.trim() || null;
+      let tenantName = newTenantName.trim() || 'Cliente';
+      let tenantId = form.tenant_id;
+
+      if (!isEdit && createNewTenant) {
+        const name = newTenantName.trim();
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const { data: newTenant, error: tenantError } = await supabase
+          .from('tenants')
+          .insert({ name, slug, email: email || null })
+          .select()
+          .single();
+        if (tenantError || !newTenant) {
+          toast({ title: 'Erro ao criar tenant', description: tenantError?.message, variant: 'destructive' });
+          setSaving(false); setActivating(false);
+          return;
+        }
+        tenantId = newTenant.id;
+      }
+
+      if (!email && tenantId && !createNewTenant) {
+        const { data: tenantData } = await supabase
+          .from('tenants')
+          .select('email, name')
+          .eq('id', tenantId)
+          .single();
+        email = tenantData?.email || null;
+        tenantName = tenantData?.name || tenantName;
+      }
+
+      if (!email) {
+        toast({ title: 'E-mail do tenant é obrigatório para ativar', variant: 'destructive' });
+        setSaving(false); setActivating(false);
+        return;
+      }
+
+      // Build license payload
+      const payload: Record<string, any> = {
+        tenant_id: tenantId,
+        license_type: form.license_type,
+        plan: form.plan,
+        status: 'active',
+        monthly_value: form.monthly_value,
+        starts_at: form.starts_at || new Date().toISOString().slice(0, 10),
+        expires_at: form.expires_at || null,
+        base_attendants: form.base_attendants,
+        extra_attendants: form.extra_attendants,
+        base_devices_web: form.base_devices_web,
+        extra_devices_web: form.extra_devices_web,
+        base_devices_meta: form.base_devices_meta,
+        extra_devices_meta: form.extra_devices_meta,
+        has_ai_module: form.has_ai_module,
+        ai_agents_limit: form.ai_agents_limit,
+        has_ia_auditor: form.has_ia_auditor,
+        has_ia_copiloto: form.has_ia_copiloto,
+        has_ia_closer: form.has_ia_closer,
+        facilite_plan: form.facilite_plan,
+        has_implantacao_starter: form.has_implantacao_starter,
+        billing_cycle: form.billing_cycle,
+        payment_type: form.payment_type,
+        payment_condition: form.payment_condition,
+        checkout_url: form.checkout_url,
+        pricing_config: form.pricing_config,
+      };
+      if (form.license_type === 'whitelabel') payload.whitelabel_slug = form.whitelabel_slug;
+      if (form.parent_license_id) payload.parent_license_id = form.parent_license_id;
+
+      // Insert license
+      const { data: licData, error: licError } = await supabase.from('licenses').insert(payload).select().single();
+      if (licError) {
+        toast({ title: 'Erro ao criar licença', description: licError.message, variant: 'destructive' });
+        setSaving(false); setActivating(false);
+        return;
+      }
+
+      // Direct activate: create user with password, no email
+      const { data: inviteResult, error: inviteError } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email,
+          full_name: tenantName,
+          role: form.license_type === 'whitelabel' ? 'wl_admin' : 'admin',
+          tenant_id: tenantId,
+          license_id: licData.id,
+          skip_email: true,
+          password: directPassword,
+        },
+      });
+
+      if (inviteError) {
+        toast({ title: 'Licença criada, mas erro ao ativar usuário', description: inviteError.message, variant: 'destructive' });
+      } else {
+        toast({ title: `Licença ativada! Usuário ${email} pode fazer login com a senha definida.` });
+      }
+
+      await supabase.from('nexus_audit_logs').insert({
+        actor_id: nexusUser?.id, actor_role: nexusUser?.role || '',
+        action: 'license_create', license_id: licData.id,
+      });
+
+      setDirectActivateOpen(false);
+      setDirectPassword('');
+      onSaved();
+      onOpenChange(false);
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+      setActivating(false);
+    }
+  }
 
   async function handleSave() {
     if (!isEdit && !createNewTenant && !form.tenant_id) {
@@ -804,11 +930,61 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
           </Card>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          {!isEdit && (
+            <Button
+              variant="secondary"
+              onClick={() => setDirectActivateOpen(true)}
+              disabled={saving}
+              className="gap-1.5"
+            >
+              <KeyRound className="h-4 w-4" />
+              Ativar sem e-mail
+            </Button>
+          )}
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-            Salvar Licença
+            {isEdit ? 'Salvar Licença' : 'Criar e Enviar E-mail'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Direct Activation Dialog */}
+    <Dialog open={directActivateOpen} onOpenChange={setDirectActivateOpen}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-primary" />
+            Ativar Licença Diretamente
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <p className="text-sm text-muted-foreground">
+            Cria o usuário com a senha definida abaixo. O cliente poderá fazer login imediatamente, sem precisar de e-mail.
+          </p>
+          <div className="space-y-2">
+            <Label>Senha de acesso</Label>
+            <Input
+              type="text"
+              placeholder="Defina a senha do cliente"
+              value={directPassword}
+              onChange={(e) => setDirectPassword(e.target.value)}
+              autoFocus
+            />
+            <p className="text-[10px] text-muted-foreground">Mínimo 6 caracteres. Informe ao cliente.</p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDirectActivateOpen(false)}>Cancelar</Button>
+          <Button
+            onClick={handleDirectActivate}
+            disabled={activating || !directPassword || directPassword.length < 6}
+            className="gap-1.5"
+          >
+            {activating && <Loader2 className="h-4 w-4 animate-spin" />}
+            Ativar Agora
           </Button>
         </DialogFooter>
       </DialogContent>

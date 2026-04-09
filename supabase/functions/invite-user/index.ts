@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email: rawEmail, full_name, role, tenant_id, license_id, user_id } = await req.json();
+    const { email: rawEmail, full_name, role, tenant_id, license_id, user_id, skip_email, password: directPassword } = await req.json();
 
     // Resolve email: either passed directly or looked up by user_id
     let email = rawEmail;
@@ -201,6 +201,52 @@ Deno.serve(async (req) => {
           user_id: existingUser.id,
           already_exists: true,
           action_link: emailSent ? undefined : linkData.properties.action_link,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // DIRECT ACTIVATION (skip_email + password): Create user with password, no email needed
+    if (skip_email && directPassword) {
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password: directPassword,
+        email_confirm: true,
+        user_metadata: { full_name, role: assignedRole, tenant_id },
+      });
+
+      if (createError || !newUser?.user) {
+        console.error("Create user (direct) error:", createError);
+        return new Response(JSON.stringify({ error: createError?.message || "Erro ao criar usuário" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await adminClient.from("profiles").upsert({
+        id: newUser.user.id,
+        email,
+        role: assignedRole,
+        full_name,
+        invitation_status: "active",
+        invited_at: new Date().toISOString(),
+        invited_by: caller.id,
+        ...(license_id ? { license_id } : {}),
+      }, { onConflict: "id" });
+
+      if (tenant_id) {
+        await adminClient.from("user_tenants").upsert(
+          { user_id: newUser.user.id, tenant_id, is_owner: false },
+          { onConflict: "user_id,tenant_id" }
+        );
+      }
+
+      console.log(`[invite-user] Direct activation for ${email}, tenant ${tenant_id}`);
+      return new Response(
+        JSON.stringify({
+          message: `Licença ativada com sucesso para ${email}`,
+          user_id: newUser.user.id,
+          activated: true,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
