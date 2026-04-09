@@ -1,18 +1,17 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Shield, RefreshCw, Webhook, CheckCircle, XCircle, CreditCard } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, CreditCard, RefreshCw, Settings, Wifi, WifiOff } from "lucide-react";
 import { CheckoutIntegrationsCard } from "@/components/settings/CheckoutIntegrationsCard";
+import { AsaasSetupModal } from "@/components/settings/AsaasSetupModal";
 import { useAsaas } from "@/contexts/AsaasContext";
 import { callAsaasProxy } from "@/lib/asaasQueries";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "@/hooks/useTenantId";
+import { Label } from "@/components/ui/label";
 
 interface AsaasConnectionSectionProps {
   expanded: boolean;
@@ -21,83 +20,76 @@ interface AsaasConnectionSectionProps {
 
 const AsaasConnectionSection = ({ expanded, onToggle }: AsaasConnectionSectionProps) => {
   const tenantId = useTenantId();
-  const { environment, setEnvironment, isSyncing, syncAll } = useAsaas();
-  const [testing, setTesting] = useState(false);
-  const [apiStatus, setApiStatus] = useState<"ok" | "error" | null>(null);
-  const [webhooks, setWebhooks] = useState<any[]>([]);
-  const [loadingWebhooks, setLoadingWebhooks] = useState(false);
-  const [registering, setRegistering] = useState(false);
+  const { environment, isSyncing, syncAll } = useAsaas();
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [connectionInfo, setConnectionInfo] = useState<{
+    is_active: boolean;
+    environment: string;
+    wallet_id: string | null;
+    account_status: string;
+    api_key_hint: string;
+  } | null>(null);
   const [syncEnabled, setSyncEnabled] = useState(true);
   const [togglingSync, setTogglingSync] = useState(false);
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://supabase.whatsflow.com.br"}/functions/v1/asaas-webhook`;
+  const [testing, setTesting] = useState(false);
+  const [testOk, setTestOk] = useState<boolean | null>(null);
 
-  // Load sync state from DB (asaas_connections.is_active)
+  // Load connection info
   useEffect(() => {
     if (!tenantId) return;
     (async () => {
       const { data } = await (supabase as any)
         .from("asaas_connections")
-        .select("is_active")
+        .select("is_active, environment, wallet_id, account_status, api_key_hint")
         .eq("tenant_id", tenantId)
         .maybeSingle();
-      if (data) setSyncEnabled(data.is_active ?? true);
+      if (data) {
+        setConnectionInfo(data);
+        setSyncEnabled(data.is_active ?? true);
+      }
     })();
   }, [tenantId]);
 
+  const isConnected = !!connectionInfo?.is_active;
+
   const handleToggleSync = async (enabled: boolean) => {
     if (!tenantId) return;
-    setSyncEnabled(enabled); // optimistic
+    setSyncEnabled(enabled);
     setTogglingSync(true);
     const { error } = await (supabase as any)
       .from("asaas_connections")
       .update({ is_active: enabled, updated_at: new Date().toISOString() })
       .eq("tenant_id", tenantId);
-    setTogglingSync(false);
     if (error) {
-      setSyncEnabled(!enabled); // revert
-      toast.error("Erro ao salvar: " + error.message);
-    } else {
-      toast.success(enabled ? "Sincronizacao Asaas ativada" : "Sincronizacao Asaas desativada");
+      setSyncEnabled(!enabled);
+      toast.error("Erro ao salvar");
+    }
+    setTogglingSync(false);
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestOk(null);
+    try {
+      await callAsaasProxy({ endpoint: "/customers", method: "GET", environment, limit: 1 });
+      setTestOk(true);
+      toast.success("Conexão OK!");
+    } catch {
+      setTestOk(false);
+      toast.error("Falha na conexão");
+    } finally {
+      setTesting(false);
     }
   };
 
-  const testAsaasConnection = async () => {
-    setTesting(true); setApiStatus(null);
-    try {
-      await callAsaasProxy({ endpoint: "/customers", method: "GET", environment, limit: 1 });
-      setApiStatus("ok"); toast.success("Conexão com Asaas OK!");
-    } catch {
-      setApiStatus("error"); toast.error("Falha na conexão com Asaas.");
-    } finally { setTesting(false); }
+  const reloadInfo = () => {
+    if (!tenantId) return;
+    (supabase as any).from("asaas_connections")
+      .select("is_active, environment, wallet_id, account_status, api_key_hint")
+      .eq("tenant_id", tenantId)
+      .maybeSingle()
+      .then(({ data }: any) => { if (data) setConnectionInfo(data); });
   };
-
-  const loadWebhooks = async () => {
-    setLoadingWebhooks(true);
-    try {
-      const res = await callAsaasProxy({ endpoint: "/webhooks", method: "GET", environment });
-      setWebhooks(Array.isArray(res?.data) ? res.data : []);
-    } catch { setWebhooks([]); }
-    finally { setLoadingWebhooks(false); }
-  };
-
-  const registerWebhook = async () => {
-    setRegistering(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("asaas-proxy", {
-        body: { action: "setup-webhook", environment },
-      });
-      if (error) throw error;
-      if (data?.success) {
-        toast.success("Webhook registrado com segurança!");
-        loadWebhooks();
-      } else {
-        toast.error(data?.error || "Erro ao registrar webhook");
-      }
-    } catch (e: any) { toast.error("Erro: " + e.message); }
-    finally { setRegistering(false); }
-  };
-
-  useEffect(() => { loadWebhooks(); }, [environment]);
 
   return (
     <Card
@@ -108,6 +100,7 @@ const AsaasConnectionSection = ({ expanded, onToggle }: AsaasConnectionSectionPr
         overflow: "hidden",
       }}
     >
+      {/* Header — always visible */}
       <button
         onClick={onToggle}
         style={{
@@ -124,83 +117,89 @@ const AsaasConnectionSection = ({ expanded, onToggle }: AsaasConnectionSectionPr
           <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Pagamentos & Checkout</p>
           <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>PIX, Boleto, Cartão de Crédito, Webhooks e Links de Checkout</p>
         </div>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: expanded ? "#00A651" : "var(--border)" }} />
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: isConnected ? "#00A651" : "var(--border)" }} />
       </button>
+
       {expanded && (
         <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--border)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-            {/* Ambiente */}
-            <Card style={{ border: "1px solid var(--border)" }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-sm"><Shield className="h-4 w-4" /> Ambiente Asaas</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Select value={environment} onValueChange={(v) => setEnvironment(v as any)}>
-                  <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sandbox">🧪 Sandbox (testes)</SelectItem>
-                    <SelectItem value="production">🚀 Production (real)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={testAsaasConnection} disabled={testing} className="text-xs gap-1">
-                    {testing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Testar
-                  </Button>
-                  {apiStatus === "ok" && <Badge className="bg-green-600 text-[9px]"><CheckCircle className="mr-1 h-3 w-3" /> OK</Badge>}
-                  {apiStatus === "error" && <Badge variant="destructive" className="text-[9px]"><XCircle className="mr-1 h-3 w-3" /> Falha</Badge>}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Sincronização */}
-            <Card style={{ border: "1px solid var(--border)" }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-sm"><RefreshCw className="h-4 w-4" /> Sincronização</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs">Sincronização de cobranças via Asaas</Label>
-                  <Switch checked={syncEnabled} onCheckedChange={handleToggleSync} disabled={togglingSync} />
+          {/* ── Asaas Status Card ── */}
+          <div className="mt-4 mb-4 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#00A651]/10 flex items-center justify-center">
+                  {isConnected ? <Wifi className="h-5 w-5 text-[#00A651]" /> : <WifiOff className="h-5 w-5 text-muted-foreground" />}
                 </div>
-                <Button onClick={syncAll} disabled={isSyncing || !syncEnabled} size="sm" className="w-full text-xs gap-1">
-                  {isSyncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Sincronizar Tudo
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Webhooks */}
-          <Card style={{ border: "1px solid var(--border)", marginTop: 16 }}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm"><Webhook className="h-4 w-4" /> Webhooks Asaas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="border p-2">
-                <Label className="text-[10px] text-muted-foreground">URL do Webhook</Label>
-                <p className="font-mono text-[10px] text-foreground break-all mt-1">{webhookUrl}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={registerWebhook} disabled={registering} className="text-xs gap-1">
-                {registering ? <Loader2 className="h-3 w-3 animate-spin" /> : <Webhook className="h-3 w-3" />} Registrar Webhook
-              </Button>
-              {webhooks.length > 0 && (
-                <div className="space-y-1">
-                  {webhooks.map((wh: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2 rounded border p-1.5 text-[10px]">
-                      <Badge variant={wh.enabled ? "default" : "secondary"} className="text-[8px]">{wh.enabled ? "Ativo" : "Off"}</Badge>
-                      <span className="font-mono text-muted-foreground truncate">{wh.url}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">Asaas</span>
+                    {isConnected ? (
+                      <Badge className="bg-emerald-600/90 text-[9px]"><CheckCircle2 className="h-2.5 w-2.5 mr-0.5" /> Conectado</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[9px] text-muted-foreground"><XCircle className="h-2.5 w-2.5 mr-0.5" /> Desconectado</Badge>
+                    )}
+                  </div>
+                  {isConnected && connectionInfo && (
+                    <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
+                      <span>{connectionInfo.environment === "production" ? "🔵 Produção" : "🟡 Sandbox"}</span>
+                      {connectionInfo.wallet_id && <span>Wallet: {connectionInfo.wallet_id.substring(0, 12)}...</span>}
+                      {connectionInfo.api_key_hint && <span>Key: ****{connectionInfo.api_key_hint}</span>}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
 
-          {/* Checkout */}
-          <div style={{ marginTop: 16 }}>
-            <CheckoutIntegrationsCard />
+              <div className="flex items-center gap-2">
+                {isConnected && (
+                  <>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleTest} disabled={testing}>
+                      {testing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                      Testar
+                    </Button>
+                    {testOk === true && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                    {testOk === false && <XCircle className="h-4 w-4 text-rose-500" />}
+                  </>
+                )}
+                <Button
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  variant={isConnected ? "outline" : "default"}
+                  onClick={() => setSetupOpen(true)}
+                >
+                  <Settings className="h-3 w-3" />
+                  {isConnected ? "Reconfigurar" : "Conectar Asaas"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Sync toggle — only when connected */}
+            {isConnected && (
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs">Sincronizar cobranças automaticamente</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={syncEnabled} onCheckedChange={handleToggleSync} disabled={togglingSync} />
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={syncAll} disabled={isSyncing || !syncEnabled}>
+                    {isSyncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                    Sincronizar
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Checkout Integrations */}
+          <CheckoutIntegrationsCard />
         </div>
       )}
+
+      {/* Smart Setup Modal */}
+      <AsaasSetupModal
+        open={setupOpen}
+        onOpenChange={setSetupOpen}
+        onConnected={() => { reloadInfo(); toast.success("Asaas conectado!"); }}
+      />
     </Card>
   );
 };
