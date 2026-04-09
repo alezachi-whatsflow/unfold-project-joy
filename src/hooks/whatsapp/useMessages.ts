@@ -162,26 +162,33 @@ export function useMessages() {
 
   /* ── fetch messages for a conversation ── */
   const fetchMessages = useCallback(
-    async (jid: string, forceRefresh = false, limit?: number) => {
+    async (compositeId: string, forceRefresh = false, limit?: number) => {
       const effectiveLimit = limit ?? messageLimitRef.current;
+      // Parse composite key: "instance_name::remote_jid" or plain "remote_jid"
+      const hasComposite = compositeId.includes("::");
+      const instanceName = hasComposite ? compositeId.split("::")[0] : "";
+      const jid = hasComposite ? compositeId.split("::").slice(1).join("::") : compositeId;
 
       // Show cached messages instantly
-      const cached = messagesCacheRef.current.get(jid);
+      const cached = messagesCacheRef.current.get(compositeId);
       if (cached && !forceRefresh) {
         setMessages(cached.messages);
         lastSyncRef.current = cached.lastSync;
         lastStatusSyncRef.current = cached.lastStatusSync;
       }
 
-      const { data: rawData } = await supabase
+      let query = supabase
         .from("whatsapp_messages")
         .select("*")
         .eq("remote_jid", jid)
         .order("created_at", { ascending: false })
         .limit(effectiveLimit);
+      // Filter by instance_name if we have a composite key
+      if (instanceName) query = query.eq("instance_name", instanceName);
+      const { data: rawData } = await query;
 
       // P0-3 FIX: If user switched conversations while this was loading, discard result
-      if (selectedJidRef.current !== jid) return;
+      if (selectedJidRef.current !== compositeId) return;
 
       const data = rawData ? [...rawData].reverse() : null;
 
@@ -194,7 +201,7 @@ export function useMessages() {
         );
 
         // P0-3 FIX: Re-check after async media resolution
-        if (selectedJidRef.current !== jid) return;
+        if (selectedJidRef.current !== compositeId) return;
 
         // Heuristic: if outgoing message (status<=2) has later incoming reply, upgrade to "read"
         const lastIncomingTime = (() => {
@@ -237,7 +244,7 @@ export function useMessages() {
           }
         }
 
-        messagesCacheRef.current.set(jid, {
+        messagesCacheRef.current.set(compositeId, {
           messages: merged,
           lastSync: syncTs,
           lastStatusSync: lastStatusSyncRef.current,

@@ -64,11 +64,13 @@ export function useConversations() {
       return;
     }
 
+    // Group by instance_name + remote_jid (composite key)
+    // This ensures same contact on different numbers = separate chats
     const grouped = new Map<string, typeof allMsgs>();
     for (const m of allMsgs) {
-      const jid = m.remote_jid;
-      if (!grouped.has(jid)) grouped.set(jid, []);
-      grouped.get(jid)!.push(m);
+      const key = `${m.instance_name}::${m.remote_jid}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(m);
     }
 
     const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
@@ -82,7 +84,12 @@ export function useConversations() {
 
     const slaMap = new Map<string | null, any>();
     for (const rule of slaRules ?? []) slaMap.set(rule.department_id, rule);
-    const leadMap = new Map((leads ?? []).map((l: any) => [l.chat_id, l]));
+    // Lead map: composite key (instance_name::chat_id) + fallback by chat_id only
+    const leadMap = new Map<string, any>();
+    for (const l of leads ?? []) {
+      leadMap.set(`${l.instance_name}::${l.chat_id}`, l);
+      if (!leadMap.has(l.chat_id)) leadMap.set(l.chat_id, l); // fallback
+    }
 
     // Build contact map with multiple lookup keys for robust avatar matching
     const contactMap = new Map<string, any>();
@@ -98,12 +105,15 @@ export function useConversations() {
     }
 
     const convs: Conversation[] = [];
-    for (const [jid, jidMsgs] of grouped) {
+    for (const [compositeKey, jidMsgs] of grouped) {
       const sorted = jidMsgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const latest = sorted[0];
+      const jid = latest.remote_jid;
+      const instanceName = latest.instance_name;
       const unread = sorted.filter((m: any) => m.direction === "incoming" && (m.status ?? 0) < 4).length;
       const phone = jidToPhone(jid);
-      const lead = leadMap.get(jid) as any;
+      // Lead lookup: prefer composite key, fallback to jid-only
+      const lead = (leadMap.get(`${instanceName}::${jid}`) || leadMap.get(jid)) as any;
       const isGroup = isGroupJid(jid);
 
       // Robust contact lookup: try jid, then phone@s.whatsapp.net, then phone, then digits
@@ -161,7 +171,7 @@ export function useConversations() {
       }
 
       convs.push({
-        id: jid, name, phone,
+        id: compositeKey, name, phone,
         lastMessage: latest.body || latest.caption || `[${latest.type}]`,
         lastMessageTime: formatTime(latest.created_at),
         lastMessageType: (latest.type === "text" ? "text" : latest.type === "audio" ? "audio" : latest.type === "image" ? "image" : "document") as any,
@@ -237,18 +247,19 @@ export function useConversations() {
   }, [fetchConversations]);
 
   /* ── assign / resolve ──── */
-  const assignConversation = useCallback(async (jid: string) => {
+  const assignConversation = useCallback(async (compositeId: string) => {
     if (!currentUserId) { toast.error("Usuario nao identificado"); return; }
     const tId = localStorage.getItem("whatsflow_default_tenant_id");
-    const conv = conversations.find((c) => c.id === jid);
-
-    const instanceName = conv?.instanceName || "";
+    const conv = conversations.find((c) => c.id === compositeId);
+    // Extract jid from composite key (instance_name::remote_jid)
+    const chatId = compositeId.includes("::") ? compositeId.split("::").slice(1).join("::") : compositeId;
+    const instanceName = conv?.instanceName || (compositeId.includes("::") ? compositeId.split("::")[0] : "");
     const { error: upsertErr } = await supabase
       .from("whatsapp_leads")
       .upsert({
-        chat_id: jid,
+        chat_id: chatId,
         instance_name: instanceName,
-        lead_name: conv?.name || jid,
+        lead_name: conv?.name || chatId,
         assigned_attendant_id: currentUserId,
         lead_status: "open",
         is_ticket_open: true,
@@ -260,18 +271,25 @@ export function useConversations() {
       return;
     }
 
-    toast.success(`Atendimento iniciado: ${conv?.name || jid}`);
+    toast.success(`Atendimento iniciado: ${conv?.name || chatId}`);
     setConversations((prev) =>
-      prev.map((c) => c.id === jid ? { ...c, assignedTo: currentUserId, status: "open" as const } : c)
+      prev.map((c) => c.id === compositeId ? { ...c, assignedTo: currentUserId, status: "open" as const } : c)
     );
     fetchConversations();
   }, [currentUserId, conversations, fetchConversations]);
 
-  const resolveConversation = useCallback(async (jid: string) => {
-    const { error } = await supabase
+  const resolveConversation = useCallback(async (compositeId: string) => {
+    const chatId = compositeId.includes("::") ? compositeId.split("::").slice(1).join("::") : compositeId;
+    const conv = conversations.find((c) => c.id === compositeId);
+    const instanceName = conv?.instanceName || (compositeId.includes("::") ? compositeId.split("::")[0] : "");
+
+    let query = supabase
       .from("whatsapp_leads")
       .update({ lead_status: "resolved", is_ticket_open: false })
-      .eq("chat_id", jid);
+      .eq("chat_id", chatId);
+    if (instanceName) query = query.eq("instance_name", instanceName);
+
+    const { error } = await query;
 
     if (error) toast.error(`Erro ao finalizar: ${error.message}`);
     else toast.success("Atendimento finalizado");
