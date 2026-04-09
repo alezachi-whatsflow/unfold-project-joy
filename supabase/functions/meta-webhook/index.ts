@@ -86,7 +86,7 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
       // Resolve integration
       const { data: integration } = await client
         .from("channel_integrations")
-        .select("id, tenant_id, name, waba_id")
+        .select("id, tenant_id, name, waba_id, access_token")
         .eq("phone_number_id", phoneNumberId)
         .eq("status", "active")
         .maybeSingle();
@@ -125,7 +125,15 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
             : new Date().toISOString();
 
           // Extract content based on type
-          const { body, mediaUrl, type, caption } = extractCloudMessageContent(msg);
+          const extracted = extractCloudMessageContent(msg);
+          const { body, type, caption, ext, mime } = extracted;
+          let { mediaId } = extracted;
+
+          // Resolve media: download from Meta CDN → upload to our storage
+          let mediaUrl: string | null = null;
+          if (mediaId && integration.access_token) {
+            mediaUrl = await resolveCloudMedia(mediaId, integration.access_token, client, ext, mime);
+          }
 
           console.log(`[meta-webhook] WhatsApp Cloud msg: ${fromNumber} (${senderName}) → ${msg.type}: ${(body || "").substring(0, 50)}`);
 
@@ -343,30 +351,83 @@ async function handlePageMessaging(
   }
 }
 
+// ─── Resolve Media: download from Meta CDN → upload to our storage ──────────
+async function resolveCloudMedia(
+  mediaId: string,
+  accessToken: string,
+  client: ReturnType<typeof createClient>,
+  ext: string,
+  mime: string,
+): Promise<string | null> {
+  try {
+    // 1. Get download URL from Meta
+    const metaRes = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const metaData = await metaRes.json();
+    const downloadUrl = metaData?.url;
+    if (!downloadUrl) {
+      console.warn(`[meta-webhook] No download URL for media ${mediaId}`);
+      return `cloud_media:${mediaId}`;
+    }
+
+    // 2. Download the media binary
+    const mediaRes = await fetch(downloadUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!mediaRes.ok) {
+      console.warn(`[meta-webhook] Media download failed: ${mediaRes.status}`);
+      return `cloud_media:${mediaId}`;
+    }
+    const mediaBytes = new Uint8Array(await mediaRes.arrayBuffer());
+
+    // 3. Upload to our Supabase storage
+    const fileName = `cloud_${mediaId}_${Date.now()}.${ext}`;
+    const { error: uploadErr } = await client.storage
+      .from("chat-attachments")
+      .upload(fileName, mediaBytes, { contentType: mime, upsert: false });
+
+    if (uploadErr) {
+      console.warn(`[meta-webhook] Storage upload failed: ${uploadErr.message}`);
+      return `cloud_media:${mediaId}`;
+    }
+
+    const { data: urlData } = client.storage.from("chat-attachments").getPublicUrl(fileName);
+    console.log(`[meta-webhook] Media resolved: ${mediaId} → ${urlData?.publicUrl?.substring(0, 80)}...`);
+    return urlData?.publicUrl || `cloud_media:${mediaId}`;
+  } catch (err: any) {
+    console.error(`[meta-webhook] resolveCloudMedia error: ${err.message}`);
+    return `cloud_media:${mediaId}`;
+  }
+}
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function extractCloudMessageContent(msg: any): {
   body: string | null;
+  mediaId: string | null;
   mediaUrl: string | null;
   type: string;
   caption: string | null;
+  ext: string;
+  mime: string;
 } {
   switch (msg.type) {
     case "text":
-      return { body: msg.text?.body || "", mediaUrl: null, type: "text", caption: null };
+      return { body: msg.text?.body || "", mediaId: null, mediaUrl: null, type: "text", caption: null, ext: "", mime: "" };
     case "image":
-      return { body: null, mediaUrl: msg.image?.id ? `cloud_media:${msg.image.id}` : null, type: "image", caption: msg.image?.caption || null };
+      return { body: null, mediaId: msg.image?.id || null, mediaUrl: null, type: "image", caption: msg.image?.caption || null, ext: "jpg", mime: msg.image?.mime_type || "image/jpeg" };
     case "video":
-      return { body: null, mediaUrl: msg.video?.id ? `cloud_media:${msg.video.id}` : null, type: "video", caption: msg.video?.caption || null };
+      return { body: null, mediaId: msg.video?.id || null, mediaUrl: null, type: "video", caption: msg.video?.caption || null, ext: "mp4", mime: msg.video?.mime_type || "video/mp4" };
     case "audio":
-      return { body: null, mediaUrl: msg.audio?.id ? `cloud_media:${msg.audio.id}` : null, type: "audio", caption: null };
+      return { body: null, mediaId: msg.audio?.id || null, mediaUrl: null, type: "audio", caption: null, ext: "ogg", mime: msg.audio?.mime_type || "audio/ogg" };
     case "document":
-      return { body: msg.document?.filename || null, mediaUrl: msg.document?.id ? `cloud_media:${msg.document.id}` : null, type: "document", caption: msg.document?.caption || null };
+      return { body: msg.document?.filename || null, mediaId: msg.document?.id || null, mediaUrl: null, type: "document", caption: msg.document?.caption || null, ext: msg.document?.filename?.split(".").pop() || "pdf", mime: msg.document?.mime_type || "application/pdf" };
     case "sticker":
-      return { body: null, mediaUrl: msg.sticker?.id ? `cloud_media:${msg.sticker.id}` : null, type: "sticker", caption: null };
+      return { body: null, mediaId: msg.sticker?.id || null, mediaUrl: null, type: "sticker", caption: null, ext: "webp", mime: "image/webp" };
     case "location":
-      return { body: `${msg.location?.latitude},${msg.location?.longitude}`, mediaUrl: null, type: "location", caption: msg.location?.name || null };
+      return { body: `${msg.location?.latitude},${msg.location?.longitude}`, mediaId: null, mediaUrl: null, type: "location", caption: msg.location?.name || null, ext: "", mime: "" };
     case "contacts":
-      return { body: JSON.stringify(msg.contacts), mediaUrl: null, type: "contact", caption: null };
+      return { body: JSON.stringify(msg.contacts), mediaId: null, mediaUrl: null, type: "contact", caption: null, ext: "", mime: "" };
     case "reaction":
       return { body: msg.reaction?.emoji || "", mediaUrl: null, type: "reaction", caption: null };
     default:
