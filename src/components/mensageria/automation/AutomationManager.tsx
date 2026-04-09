@@ -19,7 +19,11 @@ interface Trigger {
   trigger_type: string;
   trigger_value: string;
   action_type: string;
-  action_config: any;
+  action_config: {
+    reply_text?: string;
+    webhook_url?: string;
+    tag_name?: string;
+  };
   is_active: boolean;
   priority: number;
   typebot_id: string | null;
@@ -56,6 +60,26 @@ export default function AutomationManager() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Trigger | null>(null);
   const [form, setForm] = useState({ ...defaultForm });
+
+  const authorizeTypebotMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("typebot-authorize", {
+        body: { tenant_id: tenantId },
+      });
+      if (error) throw error;
+      if (!data || data.status !== "success" || !data.redirect_url) {
+        throw new Error(data?.message || "Não foi possível autorizar o acesso ao Typebot");
+      }
+      return data as { redirect_url: string; message?: string };
+    },
+    onSuccess: (data) => {
+      window.open(data.redirect_url, "_blank", "noopener,noreferrer");
+      toast.success(data.message || "Typebot aberto em uma nova aba");
+    },
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Tente novamente. Se persistir, contate o suporte.");
+    },
+  });
 
   const { data: triggers = [] } = useQuery({
     queryKey: ["automation-triggers", tenantId],
@@ -94,7 +118,7 @@ export default function AutomationManager() {
       setForm({ ...defaultForm });
       toast.success(editing ? "Automacao atualizada" : "Automacao criada");
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : "Erro ao salvar automação"),
   });
 
   const toggleMutation = useMutation({
@@ -143,7 +167,19 @@ export default function AutomationManager() {
             Gatilhos por palavra-chave com acoes automaticas e integracao Typebot. {triggers.filter((t) => t.is_active).length} ativas.
           </p>
         </div>
-        <Button onClick={openNew} size="sm" className="gap-1"><Plus size={14} /> Nova Automacao</Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => authorizeTypebotMutation.mutate()}
+            disabled={authorizeTypebotMutation.isPending}
+            size="sm"
+            className="gap-1"
+          >
+            <Bot size={14} />
+            {authorizeTypebotMutation.isPending ? "Abrindo..." : "Fluxo Typebot"}
+          </Button>
+          <Button onClick={openNew} size="sm" className="gap-1"><Plus size={14} /> Nova Automacao</Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-2">
