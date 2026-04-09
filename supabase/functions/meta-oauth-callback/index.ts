@@ -346,6 +346,22 @@ Deno.serve(async (req) => {
       return popupResponse({ success: false, message: insertErr.message });
     }
 
+    // 5b. Create virtual instance in whatsapp_instances for RLS compatibility
+    if (provider === "WABA" && integrationData.phone_number_id) {
+      const virtualInstanceName = `cloud_api_${integrationData.phone_number_id}`;
+      await adminClient.from("whatsapp_instances").upsert({
+        instance_name: virtualInstanceName,
+        session_id: virtualInstanceName,
+        tenant_id,
+        status: "connected",
+        provedor: "cloud_api",
+        label: integrationData.name || "WhatsApp Cloud API",
+      }, { onConflict: "session_id" }).then(({ error: instErr }) => {
+        if (instErr) console.warn("[meta-oauth-callback] Virtual instance upsert:", instErr.message);
+        else console.log(`[meta-oauth-callback] Virtual instance created: ${virtualInstanceName}`);
+      });
+    }
+
     console.log(`[meta-oauth-callback] ${provider} integration created for tenant ${tenant_id}`);
     const details = provider === "WABA"
       ? {
