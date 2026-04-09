@@ -176,7 +176,13 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
       streamRef.current = stream;
       audioChunksRef.current = [];
 
-      const recorder = new MediaRecorder(stream);
+      // Prefer OGG/opus (Meta Cloud API compatible), fallback to webm
+      const mimeType = MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")
+        ? "audio/ogg;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm";
+      const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -209,7 +215,8 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
     return new Promise<Blob>((resolve) => {
       recorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const recMime = recorder.mimeType || "audio/ogg";
+        const blob = new Blob(audioChunksRef.current, { type: recMime });
         resolve(blob);
       };
       recorder.stop();
@@ -243,7 +250,8 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         return;
       }
 
-      const file = new File([blob], `audio_${Date.now()}.webm`, { type: "audio/webm" });
+      const ext = blob.type.includes("ogg") ? "ogg" : "webm";
+      const file = new File([blob], `audio_${Date.now()}.${ext}`, { type: blob.type });
       const url = await uploadFileAndGetUrl(file);
 
       await onSendAttachment({

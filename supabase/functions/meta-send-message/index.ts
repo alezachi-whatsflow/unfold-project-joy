@@ -68,37 +68,54 @@ Deno.serve(async (req) => {
         components: template.components || [],
       };
     } else if (type === "audio" && media_url) {
-      // Audio requires upload to Media API first (Meta doesn't support webm via link)
+      // Audio: download from storage, upload to Meta Media API, send with media ID
       msgType = "audio";
       msgBody = "[Áudio]";
       try {
-        // Download audio from our storage
         const audioRes = await fetch(media_url);
-        const audioBlob = await audioRes.blob();
-        // Upload to Meta Media API
-        const formData = new FormData();
-        formData.append("messaging_product", "whatsapp");
-        formData.append("type", audioBlob.type || "audio/ogg");
-        formData.append("file", audioBlob, "audio.ogg");
+        const audioBytes = new Uint8Array(await audioRes.arrayBuffer());
+        const contentType = audioRes.headers.get("content-type") || "audio/ogg";
+
+        // Build multipart body manually (Deno doesn't support FormData with binary well)
+        const boundary = "----WFBoundary" + Date.now();
+        const enc = new TextEncoder();
+        const parts: Uint8Array[] = [];
+        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="messaging_product"\r\n\r\nwhatsapp\r\n`));
+        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="type"\r\n\r\n${contentType}\r\n`));
+        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.ogg"\r\nContent-Type: ${contentType}\r\n\r\n`));
+        parts.push(audioBytes);
+        parts.push(enc.encode(`\r\n--${boundary}--\r\n`));
+
+        let totalLen = 0;
+        for (const p of parts) totalLen += p.length;
+        const bodyBytes = new Uint8Array(totalLen);
+        let off = 0;
+        for (const p of parts) { bodyBytes.set(p, off); off += p.length; }
+
         const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${phone_number_id}/media`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${integration.access_token}` },
-          body: formData,
+          headers: {
+            Authorization: `Bearer ${integration.access_token}`,
+            "Content-Type": `multipart/form-data; boundary=${boundary}`,
+          },
+          body: bodyBytes,
         });
         const uploadResult = await uploadRes.json();
-        if (!uploadRes.ok || !uploadResult.id) {
-          console.error("[meta-send-message] Media upload failed:", JSON.stringify(uploadResult));
-          throw new Error(uploadResult.error?.message || "Falha no upload do áudio");
+
+        if (uploadRes.ok && uploadResult.id) {
+          messageBody.type = "audio";
+          messageBody.audio = { id: uploadResult.id };
+          console.log(`[meta-send-message] Audio uploaded as media: ${uploadResult.id}`);
+        } else {
+          console.error("[meta-send-message] Audio upload failed:", JSON.stringify(uploadResult));
+          // Fallback: send via link
+          messageBody.type = "audio";
+          messageBody.audio = { link: media_url };
         }
+      } catch (err: any) {
+        console.error("[meta-send-message] Audio error:", err.message);
         messageBody.type = "audio";
-        messageBody.audio = { id: uploadResult.id };
-        console.log(`[meta-send-message] Audio uploaded: ${uploadResult.id}`);
-      } catch (uploadErr: any) {
-        console.error("[meta-send-message] Audio upload error:", uploadErr.message);
-        // Fallback: try sending as document
-        messageBody.type = "document";
-        messageBody.document = { link: media_url, filename: "audio.webm" };
-        msgType = "document";
+        messageBody.audio = { link: media_url };
       }
     } else if (type && media_url && ["image", "video", "document"].includes(type)) {
       msgType = type;
