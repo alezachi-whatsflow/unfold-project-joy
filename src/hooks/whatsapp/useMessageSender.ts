@@ -139,10 +139,10 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       }
     }
 
-    // Refresh conversation list only (last message preview)
-    // Polling/realtime will sync the sent message — no fetchMessages here to avoid reorder flicker
     fetchConversations();
-  }, [selectedJidRef, conversations, fetchConversations]);
+    // Server-side sends save the message in the edge function — refresh chat to show it
+    if (compositeId) setTimeout(() => fetchMessages(compositeId, true), 600);
+  }, [selectedJidRef, conversations, fetchConversations, fetchMessages]);
 
   /* ── send attachment ── */
   const handleSendAttachment = useCallback(async (payload: AttachmentPayload) => {
@@ -229,10 +229,9 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       }
     }
 
-    // Refresh conversation list only (last message preview)
-    // Polling/realtime will sync the sent message — no fetchMessages here to avoid reorder flicker
     fetchConversations();
-  }, [selectedJidRef, conversations, fetchConversations]);
+    if (compositeId) setTimeout(() => fetchMessages(compositeId, true), 600);
+  }, [selectedJidRef, conversations, fetchConversations, fetchMessages]);
 
   return { handleSend, handleSendAttachment };
 }
