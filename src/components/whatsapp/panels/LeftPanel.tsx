@@ -9,6 +9,7 @@ import FilterTabs from "../left/FilterTabs";
 import ConversationItem from "../left/ConversationItem";
 import NewConversationDialog from "../left/NewConversationDialog";
 import type { Conversation } from "@/data/mockConversations";
+import type { ChannelType } from "@/components/ui/ChannelIcon";
 
 interface LeftPanelProps {
   conversations: Conversation[];
@@ -32,6 +33,7 @@ export default function LeftPanel({
 }: LeftPanelProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(initialFilter || "inbox");
+  const [channelFilter, setChannelFilter] = useState<ChannelType | null>(null);
   // Deep search: message content matches from DB (jid → snippet)
   const [deepSearchSnippets, setDeepSearchSnippets] = useState<Map<string, string>>(new Map());
   const deepSearchAbortRef = useRef<AbortController | null>(null);
@@ -130,8 +132,10 @@ export default function LeftPanel({
     if (filter === "groups_resolved") list = list.filter((c) => c.isGroup && c.status === "resolved");
     // Resolved (1:1 only)
     if (filter === "resolved") list = list.filter((c) => !c.isGroup && c.status === "resolved");
+    // Channel filter (WA Web, Cloud API, IG, etc.)
+    if (channelFilter) list = list.filter((c) => c.channel === channelFilter);
     return list;
-  }, [conversations, search, filter, deepSearchSnippets]);
+  }, [conversations, search, filter, deepSearchSnippets, channelFilter]);
 
   const inboxCount = conversations.filter((c) => !c.isGroup && !!c.assignedTo && c.status !== "resolved").length;
   const queueCount = conversations.filter((c) => !c.isGroup && !c.assignedTo && c.status !== "resolved").length;
@@ -157,7 +161,7 @@ export default function LeftPanel({
 
       <SearchBar value={search} onChange={setSearch} />
 
-      <ChannelLegend />
+      <ChannelLegend activeChannel={channelFilter} onChannelFilter={setChannelFilter} />
 
       <FilterTabs
         active={filter}

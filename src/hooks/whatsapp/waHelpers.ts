@@ -77,6 +77,7 @@ export function extractDownloadUrl(payload: any): string | null {
 }
 
 export function detectChannel(instanceName: string): ChannelType {
+  if (instanceName?.startsWith("cloud_api_")) return "whatsapp_meta";
   if (instanceName?.startsWith("meta:")) return "whatsapp_meta";
   if (instanceName?.startsWith("messenger:") || instanceName?.startsWith("messenger_")) return "facebook";
   if (instanceName?.startsWith("instagram:") || instanceName?.startsWith("instagram_")) return "instagram";
