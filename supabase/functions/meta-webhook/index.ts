@@ -394,9 +394,11 @@ async function resolveCloudMedia(
       return `cloud_media:${mediaId}`;
     }
 
-    const { data: urlData } = client.storage.from("chat-attachments").getPublicUrl(fileName);
-    console.log(`[meta-webhook] Media resolved: ${mediaId} → ${urlData?.publicUrl?.substring(0, 80)}...`);
-    return urlData?.publicUrl || `cloud_media:${mediaId}`;
+    // Use public URL (SUPABASE_URL is internal http://kong:8000, need external)
+    const publicBase = Deno.env.get("SUPABASE_PUBLIC_URL") || Deno.env.get("API_EXTERNAL_URL") || "https://supabase.whatsflow.com.br";
+    const publicUrl = `${publicBase.replace(/\/$/, "")}/storage/v1/object/public/chat-attachments/${fileName}`;
+    console.log(`[meta-webhook] Media resolved: ${mediaId} → ${publicUrl.substring(0, 80)}...`);
+    return publicUrl;
   } catch (err: any) {
     console.error(`[meta-webhook] resolveCloudMedia error: ${err.message}`);
     return `cloud_media:${mediaId}`;
