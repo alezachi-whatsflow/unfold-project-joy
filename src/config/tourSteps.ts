@@ -233,31 +233,6 @@ export const TOUR_CONFIGS: Record<string, TourConfig> = {
     ],
   },
 
-  configurar_playbooks: {
-    stepKey: "configurar_playbooks",
-    route: "/intelligence",
-    title: "Playbooks de I.A.",
-    icon: "🤖",
-    steps: [
-      {
-        title: "Funcionarios Autonomos",
-        description: "Playbooks sao agentes de IA que conversam com seus leads no WhatsApp, coletam dados e salvam no CRM automaticamente.",
-      },
-      {
-        title: "4 Playbooks Nativos",
-        description: "Voce ja tem 4 playbooks pre-configurados: Qualificacao, Diagnostico, Follow-Up e Pos-Venda. Ative-os para comecar.",
-      },
-      {
-        title: "Campos de Extracao",
-        description: "Cada playbook define os campos que a IA deve coletar (orcamento, prazo, equipe). Os dados vao direto para o CRM.",
-      },
-      {
-        title: "Escalonamento Inteligente",
-        description: "Se o cliente ficar irritado ou pedir humano, a IA para e escala para um atendente. Configure as palavras-chave de gatilho.",
-      },
-    ],
-  },
-
   configurar_assistente: {
     stepKey: "configurar_assistente",
     route: "/intelligence",
@@ -283,24 +258,4 @@ export const TOUR_CONFIGS: Record<string, TourConfig> = {
     ],
   },
 
-  configurar_suporte: {
-    stepKey: "configurar_suporte",
-    route: "/suporte",
-    title: "Central de Suporte",
-    icon: "🎫",
-    steps: [
-      {
-        title: "Tickets de Suporte",
-        description: "Crie tickets, converse com a equipe (notas internas) e responda clientes em um so lugar.",
-      },
-      {
-        title: "Chat Dual",
-        description: "Cada ticket tem dois modos: Resposta ao Cliente (fundo branco) e Nota Interna (fundo amarelo, visivel so para equipe).",
-      },
-      {
-        title: "Vincule ao CRM",
-        description: "Crie tickets diretamente de um negocio no pipeline ou de uma conversa no WhatsApp. O ticket fica vinculado automaticamente.",
-      },
-    ],
-  },
 };
