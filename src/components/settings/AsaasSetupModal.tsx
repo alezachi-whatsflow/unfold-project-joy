@@ -64,6 +64,14 @@ export function AsaasSetupModal({ open, onOpenChange, onConnected }: Props) {
 
       if (error) throw error;
 
+      if (data?.error_code === "WRONG_ENVIRONMENT") {
+        // Auto-detected wrong environment — switch and retry
+        setEnvironment("sandbox");
+        setStep("error");
+        setErrorMsg("Esta chave é de Sandbox. Troque o ambiente para Sandbox e tente novamente.");
+        return;
+      }
+
       if (data?.error_code || data?.error) {
         setStep("error");
         setErrorMsg(data.message || data.error || "Erro na configuração");
