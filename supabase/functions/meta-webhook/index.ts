@@ -382,10 +382,12 @@ async function resolveCloudMedia(
     const mediaBytes = new Uint8Array(await mediaRes.arrayBuffer());
 
     // 3. Upload to our Supabase storage
+    // Strip codec params from mime (Supabase rejects "audio/ogg; codecs=opus")
+    const cleanMime = mime.split(";")[0].trim();
     const fileName = `cloud_${mediaId}_${Date.now()}.${ext}`;
     const { error: uploadErr } = await client.storage
       .from("chat-attachments")
-      .upload(fileName, mediaBytes, { contentType: mime, upsert: false });
+      .upload(fileName, mediaBytes, { contentType: cleanMime, upsert: false });
 
     if (uploadErr) {
       console.warn(`[meta-webhook] Storage upload failed: ${uploadErr.message}`);
