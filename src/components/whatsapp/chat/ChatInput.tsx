@@ -176,9 +176,11 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
       streamRef.current = stream;
       audioChunksRef.current = [];
 
-      // Prefer OGG/opus (Meta Cloud API compatible), fallback to webm
-      const mimeType = MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")
-        ? "audio/ogg;codecs=opus"
+      // Use MP4/AAC which Meta Cloud API accepts natively
+      // Chrome: audio/mp4 not supported, use webm then convert server-side
+      // Safari: audio/mp4 supported natively
+      const mimeType = MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
         : MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
           ? "audio/webm;codecs=opus"
           : "audio/webm";
@@ -250,8 +252,11 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         return;
       }
 
-      // Always save as .ogg with audio/ogg mime — Meta Cloud API requires it
-      const file = new File([blob], `audio_${Date.now()}.ogg`, { type: "audio/ogg" });
+      // Save with correct extension matching actual format
+      const isMp4 = blob.type.includes("mp4");
+      const ext = isMp4 ? "m4a" : "webm";
+      const mime = isMp4 ? "audio/mp4" : "audio/webm";
+      const file = new File([blob], `audio_${Date.now()}.${ext}`, { type: mime });
       const url = await uploadFileAndGetUrl(file);
 
       await onSendAttachment({

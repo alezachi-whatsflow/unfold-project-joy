@@ -68,9 +68,10 @@ Deno.serve(async (req) => {
         components: template.components || [],
       };
     } else if (type === "audio" && media_url) {
-      // Send audio via direct public link — simplest and most reliable method
       msgType = "audio";
       msgBody = "[Áudio]";
+      // Send as audio via link. If the file is WebM (Chrome), Meta may reject silently.
+      // In that case, resend as document which WhatsApp renders as playable audio.
       messageBody.type = "audio";
       messageBody.audio = { link: media_url };
     } else if (type && media_url && ["image", "video", "document"].includes(type)) {
