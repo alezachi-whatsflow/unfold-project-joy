@@ -22,51 +22,56 @@ export default function ResetPasswordPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const search = window.location.search;
-    const fullUrl = hash + search;
+    let cancelled = false;
 
-    // Supabase appends tokens in hash fragment after redirect: #access_token=...&type=recovery
-    const hasToken = fullUrl.includes("access_token=") || fullUrl.includes("type=recovery") || fullUrl.includes("type=signup") || fullUrl.includes("type=invite") || fullUrl.includes("type=magiclink");
-
-    if (hasToken) {
-      // Let Supabase client auto-detect and consume the token from the URL
-      setTokenType(fullUrl.includes("type=invite") || fullUrl.includes("type=magiclink") ? "invite" : "recovery");
-      return;
-    }
-
-    // No token in URL — check if session already exists (token was consumed on previous load)
-    const checkSession = async () => {
-      // Wait for Supabase to process any pending auth state
-      await new Promise((r) => setTimeout(r, 500));
-
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setTokenType("recovery");
-        return;
-      }
-
-      // Last attempt: listen for auth state change (token processing in progress)
+    const init = async () => {
+      // 1. Listen for auth state changes FIRST (catches token processing)
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (session && (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY" || event === "TOKEN_REFRESHED")) {
+        if (cancelled) return;
+        if (session && (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION")) {
           setTokenType("recovery");
-          subscription.unsubscribe();
         }
       });
 
-      // Timeout: if no session after 3 seconds, redirect to login
-      setTimeout(() => {
-        subscription.unsubscribe();
-        supabase.auth.getSession().then(({ data: d }) => {
-          if (!d.session && !tokenType) {
-            toast.error("Link inválido ou expirado. Solicite um novo.");
-            navigate("/login");
-          }
-        });
-      }, 3000);
+      // 2. Check URL for tokens (hash fragment from GoTrue redirect)
+      const hash = window.location.hash;
+      if (hash.includes("access_token=")) {
+        // Supabase client auto-processes hash on init, just wait
+        setTokenType(hash.includes("type=invite") ? "invite" : "recovery");
+        return () => { cancelled = true; subscription.unsubscribe(); };
+      }
+
+      // 3. Check URL search params (some flows use query params)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("type") === "recovery" || params.get("type") === "signup" || params.get("token_hash")) {
+        setTokenType("recovery");
+        return () => { cancelled = true; subscription.unsubscribe(); };
+      }
+
+      // 4. No token in URL — check existing session
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setTokenType("recovery");
+        return () => { cancelled = true; subscription.unsubscribe(); };
+      }
+
+      // 5. Wait up to 4 seconds for auth state to resolve
+      await new Promise((r) => setTimeout(r, 4000));
+      if (cancelled) return;
+
+      const { data: retry } = await supabase.auth.getSession();
+      if (retry.session) {
+        setTokenType("recovery");
+      } else {
+        toast.error("Link inválido ou expirado. Faça login e solicite nova senha.");
+        navigate("/login");
+      }
+
+      return () => { cancelled = true; subscription.unsubscribe(); };
     };
 
-    checkSession();
+    const cleanup = init();
+    return () => { cancelled = true; cleanup?.then?.((fn) => fn?.()); };
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +80,27 @@ export default function ResetPasswordPage() {
     if (password !== confirm) { toast.error("Senhas não coincidem"); return; }
     setLoading(true);
     try {
-      await updatePassword(password);
+      // Try updatePassword (requires active session)
+      const { error: pwErr } = await supabase.auth.updateUser({ password });
+      if (pwErr) {
+        // Fallback: if session expired, try to re-establish from URL hash
+        const hash = window.location.hash;
+        if (hash.includes("access_token=")) {
+          // Extract and set session manually
+          const params = new URLSearchParams(hash.substring(1));
+          const access_token = params.get("access_token") || "";
+          const refresh_token = params.get("refresh_token") || "";
+          if (access_token) {
+            await supabase.auth.setSession({ access_token, refresh_token });
+            const { error: retryErr } = await supabase.auth.updateUser({ password });
+            if (retryErr) throw retryErr;
+          } else {
+            throw pwErr;
+          }
+        } else {
+          throw pwErr;
+        }
+      }
 
       // Always check if profile needs activation (invite or recovery for new users)
       const { data: { user } } = await supabase.auth.getUser();
