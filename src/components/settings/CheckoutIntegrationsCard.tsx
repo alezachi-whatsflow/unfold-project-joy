@@ -239,12 +239,10 @@ function ProviderCard({
                 <ExternalLink className="h-3 w-3 mr-1" />Docs
               </a>
             </Button>
-            {!isAsaasActive && (
-              <Button size="sm" className="h-7 text-xs" onClick={onConfigure}>
-                <Settings className="h-3 w-3 mr-1" />
-                {isConnected ? "Editar" : "Conectar"}
-              </Button>
-            )}
+            <Button size="sm" className="h-7 text-xs" onClick={onConfigure}>
+              <Settings className="h-3 w-3 mr-1" />
+              {isAsaasActive || isConnected ? "Editar" : "Conectar"}
+            </Button>
           </div>
         </div>
       </CardContent>
