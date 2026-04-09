@@ -67,12 +67,45 @@ Deno.serve(async (req) => {
         language: { code: template.language || "pt_BR" },
         components: template.components || [],
       };
-    } else if (type && media_url && ["image", "video", "audio", "document"].includes(type)) {
+    } else if (type === "audio" && media_url) {
+      // Audio requires upload to Media API first (Meta doesn't support webm via link)
+      msgType = "audio";
+      msgBody = "[Áudio]";
+      try {
+        // Download audio from our storage
+        const audioRes = await fetch(media_url);
+        const audioBlob = await audioRes.blob();
+        // Upload to Meta Media API
+        const formData = new FormData();
+        formData.append("messaging_product", "whatsapp");
+        formData.append("type", audioBlob.type || "audio/ogg");
+        formData.append("file", audioBlob, "audio.ogg");
+        const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${phone_number_id}/media`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${integration.access_token}` },
+          body: formData,
+        });
+        const uploadResult = await uploadRes.json();
+        if (!uploadRes.ok || !uploadResult.id) {
+          console.error("[meta-send-message] Media upload failed:", JSON.stringify(uploadResult));
+          throw new Error(uploadResult.error?.message || "Falha no upload do áudio");
+        }
+        messageBody.type = "audio";
+        messageBody.audio = { id: uploadResult.id };
+        console.log(`[meta-send-message] Audio uploaded: ${uploadResult.id}`);
+      } catch (uploadErr: any) {
+        console.error("[meta-send-message] Audio upload error:", uploadErr.message);
+        // Fallback: try sending as document
+        messageBody.type = "document";
+        messageBody.document = { link: media_url, filename: "audio.webm" };
+        msgType = "document";
+      }
+    } else if (type && media_url && ["image", "video", "document"].includes(type)) {
       msgType = type;
       msgBody = caption || `[${type}]`;
       messageBody.type = type;
       messageBody[type] = { link: media_url };
-      if (caption && type !== "audio") messageBody[type].caption = caption;
+      if (caption) messageBody[type].caption = caption;
     } else if (text) {
       msgType = "text";
       msgBody = text;
