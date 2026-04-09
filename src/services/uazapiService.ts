@@ -1,43 +1,8 @@
 /**
- * Direct uazapi API calls from frontend.
- * Fetches instance token from DB, calls uazapi API directly.
+ * uazapi API calls via Supabase Edge Function proxy.
+ * All calls go through uazapi-proxy — no direct browser-to-uazapi fetch.
  */
 import { supabase } from "@/integrations/supabase/client";
-
-const UAZAPI_BASE_URL = "https://whatsflow.uazapi.com";
-
-interface InstanceInfo {
-  instance_name: string;
-  instance_token: string;
-  server_url: string | null;
-}
-
-let _instanceCache: Record<string, { info: InstanceInfo; ts: number }> = {};
-const CACHE_TTL = 5 * 60 * 1000;
-
-async function getInstanceInfo(instanceName: string): Promise<InstanceInfo> {
-  const cached = _instanceCache[instanceName];
-  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.info;
-
-  const { data, error } = await (supabase as any)
-    .from("whatsapp_instances")
-    .select("instance_name, instance_token, server_url")
-    .eq("instance_name", instanceName)
-    .maybeSingle();
-
-  if (error || !data?.instance_token) {
-    throw new Error(`Instancia "${instanceName}" nao encontrada ou sem token.`);
-  }
-
-  const info: InstanceInfo = {
-    instance_name: data.instance_name,
-    instance_token: data.instance_token,
-    server_url: data.server_url,
-  };
-
-  _instanceCache[instanceName] = { info, ts: Date.now() };
-  return info;
-}
 
 export async function callUazapi(
   instanceName: string,
@@ -45,37 +10,31 @@ export async function callUazapi(
   method: string = "POST",
   body?: Record<string, any>,
 ): Promise<any> {
-  const inst = await getInstanceInfo(instanceName);
-  const baseUrl = inst.server_url || UAZAPI_BASE_URL;
-  const url = `${baseUrl}${path}`;
-
-  // Log payload for debugging replies
   if (body?.replyid) {
     console.log(`[uazapi] REPLY SEND → number: ${body.number}, replyid: ${body.replyid}, text: ${body.text?.substring(0, 50)}`);
   }
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    token: inst.instance_token,
-  };
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: method !== "GET" ? JSON.stringify(body || {}) : undefined,
+  const resp = await supabase.functions.invoke("uazapi-proxy", {
+    body: { path, method, body, instanceName },
   });
 
-  const data = await res.json().catch(() => ({}));
+  if (resp.error) {
+    console.error(`[uazapi] proxy error:`, resp.error);
+    throw new Error(resp.error.message || `uazapi proxy error`);
+  }
 
-  if (!res.ok) {
-    console.error(`[uazapi] ${method} ${path} failed:`, res.status, data);
-    throw new Error(data?.error || data?.message || `uazapi error ${res.status}`);
+  const envelope = resp.data;
+  const data = envelope?.data ?? envelope;
+
+  if (envelope && typeof envelope.ok !== "undefined" && !envelope.ok) {
+    console.error(`[uazapi] ${method} ${path} upstream ${envelope.upstream_status}:`, data);
+    throw new Error(data?.error || data?.message || `uazapi error ${envelope.upstream_status}`);
   }
 
   // Auto-save outgoing message to DB
   if (path.startsWith("/send/") && data) {
     try {
-      await saveOutgoingMessage(inst.instance_name, body, data, path);
+      await saveOutgoingMessage(instanceName, body, data, path);
     } catch (e) {
       console.warn("[uazapi] Failed to save outgoing message:", e);
     }
