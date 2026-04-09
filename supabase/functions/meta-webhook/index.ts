@@ -1,8 +1,11 @@
 /**
  * meta-webhook
- * Unified webhook receiver for WhatsApp and Instagram.
+ * Unified webhook receiver for WhatsApp Cloud API, Instagram and Messenger.
  * GET: Hub verification (challenge response)
  * POST: Incoming messages/events
+ *
+ * WhatsApp messages are saved to whatsapp_messages + whatsapp_leads
+ * (same tables as uazapi-webhook) so they appear in the Inbox.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -22,14 +25,12 @@ Deno.serve(async (req) => {
       return new Response("Bad request", { status: 400 });
     }
 
-    // Check if any integration has this verify token
     const { data: integration } = await adminClient
       .from("channel_integrations")
       .select("id, provider")
       .eq("webhook_verify_token", token)
       .maybeSingle();
 
-    // Also check global fallback token
     const globalToken = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") || "";
 
     if (integration || token === globalToken) {
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
   if (req.method === "POST") {
     try {
       const payload = await req.json();
-      const object = payload.object; // "whatsapp_business_account" or "instagram" or "page"
+      const object = payload.object;
 
       console.log(`[meta-webhook] Received ${object} event`);
 
@@ -62,7 +63,6 @@ Deno.serve(async (req) => {
       return new Response("OK", { status: 200 });
     } catch (e: any) {
       console.error("[meta-webhook] POST error:", e);
-      // Always return 200 to prevent Meta from retrying
       return new Response("OK", { status: 200 });
     }
   }
@@ -70,7 +70,9 @@ Deno.serve(async (req) => {
   return new Response("Method not allowed", { status: 405 });
 });
 
-// ─── WHATSAPP WEBHOOK HANDLER ────────────────────────────────────────────────
+// ─── WHATSAPP CLOUD API WEBHOOK HANDLER ─────────────────────────────────────
+// Saves messages to whatsapp_messages + whatsapp_leads (same as uazapi-webhook)
+// so they appear in the Inbox/Queue correctly.
 async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, payload: any) {
   for (const entry of payload.entry || []) {
     for (const change of entry.changes || []) {
@@ -78,12 +80,13 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
       if (!value) continue;
 
       const phoneNumberId = value.metadata?.phone_number_id;
+      const displayPhone = value.metadata?.display_phone_number || "";
       if (!phoneNumberId) continue;
 
-      // Resolve integration by phone_number_id (operational key)
+      // Resolve integration
       const { data: integration } = await client
         .from("channel_integrations")
-        .select("id, tenant_id, name")
+        .select("id, tenant_id, name, waba_id")
         .eq("phone_number_id", phoneNumberId)
         .eq("status", "active")
         .maybeSingle();
@@ -93,36 +96,143 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
         continue;
       }
 
-      // Process messages
+      const tenantId = integration.tenant_id;
+      // Use a virtual instance name for Cloud API to distinguish from uazapi instances
+      const instanceName = `cloud_api_${phoneNumberId}`;
+
+      // ── Contact info from webhook payload ──
+      const contacts = value.contacts || [];
+      const contactMap: Record<string, { name: string; wa_id: string }> = {};
+      for (const c of contacts) {
+        if (c.wa_id) {
+          contactMap[c.wa_id] = {
+            name: c.profile?.name || "",
+            wa_id: c.wa_id,
+          };
+        }
+      }
+
+      // ── Process Messages ──
       if (value.messages) {
         for (const msg of value.messages) {
-          console.log(`[meta-webhook] WhatsApp msg from ${msg.from} → integration ${integration.id}: ${msg.type}`);
+          const fromNumber = msg.from; // sender phone (no @)
+          const remoteJid = `${fromNumber}@s.whatsapp.net`;
+          const contactInfo = contactMap[fromNumber];
+          const senderName = contactInfo?.name || "";
+          const messageId = msg.id || `cloud_${Date.now()}_${fromNumber}`;
+          const timestamp = msg.timestamp
+            ? new Date(parseInt(msg.timestamp) * 1000).toISOString()
+            : new Date().toISOString();
 
-          await client.from("chat_messages").insert({
-            tenant_id: integration.tenant_id,
-            sender_id: msg.from,
-            content: extractMessageContent(msg),
-            content_type: msg.type,
-            message_type: msg.type,
+          // Extract content based on type
+          const { body, mediaUrl, type, caption } = extractCloudMessageContent(msg);
+
+          console.log(`[meta-webhook] WhatsApp Cloud msg: ${fromNumber} (${senderName}) → ${msg.type}: ${(body || "").substring(0, 50)}`);
+
+          // 1. Save to whatsapp_messages (same table as uazapi)
+          const messageData: Record<string, any> = {
+            instance_name: instanceName,
+            remote_jid: remoteJid,
+            message_id: messageId,
             direction: "incoming",
-            timestamp: new Date(parseInt(msg.timestamp) * 1000).toISOString(),
-            wa_message_id: msg.id,
-            metadata: {
-              provider: "WABA",
-              integration_id: integration.id,
+            type,
+            body: body || caption || null,
+            media_url: mediaUrl,
+            caption,
+            sender_name: senderName || null,
+            status: 4, // received
+            tenant_id: tenantId,
+            raw_payload: {
+              ...msg,
+              senderName,
+              provider: "cloud_api",
               phone_number_id: phoneNumberId,
-              raw: msg,
             },
-          }).then(({ error }) => {
-            if (error) console.error("[meta-webhook] Store msg error:", error.message);
+            created_at: timestamp,
+          };
+
+          // Handle quoted messages (replies)
+          if (msg.context?.id) {
+            messageData.quoted_message_id = msg.context.id;
+          }
+
+          const { error: msgErr } = await client
+            .from("whatsapp_messages")
+            .upsert(messageData, { onConflict: "message_id" });
+
+          if (msgErr) {
+            console.error("[meta-webhook] Store msg error:", msgErr.message);
+          }
+
+          // 2. Upsert whatsapp_contacts
+          if (senderName) {
+            await client.from("whatsapp_contacts").upsert({
+              instance_name: instanceName,
+              jid: remoteJid,
+              phone: fromNumber,
+              push_name: senderName,
+              name: senderName,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "jid,instance_name" }).then(({ error }) => {
+              if (error && !error.message?.includes("duplicate"))
+                console.warn("[meta-webhook] Contact upsert error:", error.message);
+            });
+          }
+
+          // 3. Upsert whatsapp_leads (creates the inbox entry)
+          const { data: existingLead } = await client
+            .from("whatsapp_leads")
+            .select("id, assigned_attendant_id, lead_status, is_ticket_open, department_id")
+            .eq("chat_id", remoteJid)
+            .eq("instance_name", instanceName)
+            .maybeSingle();
+
+          const isActiveSession = existingLead?.assigned_attendant_id != null
+            && existingLead?.lead_status !== "resolved";
+          const isReopening = existingLead?.lead_status === "resolved";
+
+          await client.from("whatsapp_leads").upsert({
+            instance_name: instanceName,
+            chat_id: remoteJid,
+            tenant_id: tenantId,
+            lead_name: senderName || fromNumber,
+            lead_full_name: senderName || fromNumber,
+            is_group: false,
+            is_community: false,
+            assigned_attendant_id: isActiveSession
+              ? existingLead.assigned_attendant_id
+              : null,
+            lead_status: isActiveSession
+              ? existingLead.lead_status
+              : isReopening
+                ? "pending"
+                : (existingLead ? existingLead.lead_status : "pending"),
+            is_ticket_open: true,
+            department_id: existingLead?.department_id || null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "instance_name,chat_id" }).then(({ error }) => {
+            if (error) console.error("[meta-webhook] Lead upsert error:", error.message);
           });
         }
       }
 
-      // Process status updates
+      // ── Process Status Updates ──
       if (value.statuses) {
         for (const status of value.statuses) {
-          console.log(`[meta-webhook] WhatsApp status: ${status.id} → ${status.status}`);
+          const statusMap: Record<string, number> = {
+            sent: 1, delivered: 2, read: 3, failed: 0,
+          };
+          const newStatus = statusMap[status.status];
+          if (newStatus !== undefined && status.id) {
+            await client
+              .from("whatsapp_messages")
+              .update({ status: newStatus, updated_at: new Date().toISOString() })
+              .eq("message_id", status.id)
+              .then(({ error }) => {
+                if (error && !error.message?.includes("0 rows"))
+                  console.warn("[meta-webhook] Status update error:", error.message);
+              });
+          }
         }
       }
     }
@@ -130,8 +240,6 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
 }
 
 // ─── INSTAGRAM + MESSENGER WEBHOOK HANDLER ──────────────────────────────────
-// Handles both object="instagram" and object="page" (Messenger)
-// The payload structure is identical — only the provider label differs
 async function handlePageMessaging(
   client: ReturnType<typeof createClient>,
   payload: any,
@@ -142,7 +250,6 @@ async function handlePageMessaging(
   for (const entry of payload.entry || []) {
     const pageId = entry.id;
 
-    // Find integration by facebook_page_id or instagram_business_account_id
     const { data: integration } = await client
       .from("channel_integrations")
       .select("id, tenant_id, name, provider")
@@ -155,63 +262,80 @@ async function handlePageMessaging(
       continue;
     }
 
+    const tenantId = integration.tenant_id;
+    const instanceName = `${channel}_${pageId}`;
+
     for (const messaging of entry.messaging || []) {
-      // Handle incoming messages
       if (messaging.message) {
-        const senderId = messaging.sender?.id; // PSID for Messenger, IGSID for Instagram
-        const recipientId = messaging.recipient?.id; // Page ID
+        const senderId = messaging.sender?.id;
         const text = messaging.message.text || "";
         const attachments = messaging.message.attachments || [];
         const contentType = attachments.length > 0 ? (attachments[0]?.type || "attachment") : "text";
         const mediaUrl = attachments.length > 0 ? (attachments[0]?.payload?.url || null) : null;
+        const messageId = messaging.message.mid || `${channel}_${Date.now()}_${senderId}`;
+        const remoteJid = `${senderId}@${channel}.meta`;
+        const timestamp = new Date(messaging.timestamp * 1000).toISOString();
 
         console.log(`[meta-webhook] ${providerLabel} msg from ${senderId} → integration ${integration.id}`);
 
-        // Upsert conversation
-        const { data: conv } = await client
-          .from("conversations")
-          .upsert({
-            tenant_id: integration.tenant_id,
-            channel,
-            provider: providerLabel,
-            status: "open",
-            last_message_at: new Date(messaging.timestamp * 1000).toISOString(),
-          }, { onConflict: "tenant_id,channel" })
-          .select("id")
-          .maybeSingle();
-
-        // Store message
-        await client.from("chat_messages").insert({
-          tenant_id: integration.tenant_id,
-          conversation_id: conv?.id || null,
-          sender_id: senderId,
-          content: text || (mediaUrl ? `[${contentType}]` : ""),
-          content_type: contentType,
-          message_type: contentType,
-          channel,
+        // Save to whatsapp_messages
+        await client.from("whatsapp_messages").upsert({
+          instance_name: instanceName,
+          remote_jid: remoteJid,
+          message_id: messageId,
           direction: "incoming",
-          timestamp: new Date(messaging.timestamp * 1000).toISOString(),
-          wa_message_id: messaging.message.mid,
+          type: contentType,
+          body: text || (mediaUrl ? `[${contentType}]` : ""),
           media_url: mediaUrl,
-          metadata: {
+          sender_name: null,
+          status: 4,
+          tenant_id: tenantId,
+          raw_payload: {
             provider: providerLabel,
             integration_id: integration.id,
             page_id: pageId,
             sender_psid: senderId,
-            recipient_page_id: recipientId,
             raw: messaging,
           },
-        }).then(({ error }) => {
+          created_at: timestamp,
+        }, { onConflict: "message_id" }).then(({ error }) => {
           if (error) console.error(`[meta-webhook] Store ${channel} msg error:`, error.message);
+        });
+
+        // Upsert lead
+        const { data: existingLead } = await client
+          .from("whatsapp_leads")
+          .select("id, assigned_attendant_id, lead_status, is_ticket_open")
+          .eq("chat_id", remoteJid)
+          .eq("instance_name", instanceName)
+          .maybeSingle();
+
+        const isActiveSession = existingLead?.assigned_attendant_id != null
+          && existingLead?.lead_status !== "resolved";
+        const isReopening = existingLead?.lead_status === "resolved";
+
+        await client.from("whatsapp_leads").upsert({
+          instance_name: instanceName,
+          chat_id: remoteJid,
+          tenant_id: tenantId,
+          lead_name: senderId,
+          is_group: false,
+          is_community: false,
+          assigned_attendant_id: isActiveSession ? existingLead.assigned_attendant_id : null,
+          lead_status: isActiveSession
+            ? existingLead.lead_status
+            : isReopening ? "pending" : (existingLead ? existingLead.lead_status : "pending"),
+          is_ticket_open: true,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "instance_name,chat_id" }).then(({ error }) => {
+          if (error) console.error(`[meta-webhook] ${channel} lead upsert error:`, error.message);
         });
       }
 
-      // Handle message delivery/read receipts
       if (messaging.delivery || messaging.read) {
         console.log(`[meta-webhook] ${providerLabel} status event from ${messaging.sender?.id}`);
       }
 
-      // Handle postbacks (Messenger button clicks)
       if (messaging.postback) {
         console.log(`[meta-webhook] ${providerLabel} postback: ${messaging.postback.payload} from ${messaging.sender?.id}`);
       }
@@ -220,17 +344,32 @@ async function handlePageMessaging(
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
-function extractMessageContent(msg: any): string {
+function extractCloudMessageContent(msg: any): {
+  body: string | null;
+  mediaUrl: string | null;
+  type: string;
+  caption: string | null;
+} {
   switch (msg.type) {
-    case "text": return msg.text?.body || "";
-    case "image": return msg.image?.caption || "[Imagem]";
-    case "video": return msg.video?.caption || "[Vídeo]";
-    case "audio": return "[Áudio]";
-    case "document": return msg.document?.filename || "[Documento]";
-    case "sticker": return "[Sticker]";
-    case "location": return `[Localização: ${msg.location?.latitude}, ${msg.location?.longitude}]`;
-    case "contacts": return "[Contato]";
-    case "reaction": return msg.reaction?.emoji || "[Reação]";
-    default: return `[${msg.type}]`;
+    case "text":
+      return { body: msg.text?.body || "", mediaUrl: null, type: "text", caption: null };
+    case "image":
+      return { body: null, mediaUrl: msg.image?.id ? `cloud_media:${msg.image.id}` : null, type: "image", caption: msg.image?.caption || null };
+    case "video":
+      return { body: null, mediaUrl: msg.video?.id ? `cloud_media:${msg.video.id}` : null, type: "video", caption: msg.video?.caption || null };
+    case "audio":
+      return { body: null, mediaUrl: msg.audio?.id ? `cloud_media:${msg.audio.id}` : null, type: "audio", caption: null };
+    case "document":
+      return { body: msg.document?.filename || null, mediaUrl: msg.document?.id ? `cloud_media:${msg.document.id}` : null, type: "document", caption: msg.document?.caption || null };
+    case "sticker":
+      return { body: null, mediaUrl: msg.sticker?.id ? `cloud_media:${msg.sticker.id}` : null, type: "sticker", caption: null };
+    case "location":
+      return { body: `${msg.location?.latitude},${msg.location?.longitude}`, mediaUrl: null, type: "location", caption: msg.location?.name || null };
+    case "contacts":
+      return { body: JSON.stringify(msg.contacts), mediaUrl: null, type: "contact", caption: null };
+    case "reaction":
+      return { body: msg.reaction?.emoji || "", mediaUrl: null, type: "reaction", caption: null };
+    default:
+      return { body: `[${msg.type}]`, mediaUrl: null, type: msg.type || "unknown", caption: null };
   }
 }
