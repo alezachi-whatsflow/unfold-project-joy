@@ -39,14 +39,20 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
     });
   }, []);
 
-  const isMetaConversation = (n: string) => n?.startsWith("meta:");
-  const isMessengerConversation = (n: string) => n?.startsWith("messenger:");
-  const isInstagramConversation = (n: string) => n?.startsWith("instagram:");
+  const isCloudApiConversation = (n: string) => n?.startsWith("cloud_api_");
+  const isMetaConversation = (n: string) => n?.startsWith("meta:") || isCloudApiConversation(n);
+  const isMessengerConversation = (n: string) => n?.startsWith("messenger:") || n?.startsWith("messenger_");
+  const isInstagramConversation = (n: string) => n?.startsWith("instagram:") || n?.startsWith("instagram_");
+
+  /** Extract the real remote_jid from a composite key (instance::jid) or plain jid */
+  const extractJid = (compositeId: string) =>
+    compositeId.includes("::") ? compositeId.split("::").slice(1).join("::") : compositeId;
 
   /* ── send text ── */
   const handleSend = useCallback(async (text: string, options?: { replyId?: string }) => {
-    const selectedJid = selectedJidRef.current;
-    if (!selectedJid || !text.trim()) return;
+    const compositeId = selectedJidRef.current;
+    if (!compositeId || !text.trim()) return;
+    const selectedJid = extractJid(compositeId);
 
     let finalText = text.trim();
     const sig = signatureCacheRef.current;
@@ -55,7 +61,7 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       finalText = `*${sig.text}*\n\n${finalText}`;
     }
 
-    const conv = conversations.find((c) => c.id === selectedJid);
+    const conv = conversations.find((c) => c.id === compositeId);
     if (!conv?.instanceName) {
       console.error("Instance not found for selected conversation");
       return;
@@ -69,6 +75,12 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
         body: { page_id: pageId, recipient_psid: selectedJid.replace("@messenger", ""), text: finalText },
       });
       if (error) { console.error("Messenger send error:", error); return; }
+    } else if (isCloudApiConversation(conv.instanceName)) {
+      const phoneNumberId = conv.instanceName.replace("cloud_api_", "");
+      const { data: result, error } = await supabase.functions.invoke("meta-send-message", {
+        body: { phone_number_id: phoneNumberId, to: jidToPhone(selectedJid), text: finalText, ...(options?.replyId ? { context_message_id: options.replyId } : {}) },
+      });
+      if (error) { toast.error(`Erro ao enviar: ${(result as any)?.error || error.message}`); return; }
     } else if (isMetaConversation(conv.instanceName) || isInstagramConversation(conv.instanceName)) {
       const phoneNumberId = conv.instanceName.replace("meta:", "").replace("instagram:", "");
       const { data: result, error } = await supabase.functions.invoke("meta-proxy", {
@@ -134,15 +146,31 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
 
   /* ── send attachment ── */
   const handleSendAttachment = useCallback(async (payload: AttachmentPayload) => {
-    const selectedJid = selectedJidRef.current;
-    if (!selectedJid) return;
-    const conv = conversations.find((c) => c.id === selectedJid);
+    const compositeId = selectedJidRef.current;
+    if (!compositeId) return;
+    const selectedJid = extractJid(compositeId);
+    const conv = conversations.find((c) => c.id === compositeId);
     if (!conv?.instanceName) return;
 
     const isGroup = isGroupJid(selectedJid);
     const number = isGroup ? selectedJid : jidToPhone(selectedJid);
 
-    if (isMetaConversation(conv.instanceName)) {
+    if (isCloudApiConversation(conv.instanceName)) {
+      const phoneNumberId = conv.instanceName.replace("cloud_api_", "");
+      const actionMap: Record<string, string> = {
+        image: "send-image", video: "send-video", audio: "send-audio", document: "send-document",
+      };
+      if (payload.type === "media") {
+        const action = actionMap[payload.mediaType || "document"] || "send-document";
+        const { error } = await supabase.functions.invoke("meta-send-message", {
+          body: {
+            phone_number_id: phoneNumberId, to: jidToPhone(selectedJid),
+            type: payload.mediaType || "document", media_url: payload.file, caption: payload.text || "",
+          },
+        });
+        if (error) { toast.error("Erro ao enviar mídia via Cloud API"); throw error; }
+      }
+    } else if (isMetaConversation(conv.instanceName)) {
       const phoneNumberId = conv.instanceName.replace("meta:", "");
       const actionMap: Record<string, string> = {
         image: "send-image", video: "send-video", audio: "send-audio", document: "send-document",
