@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Conversation } from "@/data/mockConversations";
-import type { Message } from "@/data/mockConversations";
+// Message type used in optimistic updates — shape matches mapDbMessageToUi output
 import type { AttachmentPayload } from "@/components/whatsapp/chat/ChatInput";
 import { isGroupJid, jidToPhone } from "./waHelpers";
 import { callUazapi } from "@/services/uazapiService";
@@ -52,17 +52,20 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
     compositeId.includes("::") ? compositeId.split("::").slice(1).join("::") : compositeId;
 
   /** Add outgoing message to chat immediately (optimistic) */
-  const injectOutgoing = (compositeId: string, text: string, type = "text") => {
+  const injectOutgoing = (compositeId: string, text: string, type: Message["type"] = "text") => {
     if (!updateMessagesWithCache) return;
     const now = new Date();
-    const optimisticMsg: Message = {
+    const ts = now.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const optimisticMsg: any = {
       id: `optimistic_${Date.now()}`,
-      body: text,
-      time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-      fromMe: true,
-      status: "sent" as any,
-      type: type as any,
-      senderName: null,
+      conversationId: compositeId,
+      content: text,
+      timestamp: ts,
+      _sortTs: now.getTime(),
+      direction: "outgoing" as const,
+      type,
+      status: "sent" as const,
+      senderName: undefined,
       mediaUrl: null,
       caption: null,
       replyTo: null,
