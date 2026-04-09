@@ -507,6 +507,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -951,7 +952,6 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
       </DialogContent>
     </Dialog>
 
-    {/* Direct Activation Dialog */}
     <Dialog open={directActivateOpen} onOpenChange={setDirectActivateOpen}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -989,6 +989,7 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 
