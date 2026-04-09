@@ -45,13 +45,25 @@ async function resolveApiKey(
 ): Promise<string | null> {
   // 1. Try tenant-specific key from DB
   if (tenantId) {
+    // Try exact environment match first, then any active
     const { data } = await supabase
       .from("asaas_connections")
       .select("api_key_encrypted")
       .eq("tenant_id", tenantId)
+      .eq("environment", environment === "production" ? "production" : "sandbox")
       .eq("is_active", true)
       .maybeSingle();
     if (data?.api_key_encrypted) return data.api_key_encrypted;
+
+    // Fallback: any active connection for this tenant
+    const { data: anyConn } = await supabase
+      .from("asaas_connections")
+      .select("api_key_encrypted")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    if (anyConn?.api_key_encrypted) return anyConn.api_key_encrypted;
   }
 
   // 2. Fallback to global env var (platform master key)
@@ -151,7 +163,7 @@ Deno.serve(async (req) => {
         account_status: commercialStatus || "ACTIVE",
         is_active: true,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "tenant_id" });
+      }, { onConflict: "tenant_id,environment" });
 
       if (upsertErr) return json({ error: upsertErr.message }, 500);
 
@@ -232,7 +244,7 @@ Deno.serve(async (req) => {
         await supabase.from("asaas_connections").upsert({
           tenant_id: tenantId, environment, api_key_encrypted: api_key,
           api_key_hint: api_key.slice(-4), is_active: true, updated_at: new Date().toISOString(),
-        }, { onConflict: "tenant_id" });
+        }, { onConflict: "tenant_id,environment" });
         console.log(`[asaas-proxy] Auto-saved API key for tenant ${tenantId}`);
       }
     }
