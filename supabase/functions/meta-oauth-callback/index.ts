@@ -134,13 +134,10 @@ Deno.serve(async (req) => {
       integrationData = await discoverInstagram(accessToken, tenant_id);
     }
 
-    // 3b. Validate that discovery actually found something
+    // 3b. Warn if no WABA/phone found but still save (token is valid)
     if (provider === "WABA" && !integrationData.waba_id && !integrationData.phone_number_id) {
-      console.error("[meta-oauth-callback] No WABA or phone number discovered — Embedded Signup may not have completed");
-      return popupResponse({
-        success: false,
-        message: "Nenhum número WhatsApp foi encontrado. Complete o processo de Embedded Signup no Meta Business e tente novamente.",
-      });
+      console.warn("[meta-oauth-callback] No WABA or phone discovered — saving as pending. Embedded Signup may not have completed.");
+      integrationData.name = "WhatsApp (pendente)";
     }
 
     // 4. Check for duplicates
