@@ -2,6 +2,7 @@
  * meta-send-message
  * Sends a WhatsApp message via Meta Cloud API.
  * Uses the access_token from channel_integrations.
+ * Saves outgoing message to whatsapp_messages with correct instance_name.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -27,13 +28,13 @@ Deno.serve(async (req) => {
     const { data: { user } } = await callerClient.auth.getUser();
     if (!user) throw new Error("Não autorizado");
 
-    const { phone_number_id, to, text, template } = await req.json();
+    const { phone_number_id, to, text, template, type, media_url, caption, context_message_id } = await req.json();
     if (!phone_number_id || !to) throw new Error("phone_number_id e to são obrigatórios");
 
     // Get integration by phone_number_id
     const { data: integration } = await adminClient
       .from("channel_integrations")
-      .select("id, access_token, waba_id, status")
+      .select("id, tenant_id, access_token, waba_id, status")
       .eq("phone_number_id", phone_number_id)
       .eq("status", "active")
       .single();
@@ -44,30 +45,41 @@ Deno.serve(async (req) => {
     const cleanTo = to.replace(/\D/g, "");
 
     // Build message payload
-    let messageBody: any;
+    let messageBody: any = {
+      messaging_product: "whatsapp",
+      to: cleanTo,
+    };
+
+    // Add context (reply) if provided
+    if (context_message_id) {
+      messageBody.context = { message_id: context_message_id };
+    }
+
+    let msgType = "text";
+    let msgBody = "";
 
     if (template) {
-      // Template message
-      messageBody = {
-        messaging_product: "whatsapp",
-        to: cleanTo,
-        type: "template",
-        template: {
-          name: template.name,
-          language: { code: template.language || "pt_BR" },
-          components: template.components || [],
-        },
+      msgType = "template";
+      msgBody = template.name || "";
+      messageBody.type = "template";
+      messageBody.template = {
+        name: template.name,
+        language: { code: template.language || "pt_BR" },
+        components: template.components || [],
       };
+    } else if (type && media_url && ["image", "video", "audio", "document"].includes(type)) {
+      msgType = type;
+      msgBody = caption || `[${type}]`;
+      messageBody.type = type;
+      messageBody[type] = { link: media_url };
+      if (caption && type !== "audio") messageBody[type].caption = caption;
     } else if (text) {
-      // Text message
-      messageBody = {
-        messaging_product: "whatsapp",
-        to: cleanTo,
-        type: "text",
-        text: { body: text },
-      };
+      msgType = "text";
+      msgBody = text;
+      messageBody.type = "text";
+      messageBody.text = { body: text };
     } else {
-      throw new Error("text ou template é obrigatório");
+      throw new Error("text, template ou media_url é obrigatório");
     }
 
     // Send via Meta Cloud API
@@ -92,22 +104,27 @@ Deno.serve(async (req) => {
     }
 
     const waMessageId = result.messages?.[0]?.id;
+    const instanceName = `cloud_api_${phone_number_id}`;
+    const remoteJid = `${cleanTo}@s.whatsapp.net`;
+
     console.log(`[meta-send-message] Sent to ${cleanTo} via ${phone_number_id}: ${waMessageId}`);
 
-    // Save outgoing snapshot to whatsapp_messages (consistent with uazapi-proxy)
+    // Save outgoing message to whatsapp_messages (same instance_name as meta-webhook)
     if (waMessageId) {
       await adminClient.from("whatsapp_messages").upsert({
         message_id: waMessageId,
-        instance_name: `meta:${phone_number_id}`,
-        remote_jid: `${cleanTo}@s.whatsapp.net`,
+        instance_name: instanceName,
+        remote_jid: remoteJid,
         direction: "outgoing",
-        type: template ? "template" : "text",
-        body: text || template?.name || "",
+        type: msgType,
+        body: msgBody,
+        media_url: media_url || null,
+        caption: caption || null,
         status: 1,
-        track_source: "meta_cloud_api",
+        tenant_id: integration.tenant_id,
         raw_payload: result,
+        quoted_message_id: context_message_id || null,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       }, { onConflict: "message_id" });
     }
 
