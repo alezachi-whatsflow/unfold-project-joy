@@ -59,19 +59,21 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
             fetchConversationsRef.current();
 
             const msgJid = newMsg.remote_jid;
-            const selectedJid = selectedJidRef.current;
+            const msgInstance = newMsg.instance_name || "";
+            const msgCompositeKey = msgInstance ? `${msgInstance}::${msgJid}` : msgJid;
+            const selectedComposite = selectedJidRef.current;
 
             if (payload.eventType === "INSERT") {
               const resolvedMediaUrl = await resolveMediaRef.current(newMsg);
               const uiMsg = mapMsgRef.current(newMsg, resolvedMediaUrl);
 
-              if (selectedJid && msgJid === selectedJid) {
-                updateCacheRef.current(selectedJid, (prev) => {
+              if (selectedComposite && msgCompositeKey === selectedComposite) {
+                updateCacheRef.current(selectedComposite, (prev) => {
                   if (prev.some((m) => m.id === newMsg.id)) return prev;
                   return [...prev, uiMsg];
                 });
-              } else if (messagesCacheRef.current.has(msgJid)) {
-                const cached = messagesCacheRef.current.get(msgJid)!;
+              } else if (messagesCacheRef.current.has(msgCompositeKey)) {
+                const cached = messagesCacheRef.current.get(msgCompositeKey)!;
                 if (!cached.messages.some((m) => m.id === newMsg.id)) {
                   cached.messages = [...cached.messages, uiMsg];
                   cached.lastSync = newMsg.created_at;
@@ -80,14 +82,14 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
             }
 
             if (payload.eventType === "UPDATE") {
-              if (selectedJid && msgJid === selectedJid) {
-                updateCacheRef.current(selectedJid, (prev) =>
+              if (selectedComposite && msgCompositeKey === selectedComposite) {
+                updateCacheRef.current(selectedComposite, (prev) =>
                   prev.map((m) =>
                     m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
                   )
                 );
-              } else if (messagesCacheRef.current.has(msgJid)) {
-                const cached = messagesCacheRef.current.get(msgJid)!;
+              } else if (messagesCacheRef.current.has(msgCompositeKey)) {
+                const cached = messagesCacheRef.current.get(msgCompositeKey)!;
                 cached.messages = cached.messages.map((m) =>
                   m.id === newMsg.id ? { ...m, status: statusNumToLabel(newMsg.status ?? 0) } : m
                 );
@@ -113,14 +115,20 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
 
       if (selectedJid) {
         let hadUpdates = false;
+        // Parse composite key for queries
+        const hasComposite = selectedJid.includes("::");
+        const pollInstance = hasComposite ? selectedJid.split("::")[0] : "";
+        const pollJid = hasComposite ? selectedJid.split("::").slice(1).join("::") : selectedJid;
 
         // 1) New messages by created_at
-        const { data } = await supabase
+        let msgQuery = supabase
           .from("whatsapp_messages")
           .select("*")
-          .eq("remote_jid", selectedJid)
+          .eq("remote_jid", pollJid)
           .gt("created_at", lastSyncRef.current)
           .order("created_at", { ascending: true });
+        if (pollInstance) msgQuery = msgQuery.eq("instance_name", pollInstance);
+        const { data } = await msgQuery;
 
         if (data && data.length > 0) {
           // P0-3 FIX: verify jid didn't change during await
@@ -153,12 +161,14 @@ export function useRealtimeSync(opts: UseRealtimeSyncOptions) {
 
         // 2) Status updates by updated_at (ticks - P0-2)
         if (selectedJidRef.current === selectedJid) {
-          const { data: updatedMsgs } = await supabase
+          let statusQuery = supabase
             .from("whatsapp_messages")
             .select("id, status, updated_at")
-            .eq("remote_jid", selectedJid)
+            .eq("remote_jid", pollJid)
             .gt("updated_at", lastStatusSyncRef.current)
             .order("updated_at", { ascending: true });
+          if (pollInstance) statusQuery = statusQuery.eq("instance_name", pollInstance);
+          const { data: updatedMsgs } = await statusQuery;
 
           if (updatedMsgs && updatedMsgs.length > 0 && selectedJidRef.current === selectedJid) {
             const statusMap = new Map(updatedMsgs.map((m: any) => [m.id, m.status]));
