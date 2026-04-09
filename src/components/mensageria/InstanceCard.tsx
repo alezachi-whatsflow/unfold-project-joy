@@ -1,9 +1,10 @@
 import { fmtDate, fmtDateTime } from "@/lib/dateUtils";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { QrCode, Unplug, Trash2, Bot, Shield, Settings, RefreshCw, Loader2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { QrCode, Unplug, Trash2, Zap, Shield, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -36,16 +37,17 @@ export type UazapiInstance = {
   last_disconnect_reason: string | null;
   api_created_at: string | null;
   api_updated_at: string | null;
+  criado_em: string | null;
   label: string;
   session_id: string;
   provedor: string;
 };
 
-const STATUS_CONFIG: Record<string, { emoji: string; label: string; color: string }> = {
-  connected: { emoji: "🔵", label: "Conectado", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
-  disconnected: { emoji: "🔴", label: "Desconectado", color: "bg-red-500/20 text-red-400 border-red-500/30" },
-  connecting: { emoji: "🟡", label: "Conectando", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
-  qr_pending: { emoji: "🟡", label: "QR Pendente", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
+const STATUS_BADGE: Record<string, { label: string; color: string }> = {
+  connected: { label: "Conectado", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
+  disconnected: { label: "Desconectado", color: "bg-red-500/20 text-red-400 border-red-500/30" },
+  connecting: { label: "Conectando", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
+  qr_pending: { label: "QR Pendente", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
 };
 
 type Props = {
@@ -56,10 +58,13 @@ type Props = {
 };
 
 export default function InstanceCard({ instance, onConnect, onRefresh, onDelete }: Props) {
-  const st = STATUS_CONFIG[instance.status] || STATUS_CONFIG.disconnected;
+  const st = STATUS_BADGE[instance.status] || STATUS_BADGE.disconnected;
+  const isConnected = instance.status === "connected";
+  const isOnline = instance.current_presence === "available";
   const [disconnecting, setDisconnecting] = useState(false);
   const [showChatbot, setShowChatbot] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
@@ -76,110 +81,163 @@ export default function InstanceCard({ instance, onConnect, onRefresh, onDelete 
   };
 
   const handleDelete = async () => {
-    if (!confirm("Tem certeza que deseja excluir esta instância?")) return;
+    if (!confirm(`Excluir "${instance.label || instance.instance_name}"?\n\nIsso removerá o dispositivo, todas as mensagens e arquivos de mídia. Esta ação não pode ser desfeita.`)) return;
     try {
       await instanceService.delete(instance.instance_name);
       toast.success("Instância excluída!");
       onDelete();
-    } catch (err: any) {
-      // Fallback: delete from local DB only
+    } catch {
       await supabase.from("whatsapp_instances").delete().eq("id", instance.id);
-      toast.success("Instância removida do sistema.");
+      toast.success("Instância removida.");
       onDelete();
     }
   };
 
+  const handleSyncMessages = async () => {
+    setSyncing(true);
+    try {
+      await supabase.functions.invoke("sync-uazapi-messages", {
+        body: { instance_name: instance.instance_name },
+      });
+      toast.success("Sincronizando mensagens do dispositivo...");
+    } catch {
+      toast.error("Erro ao sincronizar mensagens");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Timestamps
+  const createdAt = instance.criado_em || instance.api_created_at;
+  const createdAgo = createdAt
+    ? formatDistanceToNow(new Date(createdAt), { addSuffix: true, locale: ptBR })
+    : null;
+  const connectedAgo = isConnected && instance.ultimo_ping
+    ? formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })
+    : null;
+  const disconnectedAgo = !isConnected && instance.last_disconnect
+    ? formatDistanceToNow(new Date(instance.last_disconnect), { addSuffix: true, locale: ptBR })
+    : null;
+
   return (
     <>
-      <Card style={{ border: "1px solid var(--border)", background: "var(--bg-card)", borderRadius: 10, overflow: "hidden" }}>
+      <Card className="border-border bg-card overflow-hidden">
         <CardContent className="p-4 space-y-3">
-          {/* Header */}
+
+          {/* ── Row 1: Name + Status Badge + Online dot (14) ── */}
           <div className="flex items-center gap-3">
-            <div style={{
-              width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
-              background: instance.status === "connected" ? "rgba(14,138,92,0.1)" : "var(--border)",
-            }}>
-              {instance.profile_pic_url ? (
-                <img src={instance.profile_pic_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
-              ) : (
-                <span style={{ fontSize: 16 }}>{st.emoji}</span>
-              )}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="flex items-center gap-1.5">
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }} className="truncate">
-                  {instance.profile_name || instance.label || instance.instance_name}
-                </span>
-                {instance.is_business && <Badge variant="secondary" className="text-[8px] px-1">Biz</Badge>}
-              </div>
-              {instance.phone_number && (
-                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>📱 {instance.phone_number}</p>
-              )}
-            </div>
-            <Badge variant="outline" className={st.color} style={{ fontSize: 10, flexShrink: 0 }}>{st.label}</Badge>
-          </div>
+            {/* (14) Status dot: green=online, red=offline */}
+            <div className={`w-3 h-3 rounded-full shrink-0 ${isConnected && isOnline ? "bg-emerald-500" : isConnected ? "bg-amber-500" : "bg-red-500"}`} />
 
-          {/* Compact info row */}
-          <div style={{ display: "flex", gap: 12, fontSize: 11, color: "var(--text-secondary)", flexWrap: "wrap" }}>
-            <span>{instance.current_presence === "available" ? "🟢 Online" : "⚪ Offline"}</span>
-            <span>{instance.chatbot_enabled ? "🤖 Bot ativo" : "🤖 Inativo"}</span>
-            <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>
-              {instance.ultimo_ping
-                ? formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })
-                : "—"}
+            {/* (3) Full device name */}
+            <span className="text-sm font-semibold truncate flex-1">
+              {instance.label || instance.instance_name}
             </span>
+
+            {instance.is_business && <Badge variant="secondary" className="text-[8px] px-1">Biz</Badge>}
+
+            {/* (4) Connection status badge */}
+            <Badge variant="outline" className={`text-[10px] shrink-0 ${st.color}`}>{st.label}</Badge>
           </div>
 
-          {/* Connection/Disconnection info */}
-          <div style={{ display: "flex", gap: 12, fontSize: 10, color: "var(--text-muted)", flexWrap: "wrap" }}>
-            {instance.api_created_at && (
-              <span>📅 Criado: {fmtDateTime(instance.api_created_at)}</span>
+          {/* ── Row 2: Timestamps (5, 7, 13) ── */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+            {/* (14) Online/Offline status */}
+            <span className={isConnected && isOnline ? "text-emerald-400" : "text-muted-foreground"}>
+              {isConnected && isOnline ? "🟢 Online" : isConnected ? "🟡 Inativo" : "🔴 Offline"}
+            </span>
+
+            {/* (5) Time since creation */}
+            {createdAgo && <span>Criado {createdAgo}</span>}
+
+            {/* (13) Time connected/disconnected */}
+            {connectedAgo && (
+              <span className="text-emerald-400">✅ Conectado {connectedAgo}</span>
             )}
-            {instance.status === "connected" && instance.ultimo_ping && (
-              <span style={{ color: "var(--inbox-active-color, #0E8A5C)" }}>
-                ✅ Conectado {formatDistanceToNow(new Date(instance.ultimo_ping), { addSuffix: true, locale: ptBR })}
-              </span>
-            )}
-            {instance.last_disconnect && (
-              <span style={{ color: instance.status === "disconnected" ? "#ef4444" : "var(--text-muted)" }}>
-                ⚠️ Última desconexão: {fmtDateTime(instance.last_disconnect)}
-                {instance.last_disconnect_reason && ` (${instance.last_disconnect_reason})`}
-              </span>
+            {disconnectedAgo && (
+              <span className="text-red-400">⚠️ Desconectado {disconnectedAgo}</span>
             )}
           </div>
 
-          {/* Actions by status */}
-          <div className="flex flex-wrap gap-2 pt-1">
+          {/* ── Row 3: Creation date (7) + Automation status (6) ── */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+            {/* (7) Creation date */}
+            {createdAt && <span>📅 Criado: {fmtDateTime(createdAt)}</span>}
+
+            {/* (6) Automation/chatbot status */}
+            <span className={instance.chatbot_enabled ? "text-primary" : ""}>
+              {instance.chatbot_enabled ? "⚡ Automação ativa" : "⚡ Sem automação"}
+            </span>
+
+            {/* Phone number if available */}
+            {instance.phone_number && <span>📱 {instance.phone_number}</span>}
+          </div>
+
+          {/* ── Row 4: Action buttons ── */}
+          <div className="flex items-center gap-1.5 pt-1 border-t border-border">
+            {/* Connect button (only when disconnected) */}
             {(instance.status === "disconnected" || instance.status === "qr_pending") && (
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 flex-1" onClick={onConnect}>
-                <QrCode className="h-3.5 w-3.5 mr-1" /> Conectar
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1 text-xs" onClick={onConnect}>
+                <QrCode className="h-3.5 w-3.5" /> Conectar
               </Button>
             )}
             {instance.status === "connecting" && (
-              <Button size="sm" variant="outline" className="flex-1" onClick={onConnect}>
-                <QrCode className="h-3.5 w-3.5 mr-1" /> Ver QR
+              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={onConnect}>
+                <QrCode className="h-3.5 w-3.5" /> Ver QR
               </Button>
             )}
-            {instance.status === "connected" && (
-              <>
-                <Button size="sm" variant="outline" className="flex-1" onClick={handleDisconnect} disabled={disconnecting}>
-                  {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Unplug className="h-3.5 w-3.5 mr-1" />}
-                  Desconectar
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setShowChatbot(true)}>
-                  <Bot className="h-3.5 w-3.5" />
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setShowPrivacy(true)}>
+
+            {/* (12) Disconnect — icon button when connected */}
+            {isConnected && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={handleDisconnect} disabled={disconnecting}>
+                    {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unplug className="h-3.5 w-3.5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Desconectar dispositivo</TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* (11) Privacy settings */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setShowPrivacy(true)}>
                   <Shield className="h-3.5 w-3.5" />
                 </Button>
-              </>
-            )}
-            <Button size="sm" variant="ghost" onClick={onRefresh}>
-              <RefreshCw className="h-3.5 w-3.5" />
-            </Button>
-            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={handleDelete}>
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Privacidade</TooltipContent>
+            </Tooltip>
+
+            {/* (10) Sync messages from device */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleSyncMessages} disabled={syncing}>
+                  {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Sincronizar mensagens</TooltipContent>
+            </Tooltip>
+
+            {/* (8) Automation settings */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" className={`h-8 w-8 p-0 ${instance.chatbot_enabled ? "text-primary" : ""}`} onClick={() => setShowChatbot(true)}>
+                  <Zap className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Automação</TooltipContent>
+            </Tooltip>
+
+            {/* (9) Delete instance */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive ml-auto" onClick={handleDelete}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Excluir dispositivo</TooltipContent>
+            </Tooltip>
           </div>
         </CardContent>
       </Card>

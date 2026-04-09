@@ -58,6 +58,7 @@ export default function UazapiInstancesTab() {
         last_disconnect_reason: d.last_disconnect_reason,
         api_created_at: d.api_created_at,
         api_updated_at: d.api_updated_at,
+        criado_em: d.criado_em,
         label: d.label,
         session_id: d.session_id,
         provedor: d.provedor,
@@ -118,15 +119,11 @@ export default function UazapiInstancesTab() {
     }
   };
 
+  // (1) Sincronizar = refresh da lista de dispositivos
   const handleSync = async () => {
     setLoading(true);
-    try {
-      await instanceService.syncAll();
-      toast.success("Sincronizacao iniciada! Os dados serao atualizados em ate 10 minutos conforme as regras da Meta.", { duration: 8000 });
-    } catch {
-      toast.error("Erro ao sincronizar.");
-    }
-    fetchInstances();
+    await fetchInstances();
+    toast.success("Lista de dispositivos atualizada");
   };
 
   return (
