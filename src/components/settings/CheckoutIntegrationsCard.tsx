@@ -334,7 +334,8 @@ function ConfigureProviderDialog({
               </p>
             </div>
 
-            {/* Secret Key */}
+            {/* Secret Key — hidden for Asaas (only has API Key) */}
+            {provider.id !== "asaas" && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Secret Key</Label>
               <div className="relative">
@@ -356,6 +357,7 @@ function ConfigureProviderDialog({
                 ⚠️ A secret key será armazenada de forma segura no servidor (Secrets).
               </p>
             </div>
+            )}
 
             {/* Test */}
             <Button onClick={handleTest} disabled={testing || !form.apiKey} variant="outline" className="w-full">
