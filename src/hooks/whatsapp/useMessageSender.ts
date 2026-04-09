@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Conversation } from "@/data/mockConversations";
+import type { Message } from "@/data/mockConversations";
 import type { AttachmentPayload } from "@/components/whatsapp/chat/ChatInput";
 import { isGroupJid, jidToPhone } from "./waHelpers";
 import { callUazapi } from "@/services/uazapiService";
@@ -13,10 +14,12 @@ interface UseMessageSenderOptions {
   conversations: Conversation[];
   fetchConversations: () => Promise<void>;
   fetchMessages: (jid: string, forceRefresh?: boolean, limit?: number) => Promise<void>;
+  updateMessagesWithCache?: (jid: string, updater: (prev: Message[]) => Message[]) => void;
+  mapDbMessageToUi?: (row: any) => Promise<Message>;
 }
 
 export function useMessageSender(opts: UseMessageSenderOptions) {
-  const { selectedJidRef, conversations, fetchConversations, fetchMessages } = opts;
+  const { selectedJidRef, conversations, fetchConversations, fetchMessages, updateMessagesWithCache } = opts;
 
   /* ── signature cache ── */
   const signatureCacheRef = useRef<{ enabled: boolean; text: string } | null>(null);
@@ -48,6 +51,25 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
   const extractJid = (compositeId: string) =>
     compositeId.includes("::") ? compositeId.split("::").slice(1).join("::") : compositeId;
 
+  /** Add outgoing message to chat immediately (optimistic) */
+  const injectOutgoing = (compositeId: string, text: string, type = "text") => {
+    if (!updateMessagesWithCache) return;
+    const now = new Date();
+    const optimisticMsg: Message = {
+      id: `optimistic_${Date.now()}`,
+      body: text,
+      time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      fromMe: true,
+      status: "sent" as any,
+      type: type as any,
+      senderName: null,
+      mediaUrl: null,
+      caption: null,
+      replyTo: null,
+    };
+    updateMessagesWithCache(compositeId, (prev) => [...prev, optimisticMsg]);
+  };
+
   /* ── send text ── */
   const handleSend = useCallback(async (text: string, options?: { replyId?: string }) => {
     const compositeId = selectedJidRef.current;
@@ -77,6 +99,7 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       if (error) { console.error("Messenger send error:", error); return; }
     } else if (isCloudApiConversation(conv.instanceName)) {
       const phoneNumberId = conv.instanceName.replace("cloud_api_", "");
+      injectOutgoing(compositeId, finalText);
       const { data: result, error } = await supabase.functions.invoke("meta-send-message", {
         body: { phone_number_id: phoneNumberId, to: jidToPhone(selectedJid), text: finalText, ...(options?.replyId ? { context_message_id: options.replyId } : {}) },
       });
@@ -113,7 +136,8 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
         body: finalText, status: 4, tenant_id: tId,
       });
     } else {
-      // Feature Toggle: Backend API vs Direct uazapi
+      // WA Web: uazapi — inject optimistic, then send
+      injectOutgoing(compositeId, finalText);
       try {
         if (isBackendAvailable()) {
           // NEW PATH: Send via Backend API → BullMQ → 202 Accepted

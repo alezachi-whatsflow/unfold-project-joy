@@ -40,6 +40,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
 
   const { handleSend, handleSendAttachment } = useMessageSender({
     selectedJidRef, conversations, fetchConversations, fetchMessages,
+    updateMessagesWithCache, mapDbMessageToUi,
   });
 
   const [rightOpen, setRightOpen] = useState(false);
