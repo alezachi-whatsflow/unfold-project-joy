@@ -26,12 +26,21 @@ export function useConversations() {
 
     const { data: integrations } = await supabase
       .from("channel_integrations")
-      .select("provider, bot_username, id")
+      .select("provider, bot_username, id, phone_number_id, facebook_page_id, instagram_business_account_id")
       .eq("status", "active");
     for (const intg of integrations ?? []) {
-      const prefix = intg.provider?.toLowerCase() || "channel";
-      const suffix = intg.bot_username || intg.id;
-      instanceNames.push(`${prefix}_${suffix}`);
+      const p = (intg.provider || "").toUpperCase();
+      if (p === "WABA" && intg.phone_number_id) {
+        instanceNames.push(`cloud_api_${intg.phone_number_id}`);
+      } else if (p === "INSTAGRAM" && intg.facebook_page_id) {
+        instanceNames.push(`instagram_${intg.facebook_page_id}`);
+      } else if (p === "MESSENGER" && intg.facebook_page_id) {
+        instanceNames.push(`messenger_${intg.facebook_page_id}`);
+      } else if (p === "TELEGRAM") {
+        instanceNames.push(`telegram_${intg.bot_username || intg.id}`);
+      } else {
+        instanceNames.push(`${p.toLowerCase()}_${intg.id}`);
+      }
     }
 
     let query = supabase
