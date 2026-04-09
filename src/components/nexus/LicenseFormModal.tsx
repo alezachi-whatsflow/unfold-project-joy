@@ -507,7 +507,6 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
   }
 
   return (
-    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -949,47 +948,48 @@ export default function LicenseFormModal({ open, onOpenChange, license, onSaved 
             {isEdit ? 'Salvar Licença' : 'Criar e Enviar E-mail'}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
 
-    <Dialog open={directActivateOpen} onOpenChange={setDirectActivateOpen}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-primary" />
-            Ativar Licença Diretamente
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 mt-2">
-          <p className="text-sm text-muted-foreground">
-            Cria o usuário com a senha definida abaixo. O cliente poderá fazer login imediatamente, sem precisar de e-mail.
-          </p>
-          <div className="space-y-2">
-            <Label>Senha de acesso</Label>
-            <Input
-              type="text"
-              placeholder="Defina a senha do cliente"
-              value={directPassword}
-              onChange={(e) => setDirectPassword(e.target.value)}
-              autoFocus
-            />
-            <p className="text-[10px] text-muted-foreground">Mínimo 6 caracteres. Informe ao cliente.</p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setDirectActivateOpen(false)}>Cancelar</Button>
-          <Button
-            onClick={handleDirectActivate}
-            disabled={activating || !directPassword || directPassword.length < 6}
-            className="gap-1.5"
-          >
-            {activating && <Loader2 className="h-4 w-4 animate-spin" />}
-            Ativar Agora
-          </Button>
-        </DialogFooter>
+        {/* Nested Direct Activation Dialog */}
+        <Dialog open={directActivateOpen} onOpenChange={setDirectActivateOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-primary" />
+                Ativar Licença Diretamente
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <p className="text-sm text-muted-foreground">
+                Cria o usuário com a senha definida abaixo. O cliente poderá fazer login imediatamente, sem precisar de e-mail.
+              </p>
+              <div className="space-y-2">
+                <Label>Senha de acesso</Label>
+                <Input
+                  type="text"
+                  placeholder="Defina a senha do cliente"
+                  value={directPassword}
+                  onChange={(e) => setDirectPassword(e.target.value)}
+                  autoFocus
+                />
+                <p className="text-[10px] text-muted-foreground">Mínimo 6 caracteres. Informe ao cliente.</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDirectActivateOpen(false)}>Cancelar</Button>
+              <Button
+                onClick={handleDirectActivate}
+                disabled={activating || !directPassword || directPassword.length < 6}
+                className="gap-1.5"
+              >
+                {activating && <Loader2 className="h-4 w-4 animate-spin" />}
+                Ativar Agora
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </DialogContent>
     </Dialog>
-    </>
   );
 }
 
