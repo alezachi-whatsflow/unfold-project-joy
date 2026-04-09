@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "@/hooks/useTenantId";
+import { AsaasSetupModal } from "./AsaasSetupModal";
 
 // ── Provider Registry ──
 
@@ -486,6 +487,7 @@ export function CheckoutIntegrationsCard() {
   const tenantId = useTenantId();
   const [connections, setConnections] = useState<Record<string, ProviderConnection>>(loadConnections);
   const [configuring, setConfiguring] = useState<string | null>(null);
+  const [asaasSetupOpen, setAsaasSetupOpen] = useState(false);
   const [asaasConnected, setAsaasConnected] = useState(false);
 
   // Check if Asaas is actually connected for this tenant
@@ -601,7 +603,7 @@ export function CheckoutIntegrationsCard() {
                 key={provider.id}
                 provider={provider}
                 connection={connections[provider.id]}
-                onConfigure={() => setConfiguring(provider.id)}
+                onConfigure={() => provider.id === "asaas" ? setAsaasSetupOpen(true) : setConfiguring(provider.id)}
                 asaasConnected={asaasConnected}
               />
             ))}
@@ -609,10 +611,16 @@ export function CheckoutIntegrationsCard() {
         </CardContent>
       </Card>
 
+      <AsaasSetupModal
+        open={asaasSetupOpen}
+        onOpenChange={setAsaasSetupOpen}
+        onConnected={() => setAsaasConnected(true)}
+      />
+
       <ConfigureProviderDialog
         provider={activeProvider}
         connection={activeConnection}
-        open={!!configuring}
+        open={!!configuring && configuring !== "asaas"}
         onOpenChange={(o) => { if (!o) setConfiguring(null); }}
         onSave={handleSave}
         onDisconnect={handleDisconnect}

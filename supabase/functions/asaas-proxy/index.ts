@@ -66,7 +66,18 @@ async function resolveApiKey(
     if (anyConn?.api_key_encrypted) return anyConn.api_key_encrypted;
   }
 
-  // 2. Fallback to global env var (platform master key)
+  // 2. No tenant? Try any active connection (single-tenant fallback)
+  if (!tenantId) {
+    const { data: fallback } = await supabase
+      .from("asaas_connections")
+      .select("api_key_encrypted")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    if (fallback?.api_key_encrypted) return fallback.api_key_encrypted;
+  }
+
+  // 3. Fallback to global env var (platform master key)
   return Deno.env.get("ASAAS_API_KEY") || null;
 }
 
