@@ -123,61 +123,55 @@ const AsaasConnectionSection = ({ expanded, onToggle }: AsaasConnectionSectionPr
       {expanded && (
         <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--border)" }}>
 
-          {/* ── Asaas Status Card ── */}
-          <div className="mt-4 mb-4 p-4 rounded-lg border border-border bg-muted/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#00A651]/10 flex items-center justify-center">
-                  {isConnected ? <Wifi className="h-5 w-5 text-[#00A651]" /> : <WifiOff className="h-5 w-5 text-muted-foreground" />}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">Asaas</span>
-                    {isConnected ? (
+          {/* ── Resumo / Status ── */}
+          {!isConnected ? (
+            /* Desconectado: apenas resumo informativo, sem botão */
+            <div className="mt-4 mb-4 p-4 rounded-lg border border-border bg-muted/30">
+              <p className="text-sm font-semibold mb-1">Resumo Checkout's</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Configure gateways de pagamento para gerar cobranças via PIX, Boleto Bancário e Cartão de Crédito.
+                Conecte o Asaas, Stripe, Mercado Pago ou outro gateway na seção abaixo para começar a receber pagamentos diretamente pela plataforma.
+              </p>
+            </div>
+          ) : (
+            /* Conectado: card de status compacto */
+            <div className="mt-4 mb-4 p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#00A651]/10 flex items-center justify-center">
+                    <Wifi className="h-5 w-5 text-[#00A651]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">Asaas</span>
                       <Badge className="bg-emerald-600/90 text-[9px]"><CheckCircle2 className="h-2.5 w-2.5 mr-0.5" /> Conectado</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[9px] text-muted-foreground"><XCircle className="h-2.5 w-2.5 mr-0.5" /> Desconectado</Badge>
+                    </div>
+                    {connectionInfo && (
+                      <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
+                        <span>{connectionInfo.environment === "production" ? "🔵 Produção" : "🟡 Sandbox"}</span>
+                        {connectionInfo.wallet_id && <span>Wallet: {connectionInfo.wallet_id.substring(0, 12)}...</span>}
+                        {connectionInfo.api_key_hint && <span>Key: ****{connectionInfo.api_key_hint}</span>}
+                      </div>
                     )}
                   </div>
-                  {isConnected && connectionInfo && (
-                    <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
-                      <span>{connectionInfo.environment === "production" ? "🔵 Produção" : "🟡 Sandbox"}</span>
-                      {connectionInfo.wallet_id && <span>Wallet: {connectionInfo.wallet_id.substring(0, 12)}...</span>}
-                      {connectionInfo.api_key_hint && <span>Key: ****{connectionInfo.api_key_hint}</span>}
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                {isConnected && (
-                  <>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleTest} disabled={testing}>
-                      {testing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                      Testar
-                    </Button>
-                    {testOk === true && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                    {testOk === false && <XCircle className="h-4 w-4 text-rose-500" />}
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  variant={isConnected ? "outline" : "default"}
-                  onClick={() => setSetupOpen(true)}
-                >
-                  <Settings className="h-3 w-3" />
-                  {isConnected ? "Reconfigurar" : "Conectar Asaas"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Sync toggle — only when connected */}
-            {isConnected && (
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs">Sincronizar cobranças automaticamente</Label>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleTest} disabled={testing}>
+                    {testing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                    Testar
+                  </Button>
+                  {testOk === true && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  {testOk === false && <XCircle className="h-4 w-4 text-rose-500" />}
+                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setSetupOpen(true)}>
+                      Reconfigurar
+                  </Button>
                 </div>
+              </div>
+
+              {/* Sync toggle */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-emerald-500/10">
+                <Label className="text-xs">Sincronizar cobranças automaticamente</Label>
                 <div className="flex items-center gap-2">
                   <Switch checked={syncEnabled} onCheckedChange={handleToggleSync} disabled={togglingSync} />
                   <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={syncAll} disabled={isSyncing || !syncEnabled}>
@@ -186,8 +180,8 @@ const AsaasConnectionSection = ({ expanded, onToggle }: AsaasConnectionSectionPr
                   </Button>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Checkout Integrations */}
           <CheckoutIntegrationsCard />
