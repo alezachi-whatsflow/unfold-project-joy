@@ -68,56 +68,11 @@ Deno.serve(async (req) => {
         components: template.components || [],
       };
     } else if (type === "audio" && media_url) {
-      // Audio: download from storage, upload to Meta Media API, send with media ID
+      // Send audio via direct public link — simplest and most reliable method
       msgType = "audio";
       msgBody = "[Áudio]";
-      try {
-        const audioRes = await fetch(media_url);
-        const audioBytes = new Uint8Array(await audioRes.arrayBuffer());
-        // Always declare as audio/ogg — Meta accepts ogg but rejects webm
-        // Chrome opus-in-webm is binary-compatible with opus-in-ogg for Meta's parser
-        const uploadMime = "audio/ogg";
-
-        const boundary = "----WFBoundary" + Date.now();
-        const enc = new TextEncoder();
-        const parts: Uint8Array[] = [];
-        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="messaging_product"\r\n\r\nwhatsapp\r\n`));
-        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="type"\r\n\r\n${uploadMime}\r\n`));
-        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.ogg"\r\nContent-Type: ${uploadMime}\r\n\r\n`));
-        parts.push(audioBytes);
-        parts.push(enc.encode(`\r\n--${boundary}--\r\n`));
-
-        let totalLen = 0;
-        for (const p of parts) totalLen += p.length;
-        const bodyBytes = new Uint8Array(totalLen);
-        let off = 0;
-        for (const p of parts) { bodyBytes.set(p, off); off += p.length; }
-
-        const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${phone_number_id}/media`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${integration.access_token}`,
-            "Content-Type": `multipart/form-data; boundary=${boundary}`,
-          },
-          body: bodyBytes,
-        });
-        const uploadResult = await uploadRes.json();
-
-        if (uploadRes.ok && uploadResult.id) {
-          messageBody.type = "audio";
-          messageBody.audio = { id: uploadResult.id };
-          console.log(`[meta-send-message] Audio uploaded as media: ${uploadResult.id}`);
-        } else {
-          console.error("[meta-send-message] Audio upload failed:", JSON.stringify(uploadResult));
-          // Fallback: send via link
-          messageBody.type = "audio";
-          messageBody.audio = { link: media_url };
-        }
-      } catch (err: any) {
-        console.error("[meta-send-message] Audio error:", err.message);
-        messageBody.type = "audio";
-        messageBody.audio = { link: media_url };
-      }
+      messageBody.type = "audio";
+      messageBody.audio = { link: media_url };
     } else if (type && media_url && ["image", "video", "document"].includes(type)) {
       msgType = type;
       msgBody = caption || `[${type}]`;
