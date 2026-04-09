@@ -26,22 +26,47 @@ export default function ResetPasswordPage() {
     const search = window.location.search;
     const fullUrl = hash + search;
 
-    if (fullUrl.includes("type=recovery") || fullUrl.includes("type=signup")) {
-      setTokenType("recovery");
-    } else if (fullUrl.includes("type=invite") || fullUrl.includes("type=magiclink")) {
-      setTokenType("invite");
-    } else {
-      // Check if user is already authenticated (token was auto-consumed by Supabase)
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          // User is authenticated — show password form anyway
+    // Supabase appends tokens in hash fragment after redirect: #access_token=...&type=recovery
+    const hasToken = fullUrl.includes("access_token=") || fullUrl.includes("type=recovery") || fullUrl.includes("type=signup") || fullUrl.includes("type=invite") || fullUrl.includes("type=magiclink");
+
+    if (hasToken) {
+      // Let Supabase client auto-detect and consume the token from the URL
+      setTokenType(fullUrl.includes("type=invite") || fullUrl.includes("type=magiclink") ? "invite" : "recovery");
+      return;
+    }
+
+    // No token in URL — check if session already exists (token was consumed on previous load)
+    const checkSession = async () => {
+      // Wait for Supabase to process any pending auth state
+      await new Promise((r) => setTimeout(r, 500));
+
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setTokenType("recovery");
+        return;
+      }
+
+      // Last attempt: listen for auth state change (token processing in progress)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session && (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY" || event === "TOKEN_REFRESHED")) {
           setTokenType("recovery");
-        } else {
-          toast.error("Link invalido ou expirado");
-          navigate("/login");
+          subscription.unsubscribe();
         }
       });
-    }
+
+      // Timeout: if no session after 3 seconds, redirect to login
+      setTimeout(() => {
+        subscription.unsubscribe();
+        supabase.auth.getSession().then(({ data: d }) => {
+          if (!d.session && !tokenType) {
+            toast.error("Link inválido ou expirado. Solicite um novo.");
+            navigate("/login");
+          }
+        });
+      }, 3000);
+    };
+
+    checkSession();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
