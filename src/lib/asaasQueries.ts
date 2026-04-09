@@ -17,6 +17,7 @@ export async function callAsaasProxy(params: {
   endpoint: string;
   method?: string;
   params?: Record<string, unknown>;
+  body?: Record<string, unknown>;
   environment?: "sandbox" | "production";
   limit?: number;
   offset?: number;
@@ -24,9 +25,26 @@ export async function callAsaasProxy(params: {
   let data: any = null;
   let error: any = null;
 
+  // If params.body is provided (POST/PUT), use it as params for the proxy
+  const proxyBody: Record<string, unknown> = { ...params };
+  if (params.body && !params.params) {
+    proxyBody.params = params.body;
+    delete proxyBody.body;
+  }
+
+  // Pass API key from localStorage as fallback (until save-key migrates to DB)
+  try {
+    const stored = localStorage.getItem("whatsflow_checkout_connections");
+    if (stored) {
+      const conns = JSON.parse(stored);
+      if (conns?.asaas?.apiKey) proxyBody.api_key = conns.asaas.apiKey;
+      if (conns?.asaas?.environment) proxyBody.environment = proxyBody.environment || conns.asaas.environment;
+    }
+  } catch {}
+
   try {
     const result = await supabase.functions.invoke("asaas-proxy", {
-      body: params,
+      body: proxyBody,
     });
     data = result.data;
     error = result.error;

@@ -214,13 +214,27 @@ Deno.serve(async (req) => {
     // ═══ STANDARD PROXY: Forward to Asaas API ═══
     if (!endpoint) return json({ error: "endpoint is required" }, 400);
 
-    const apiKey = await resolveApiKey(supabase, tenantId, environment);
+    const apiKey = await resolveApiKey(supabase, tenantId, environment)
+      || api_key  // Fallback: API key passed in request body (from localStorage)
+      || null;
     if (!apiKey) {
       return json({
         error: "API Key não configurada",
         error_code: "NO_API_KEY",
-        message: "Configure sua chave API do Asaas em Integrações → Pagamentos & Checkout",
+        message: "Configure sua chave API do Asaas em Integrações → Pagamentos & Checkout → Asaas → engrenagem",
       }, 400);
+    }
+
+    // Auto-save key to DB if found in body but not in DB (migration helper)
+    if (api_key && tenantId) {
+      const { data: existing } = await supabase.from("asaas_connections").select("id").eq("tenant_id", tenantId).maybeSingle();
+      if (!existing) {
+        await supabase.from("asaas_connections").upsert({
+          tenant_id: tenantId, environment, api_key_encrypted: api_key,
+          api_key_hint: api_key.slice(-4), is_active: true, updated_at: new Date().toISOString(),
+        }, { onConflict: "tenant_id" });
+        console.log(`[asaas-proxy] Auto-saved API key for tenant ${tenantId}`);
+      }
     }
 
     const baseUrl = environment === "production" ? ASAAS_PRODUCTION_URL : ASAAS_SANDBOX_URL;
