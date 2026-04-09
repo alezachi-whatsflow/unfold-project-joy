@@ -99,27 +99,20 @@ Deno.serve(async (req) => {
     let walletId = account.walletId || null;
     const accountName = account.tradingName || account.company || account.name || "Conta Asaas";
 
-    // If walletId not in /myAccount, fetch from /wallets endpoint
+    // If walletId not in /myAccount, try finance/balance to get it
     if (!walletId) {
       try {
-        const walletsRes = await fetch(`${baseUrl}/wallets`, { headers });
-        if (walletsRes.ok) {
-          const walletsData = await walletsRes.json();
-          walletId = walletsData?.data?.[0]?.id || walletsData?.id || null;
+        const finRes = await fetch(`${baseUrl}/finance/balance`, { headers });
+        if (finRes.ok) {
+          const finData = await finRes.json();
+          // The account ID from myAccount IS the walletId for splits
+          walletId = account.id || null;
         }
       } catch {}
     }
 
-    // Last resort: use the account ID as wallet reference
-    if (!walletId) {
-      try {
-        const finRes = await fetch(`${baseUrl}/finance/getCurrentBalance`, { headers });
-        if (finRes.ok) {
-          // If we can access finance, the account works — use cpfCnpj as identifier
-          walletId = account.cpfCnpj || account.id || null;
-        }
-      } catch {}
-    }
+    // Last fallback: account ID
+    if (!walletId) walletId = account.id || null;
 
     console.log(`[asaas-setup] Account validated: ${accountName}, wallet=${walletId}`);
 
@@ -168,7 +161,9 @@ Deno.serve(async (req) => {
         method: "PUT",
         headers,
         body: JSON.stringify({
+          name: "Whatsflow Finance",
           url: webhookUrl,
+          sendType: "SEQUENTIALLY",
           enabled: true,
           authToken: webhookToken,
           apiVersion: 3,
@@ -187,8 +182,10 @@ Deno.serve(async (req) => {
         method: "POST",
         headers,
         body: JSON.stringify({
+          name: "Whatsflow Finance",
           url: webhookUrl,
           email: "",
+          sendType: "SEQUENTIALLY",
           apiVersion: 3,
           enabled: true,
           authToken: webhookToken,

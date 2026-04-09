@@ -35,7 +35,7 @@ export function AsaasProvider({ children }: { children: React.ReactNode }) {
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [environment, setEnvironment] = useState<"sandbox" | "production">("sandbox");
+  const [environment, setEnvironment] = useState<"sandbox" | "production">("production");
   const [tenantId, setTenantId] = useState<string>("");
 
   useEffect(() => {
@@ -43,7 +43,21 @@ export function AsaasProvider({ children }: { children: React.ReactNode }) {
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) {
           supabase.from("user_tenants").select("tenant_id").eq("user_id", user.id).limit(1).single()
-            .then(({ data }) => { if (data?.tenant_id) setTenantId(data.tenant_id); });
+            .then(({ data }) => {
+              if (data?.tenant_id) {
+                setTenantId(data.tenant_id);
+                // Load saved environment from asaas_connections
+                (supabase as any).from("asaas_connections")
+                  .select("environment")
+                  .eq("tenant_id", data.tenant_id)
+                  .eq("is_active", true)
+                  .limit(1)
+                  .maybeSingle()
+                  .then(({ data: conn }: any) => {
+                    if (conn?.environment) setEnvironment(conn.environment);
+                  });
+              }
+            });
         }
       });
     });
