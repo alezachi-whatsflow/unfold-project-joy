@@ -17,6 +17,7 @@ import {
   Trash2,
   Square,
   Circle,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -83,6 +84,7 @@ function formatRecordingTime(seconds: number): string {
 
 export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelReply }: ChatInputProps) {
   const [text, setText] = useState("");
+  const [fixingGrammar, setFixingGrammar] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
   const [attachMode, setAttachMode] = useState<AttachMode>(null);
   const [sending, setSending] = useState(false);
@@ -278,6 +280,37 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     onSend(text.trim(), replyTo?.messageId ? { replyId: replyTo.messageId } : undefined);
     setText("");
     onCancelReply?.();
+  };
+
+  const handleFixGrammar = async () => {
+    if (!text.trim() || fixingGrammar) return;
+    setFixingGrammar(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const base = (supabase as any).supabaseUrl || "https://supabase.whatsflow.com.br";
+      const res = await fetch(`${base}/functions/v1/copilot-run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || ""}`,
+        },
+        body: JSON.stringify({
+          message: `Corrija apenas a grafia, acentuação e pontuação do texto abaixo em português brasileiro. Mantenha o tom original (informal/formal). Não altere o sentido, não adicione palavras e não explique nada. Retorne APENAS o texto corrigido, sem aspas:\n\n${text}`,
+        }),
+      });
+      const data = await res.json();
+      const corrected = data?.reply || data?.message || data?.text || "";
+      if (corrected && corrected !== text) {
+        setText(corrected);
+        toast.success("Texto corrigido!");
+      } else {
+        toast.info("Nenhuma correção necessária");
+      }
+    } catch {
+      toast.error("Erro ao corrigir texto");
+    } finally {
+      setFixingGrammar(false);
+    }
   };
 
   const resetAttach = () => {
@@ -805,6 +838,10 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
                 e.preventDefault();
                 handleSend();
               }
+              if (e.key === "C" && e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                handleFixGrammar();
+              }
             }}
             onPaste={(e) => {
               const items = e.clipboardData?.items;
@@ -827,6 +864,20 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
             className="flex-1 min-w-0 resize-none border-none outline-none rounded-[10px] px-3 py-2"
             style={{ backgroundColor: "var(--wa-bg-input)", color: "var(--wa-text-primary)", fontSize: 15, maxHeight: 120 }}
           />
+
+          {/* Grammar fix button — visible when there's text */}
+          {text.trim().length > 3 && (
+            <button
+              onClick={handleFixGrammar}
+              disabled={fixingGrammar}
+              className="shrink-0 flex items-center justify-center transition-all hover:scale-110"
+              style={{ color: fixingGrammar ? "var(--wa-green)" : "var(--wa-text-secondary)", width: 28, height: 28 }}
+              aria-label="Corrigir grafia (Ctrl+Shift+C)"
+              title="Corrigir grafia"
+            >
+              {fixingGrammar ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+            </button>
+          )}
 
           {text.trim() ? (
             <button
