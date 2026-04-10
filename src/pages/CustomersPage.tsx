@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Trash2, Users, UserCheck, UserX, DollarSign, CalendarRange, Plus, Pencil } from "lucide-react";
-import { useCustomerFilters, ColumnFilterPopover } from "@/components/customers/CustomerTableFilters";
+import { useCustomerFilters, ColumnFilterPopover, CustomerSearchBar } from "@/components/customers/CustomerTableFilters";
 import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
 import { useState } from "react";
 import type { Customer } from "@/types/customers";
@@ -47,7 +47,7 @@ export default function CustomersPage() {
     setFormOpen(true);
   };
 
-  const { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount } =
+  const { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount, searchQuery, setSearchQuery, clearAll } =
     useCustomerFilters(customers);
 
   if (isLoading) {
@@ -144,13 +144,25 @@ export default function CustomersPage() {
         </Card>
       </div>
 
+      {/* Search & Filters */}
+      <CustomerSearchBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        uniqueValues={uniqueValues}
+        filters={filters}
+        toggleFilter={toggleFilter}
+        clearFilter={clearFilter}
+        clearAll={clearAll}
+        activeFilterCount={activeFilterCount}
+      />
+
       {/* Customer Table */}
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-muted-foreground" />
             Lista de Clientes ({filteredCustomers.length}
-            {activeFilterCount > 0 && ` de ${customers.length}`})
+            {(activeFilterCount > 0 || searchQuery) && ` de ${customers.length}`})
           </CardTitle>
         </CardHeader>
         <CardContent>

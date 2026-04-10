@@ -6,8 +6,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown, Filter, Search, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export type ColumnFilterKey =
@@ -32,6 +34,7 @@ export const emptyFilters: ActiveFilters = {
 
 export function useCustomerFilters(customers: Customer[]) {
   const [filters, setFilters] = useState<ActiveFilters>(emptyFilters);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const uniqueValues = useMemo(() => {
     const vals: Record<ColumnFilterKey, Set<string>> = {
@@ -55,8 +58,18 @@ export function useCustomerFilters(customers: Customer[]) {
   }, [customers]);
 
   const filteredCustomers = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
     return customers
       .filter((c) => {
+        // Text search
+        if (q) {
+          const matchName = (c.nome || "").toLowerCase().includes(q);
+          const matchEmail = (c.email || "").toLowerCase().includes(q);
+          const matchCpf = (c.cpf_cnpj || "").replace(/\D/g, "").includes(q.replace(/\D/g, ""));
+          const matchPhone = (c.telefone || c.phone_lead || "").replace(/\D/g, "").includes(q.replace(/\D/g, ""));
+          if (!matchName && !matchEmail && !matchCpf && !matchPhone) return false;
+        }
+        // Column filters
         if (filters.status.length && !filters.status.includes(c.status)) return false;
         if (filters.checkout.length && !filters.checkout.includes(c.checkout)) return false;
         if (filters.condicao.length && !filters.condicao.includes(c.condicao || "-")) return false;
@@ -64,7 +77,7 @@ export function useCustomerFilters(customers: Customer[]) {
         return true;
       })
       .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }));
-  }, [customers, filters]);
+  }, [customers, filters, searchQuery]);
 
   const toggleFilter = (key: ColumnFilterKey, value: string) => {
     setFilters((prev) => {
@@ -82,7 +95,9 @@ export function useCustomerFilters(customers: Customer[]) {
 
   const activeFilterCount = Object.values(filters).reduce((s, arr) => s + (arr.length > 0 ? 1 : 0), 0);
 
-  return { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount };
+  const clearAll = () => { setFilters(emptyFilters); setSearchQuery(""); };
+
+  return { filters, uniqueValues, filteredCustomers, toggleFilter, clearFilter, activeFilterCount, searchQuery, setSearchQuery, clearAll };
 }
 
 interface ColumnFilterPopoverProps {
@@ -150,5 +165,110 @@ export function ColumnFilterPopover({
         </ScrollArea>
       </PopoverContent>
     </Popover>
+  );
+}
+
+// ── Dynamic Filter Dropdown ──
+const FILTER_COLUMNS: { key: ColumnFilterKey; label: string }[] = [
+  { key: "status", label: "Status" },
+  { key: "checkout", label: "Checkout" },
+  { key: "condicao", label: "Condição" },
+  { key: "whitelabel", label: "Partner" },
+];
+
+interface DynamicFilterProps {
+  uniqueValues: Record<ColumnFilterKey, string[]>;
+  filters: ActiveFilters;
+  onToggle: (key: ColumnFilterKey, value: string) => void;
+  onClear: (key: ColumnFilterKey) => void;
+}
+
+function DynamicFilter({ uniqueValues, filters, onToggle, onClear }: DynamicFilterProps) {
+  const [selectedColumn, setSelectedColumn] = useState<ColumnFilterKey | "">("");
+  const options = selectedColumn ? uniqueValues[selectedColumn] || [] : [];
+  const selected = selectedColumn ? filters[selectedColumn] || [] : [];
+
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={selectedColumn} onValueChange={(v) => setSelectedColumn(v as ColumnFilterKey)}>
+        <SelectTrigger className="h-8 w-[130px] text-xs border-border">
+          <SelectValue placeholder="Filtrar por..." />
+        </SelectTrigger>
+        <SelectContent>
+          {FILTER_COLUMNS.map((col) => (
+            <SelectItem key={col.key} value={col.key} className="text-xs">{col.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {selectedColumn && (
+        <Select
+          value={selected.length === 1 ? selected[0] : ""}
+          onValueChange={(v) => {
+            onClear(selectedColumn);
+            if (v) onToggle(selectedColumn, v);
+          }}
+        >
+          <SelectTrigger className="h-8 w-[140px] text-xs border-border">
+            <SelectValue placeholder="Selecionar..." />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt) => (
+              <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  );
+}
+
+// ── Customer Search Bar ──
+interface CustomerSearchBarProps {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  uniqueValues: Record<ColumnFilterKey, string[]>;
+  filters: ActiveFilters;
+  toggleFilter: (key: ColumnFilterKey, value: string) => void;
+  clearFilter: (key: ColumnFilterKey) => void;
+  clearAll: () => void;
+  activeFilterCount: number;
+}
+
+export function CustomerSearchBar({
+  searchQuery, setSearchQuery,
+  uniqueValues, filters, toggleFilter, clearFilter, clearAll, activeFilterCount,
+}: CustomerSearchBarProps) {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+      {/* Search input */}
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar por nome, email, CPF/CNPJ ou telefone..."
+          className="h-8 pl-9 text-xs border-border"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Dynamic filters */}
+      <DynamicFilter uniqueValues={uniqueValues} filters={filters} onToggle={toggleFilter} onClear={clearFilter} />
+      <DynamicFilter uniqueValues={uniqueValues} filters={filters} onToggle={toggleFilter} onClear={clearFilter} />
+
+      {/* Clear all */}
+      {(activeFilterCount > 0 || searchQuery) && (
+        <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground shrink-0" onClick={clearAll}>
+          <X className="h-3 w-3 mr-1" /> Limpar
+        </Button>
+      )}
+    </div>
   );
 }
