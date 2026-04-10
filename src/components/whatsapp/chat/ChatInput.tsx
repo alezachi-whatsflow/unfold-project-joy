@@ -806,6 +806,22 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
                 handleSend();
               }
             }}
+            onPaste={(e) => {
+              const items = e.clipboardData?.items;
+              if (!items) return;
+              for (const item of Array.from(items)) {
+                if (item.type.startsWith("image/")) {
+                  e.preventDefault();
+                  const blob = item.getAsFile();
+                  if (!blob) return;
+                  const file = new File([blob], `screenshot_${Date.now()}.png`, { type: blob.type });
+                  setSelectedFiles((prev) => [...prev, file]);
+                  setAttachMode("media");
+                  setShowAttach(true);
+                  return;
+                }
+              }
+            }}
             placeholder="Digite uma mensagem"
             rows={1}
             className="flex-1 min-w-0 resize-none border-none outline-none rounded-[10px] px-3 py-2"
