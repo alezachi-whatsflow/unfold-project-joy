@@ -28,8 +28,9 @@ export default function UazapiInstancesTab() {
       .eq("provedor", "uazapi")
       .order("api_created_at", { ascending: false, nullsFirst: false });
 
-    // Filter by tenant if available (RLS should handle this, but explicit is safer)
-    if (tenantId) query = query.eq("tenant_id", tenantId);
+    // Always filter by tenant — mandatory, even for Admin Core users
+    if (!tenantId) { setLoading(false); return; }
+    query = query.eq("tenant_id", tenantId);
 
     const { data } = await query;
 

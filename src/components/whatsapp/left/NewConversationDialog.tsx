@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Send, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
 import { toast } from "sonner";
 
 interface Instance {
@@ -28,6 +29,7 @@ interface NewConversationDialogProps {
 }
 
 export default function NewConversationDialog({ open, onClose, onConversationStarted }: NewConversationDialogProps) {
+  const tenantId = useTenantId();
   const [instances, setInstances] = useState<Instance[]>([]);
   const [selectedInstance, setSelectedInstance] = useState("");
   const [phone, setPhone] = useState("");
@@ -36,22 +38,21 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
-
-    const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
-    let instQuery = supabase
+    if (!open || !tenantId) return;
+    // Always filter by tenant — even for Admin Core users
+    const instQuery = supabase
       .from("whatsapp_instances")
       .select("id, label, instance_name, status, provedor")
       .eq("status", "connected")
-      .neq("provedor", "cloud_api"); // Exclude cloud_api (comes from channel_integrations)
-    if (tenantId) instQuery = instQuery.eq("tenant_id", tenantId);
+      .eq("tenant_id", tenantId)
+      .neq("provedor", "cloud_api");
 
-    let metaQuery = supabase
+    const metaQuery = supabase
       .from("channel_integrations")
       .select("id, name, phone_number_id, display_phone_number, status, provider")
       .eq("provider", "WABA")
-      .eq("status", "active");
-    if (tenantId) metaQuery = metaQuery.eq("tenant_id", tenantId);
+      .eq("status", "active")
+      .eq("tenant_id", tenantId);
 
     Promise.all([instQuery, metaQuery]).then(([legacyRes, metaRes]) => {
       const allInstances: Instance[] = [];
@@ -84,7 +85,7 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
         setSelectedInstance(allInstances[0].instance_name || "");
       }
     });
-  }, [open]);
+  }, [open, tenantId]);
 
   const handleSend = async () => {
     const cleanPhone = phone.replace(/\D/g, "");
