@@ -2,9 +2,12 @@ import { useState, useRef, useCallback, useEffect, type DragEvent } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, FileText, Image, X, Loader2 } from "lucide-react";
 import { StatusPill } from "./StatusPill";
+import { SmartCombobox } from "@/components/expenses/SmartCombobox";
+import { useExpenseCategories } from "@/hooks/useExpenseCategories";
+import { useSuppliers } from "@/hooks/useSuppliers";
 import type { Despesa } from "./DespesaTable";
 
-const CATEGORIAS = ["Transporte", "Escritório", "Tecnologia", "Telecom", "Alimentação", "Outros"];
+const CATEGORIAS_FALLBACK = ["Transporte", "Escritório", "Tecnologia", "Telecom", "Alimentação", "Outros"];
 const STATUS_OPTIONS = ["pendente", "pago", "rejeitado"];
 const ACCEPTED = ".jpg,.jpeg,.png,.webp,.pdf";
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -31,10 +34,14 @@ const labelCls = "text-xs font-medium mb-1 block";
 export function ModalNovaDespesa({ open, onOpenChange, onSave, editingExpense }: Props) {
   const isEdit = !!editingExpense;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { categories, createCategory } = useExpenseCategories();
+  const { suppliers, createSupplier } = useSuppliers();
 
   const [supplier, setSupplier] = useState("");
+  const [supplierId, setSupplierId] = useState<string | null>(null);
   const [rawValue, setRawValue] = useState("");
   const [category, setCategory] = useState("Outros");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("pendente");
@@ -118,15 +125,18 @@ export function ModalNovaDespesa({ open, onOpenChange, onSave, editingExpense }:
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
-          {/* Fornecedor */}
+          {/* Fornecedor — Smart Combobox with inline create */}
           <div>
             <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Fornecedor *</label>
-            <input
-              value={supplier}
-              onChange={(e) => setSupplier(e.target.value)}
-              placeholder="Nome do fornecedor"
-              className={inputCls}
-              style={{ borderColor: "hsl(var(--border))" }}
+            <SmartCombobox
+              options={suppliers.map((s) => ({ id: s.id, name: s.name }))}
+              value={supplierId}
+              onChange={(id, name) => { setSupplierId(id); setSupplier(name); }}
+              onCreateNew={async (name) => {
+                const result = await createSupplier.mutateAsync({ name });
+                return { id: result.id, name: result.name };
+              }}
+              placeholder="Buscar ou criar fornecedor..."
             />
           </div>
 
@@ -147,14 +157,19 @@ export function ModalNovaDespesa({ open, onOpenChange, onSave, editingExpense }:
             </div>
             <div>
               <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Categoria</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className={selectCls}
-                style={{ borderColor: "hsl(var(--border))" }}
-              >
-                {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <SmartCombobox
+                options={categories.length > 0
+                  ? categories.map((c) => ({ id: c.id, name: c.name, color: c.color }))
+                  : CATEGORIAS_FALLBACK.map((c) => ({ id: c, name: c }))
+                }
+                value={categoryId}
+                onChange={(id, name) => { setCategoryId(id); setCategory(name); }}
+                onCreateNew={async (name) => {
+                  const result = await createCategory.mutateAsync(name);
+                  return { id: result.id, name: result.name, color: result.color };
+                }}
+                placeholder="Buscar ou criar..."
+              />
             </div>
           </div>
 
