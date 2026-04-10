@@ -69,12 +69,24 @@ Deno.serve(async (req) => {
 
     if (!contactErr) updates.push("contacts");
 
-    // 3. Find or create customer
+    // 3. Find or create customer using normalized phone
+    const { data: normResult } = await supabase.rpc("normalize_br_phone", { phone_text: phone });
+    const normalizedPhone = normResult || phone;
+
+    // Resolve tenant
+    const { data: ut } = await supabase
+      .from("user_tenants")
+      .select("tenant_id")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    const tenantIdForCustomer = ut?.tenant_id;
+
     const { data: existingCustomer } = await supabase
       .from("customers")
       .select("id")
-      .or(`telefone.eq.${phone},phone.eq.${phone}`)
-      .limit(1)
+      .eq("normalized_phone", normalizedPhone)
+      .eq("tenant_id", tenantIdForCustomer)
       .maybeSingle();
 
     let customerId = existingCustomer?.id || null;
