@@ -29,6 +29,19 @@ export default function ProfilePage() {
   const rawPhone = user?.user_metadata?.phone || "";
   // Never show email in phone field (data corruption guard)
   const [phone, setPhone] = useState(rawPhone.includes("@") ? "" : rawPhone);
+
+  // Force refresh session to get updated metadata from server
+  useEffect(() => {
+    (async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase.auth.refreshSession();
+      if (data.user) {
+        const freshPhone = data.user.user_metadata?.phone || "";
+        if (!freshPhone.includes("@")) setPhone(freshPhone);
+        setFullName(data.user.user_metadata?.full_name || fullName);
+      }
+    })();
+  }, []);
   const [saving, setSaving] = useState(false);
 
   const [currentPw, setCurrentPw] = useState("");
