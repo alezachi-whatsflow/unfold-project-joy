@@ -102,6 +102,8 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
   // Attachment form fields
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [dupFiles, setDupFiles] = useState<File[]>([]);
+  const [showDupConfirm, setShowDupConfirm] = useState(false);
   const [mediaCaption, setMediaCaption] = useState("");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
@@ -345,11 +347,14 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     }
 
     const valid: File[] = [];
+    const duplicates: File[] = [];
     const invalidNames: string[] = [];
 
     for (const file of sliced) {
       if (file.size > MAX_FILE_SIZE_BYTES) {
         invalidNames.push(file.name);
+      } else if (selectedFiles.some((f) => f.name === file.name && f.size === file.size)) {
+        duplicates.push(file);
       } else {
         valid.push(file);
       }
@@ -359,8 +364,15 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
       toast.error(`Arquivo acima de ${MAX_FILE_SIZE_MB}MB: ${invalidNames[0]}${invalidNames.length > 1 ? ` (+${invalidNames.length - 1})` : ""}`);
     }
 
+    // Add non-duplicate files immediately
     if (valid.length) {
       setSelectedFiles((prev) => [...prev, ...valid]);
+    }
+
+    // Show confirmation popup for duplicates
+    if (duplicates.length) {
+      setDupFiles(duplicates);
+      setShowDupConfirm(true);
     }
   };
 
@@ -476,6 +488,47 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
   };
 
   return (
+    <>
+    {/* Duplicate file confirmation popup */}
+    {showDupConfirm && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Arquivo duplicado</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {dupFiles.length === 1
+                  ? `"${dupFiles[0].name}" já foi adicionado ao anexo.`
+                  : `${dupFiles.length} arquivos já foram adicionados ao anexo.`}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-5">Tem certeza que deseja anexar novamente?</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setShowDupConfirm(false); setDupFiles([]); }}
+              className="flex-1 h-9 rounded-xl text-xs font-medium border border-border bg-muted hover:bg-muted/80 transition-colors"
+            >
+              Não, cancelar
+            </button>
+            <button
+              onClick={() => {
+                setSelectedFiles((prev) => [...prev, ...dupFiles]);
+                setShowDupConfirm(false);
+                setDupFiles([]);
+              }}
+              className="flex-1 h-9 rounded-xl text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Sim, anexar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     <div style={{ backgroundColor: "var(--wa-bg-header)", borderTop: "1px solid var(--wa-border)" }}>
       {showAttach && !attachMode && (
         <div
@@ -781,5 +834,6 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         </div>
       )}
     </div>
+    </>
   );
 }
