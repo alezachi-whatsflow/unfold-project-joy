@@ -38,19 +38,22 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
   useEffect(() => {
     if (!open) return;
 
-    Promise.all([
-      // Legacy: whatsapp_instances (uazapi/zapi)
-      supabase
-        .from("whatsapp_instances")
-        .select("id, label, instance_name, status")
-        .eq("status", "connected"),
-      // New: channel_integrations (Meta Cloud API)
-      supabase
-        .from("channel_integrations")
-        .select("id, name, phone_number_id, display_phone_number, status, provider")
-        .eq("provider", "WABA")
-        .eq("status", "active"),
-    ]).then(([legacyRes, metaRes]) => {
+    const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
+    let instQuery = supabase
+      .from("whatsapp_instances")
+      .select("id, label, instance_name, status, provedor")
+      .eq("status", "connected")
+      .neq("provedor", "cloud_api"); // Exclude cloud_api (comes from channel_integrations)
+    if (tenantId) instQuery = instQuery.eq("tenant_id", tenantId);
+
+    let metaQuery = supabase
+      .from("channel_integrations")
+      .select("id, name, phone_number_id, display_phone_number, status, provider")
+      .eq("provider", "WABA")
+      .eq("status", "active");
+    if (tenantId) metaQuery = metaQuery.eq("tenant_id", tenantId);
+
+    Promise.all([instQuery, metaQuery]).then(([legacyRes, metaRes]) => {
       const allInstances: Instance[] = [];
 
       // Add legacy instances
