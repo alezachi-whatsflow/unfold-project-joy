@@ -103,6 +103,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
             activeFilter={activeFilter}
             onLoadMore={loadMoreMessages}
             hasMore={messages.length >= messageLimit}
+            updateMessagesWithCache={updateMessagesWithCache}
           />
           <RightPanel
             conversation={selectedConv}

@@ -1,7 +1,7 @@
 import React from "react";
 import type { Message } from "@/data/mockMessages";
 import TickIcons from "../shared/TickIcons";
-import { Play, Mic, RefreshCw } from "lucide-react";
+import { Play, Mic, RefreshCw, Ban } from "lucide-react";
 import WaAvatar from "../shared/Avatar";
 import { getMessageRenderer } from "./MessageRenderers";
 import MessageContextMenu from "./MessageContextMenu";
@@ -74,6 +74,34 @@ const MessageBubble = React.memo(function MessageBubble({
   }
 
   const isOut = m.direction === "outgoing";
+  const isDeleted = (m as any).isDeleted === true;
+
+  // Deleted message visual
+  if (isDeleted) {
+    return (
+      <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1`}>
+        <div
+          className="max-w-[65%] px-3 py-2 rounded-lg border"
+          style={{
+            backgroundColor: "rgba(239, 68, 68, 0.08)",
+            borderColor: "rgba(239, 68, 68, 0.2)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <Ban size={14} className="text-red-400/60 shrink-0" />
+            <span className="text-xs italic" style={{ color: "rgba(239, 68, 68, 0.6)" }}>
+              Mensagem apagada
+            </span>
+          </div>
+          <div className="flex items-center justify-end mt-0.5">
+            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
+              {formatMsgTime(m.timestamp)}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Typing indicator
   if (m.direction === "typing") {

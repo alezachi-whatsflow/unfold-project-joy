@@ -31,6 +31,8 @@ interface ChatPanelProps {
   onLoadMore?: () => void;
   /** Pagination: whether there are more messages to load */
   hasMore?: boolean;
+  /** Update messages in cache (for optimistic updates like delete) */
+  updateMessagesWithCache?: (jid: string, updater: (prev: Message[]) => Message[]) => void;
 }
 
 // Quick action chips
@@ -67,7 +69,7 @@ interface ConversationNote {
   created_at: string;
 }
 
-export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation, onAssign, onResolve, activeFilter, onLoadMore, hasMore }: ChatPanelProps) {
+export default function ChatPanel({ conversation, messages, isRightOpen, onToggleRight, onSend, onSendAttachment, onNewConversation, onAssign, onResolve, activeFilter, onLoadMore, hasMore, updateMessagesWithCache }: ChatPanelProps) {
   const [replyTo, setReplyTo] = useState<{ senderName: string; content: string; messageId?: string } | null>(null);
   const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
 
@@ -514,6 +516,14 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
             import("@/services/messageService").then(({ messageService }) => {
               messageService.delete(conversation.instanceName, msgId, conversation.id);
             });
+            // Mark as deleted in local state (red transparent visual)
+            if (updateMessagesWithCache && conversation.id) {
+              updateMessagesWithCache(conversation.id, (prev) =>
+                prev.map((m) => m.id === msgId || m.providerMessageId === msgId
+                  ? { ...m, isDeleted: true } as any
+                  : m)
+              );
+            }
           }
         }}
       />
