@@ -100,12 +100,24 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
     supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
   }, []);
 
-  // Reset quick-action states when conversation changes
+  // Reset quick-action states + load tags when conversation changes
   useEffect(() => {
     setTransferOpen(false);
     setTagOpen(false);
     setNotesOpen(false);
     setIaEnabled(false);
+    setLeadTags([]);
+
+    // Auto-load tags for the selected conversation
+    if (conversation) {
+      const chatId = conversation.id.includes("::") ? conversation.id.split("::").slice(1).join("::") : conversation.id;
+      const instName = conversation.instanceName || (conversation.id.includes("::") ? conversation.id.split("::")[0] : "");
+      let q = supabase.from("whatsapp_leads").select("lead_tags").eq("chat_id", chatId);
+      if (instName) q = q.eq("instance_name", instName);
+      q.maybeSingle().then(({ data }) => {
+        if (data?.lead_tags?.length) setLeadTags(data.lead_tags);
+      });
+    }
   }, [conversation?.id]);
 
   // Load AI state when conversation changes
@@ -191,12 +203,12 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       if (tagErr) throw tagErr;
       setTenantTags(tags || []);
 
-      // Load current lead tags
-      const { data: lead } = await supabase
-        .from("whatsapp_leads")
-        .select("lead_tags")
-        .eq("chat_id", conversation.id)
-        .maybeSingle();
+      // Load current lead tags (conversation.id is composite: instance::jid)
+      const chatId = conversation.id.includes("::") ? conversation.id.split("::").slice(1).join("::") : conversation.id;
+      const instName = conversation.instanceName || (conversation.id.includes("::") ? conversation.id.split("::")[0] : "");
+      let leadQuery = supabase.from("whatsapp_leads").select("lead_tags").eq("chat_id", chatId);
+      if (instName) leadQuery = leadQuery.eq("instance_name", instName);
+      const { data: lead } = await leadQuery.maybeSingle();
 
       setLeadTags(lead?.lead_tags || []);
     } catch (err: any) {
@@ -216,10 +228,11 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
       current.push(tagName);
     }
 
-    const { error } = await supabase
-      .from("whatsapp_leads")
-      .update({ lead_tags: current })
-      .eq("chat_id", conversation.id);
+    const chatId = conversation.id.includes("::") ? conversation.id.split("::").slice(1).join("::") : conversation.id;
+    const instName = conversation.instanceName || (conversation.id.includes("::") ? conversation.id.split("::")[0] : "");
+    let query = supabase.from("whatsapp_leads").update({ lead_tags: current }).eq("chat_id", chatId);
+    if (instName) query = query.eq("instance_name", instName);
+    const { error } = await query;
 
     if (error) {
       toast.error(`Erro ao atualizar tags: ${error.message}`);
@@ -419,8 +432,11 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {c.tags.map((tag, i) => <TagBadge key={i} label={tag.label} color={tag.color} />)}
+          <div className="flex items-center gap-1 flex-wrap">
+            {/* Show tags from lead (realtime) or from conversation object (initial) */}
+            {(leadTags.length > 0 ? leadTags : (c.tags || []).map((t: any) => t.label)).map((tag: string, i: number) => (
+              <TagBadge key={i} label={tag} color="lead" />
+            ))}
           </div>
           <div className="flex items-center gap-4 ml-4">
             {onNewConversation && (
