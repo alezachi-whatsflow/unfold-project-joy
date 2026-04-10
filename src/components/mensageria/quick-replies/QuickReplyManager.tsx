@@ -49,7 +49,15 @@ export default function QuickReplyManager() {
 
   const saveMutation = useMutation({
     mutationFn: async (values: typeof form & { id?: string }) => {
-      const payload = { ...values, tenant_id: tenantId, shortcut: values.shortcut.startsWith("/") ? values.shortcut : `/${values.shortcut}` };
+      if (!tenantId) throw new Error("Tenant não identificado");
+      const shortcut = values.shortcut.startsWith("/") ? values.shortcut : `/${values.shortcut}`;
+      const payload = {
+        title: values.title.trim(),
+        shortcut,
+        body: values.body,
+        is_private: values.is_private,
+        tenant_id: tenantId,
+      };
       if (values.id) {
         const { error } = await supabase.from("quick_replies").update(payload).eq("id", values.id);
         if (error) throw error;
@@ -62,7 +70,7 @@ export default function QuickReplyManager() {
       queryClient.invalidateQueries({ queryKey: ["quick-replies", tenantId] });
       setEditOpen(false);
       setEditing(null);
-      toast.success(editing ? "Resposta atualizada" : "Resposta criada");
+      toast.success(editing ? "Modelo atualizado" : "Modelo criado");
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -74,7 +82,7 @@ export default function QuickReplyManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quick-replies", tenantId] });
-      toast.success("Resposta excluída");
+      toast.success("Modelo excluído");
     },
   });
 
@@ -105,7 +113,7 @@ export default function QuickReplyManager() {
           </p>
         </div>
         <Button onClick={openNew} size="sm" className="gap-1">
-          <Plus size={14} /> Nova Resposta
+          <Plus size={14} /> Novo Modelo
         </Button>
       </div>
 
@@ -154,7 +162,7 @@ export default function QuickReplyManager() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar Resposta" : "Nova Resposta Rápida"}</DialogTitle>
+            <DialogTitle>{editing ? "Editar Resposta" : "Nova Modelo de Mensagem"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <Input placeholder="Título (ex: Boas-vindas)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -169,8 +177,8 @@ export default function QuickReplyManager() {
                 {form.is_private ? <><Lock size={12} className="inline mr-1" />Privada (só você vê)</> : <><Globe size={12} className="inline mr-1" />Visível para toda equipe</>}
               </span>
             </div>
-            <Button onClick={() => saveMutation.mutate({ ...form, id: editing?.id })} disabled={!form.title || !form.shortcut || !form.body || saveMutation.isPending} className="w-full">
-              {saveMutation.isPending ? "Salvando..." : editing ? "Salvar Alterações" : "Criar Resposta"}
+            <Button onClick={() => saveMutation.mutate({ ...form, id: editing?.id })} disabled={!form.title.trim() || !form.shortcut.trim() || !form.body.trim() || saveMutation.isPending} className="w-full">
+              {saveMutation.isPending ? "Salvando..." : editing ? "Salvar Alterações" : "Criar Modelo"}
             </Button>
           </div>
         </DialogContent>
