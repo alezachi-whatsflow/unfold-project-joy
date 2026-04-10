@@ -134,7 +134,28 @@ export default function NewConversationDialog({ open, onClose, onConversationSta
 
       toast.success("Mensagem enviada!");
       const jid = `${cleanPhone}@s.whatsapp.net`;
-      onConversationStarted(jid);
+      const compositeKey = `${selectedInstance}::${jid}`;
+
+      // Auto-assign to current user (goes to "Em Atendimento", not "Fila")
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const tenantId = localStorage.getItem("whatsflow_default_tenant_id");
+          await supabase.from("whatsapp_leads").upsert({
+            chat_id: jid,
+            instance_name: selectedInstance,
+            lead_name: cleanPhone,
+            assigned_attendant_id: user.id,
+            lead_status: "open",
+            is_ticket_open: true,
+            tenant_id: tenantId,
+          }, { onConflict: "instance_name,chat_id" });
+        }
+      } catch (e) {
+        console.warn("Auto-assign failed:", e);
+      }
+
+      onConversationStarted(compositeKey);
       onClose();
       setPhone("");
       setCustomMessage("");
