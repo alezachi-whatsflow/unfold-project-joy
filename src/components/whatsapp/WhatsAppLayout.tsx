@@ -108,6 +108,7 @@ export default function WhatsAppLayout({ initialFilter }: WhatsAppLayoutProps = 
             conversation={selectedConv}
             isOpen={rightOpen}
             onClose={() => setRightOpen(false)}
+            onNameUpdated={fetchConversations}
           />
         </>
       )}

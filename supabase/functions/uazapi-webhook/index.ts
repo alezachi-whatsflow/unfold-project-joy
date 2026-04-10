@@ -858,7 +858,7 @@ Deno.serve(async (req) => {
           // ── TRAVA DE SESSÃO: buscar lead existente pelo chat_id + instance ──
           const { data: existingLead } = await supabase
             .from("whatsapp_leads")
-            .select("id, assigned_attendant_id, lead_status, is_ticket_open, tenant_id")
+            .select("id, assigned_attendant_id, lead_status, is_ticket_open, tenant_id, department_id, name_edited_manually, lead_name")
             .eq("chat_id", chat.wa_chatid)
             .eq("instance_name", instance)
             .maybeSingle();
@@ -897,9 +897,11 @@ Deno.serve(async (req) => {
               tenant_id: existingLead?.tenant_id || undefined,
               // Auto-assign department from instance if not already set
               department_id: existingLead?.department_id || instanceDeptId || undefined,
-              // Prefer real name (pushName) over phone-number-as-name from uazapi
-              lead_name: (pushName && !/^\d+$/.test(pushName)) ? pushName : (chat.lead_name && !/^\d+$/.test(chat.lead_name)) ? chat.lead_name : contactName || undefined,
-              lead_full_name: (pushName && !/^\d+$/.test(pushName)) ? pushName : (chat.lead_fullName && !/^\d+$/.test(chat.lead_fullName)) ? chat.lead_fullName : contactName || undefined,
+              // Never overwrite manually edited names (name_edited_manually flag)
+              ...(existingLead?.name_edited_manually ? {} : {
+                lead_name: (pushName && !/^\d+$/.test(pushName)) ? pushName : (chat.lead_name && !/^\d+$/.test(chat.lead_name)) ? chat.lead_name : contactName || undefined,
+                lead_full_name: (pushName && !/^\d+$/.test(pushName)) ? pushName : (chat.lead_fullName && !/^\d+$/.test(chat.lead_fullName)) ? chat.lead_fullName : contactName || undefined,
+              }),
               // REGRA DE OURO: atendente no banco → MANTÉM. Sem atendente → null.
               assigned_attendant_id: isActiveSession
                 ? existingLead.assigned_attendant_id

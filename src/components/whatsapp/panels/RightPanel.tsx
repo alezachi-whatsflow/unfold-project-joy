@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MessageCircle, Phone, MoreVertical, ChevronDown, ChevronUp, Plus, X, GitBranch, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { MessageCircle, Phone, MoreVertical, ChevronDown, ChevronUp, X, GitBranch, Loader2, Pencil, Check, Save } from "lucide-react";
 import type { Conversation } from "@/data/mockConversations";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
@@ -7,50 +7,105 @@ import StatusBadge from "../shared/StatusBadge";
 import { usePipelines } from "@/hooks/usePipelines";
 import { useTenantId } from "@/hooks/useTenantId";
 import { useNegocios } from "@/hooks/useNegocios";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 interface RightPanelProps {
   conversation: Conversation | null;
   isOpen: boolean;
   onClose: () => void;
+  onNameUpdated?: () => void;
 }
 
-export default function RightPanel({ conversation, isOpen, onClose }: RightPanelProps) {
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ tags: true, info: true, custom: false, pipeline: true });
+export default function RightPanel({ conversation, isOpen, onClose, onNameUpdated }: RightPanelProps) {
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ tags: true, info: true, pipeline: true });
   const tenantId = useTenantId();
   const { pipelines } = usePipelines(tenantId);
   const { createNegocio } = useNegocios();
   const [sendingTo, setSendingTo] = useState<string | null>(null);
 
+  // Editable fields
+  const [editingName, setEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editCpfCnpj, setEditCpfCnpj] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
   const toggleSection = (id: string) => setOpenSections((p) => ({ ...p, [id]: !p[id] }));
+
+  // Reset edit state when conversation changes
+  useEffect(() => {
+    setEditingName(false);
+    if (conversation) {
+      setEditName(conversation.name || "");
+      setEditEmail("");
+      setEditCpfCnpj("");
+
+      // Load email/cpf from lead or customer
+      const chatId = conversation.id.includes("::") ? conversation.id.split("::").slice(1).join("::") : conversation.id;
+      const instName = conversation.instanceName || (conversation.id.includes("::") ? conversation.id.split("::")[0] : "");
+      let q = supabase.from("whatsapp_leads").select("customer_id").eq("chat_id", chatId);
+      if (instName) q = q.eq("instance_name", instName);
+      q.maybeSingle().then(({ data }) => {
+        if (data?.customer_id) {
+          supabase.from("customers").select("email, cpf_cnpj").eq("id", data.customer_id).maybeSingle().then(({ data: cust }) => {
+            if (cust) {
+              setEditEmail(cust.email || "");
+              setEditCpfCnpj(cust.cpf_cnpj || "");
+            }
+          });
+        }
+      });
+    }
+  }, [conversation?.id]);
+
+  const handleSaveName = useCallback(async () => {
+    if (!conversation || !editName.trim()) return;
+    setSavingName(true);
+
+    const chatId = conversation.id.includes("::") ? conversation.id.split("::").slice(1).join("::") : conversation.id;
+    const instName = conversation.instanceName || (conversation.id.includes("::") ? conversation.id.split("::")[0] : "");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("update-contact-name", {
+        body: {
+          chat_id: chatId,
+          instance_name: instName,
+          new_name: editName.trim(),
+          email: editEmail.trim() || undefined,
+          cpf_cnpj: editCpfCnpj.trim() || undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(`Nome atualizado: ${editName.trim()}`);
+      setEditingName(false);
+      onNameUpdated?.();
+    } catch (err: any) {
+      toast.error("Erro ao salvar: " + (err.message || "Erro desconhecido"));
+    } finally {
+      setSavingName(false);
+    }
+  }, [conversation, editName, editEmail, editCpfCnpj, onNameUpdated]);
 
   if (!conversation || !isOpen) return null;
   const c = conversation;
   const isGroup = c.isGroup ?? false;
-
-  const fields = isGroup
-    ? [
-        { label: "Tipo", value: "Grupo" },
-        { label: "Nome do Grupo", value: c.name },
-        { label: "ID do Grupo", value: c.phone },
-        ...(c.participantCount ? [{ label: "Participantes", value: String(c.participantCount) }] : []),
-      ]
-    : [
-        { label: "Nome", value: c.name },
-        { label: "Telefone", value: c.phone },
-        { label: "Email", value: "—" },
-        { label: "CPF/CNPJ", value: "—" },
-      ];
 
   const handleSendToPipeline = async (pipelineId: string, pipelineName: string) => {
     if (!tenantId) return;
     setSendingTo(pipelineId);
     try {
       await createNegocio({
-        titulo: `Lead: ${c.name}`,
+        titulo: `Lead: ${editName || c.name}`,
         status: "prospeccao",
         origem: "whatsapp",
-        cliente_nome: c.name,
+        cliente_nome: editName || c.name,
         pipeline_id: pipelineId,
         notas: `Telefone: ${c.phone}\nOrigem: Caixa de Entrada`,
         valor_total: 0,
@@ -67,10 +122,7 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
   };
 
   return (
-    <div
-      className="right-panel-wa h-full flex flex-col overflow-y-auto shrink-0 msg-right-panel"
-      style={{ width: 320 }}
-    >
+    <div className="right-panel-wa h-full flex flex-col overflow-y-auto shrink-0 msg-right-panel" style={{ width: 320 }}>
       {/* Close button */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--wa-border)" }}>
         <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
@@ -81,11 +133,36 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
         </button>
       </div>
 
-      {/* Contact Info */}
+      {/* Contact Header */}
       <div className="flex flex-col items-center py-6" style={{ borderBottom: "1px solid var(--wa-border)" }}>
-        <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={64} isOnline={c.isOnline} />
-        <p className="text-base font-semibold mt-3" style={{ color: "var(--wa-text-primary)" }}>{c.name}</p>
+        <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={64} isOnline={c.isOnline} avatarUrl={c.avatarUrl} />
+
+        {/* Editable name */}
+        {editingName ? (
+          <div className="flex items-center gap-1 mt-3 px-4 w-full">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="h-8 text-sm text-center"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+            />
+            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={handleSaveName} disabled={savingName}>
+              {savingName ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 text-emerald-500" />}
+            </Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => { setEditingName(false); setEditName(c.name); }}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 mt-3 group cursor-pointer" onClick={() => !isGroup && setEditingName(true)}>
+            <p className="text-base font-semibold" style={{ color: "var(--wa-text-primary)" }}>{editName || c.name}</p>
+            {!isGroup && <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
+          </div>
+        )}
+
         <p className="text-[13px]" style={{ color: "var(--wa-text-secondary)" }}>{c.phone}</p>
+
         <div className="flex gap-3 mt-4">
           {[MessageCircle, Phone, MoreVertical].map((Icon, i) => (
             <button
@@ -94,7 +171,6 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
               style={{ width: 40, height: 40, backgroundColor: "var(--wa-bg-input)" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-border-input)")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-bg-input)")}
-              aria-label="action"
             >
               <Icon size={18} style={{ color: "var(--wa-text-primary)" }} />
             </button>
@@ -102,7 +178,7 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
         </div>
       </div>
 
-      {/* Send to Pipeline Section */}
+      {/* Send to Pipeline */}
       {!isGroup && pipelines.length > 0 && (
         <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
           <button onClick={() => toggleSection("pipeline")} className="w-full flex items-center justify-between px-4 py-3">
@@ -119,36 +195,23 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
                   <button
                     key={p.id}
                     onClick={() => handleSendToPipeline(p.id, p.name)}
-                    disabled={!!sendingTo}
-                    className="w-full text-left px-3 py-2 rounded-md text-xs transition-colors flex items-center gap-2"
-                    style={{
-                      backgroundColor: "var(--wa-bg-input)",
-                      color: "var(--wa-text-primary)",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-border-input)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-bg-input)")}
+                    disabled={isSending}
+                    className="w-full flex items-center justify-between px-3 py-2 text-xs rounded transition-colors hover:bg-muted"
+                    style={{ border: "1px solid var(--wa-border)" }}
                   >
-                    {isSending ? (
-                      <Loader2 size={12} className="animate-spin shrink-0" />
-                    ) : (
-                      <GitBranch size={12} className="shrink-0" style={{ color: "var(--wa-green)" }} />
-                    )}
-                    <span className="flex-1 truncate font-medium">{p.name}</span>
-                    <span className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>
-                      {p.stages.filter((s: any) => s.enabled).length} etapas
+                    <span className="flex items-center gap-1.5">
+                      <GitBranch size={12} /> {p.name}
                     </span>
+                    <span className="text-[10px] text-muted-foreground">{p.stages?.length || 0} etapas</span>
                   </button>
                 );
               })}
-              <p className="text-[10px] mt-1" style={{ color: "var(--wa-text-tertiary)" }}>
-                Cria um negocio no pipeline selecionado com dados do contato
-              </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Tags & Status Section */}
+      {/* Tags e Status */}
       <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
         <button onClick={() => toggleSection("tags")} className="w-full flex items-center justify-between px-4 py-3">
           <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>Tags e Status</span>
@@ -156,71 +219,89 @@ export default function RightPanel({ conversation, isOpen, onClose }: RightPanel
         </button>
         {openSections.tags && (
           <div className="px-4 pb-3 space-y-2">
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {c.tags.map((tag, i) => <TagBadge key={i} label={tag.label} color={tag.color} />)}
-              <button className="rounded-full flex items-center justify-center" style={{ width: 18, height: 18, border: "1px dashed var(--wa-border-input)" }} aria-label="Adicionar tag">
-                <Plus size={10} style={{ color: "var(--wa-text-secondary)" }} />
-              </button>
+              {c.tags.length === 0 && <span className="text-xs text-muted-foreground">Nenhuma tag</span>}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color: "var(--wa-text-secondary)" }}>Ticket:</span>
-              <StatusBadge status={c.status} />
+            <div className="flex gap-3 text-xs">
+              <span>Ticket: <StatusBadge status={c.isTicketOpen ? "ABERTO" : "FECHADO"} /></span>
             </div>
             {c.assignedTo && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs" style={{ color: "var(--wa-text-secondary)" }}>Atendente:</span>
-                <div className="flex items-center gap-1">
-                  <WaAvatar initials={c.assignedTo.split(" ").map(w => w[0]).join("")} color="var(--wa-green)" size={20} />
-                  <span className="text-xs" style={{ color: "var(--wa-text-primary)" }}>{c.assignedTo}</span>
-                </div>
+              <div className="text-xs text-muted-foreground">
+                Atendente: <span className="font-mono text-[10px]">{c.assignedTo}</span>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Lead Info Section */}
-      <div style={{ borderBottom: "1px solid var(--wa-border)" }}>
+      {/* Lead Info — Editable */}
+      <div>
         <button onClick={() => toggleSection("info")} className="w-full flex items-center justify-between px-4 py-3">
-          <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>
-            {isGroup ? "Informacoes do Grupo" : "Informacoes do Lead"}
-          </span>
+          <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>Informacoes do Lead</span>
           {openSections.info ? <ChevronUp size={16} style={{ color: "var(--wa-text-secondary)" }} /> : <ChevronDown size={16} style={{ color: "var(--wa-text-secondary)" }} />}
         </button>
         {openSections.info && (
-          <div className="px-4 pb-3 space-y-2">
-            {fields.map((f) => (
-              <div key={f.label} className="flex flex-col gap-0.5">
-                <span className="text-[10px] uppercase" style={{ color: "var(--wa-text-tertiary)" }}>{f.label}</span>
-                <span className="text-sm" style={{ color: "var(--wa-text-primary)" }}>{f.value}</span>
-              </div>
-            ))}
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase" style={{ color: "var(--wa-text-tertiary)" }}>Anotacoes</span>
-              <textarea
-                className="w-full bg-transparent border rounded text-sm resize-none outline-none px-2 py-1"
-                style={{ borderColor: "var(--wa-border-input)", color: "var(--wa-text-primary)", minHeight: 60 }}
-                placeholder="Adicionar notas..."
-              />
-            </div>
+          <div className="px-4 pb-4 space-y-3">
+            {isGroup ? (
+              <>
+                <InfoField label="Tipo" value="Grupo" />
+                <InfoField label="Nome do Grupo" value={c.name} />
+                <InfoField label="ID do Grupo" value={c.phone} />
+              </>
+            ) : (
+              <>
+                <div>
+                  <Label className="text-[10px] uppercase text-muted-foreground">Nome</Label>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="h-8 text-sm mt-0.5"
+                    placeholder="Nome do contato"
+                  />
+                </div>
+                <InfoField label="Telefone" value={c.phone} />
+                <div>
+                  <Label className="text-[10px] uppercase text-muted-foreground">Email</Label>
+                  <Input
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="h-8 text-sm mt-0.5"
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase text-muted-foreground">CPF/CNPJ</Label>
+                  <Input
+                    value={editCpfCnpj}
+                    onChange={(e) => setEditCpfCnpj(e.target.value)}
+                    className="h-8 text-sm mt-0.5"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  className="w-full gap-1.5 text-xs"
+                  onClick={handleSaveName}
+                  disabled={savingName || !editName.trim()}
+                >
+                  {savingName ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Salvar Alterações
+                </Button>
+              </>
+            )}
           </div>
         )}
       </div>
+    </div>
+  );
+}
 
-      {/* Custom Fields */}
-      <div>
-        <button onClick={() => toggleSection("custom")} className="w-full flex items-center justify-between px-4 py-3">
-          <span className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>Campos Personalizados</span>
-          {openSections.custom ? <ChevronUp size={16} style={{ color: "var(--wa-text-secondary)" }} /> : <ChevronDown size={16} style={{ color: "var(--wa-text-secondary)" }} />}
-        </button>
-        {openSections.custom && (
-          <div className="px-4 pb-3">
-            <button className="flex items-center gap-1 text-xs" style={{ color: "var(--wa-green)" }}>
-              <Plus size={14} /> Adicionar campo
-            </button>
-          </div>
-        )}
-      </div>
+function InfoField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase" style={{ color: "var(--wa-text-tertiary)" }}>{label}</p>
+      <p className="text-sm" style={{ color: "var(--wa-text-primary)" }}>{value || "—"}</p>
     </div>
   );
 }
