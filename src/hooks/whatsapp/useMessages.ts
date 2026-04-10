@@ -140,6 +140,9 @@ export function useMessages() {
         mediaUrl: mediaUrlOverride ?? row.media_url ?? null,
         caption: row.caption || null,
         replyTo,
+        isDeleted: row.is_deleted || false,
+        deletedByName: row.deleted_by_name || null,
+        deletedAt: row.deleted_at ? fmtDateTime(new Date(row.deleted_at)) : null,
       };
     },
     []

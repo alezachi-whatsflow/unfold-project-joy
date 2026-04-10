@@ -75,33 +75,8 @@ const MessageBubble = React.memo(function MessageBubble({
 
   const isOut = m.direction === "outgoing";
   const isDeleted = (m as any).isDeleted === true;
-
-  // Deleted message visual
-  if (isDeleted) {
-    return (
-      <div className={`message-bubble flex ${isOut ? "justify-end" : "justify-start"} px-5 my-1`}>
-        <div
-          className="max-w-[65%] px-3 py-2 rounded-lg border"
-          style={{
-            backgroundColor: "rgba(239, 68, 68, 0.08)",
-            borderColor: "rgba(239, 68, 68, 0.2)",
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <Ban size={14} className="text-red-400/60 shrink-0" />
-            <span className="text-xs italic" style={{ color: "rgba(239, 68, 68, 0.6)" }}>
-              Mensagem apagada
-            </span>
-          </div>
-          <div className="flex items-center justify-end mt-0.5">
-            <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
-              {formatMsgTime(m.timestamp)}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const deletedByName = (m as any).deletedByName || null;
+  const deletedAt = (m as any).deletedAt || null;
 
   // Typing indicator
   if (m.direction === "typing") {
@@ -147,8 +122,11 @@ const MessageBubble = React.memo(function MessageBubble({
         <div
           className="px-2.5 pt-1.5 pb-1 overflow-hidden break-words"
           style={{
-            backgroundColor: isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)",
+            backgroundColor: isDeleted
+              ? (isOut ? "rgba(239, 68, 68, 0.06)" : "rgba(239, 68, 68, 0.04)")
+              : (isOut ? "var(--wa-bg-msg-out)" : "var(--wa-bg-msg-in)"),
             borderRadius: isOut ? "8px 0px 8px 8px" : "0px 8px 8px 8px",
+            border: isDeleted ? "1px solid rgba(239, 68, 68, 0.15)" : undefined,
           }}
         >
           {showSender && m.senderName && (
@@ -157,9 +135,20 @@ const MessageBubble = React.memo(function MessageBubble({
             </p>
           )}
           {replyBlock}
-          <div style={{ color: "var(--wa-text-primary)" }}>
+          <div style={{ color: isDeleted ? "var(--wa-text-secondary)" : "var(--wa-text-primary)", opacity: isDeleted ? 0.7 : 1 }}>
             <Renderer message={m} nameColor={m.senderName ? nameColor(m.senderName) : undefined} formatTime={formatMsgTime} />
           </div>
+
+          {/* Deleted indicator — shows who deleted and when */}
+          {isDeleted && (
+            <div className="flex items-center gap-1.5 mt-1 pt-1" style={{ borderTop: "1px solid rgba(239, 68, 68, 0.15)" }}>
+              <Ban size={11} className="text-red-400/70 shrink-0" />
+              <span className="text-[10px] italic" style={{ color: "rgba(239, 68, 68, 0.7)" }}>
+                Apagada{deletedByName ? ` por ${deletedByName}` : ""}{deletedAt ? ` • ${deletedAt}` : ""}
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center justify-end gap-1 mt-0.5">
             <span className="text-[10px]" style={{ color: "var(--wa-text-tertiary)" }}>
               {formatMsgTime(m.timestamp)}

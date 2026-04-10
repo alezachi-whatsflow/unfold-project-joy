@@ -511,19 +511,35 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
             }
           });
         }}
-        onDelete={(msgId) => {
-          if (conversation?.instanceName) {
-            import("@/services/messageService").then(({ messageService }) => {
-              messageService.delete(conversation.instanceName, msgId, conversation.id);
-            });
-            // Mark as deleted in local state (red transparent visual)
-            if (updateMessagesWithCache && conversation.id) {
-              updateMessagesWithCache(conversation.id, (prev) =>
-                prev.map((m) => m.id === msgId || m.providerMessageId === msgId
-                  ? { ...m, isDeleted: true } as any
-                  : m)
-              );
-            }
+        onDelete={async (msgId) => {
+          if (!conversation?.instanceName) return;
+
+          // 1. Delete on WhatsApp (for the recipient)
+          import("@/services/messageService").then(({ messageService }) => {
+            messageService.delete(conversation.instanceName, msgId, conversation.id);
+          });
+
+          // 2. Get current user info
+          const { data: { user } } = await supabase.auth.getUser();
+          const userName = user?.user_metadata?.full_name || user?.email || "Desconhecido";
+          const now = new Date().toISOString();
+
+          // 3. Mark as soft-deleted in DB (preserve content, track who)
+          const dbId = msgId;
+          await supabase.from("whatsapp_messages").update({
+            is_deleted: true,
+            deleted_by: user?.id || null,
+            deleted_by_name: userName,
+            deleted_at: now,
+          }).or(`id.eq.${dbId},message_id.eq.${dbId}`);
+
+          // 4. Update local state immediately
+          if (updateMessagesWithCache && conversation.id) {
+            updateMessagesWithCache(conversation.id, (prev) =>
+              prev.map((m) => m.id === dbId || m.providerMessageId === dbId
+                ? { ...m, isDeleted: true, deletedByName: userName, deletedAt: now } as any
+                : m)
+            );
           }
         }}
       />
