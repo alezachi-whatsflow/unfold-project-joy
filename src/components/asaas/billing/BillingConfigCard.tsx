@@ -23,6 +23,8 @@ interface Props {
   config: BillingConfig;
   setConfig: (config: BillingConfig) => void;
   getDueDate: () => string;
+  useCustomerValue?: boolean;
+  onUseCustomerValueChange?: (v: boolean) => void;
 }
 
 const BILLING_TYPE_LABELS: Record<BillingConfig["billingType"], { label: string; icon: React.ReactNode; description: string }> = {
@@ -58,7 +60,7 @@ import { useTenantId } from "@/hooks/useTenantId";
 
 const STORAGE_KEY = "billing_presets";
 
-export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
+export function BillingConfigCard({ config, setConfig, getDueDate, useCustomerValue, onUseCustomerValueChange }: Props) {
   const tenantId = useTenantId();
   const showBoletoSettings = config.billingType === "BOLETO" || config.billingType === "UNDEFINED";
   const [presets, setPresets] = useState<BillingPreset[]>([]);
@@ -222,15 +224,33 @@ export function BillingConfigCard({ config, setConfig, getDueDate }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Valor (R$)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={config.value}
-              onChange={(e) => setConfig({ ...config, value: e.target.value })}
-              placeholder="0,00"
-              className="h-9 text-xs"
-            />
+            {onUseCustomerValueChange && (
+              <div className="flex items-center gap-2 mb-1.5">
+                <Switch
+                  checked={useCustomerValue}
+                  onCheckedChange={onUseCustomerValueChange}
+                  className="scale-75"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  {useCustomerValue ? "Usando valor individual do cadastro" : "Valor manual (fixo para todos)"}
+                </span>
+              </div>
+            )}
+            {useCustomerValue ? (
+              <div className="h-9 flex items-center px-3 rounded-md border border-border bg-muted/50 text-xs text-muted-foreground">
+                Valor será buscado do cadastro de cada cliente
+              </div>
+            ) : (
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={config.value}
+                onChange={(e) => setConfig({ ...config, value: e.target.value })}
+                placeholder="0,00"
+                className="h-9 text-xs"
+              />
+            )}
           </div>
         </div>
 

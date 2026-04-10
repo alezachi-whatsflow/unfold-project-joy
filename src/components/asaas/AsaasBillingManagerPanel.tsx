@@ -83,6 +83,7 @@ export function AsaasBillingManagerPanel() {
   const [isCreating, setIsCreating] = useState(false);
   const [results, setResults] = useState<CreationResult[]>([]);
   const [mode, setMode] = useState<BillingMode>("manual");
+  const [useCustomerValue, setUseCustomerValue] = useState(false);
   const [artifactResult, setArtifactResult] = useState<CreationResult | null>(null);
   const [artifactOpen, setArtifactOpen] = useState(false);
 
@@ -102,7 +103,7 @@ export function AsaasBillingManagerPanel() {
         : "Selecione pelo menos um cliente");
       return;
     }
-    if (!config.value || parseFloat(config.value) <= 0) {
+    if (!useCustomerValue && (!config.value || parseFloat(config.value) <= 0)) {
       toast.error("Informe um valor válido");
       return;
     }
@@ -153,10 +154,34 @@ export function AsaasBillingManagerPanel() {
       }
 
       try {
+        // Resolve value: use customer's registered value or manual input
+        let chargeValue = parseFloat(config.value) || 0;
+        if (useCustomerValue) {
+          // Try asaas_customers first, then local customers table
+          const asaasCust = customers.find((c) => c.asaas_id === customerId);
+          let custValue = (asaasCust as any)?.value || (asaasCust as any)?.valor_ultima_cobranca || 0;
+
+          // Fallback: look up in local customers table by email
+          if (!custValue && asaasCust?.email) {
+            const { data: localCust } = await supabase
+              .from("customers")
+              .select("valor_ultima_cobranca")
+              .eq("email", asaasCust.email)
+              .maybeSingle();
+            custValue = localCust?.valor_ultima_cobranca || 0;
+          }
+
+          if (!custValue || custValue <= 0) {
+            newResults.push({ customer: customerName, asaasId: asaasCustomerId, status: "error", message: "Cliente sem valor cadastrado" });
+            continue;
+          }
+          chargeValue = typeof custValue === "string" ? parseFloat(custValue) : custValue;
+        }
+
         const payload: Record<string, unknown> = {
           customer: asaasCustomerId,
           billingType: config.billingType,
-          value: parseFloat(config.value),
+          value: chargeValue,
           dueDate: getDueDate(),
           description: config.description || `Cobrança - ${customerName}`,
         };
@@ -215,7 +240,7 @@ export function AsaasBillingManagerPanel() {
               for (const r of validRecipients) {
                 const splitVal = parseFloat(r.splitValue);
                 const totalValue = r.splitType === "PERCENTAGE"
-                  ? (parseFloat(config.value) * splitVal) / 100
+                  ? (chargeValue * splitVal) / 100
                   : splitVal;
 
                 await supabase.from("asaas_splits").insert({
@@ -336,7 +361,7 @@ export function AsaasBillingManagerPanel() {
       {/* Configuration */}
       <div className={`grid gap-6 ${mode === "manual" ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
         <div className="space-y-6">
-          <BillingConfigCard config={config} setConfig={setConfig} getDueDate={getDueDate} />
+          <BillingConfigCard config={config} setConfig={setConfig} getDueDate={getDueDate} useCustomerValue={useCustomerValue} onUseCustomerValueChange={setUseCustomerValue} />
           <SplitConfigCard split={split} setSplit={setSplit} />
         </div>
 
@@ -360,13 +385,13 @@ export function AsaasBillingManagerPanel() {
                 {split.enabled && ` + Split (${split.recipients.filter((r) => r.walletId).length} recebedor(es))`}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                Valor: R$ {config.value || "0,00"} cada • Vencimento: {getDueDate()} • Modo: {mode === "automatic" ? "Automático" : "Manual"} • Ambiente: {environment}
+                Valor: {useCustomerValue ? "Individual (cadastro)" : `R$ ${config.value || "0,00"} cada`} • Vencimento: {getDueDate()} • Modo: {mode === "automatic" ? "Automático" : "Manual"} • Ambiente: {environment}
               </p>
             </div>
           </div>
           <Button
             onClick={createBillings}
-            disabled={isCreating || targetCustomerIds.length === 0 || !config.value}
+            disabled={isCreating || targetCustomerIds.length === 0 || (!useCustomerValue && !config.value)}
             className="gap-2"
           >
             {isCreating ? (
