@@ -8,6 +8,29 @@ const corsHeaders = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+function now_br() {
+  return new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+
+async function logAutomation(supabase: any, tenant_id: string, instance_name: string, remote_jid: string, triggerName: string, phase: "inicio" | "fim") {
+  const emoji = phase === "inicio" ? "\u2699\uFE0F" : "\u2705";
+  const label = phase === "inicio" ? "Automa\u00E7\u00E3o iniciada" : "Automa\u00E7\u00E3o finalizada";
+  const body = `${emoji} ${label}\nGatilho: ${triggerName}\nData/hora: ${now_br()}`;
+
+  await supabase.from("whatsapp_messages").insert({
+    message_id: `auto_${phase}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    instance_name,
+    remote_jid,
+    direction: "outgoing",
+    type: "note",
+    body,
+    status: 3,
+    tenant_id,
+    sender_name: "Sistema",
+    created_at: new Date().toISOString(),
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -20,6 +43,30 @@ Deno.serve(async (req) => {
     const { tenant_id, instance_name, remote_jid, contact_phone, message_text, message_type, sender_name } = await req.json();
 
     if (!tenant_id || !remote_jid) return json({ error: "tenant_id and remote_jid required" }, 400);
+
+    // ── Step 0: Handle "end" command ──
+    if ((message_text || "").trim().toLowerCase() === "end") {
+      const { data: activeSession } = await supabase
+        .from("typebot_sessions")
+        .select("*")
+        .eq("tenant_id", tenant_id)
+        .eq("remote_jid", remote_jid)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (activeSession?.session_id) {
+        // Close session, send session ID back via WhatsApp, log fim
+        await supabase.from("typebot_sessions").update({ is_active: false, updated_at: new Date().toISOString() }).eq("id", activeSession.id);
+        await sendMessage(supabase, instance_name, remote_jid, `Sessão finalizada! *${activeSession.session_id}*`);
+        const { data: trg } = await supabase.from("automation_triggers").select("name").eq("typebot_id", activeSession.typebot_id).eq("tenant_id", tenant_id).maybeSingle();
+        await logAutomation(supabase, tenant_id, instance_name, remote_jid, trg?.name || "Typebot", "fim");
+        return json({ action: "session_ended_by_user", session_id: activeSession.session_id });
+      } else {
+        // No active session
+        await sendMessage(supabase, instance_name, remote_jid, `Sessão finalizada! *N/A*`);
+        return json({ action: "no_session" });
+      }
+    }
 
     // ── Step 1: Check active Typebot session ──
     const { data: activeSession } = await supabase
@@ -71,17 +118,36 @@ Deno.serve(async (req) => {
 
     console.log(`[automation-router] Trigger matched: ${matchedTrigger.name} (${matchedTrigger.action_type})`);
 
+    // Log de início da automação (antes de enviar mensagens)
+    await logAutomation(supabase, tenant_id, instance_name, remote_jid, matchedTrigger.name, "inicio");
+
     // ── Step 3: Execute action ──
     if (matchedTrigger.action_type === "reply") {
       // Simple auto-reply
       const replyText = matchedTrigger.action_config?.reply_text;
       if (replyText) {
-        await sendViaUazapi(supabase, instance_name, remote_jid, replyText);
+        await sendMessage(supabase, instance_name, remote_jid, replyText);
       }
+      await logAutomation(supabase, tenant_id, instance_name, remote_jid, matchedTrigger.name, "fim");
       return json({ action: "replied", text: replyText });
     }
 
-    if (matchedTrigger.action_type === "webhook" && matchedTrigger.typebot_id && matchedTrigger.typebot_url) {
+    if (matchedTrigger.action_type === "typebot" && matchedTrigger.typebot_id) {
+      // Resolve typebot_url: use trigger's stored URL, or fetch from typebot_accounts
+      let typebotUrl = matchedTrigger.typebot_url || "";
+      if (!typebotUrl) {
+        const { data: account } = await supabase
+          .from("typebot_accounts")
+          .select("typebot_url_viewer")
+          .eq("tenant_id", tenant_id)
+          .maybeSingle();
+        typebotUrl = account?.typebot_url_viewer || "";
+      }
+      if (!typebotUrl) {
+        console.error("[automation-router] No Typebot URL found for tenant", tenant_id);
+        return json({ error: "Typebot URL not configured" }, 400);
+      }
+
       // Start Typebot flow
       const result = await startTypebotChat(supabase, {
         tenant_id,
@@ -90,9 +156,13 @@ Deno.serve(async (req) => {
         contact_phone,
         sender_name,
         typebot_id: matchedTrigger.typebot_id,
-        typebot_url: matchedTrigger.typebot_url,
+        typebot_url: typebotUrl,
         message_text,
       });
+      // If flow completed immediately (no more input), log fim
+      if (result.completed) {
+        await logAutomation(supabase, tenant_id, instance_name, remote_jid, matchedTrigger.name, "fim");
+      }
       return json({ action: "typebot_started", ...result });
     }
 
@@ -108,6 +178,7 @@ Deno.serve(async (req) => {
         lead_status: userId ? "open" : "pending",
         is_ticket_open: true,
       }, { onConflict: "chat_id,instance_name" });
+      await logAutomation(supabase, tenant_id, instance_name, remote_jid, matchedTrigger.name, "fim");
       return json({ action: "assigned", department_id: departmentId, user_id: userId });
     }
 
@@ -130,6 +201,7 @@ Deno.serve(async (req) => {
           }, { onConflict: "chat_id,instance_name" });
         }
       }
+      await logAutomation(supabase, tenant_id, instance_name, remote_jid, matchedTrigger.name, "fim");
       return json({ action: "tagged", tag: tagName });
     }
 
@@ -145,6 +217,7 @@ Deno.serve(async (req) => {
         lead_status: "open",
         is_ticket_open: true,
       }, { onConflict: "chat_id,instance_name" });
+      await logAutomation(supabase, tenant_id, instance_name, remote_jid, matchedTrigger.name, "fim");
       return json({ action: "transferred", department_id: departmentId, user_id: userId });
     }
 
@@ -170,12 +243,13 @@ async function startTypebotChat(supabase: any, params: {
 }) {
   const { tenant_id, instance_name, remote_jid, contact_phone, sender_name, typebot_id, typebot_url, message_text } = params;
 
-  // Call Typebot startChat API
-  const startRes = await fetch(`${typebot_url}/api/v1/typebots/${typebot_id}/startChat`, {
+  // Call Typebot sendMessage API (works for both published and unpublished bots)
+  const startRes = await fetch(`${typebot_url}/api/v1/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      message: message_text,
+      startParams: { typebot: typebot_id },
+      message: message_text || undefined,
       prefilledVariables: {
         nome: sender_name || "",
         telefone: contact_phone || "",
@@ -187,25 +261,27 @@ async function startTypebotChat(supabase: any, params: {
 
   if (!startRes.ok) {
     const errText = await startRes.text();
-    console.error(`[automation-router] Typebot startChat failed: ${startRes.status} ${errText}`);
-    return { error: `Typebot startChat failed: ${startRes.status}` };
+    console.error(`[automation-router] Typebot sendMessage failed: ${startRes.status} ${errText}`);
+    return { error: `Typebot sendMessage failed: ${startRes.status}` };
   }
 
   const chatData = await startRes.json();
-  const sessionId = chatData.sessionId;
+  const sessionId = chatData.sessionId || null;
 
-  // Save session
-  await supabase.from("typebot_sessions").upsert({
-    tenant_id,
-    remote_jid,
-    contact_phone,
-    instance_name,
-    typebot_id,
-    session_id: sessionId,
-    is_active: true,
-    variables: chatData.prefilledVariables || {},
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "tenant_id,remote_jid,typebot_id" });
+  // Save session only if we got a sessionId (flow expects more input)
+  if (sessionId) {
+    await supabase.from("typebot_sessions").upsert({
+      tenant_id,
+      remote_jid,
+      contact_phone,
+      instance_name,
+      typebot_id,
+      session_id: sessionId,
+      is_active: true,
+      variables: chatData.prefilledVariables || {},
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "tenant_id,remote_jid,typebot_id" });
+  }
 
   // Process and send response messages
   const sentCount = await processTypebotMessages(supabase, chatData.messages || [], instance_name, remote_jid);
@@ -213,36 +289,53 @@ async function startTypebotChat(supabase: any, params: {
   // Check for input block (Typebot waiting for user response)
   const hasInput = chatData.input !== undefined && chatData.input !== null;
 
-  return { session_id: sessionId, messages_sent: sentCount, waiting_for_input: hasInput };
+  // If flow completed immediately (no input expected), close session and log fim
+  if (!hasInput) {
+    await supabase.from("typebot_sessions").update({ is_active: false, updated_at: new Date().toISOString() }).eq("tenant_id", tenant_id).eq("remote_jid", remote_jid).eq("typebot_id", typebot_id);
+    // Log fim will be handled by the caller
+  }
+
+  return { session_id: sessionId, messages_sent: sentCount, waiting_for_input: hasInput, completed: !hasInput };
 }
 
 async function continueTypebotChat(session: any, message: string, supabase: any) {
   // Call Typebot continueChat API
   const typebotUrl = session.variables?.typebot_url || "";
 
-  // Get typebot_url from automation_triggers
+  // Get typebot_url and trigger name from automation_triggers
   const { data: trigger } = await supabase
     .from("automation_triggers")
-    .select("typebot_url")
+    .select("typebot_url, name")
     .eq("typebot_id", session.typebot_id)
     .eq("tenant_id", session.tenant_id)
     .maybeSingle();
+  const triggerName = trigger?.name || "Typebot";
 
-  const baseUrl = trigger?.typebot_url || Deno.env.get("TYPEBOT_URL") || "";
+  let baseUrl = trigger?.typebot_url || Deno.env.get("TYPEBOT_URL") || "";
+  if (!baseUrl) {
+    // Fallback: fetch viewer URL from typebot_accounts
+    const { data: account } = await supabase
+      .from("typebot_accounts")
+      .select("typebot_url_viewer")
+      .eq("tenant_id", session.tenant_id)
+      .maybeSingle();
+    baseUrl = account?.typebot_url_viewer || "";
+  }
   if (!baseUrl) {
     console.error("[automation-router] No Typebot URL configured");
     return { error: "No Typebot URL" };
   }
 
-  const continueRes = await fetch(`${baseUrl}/api/v1/sessions/${session.session_id}/continueChat`, {
+  const continueRes = await fetch(`${baseUrl}/api/v1/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ sessionId: session.session_id, message }),
   });
 
   if (!continueRes.ok) {
     // Session may have expired — close it
     await supabase.from("typebot_sessions").update({ is_active: false }).eq("id", session.id);
+    await logAutomation(supabase, session.tenant_id, session.instance_name, session.remote_jid, triggerName, "fim");
     return { error: `continueChat failed: ${continueRes.status}`, session_closed: true };
   }
 
@@ -271,6 +364,7 @@ async function continueTypebotChat(session: any, message: string, supabase: any)
     }, { onConflict: "chat_id,instance_name" });
 
     console.log(`[automation-router] Handoff: session ${session.session_id} → ${handoff.type}`);
+    await logAutomation(supabase, session.tenant_id, session.instance_name, session.remote_jid, triggerName, "fim");
     return { handoff: true, type: handoff.type, messages_sent: sentCount };
   }
 
@@ -283,6 +377,7 @@ async function continueTypebotChat(session: any, message: string, supabase: any)
   // If Typebot says conversation is done (no input expected)
   if (!chatData.input) {
     await supabase.from("typebot_sessions").update({ is_active: false }).eq("id", session.id);
+    await logAutomation(supabase, session.tenant_id, session.instance_name, session.remote_jid, triggerName, "fim");
     return { completed: true, messages_sent: sentCount };
   }
 
@@ -299,20 +394,51 @@ async function processTypebotMessages(supabase: any, messages: any[], instanceNa
           block.children?.map((child: any) => child.text || "").join("") || ""
         ).join("\n");
         if (plainText.trim()) {
-          await sendViaUazapi(supabase, instanceName, remoteJid, plainText);
+          await sendMessage(supabase, instanceName, remoteJid, plainText);
           sent++;
         }
       } else if (msg.type === "text" && msg.content?.plainText) {
-        await sendViaUazapi(supabase, instanceName, remoteJid, msg.content.plainText);
+        await sendMessage(supabase, instanceName, remoteJid, msg.content.plainText);
         sent++;
       } else if (msg.type === "image" && msg.content?.url) {
-        await sendMediaViaUazapi(supabase, instanceName, remoteJid, msg.content.url, "image", msg.content.alt || "");
+        await sendMedia(supabase, instanceName, remoteJid, msg.content.url, "image", msg.content.alt || "");
         sent++;
       } else if (msg.type === "video" && msg.content?.url) {
-        await sendMediaViaUazapi(supabase, instanceName, remoteJid, msg.content.url, "video", "");
+        await sendMedia(supabase, instanceName, remoteJid, msg.content.url, "video", "");
         sent++;
       } else if (msg.type === "audio" && msg.content?.url) {
-        await sendMediaViaUazapi(supabase, instanceName, remoteJid, msg.content.url, "audio", "");
+        await sendMedia(supabase, instanceName, remoteJid, msg.content.url, "audio", "");
+        sent++;
+      } else if (msg.type === "file" && msg.content?.url) {
+        // Typebot sends all files as type "file" — detect real type via HEAD request
+        const fileUrl = msg.content.url as string;
+        let mediaType = "document";
+        let fileName: string | undefined;
+        try {
+          const headRes = await fetch(fileUrl, { method: "HEAD" });
+          const ct = (headRes.headers.get("content-type") || "").toLowerCase();
+          if (ct.startsWith("image/")) mediaType = "image";
+          else if (ct.startsWith("video/")) mediaType = "video";
+          else if (ct.startsWith("audio/")) mediaType = "audio";
+          else mediaType = "document";
+          // Extract filename from content-disposition or generate from content-type
+          const cd = headRes.headers.get("content-disposition") || "";
+          const match = cd.match(/filename[*]?=(?:UTF-8''|"?)([^";]+)/i);
+          if (match) {
+            fileName = decodeURIComponent(match[1].trim());
+          } else if (mediaType === "document") {
+            const extMap: Record<string, string> = {
+              "application/pdf": "pdf", "application/vnd.ms-excel": "xls",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+              "application/msword": "doc", "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+              "text/csv": "csv", "application/zip": "zip",
+            };
+            const ext = extMap[ct] || ct.split("/")[1] || "bin";
+            const id = Math.random().toString(36).slice(2, 7);
+            fileName = `${id}.${ext}`;
+          }
+        } catch { /* fallback to document */ }
+        await sendMedia(supabase, instanceName, remoteJid, fileUrl, mediaType, "", fileName);
         sent++;
       }
       // Add delay between messages for natural feel
@@ -345,36 +471,166 @@ function checkForHandoff(chatData: any): { type: string; department_id?: string;
 
 // ── Send helpers ──
 
-async function sendViaUazapi(supabase: any, instanceName: string, remoteJid: string, text: string) {
+const UAZAPI_BASE = Deno.env.get("UAZAPI_BASE_URL") || "";
+
+async function saveOutgoingMessage(supabase: any, instanceName: string, remoteJid: string, body: string, type = "text", mediaUrl: string | null = null) {
+  let tenantId: string | null = null;
+
+  if (instanceName.startsWith("cloud_api_")) {
+    const phoneNumberId = instanceName.replace("cloud_api_", "");
+    const { data } = await supabase.from("channel_integrations").select("tenant_id").eq("phone_number_id", phoneNumberId).maybeSingle();
+    tenantId = data?.tenant_id;
+  } else {
+    const { data } = await supabase.from("whatsapp_instances").select("tenant_id").eq("instance_name", instanceName).maybeSingle();
+    tenantId = data?.tenant_id;
+  }
+  if (!tenantId) return;
+
+  await supabase.from("whatsapp_messages").insert({
+    message_id: `auto_out_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    instance_name: instanceName,
+    remote_jid: remoteJid,
+    direction: "outgoing",
+    type,
+    body,
+    media_url: mediaUrl,
+    status: 2,
+    tenant_id: tenantId,
+    sender_name: "Automação",
+    created_at: new Date().toISOString(),
+  });
+}
+
+async function sendMessage(supabase: any, instanceName: string, remoteJid: string, text: string) {
+  const phone = remoteJid.replace(/@.*$/, "");
+
+  // Cloud API instance (Meta WhatsApp)
+  if (instanceName.startsWith("cloud_api_")) {
+    const phoneNumberId = instanceName.replace("cloud_api_", "");
+    const { data: integration } = await supabase
+      .from("channel_integrations")
+      .select("access_token")
+      .eq("phone_number_id", phoneNumberId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (!integration?.access_token) return;
+
+    await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${integration.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: phone,
+        type: "text",
+        text: { body: text },
+      }),
+    });
+    await saveOutgoingMessage(supabase, instanceName, remoteJid, text);
+    return;
+  }
+
+  // Instagram / Messenger instance
+  if (instanceName.startsWith("instagram_") || instanceName.startsWith("messenger_")) {
+    const pageId = instanceName.replace(/^(instagram|messenger)_/, "");
+    const { data: integration } = await supabase
+      .from("channel_integrations")
+      .select("access_token")
+      .or(`facebook_page_id.eq.${pageId},instagram_business_account_id.eq.${pageId}`)
+      .eq("status", "active")
+      .maybeSingle();
+    if (!integration?.access_token) return;
+
+    const recipientId = remoteJid.replace(/@.*$/, "");
+    await fetch(`https://graph.facebook.com/v21.0/me/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${integration.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text },
+      }),
+    });
+    await saveOutgoingMessage(supabase, instanceName, remoteJid, text);
+    return;
+  }
+
+  // UazAPI instance
   const { data: inst } = await supabase
     .from("whatsapp_instances")
-    .select("instance_token, server_url")
+    .select("instance_token, server_url, tenant_id")
     .eq("instance_name", instanceName)
     .maybeSingle();
 
-  if (!inst) return;
+  if (!inst?.instance_token) return;
 
-  const phone = remoteJid.replace(/@.*$/, "");
-  await fetch(`${inst.server_url}/send/text`, {
+  const baseUrl = inst.server_url || UAZAPI_BASE;
+  if (!baseUrl) return;
+
+  await fetch(`${baseUrl}/send/text`, {
     method: "POST",
     headers: { "Content-Type": "application/json", token: inst.instance_token },
     body: JSON.stringify({ number: phone, text }),
   });
+  // UazAPI webhook already saves outgoing messages — no need to duplicate
 }
 
-async function sendMediaViaUazapi(supabase: any, instanceName: string, remoteJid: string, url: string, type: string, caption: string) {
+async function sendMedia(supabase: any, instanceName: string, remoteJid: string, url: string, type: string, caption: string, docName?: string) {
+  const phone = remoteJid.replace(/@.*$/, "");
+
+  // Cloud API instance (Meta WhatsApp)
+  if (instanceName.startsWith("cloud_api_")) {
+    const phoneNumberId = instanceName.replace("cloud_api_", "");
+    const { data: integration } = await supabase
+      .from("channel_integrations")
+      .select("access_token")
+      .eq("phone_number_id", phoneNumberId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (!integration?.access_token) return;
+
+    const mediaType = ["image", "video", "audio", "document"].includes(type) ? type : "document";
+    const mediaPayload: any = { link: url };
+    if (caption && mediaType !== "audio") mediaPayload.caption = caption;
+    if (docName && mediaType === "document") mediaPayload.filename = docName;
+
+    await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${integration.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: phone,
+        type: mediaType,
+        [mediaType]: mediaPayload,
+      }),
+    });
+    await saveOutgoingMessage(supabase, instanceName, remoteJid, caption || `[${mediaType}]`, mediaType, url);
+    return;
+  }
+
+  // UazAPI instance
   const { data: inst } = await supabase
     .from("whatsapp_instances")
-    .select("instance_token, server_url")
+    .select("instance_token, server_url, tenant_id")
     .eq("instance_name", instanceName)
     .maybeSingle();
 
-  if (!inst) return;
+  if (!inst?.instance_token) return;
 
-  const phone = remoteJid.replace(/@.*$/, "");
-  await fetch(`${inst.server_url}/send/media`, {
+  const baseUrl = inst.server_url || UAZAPI_BASE;
+  if (!baseUrl) return;
+
+  await fetch(`${baseUrl}/send/media`, {
     method: "POST",
     headers: { "Content-Type": "application/json", token: inst.instance_token },
-    body: JSON.stringify({ number: phone, file: url, text: caption }),
+    body: JSON.stringify({ number: phone, type, file: url, text: caption, ...(docName ? { docName } : {}) }),
   });
+  // UazAPI webhook already saves outgoing messages — no need to duplicate
 }

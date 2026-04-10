@@ -10,7 +10,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Zap, MessageSquare, UserPlus, Tag, ArrowRight, Webhook, Trash2, Bot, Edit2 } from "lucide-react";
+import { Plus, Zap, MessageSquare, UserPlus, Tag, ArrowRight, Webhook, Trash2, Bot, Edit2, FlaskConical, Sparkles, Loader2, ChevronsUpDown, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Trigger {
@@ -23,12 +26,26 @@ interface Trigger {
     reply_text?: string;
     webhook_url?: string;
     tag_name?: string;
+    typebot_mode?: "classic" | "zero" | "labs";
+    typebot_token?: string;
   };
   is_active: boolean;
   priority: number;
   typebot_id: string | null;
   typebot_url: string | null;
 }
+
+interface TypebotFlow {
+  id: string;
+  name: string;
+  publicId: string | null;
+}
+
+const TYPEBOT_MODE_LABELS: Record<string, { label: string; description: string }> = {
+  classic: { label: "Flow Classic", description: "Selecione um fluxo do seu painel Typebot" },
+  zero: { label: "Flow Zero", description: "IA cria fluxos automaticamente (em breve)" },
+  labs: { label: "Flow Labs", description: "Ambiente experimental com configuracao manual" },
+};
 
 const ACTION_ICONS: Record<string, typeof Zap> = {
   reply: MessageSquare,
@@ -50,8 +67,8 @@ const ACTION_LABELS: Record<string, string> = {
 
 const defaultForm = {
   name: "", trigger_type: "keyword", trigger_value: "",
-  action_type: "reply", action_config: { reply_text: "" },
-  typebot_id: "", typebot_url: "",
+  action_type: "reply", action_config: { reply_text: "" } as Record<string, string | undefined>,
+  typebot_id: "", typebot_url: "", typebot_mode: "classic" as "classic" | "zero" | "labs",
 };
 
 export default function AutomationManager() {
@@ -60,6 +77,22 @@ export default function AutomationManager() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Trigger | null>(null);
   const [form, setForm] = useState({ ...defaultForm });
+
+  const [typebotViewerUrl, setTypebotViewerUrl] = useState("");
+
+  const { data: typebotFlows = [], isLoading: loadingFlows } = useQuery({
+    queryKey: ["typebot-flows", tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("typebot-list-bots", {
+        body: { tenant_id: tenantId },
+      });
+      if (error) throw error;
+      if (!data || data.status !== "success") return [];
+      if (data.viewer_url) setTypebotViewerUrl(data.viewer_url);
+      return (data.typebots || []) as TypebotFlow[];
+    },
+    enabled: !!tenantId && form.action_type === "typebot" && form.typebot_mode === "classic" && createOpen,
+  });
 
   const authorizeTypebotMutation = useMutation({
     mutationFn: async () => {
@@ -93,14 +126,19 @@ export default function AutomationManager() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const isTypebot = form.action_type === "typebot";
+      const actionConfig = isTypebot
+        ? { ...form.action_config, typebot_mode: form.typebot_mode }
+        : form.action_config;
+
       const payload = {
         name: form.name,
         trigger_type: form.trigger_type,
         trigger_value: form.trigger_value,
         action_type: form.action_type,
-        action_config: form.action_config,
-        typebot_id: form.action_type === "typebot" ? form.typebot_id || null : null,
-        typebot_url: form.action_type === "typebot" ? form.typebot_url || null : null,
+        action_config: actionConfig,
+        typebot_id: isTypebot ? form.typebot_id || null : null,
+        typebot_url: isTypebot ? (form.typebot_url || typebotViewerUrl || null) : null,
         tenant_id: tenantId,
       };
       if (editing) {
@@ -154,6 +192,7 @@ export default function AutomationManager() {
       action_config: t.action_config || {},
       typebot_id: t.typebot_id || "",
       typebot_url: t.typebot_url || "",
+      typebot_mode: (t.action_config?.typebot_mode as "classic" | "zero" | "labs") || "classic",
     });
     setCreateOpen(true);
   };
@@ -205,8 +244,20 @@ export default function AutomationManager() {
                     </Badge>
                     <ArrowRight size={10} />
                     <Badge variant="outline" className="text-[9px] gap-0.5"><ActionIcon size={8} /> {ACTION_LABELS[t.action_type]}</Badge>
-                    {t.action_type === "typebot" && t.typebot_id && (
-                      <Badge variant="secondary" className="text-[9px] gap-0.5"><Bot size={8} /> {t.typebot_id}</Badge>
+                    {t.action_type === "typebot" && (
+                      <>
+                        {t.action_config?.typebot_mode && (
+                          <Badge variant="secondary" className="text-[9px] gap-0.5">
+                            {t.action_config.typebot_mode === "classic" && <Bot size={8} />}
+                            {t.action_config.typebot_mode === "labs" && <FlaskConical size={8} />}
+                            {t.action_config.typebot_mode === "zero" && <Sparkles size={8} />}
+                            {TYPEBOT_MODE_LABELS[t.action_config.typebot_mode]?.label || t.action_config.typebot_mode}
+                          </Badge>
+                        )}
+                        {t.typebot_id && (
+                          <Badge variant="secondary" className="text-[9px] gap-0.5"><Bot size={8} /> {t.typebot_id}</Badge>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -285,29 +336,133 @@ export default function AutomationManager() {
             )}
 
             {form.action_type === "typebot" && (
-              <div className="space-y-3 p-3 border border-blue-500/20 bg-blue-500/5">
+              <div className="space-y-3 p-3 border border-blue-500/20 bg-blue-500/5 rounded">
                 <div className="flex items-center gap-2 text-sm font-medium text-blue-500">
                   <Bot size={16} />
                   Configuracao do Typebot
                 </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block text-muted-foreground">URL do Typebot</label>
-                  <Input
-                    placeholder="https://typebot.seudominio.com"
-                    value={form.typebot_url}
-                    onChange={(e) => setForm({ ...form, typebot_url: e.target.value })}
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">URL base do seu Typebot (self-hosted ou cloud)</p>
+
+                {/* Mode selector */}
+                <div className="grid grid-cols-3 gap-2">
+                  {(["classic", "zero", "labs"] as const).map((mode) => {
+                    const selected = form.typebot_mode === mode;
+                    const isZero = mode === "zero";
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        disabled={isZero}
+                        onClick={() => setForm({ ...form, typebot_mode: mode, typebot_id: "", typebot_url: "", action_config: { ...form.action_config, typebot_token: undefined } })}
+                        className={`relative p-2 rounded border text-center transition-all ${
+                          selected
+                            ? "border-blue-500 bg-blue-500/10 text-blue-500"
+                            : isZero
+                            ? "border-muted/40 bg-muted/5 text-muted-foreground/40 cursor-not-allowed"
+                            : "border-muted bg-background text-muted-foreground hover:border-blue-500/40"
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-1">
+                          {mode === "classic" && <Bot size={16} />}
+                          {mode === "zero" && <Sparkles size={16} />}
+                          {mode === "labs" && <FlaskConical size={16} />}
+                          <span className="text-[10px] font-semibold leading-tight">{TYPEBOT_MODE_LABELS[mode].label}</span>
+                        </div>
+                        {isZero && (
+                          <span className="absolute -top-1.5 -right-1.5 bg-yellow-500 text-[8px] text-white px-1 rounded-full font-bold">BREVE</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block text-muted-foreground">Typebot ID (slug do fluxo)</label>
-                  <Input
-                    placeholder="Ex: atendimento-vendas"
-                    value={form.typebot_id}
-                    onChange={(e) => setForm({ ...form, typebot_id: e.target.value })}
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">O ID ou slug do fluxo no Typebot (encontre na URL do editor)</p>
-                </div>
+                <p className="text-[10px] text-muted-foreground">{TYPEBOT_MODE_LABELS[form.typebot_mode].description}</p>
+
+                {/* Flow Classic - select from account */}
+                {form.typebot_mode === "classic" && (
+                  <div>
+                    <label className="text-xs font-medium mb-1 block text-muted-foreground">Selecione o fluxo</label>
+                    {loadingFlows ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                        <Loader2 size={14} className="animate-spin" /> Carregando fluxos...
+                      </div>
+                    ) : typebotFlows.length === 0 ? (
+                      <div className="text-xs text-muted-foreground py-2">
+                        Nenhum fluxo encontrado. Crie um fluxo no painel Typebot primeiro.
+                      </div>
+                    ) : (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                            {form.typebot_id ? (
+                              <span className="flex items-center gap-1.5 truncate">
+                                <Bot size={12} className="text-blue-500 shrink-0" />
+                                {typebotFlows.find((tb) => (tb.publicId || tb.id) === form.typebot_id)?.name || form.typebot_id}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">Selecione um fluxo...</span>
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar fluxo..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhum fluxo encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                {typebotFlows.map((tb) => {
+                                  const value = tb.publicId || tb.id;
+                                  return (
+                                    <CommandItem
+                                      key={tb.id}
+                                      value={tb.name}
+                                      onSelect={() => setForm({ ...form, typebot_id: value })}
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4", form.typebot_id === value ? "opacity-100" : "opacity-0")} />
+                                      <Bot size={12} className="mr-1.5 text-blue-500 shrink-0" />
+                                      {tb.name}
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
+                )}
+
+                {/* Flow Labs - manual config */}
+                {form.typebot_mode === "labs" && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">URL do Typebot</label>
+                      <Input
+                        placeholder="https://typebot.seudominio.com"
+                        value={form.typebot_url}
+                        onChange={(e) => setForm({ ...form, typebot_url: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Typebot ID (slug do fluxo)</label>
+                      <Input
+                        placeholder="Ex: atendimento-vendas"
+                        value={form.typebot_id}
+                        onChange={(e) => setForm({ ...form, typebot_id: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Token de acesso</label>
+                      <Input
+                        type="password"
+                        placeholder="Token do Typebot"
+                        value={form.action_config.typebot_token || ""}
+                        onChange={(e) => setForm({ ...form, action_config: { ...form.action_config, typebot_token: e.target.value } })}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Token de autenticacao para acessar a API do Typebot do cliente</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

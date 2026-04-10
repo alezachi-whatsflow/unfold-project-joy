@@ -139,26 +139,14 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
         body: finalText, status: 4, tenant_id: tId,
       });
     } else {
-      // WA Web: uazapi — inject optimistic, then send
+      // WA Web: uazapi — send directly
       injectOutgoing(compositeId, finalText);
       try {
-        if (isBackendAvailable()) {
-          // NEW PATH: Send via Backend API → BullMQ → 202 Accepted
-          await messagesApi.send({
-            instanceName: conv.instanceName,
-            recipientJid: isGroup ? selectedJid : jidToPhone(selectedJid),
-            text: finalText,
-            isGroup,
-            ...(options?.replyId ? { replyid: options.replyId } : {}),
-          });
-        } else {
-          // LEGACY PATH: Direct uazapi call (current behavior)
-          await callUazapi(conv.instanceName, "/send/text", "POST", {
-            number: isGroup ? selectedJid : jidToPhone(selectedJid),
-            text: finalText,
-            ...(options?.replyId ? { replyid: options.replyId } : {}),
-          });
-        }
+        await callUazapi(conv.instanceName, "/send/text", "POST", {
+          number: isGroup ? selectedJid : jidToPhone(selectedJid),
+          text: finalText,
+          ...(options?.replyId ? { replyid: options.replyId } : {}),
+        });
       } catch (err: any) {
         console.error("Send error:", err);
         toast.error(`Erro ao enviar: ${err.message || "Falha no envio"}`);
@@ -237,19 +225,7 @@ export function useMessageSender(opts: UseMessageSenderOptions) {
       }
 
       try {
-        if (isBackendAvailable() && payload.type === "media") {
-          // NEW PATH: Backend API for media
-          await messagesApi.sendMedia({
-            instanceName: conv.instanceName,
-            recipientJid: number,
-            mediaType: payload.mediaType || "document",
-            mediaUrl: payload.file,
-            caption: payload.text || "",
-          });
-        } else {
-          // LEGACY PATH: Direct uazapi
-          await callUazapi(conv.instanceName, path, "POST", body);
-        }
+        await callUazapi(conv.instanceName, path, "POST", body);
       } catch (err: any) {
         console.error("Attachment send error:", err);
         throw err;

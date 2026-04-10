@@ -226,6 +226,25 @@ async function handleWhatsAppWebhook(client: ReturnType<typeof createClient>, pa
           }, { onConflict: "instance_name,chat_id" }).then(({ error }) => {
             if (error) console.error("[meta-webhook] Lead upsert error:", error.message);
           });
+
+          // 4. Dispatch to automation-router (triggers + Typebot sessions)
+          const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+          const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
+          if (tenantId && SUPABASE_URL) {
+            fetch(`${SUPABASE_URL}/functions/v1/automation-router`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+              body: JSON.stringify({
+                tenant_id: tenantId,
+                instance_name: instanceName,
+                remote_jid: remoteJid,
+                contact_phone: fromNumber,
+                message_text: body || caption || "",
+                message_type: type,
+                sender_name: senderName || "",
+              }),
+            }).catch((e: any) => console.error("[meta-webhook] automation-router dispatch error:", e.message));
+          }
         }
       }
 
@@ -343,6 +362,25 @@ async function handlePageMessaging(
         }, { onConflict: "instance_name,chat_id" }).then(({ error }) => {
           if (error) console.error(`[meta-webhook] ${channel} lead upsert error:`, error.message);
         });
+
+        // Dispatch to automation-router (triggers + Typebot sessions)
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+        const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
+        if (tenantId && SUPABASE_URL) {
+          fetch(`${SUPABASE_URL}/functions/v1/automation-router`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({
+              tenant_id: tenantId,
+              instance_name: instanceName,
+              remote_jid: remoteJid,
+              contact_phone: senderId,
+              message_text: text || "",
+              message_type: contentType,
+              sender_name: "",
+            }),
+          }).catch((e: any) => console.error(`[meta-webhook] ${channel} automation-router dispatch error:`, e.message));
+        }
       }
 
       if (messaging.delivery || messaging.read) {
