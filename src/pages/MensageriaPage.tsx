@@ -51,7 +51,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "atendentes",       label: "Atendentes",           icon: UserCog,            group: "config" },
   { id: "setores",          label: "Setores",              icon: Building2,          group: "config" },
   { id: "sla",              label: "SLA",                  icon: Clock,              group: "config" },
-  { id: "msg-predefinidas", label: "Modelos de Mensagem",  icon: MessageSquareText,  group: "config" },
+  { id: "msg-predefinidas", label: "Modelos de Msg",       icon: MessageSquareText,  group: "config" },
   { id: "tags-contato",     label: "Tags de Contato",      icon: Tag,                group: "config" },
   { id: "automacoes",       label: "Automações",           icon: Zap,                group: "config" },
 ];
@@ -130,7 +130,7 @@ const MensageriaPage = () => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "flex flex-col shrink-0 transition-all duration-250 ease-[cubic-bezier(.4,0,.2,1)]",
+          "flex flex-col shrink-0 overflow-hidden transition-all duration-250 ease-[cubic-bezier(.4,0,.2,1)] z-10",
           expanded ? "w-[200px]" : "w-[52px]"
         )}
         style={{ background: "var(--bg-surface, hsl(var(--card)))", borderRight: "1px solid var(--border, hsl(var(--border)))" }}
