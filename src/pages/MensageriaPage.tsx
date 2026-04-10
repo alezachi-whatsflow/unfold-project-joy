@@ -93,17 +93,20 @@ const MensageriaPage = () => {
     const isActive = activeTab === item.id;
 
     if (!expanded) {
-      // Collapsed: icon with scale effect + tooltip
       return (
-        <div className="relative flex justify-center">
-          <button
-            onClick={() => setActiveTab(item.id)}
-            className={`nav-icon-hover ${isActive ? "active" : ""}`}
-            style={{ width: 38, height: 38 }}
-          >
-            <Icon size={18} />
-            <span className="nav-icon-tooltip-right">{item.label}</span>
-          </button>
+        <div className="flex justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setActiveTab(item.id)}
+                className={`nav-icon-hover ${isActive ? "active" : ""}`}
+                style={{ width: 38, height: 38 }}
+              >
+                <Icon size={18} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
+          </Tooltip>
         </div>
       );
     }
