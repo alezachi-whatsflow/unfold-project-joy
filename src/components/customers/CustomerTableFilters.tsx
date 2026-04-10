@@ -55,13 +55,15 @@ export function useCustomerFilters(customers: Customer[]) {
   }, [customers]);
 
   const filteredCustomers = useMemo(() => {
-    return customers.filter((c) => {
-      if (filters.status.length && !filters.status.includes(c.status)) return false;
-      if (filters.checkout.length && !filters.checkout.includes(c.checkout)) return false;
-      if (filters.condicao.length && !filters.condicao.includes(c.condicao || "-")) return false;
-      if (filters.whitelabel.length && !filters.whitelabel.includes(c.whitelabel)) return false;
-      return true;
-    });
+    return customers
+      .filter((c) => {
+        if (filters.status.length && !filters.status.includes(c.status)) return false;
+        if (filters.checkout.length && !filters.checkout.includes(c.checkout)) return false;
+        if (filters.condicao.length && !filters.condicao.includes(c.condicao || "-")) return false;
+        if (filters.whitelabel.length && !filters.whitelabel.includes(c.whitelabel)) return false;
+        return true;
+      })
+      .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }));
   }, [customers, filters]);
 
   const toggleFilter = (key: ColumnFilterKey, value: string) => {
