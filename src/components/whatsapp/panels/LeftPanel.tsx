@@ -191,6 +191,7 @@ export default function LeftPanel({
               isQueueMode={!c.isGroup && (filter === "queue" || !c.assignedTo)}
               onAssign={!c.isGroup && onAssignConversation ? () => onAssignConversation(c.id) : undefined}
               searchQuery={search.length >= 3 ? search : undefined}
+              showTags={filter === "queue" || filter === "groups_queue"}
             />
           ))
         )}

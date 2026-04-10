@@ -426,19 +426,29 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
           <div className="flex items-center gap-3 min-w-0">
             <WaAvatar initials={c.avatarInitials} color={c.avatarColor} size={40} isOnline={c.isOnline} imageUrl={c.avatarUrl} />
             <div className="min-w-0">
-              <p className="text-[15px] font-semibold truncate" style={{ color: "var(--wa-text-primary)" }}>{c.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[15px] font-semibold truncate" style={{ color: "var(--wa-text-primary)" }}>{c.name}</p>
+                {/* Tags — persistent, right of name */}
+                {(leadTags.length > 0 || (c.tags || []).length > 0) && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    {(leadTags.length > 0 ? leadTags : (c.tags || []).map((t: any) => t.label)).map((tag: string, i: number) => (
+                      <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border" style={{
+                        background: "rgba(34,197,94,0.1)",
+                        borderColor: "rgba(34,197,94,0.3)",
+                        color: "rgb(34,197,94)",
+                      }}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
               <p className="text-[13px]" style={{ color: "var(--wa-text-secondary)" }}>
                 {c.isGroup
                   ? `Grupo${c.participantCount ? ` · ${c.participantCount} participantes` : ""}`
                   : c.isOnline ? "online" : "visto por último recentemente"}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-1 flex-wrap">
-            {/* Show tags from lead (realtime) or from conversation object (initial) */}
-            {(leadTags.length > 0 ? leadTags : (c.tags || []).map((t: any) => t.label)).map((tag: string, i: number) => (
-              <TagBadge key={i} label={tag} color="lead" />
-            ))}
           </div>
           <div className="flex items-center gap-4 ml-4">
             {onNewConversation && (

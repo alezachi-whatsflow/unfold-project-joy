@@ -16,6 +16,8 @@ interface ConversationItemProps {
   onAssign?: () => void;
   /** Active search query for snippet highlighting */
   searchQuery?: string;
+  /** Only show tags in queue mode */
+  showTags?: boolean;
 }
 
 /** Highlight search term within a text string */
@@ -32,7 +34,7 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   );
 }
 
-const ConversationItem = React.memo(function ConversationItem({ conversation: c, isSelected, onClick, isQueueMode, onAssign, searchQuery }: ConversationItemProps) {
+const ConversationItem = React.memo(function ConversationItem({ conversation: c, isSelected, onClick, isQueueMode, onAssign, searchQuery, showTags }: ConversationItemProps) {
   const prefixMap: Record<string, string> = {
     audio: "\uD83C\uDFB5 Áudio",
     document: "\uD83D\uDCCE Documento",
@@ -127,8 +129,8 @@ const ConversationItem = React.memo(function ConversationItem({ conversation: c,
           </div>
         )}
 
-        {/* Tags */}
-        {c.tags.length > 0 && (
+        {/* Tags — only in queue mode */}
+        {showTags && c.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {c.tags.map((tag, i) => (
               <TagBadge key={i} label={tag.label} color={tag.color} />
