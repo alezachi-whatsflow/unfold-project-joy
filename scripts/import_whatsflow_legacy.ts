@@ -245,31 +245,38 @@ async function main() {
     process.exit(0);
   }
 
-  // ── Bulk Upsert ──
-  console.log(`\n⬆️  Upserting ${records.length} records...`);
-  let ok = 0, errors = 0;
+  // ── Insert with check-before-insert (conditional index doesn't work with REST upsert) ──
+  console.log(`\n⬆️  Importing ${records.length} records...`);
+  let ok = 0, updated = 0, errors = 0;
 
-  for (let i = 0; i < records.length; i += BATCH_SIZE) {
-    const batch = records.slice(i, i + BATCH_SIZE);
-    const { error } = await supabase.from("customers").upsert(
-      batch.map((r) => ({ ...r, updated_at: new Date().toISOString() })),
-      { onConflict: "tenant_id,email", ignoreDuplicates: false }
-    );
-    if (error) {
-      // Fallback: one by one
-      for (const r of batch) {
-        const { error: e } = await supabase.from("customers").upsert(
-          { ...r, updated_at: new Date().toISOString() },
-          { onConflict: "tenant_id,email" }
-        );
-        if (e) { errors++; console.error(`  ❌ ${r.nome}: ${e.message}`); }
-        else ok++;
-      }
+  for (const r of records) {
+    // Check if exists by email
+    const { data: existing } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("tenant_id", TENANT_ID)
+      .eq("email", r.email!)
+      .maybeSingle();
+
+    if (existing) {
+      // Update existing
+      const { error: upErr } = await supabase
+        .from("customers")
+        .update({ ...r, updated_at: new Date().toISOString() })
+        .eq("id", existing.id);
+      if (upErr) { errors++; console.error(`  ❌ Update ${r.nome}: ${upErr.message}`); }
+      else { updated++; }
     } else {
-      ok += batch.length;
+      // Insert new
+      const { error: insErr } = await supabase
+        .from("customers")
+        .insert({ ...r, updated_at: new Date().toISOString() });
+      if (insErr) { errors++; console.error(`  ❌ Insert ${r.nome}: ${insErr.message}`); }
+      else { ok++; }
     }
-    process.stdout.write(`  ✅ ${ok}/${records.length}\r`);
-    await new Promise((r) => setTimeout(r, 200));
+    process.stdout.write(`  ✅ ${ok + updated}/${records.length} (${ok} new, ${updated} updated)\r`);
+    // Small delay to avoid rate limiting
+    if ((ok + updated + errors) % 10 === 0) await new Promise((r) => setTimeout(r, 100));
   }
 
   console.log(`\n\n✅ Import complete: ${ok} OK, ${errors} errors`);
