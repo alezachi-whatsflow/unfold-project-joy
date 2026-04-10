@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Camera, Upload, Sparkles, CheckCircle2 } from "lucide-react";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { Customer } from "@/types/customers";
 import { CnpjInput } from "@/components/ui/cnpj-input";
 
@@ -48,6 +50,9 @@ const emptyForm: Omit<Customer, "id"> = {
 export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Props) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [ocrDone, setOcrDone] = useState(false);
+  const ocrInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editing) {
@@ -56,9 +61,50 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
     } else {
       setForm({ ...emptyForm, dataAtivacao: new Date().toISOString().split("T")[0] });
     }
+    setOcrDone(false);
   }, [editing, open]);
 
   const set = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  // OCR: extract customer data from image
+  const handleOcrUpload = async (file: File) => {
+    if (!file) return;
+    setExtracting(true);
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]); // strip data:image/...;base64,
+        };
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke("extract-customer-ocr", {
+        body: { image_base64: base64 },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const d = data?.data;
+      if (d) {
+        // Map extracted fields to form
+        if (d.nome) set("nome", d.nome);
+        if (d.email) set("email", d.email);
+        if (d.cpf_cnpj) set("cpfCnpj", d.cpf_cnpj);
+        if (d.telefone) set("phoneLead", d.telefone);
+        if (d.responsavel) set("phoneCompany", ""); // Will be used for dynamic
+        setOcrDone(true);
+        toast.success(`Dados extraídos com ${d.confidence || "?"}% de confiança`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao extrair dados da imagem");
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!form.nome.trim() || !form.email.trim()) return;
@@ -81,6 +127,42 @@ export function CustomerFormDialog({ open, onOpenChange, onSave, editing }: Prop
           <DialogTitle>{editing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {/* OCR Import — only for new customers */}
+          {!editing && (
+            <div
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-lg border border-dashed transition-colors cursor-pointer",
+                extracting ? "border-primary/50 bg-primary/5" : ocrDone ? "border-emerald-500/30 bg-emerald-500/5" : "border-border hover:border-primary/30 hover:bg-muted/50"
+              )}
+              onClick={() => !extracting && ocrInputRef.current?.click()}
+            >
+              <input
+                ref={ocrInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleOcrUpload(file);
+                  e.target.value = "";
+                }}
+              />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                {extracting ? <Loader2 className="h-5 w-5 text-primary animate-spin" /> : ocrDone ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <Camera className="h-5 w-5 text-primary" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium">
+                  {extracting ? "Extraindo dados..." : ocrDone ? "Dados extraídos com sucesso!" : "Importar de imagem (OCR)"}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {extracting ? "Analisando documento com IA..." : ocrDone ? "Revise os campos preenchidos abaixo" : "Envie foto do cartão CNPJ, certificado MEI ou cartão de visitas"}
+                </p>
+              </div>
+              {!extracting && !ocrDone && <Upload className="h-4 w-4 text-muted-foreground shrink-0" />}
+              {ocrDone && <Sparkles className="h-4 w-4 text-emerald-500 shrink-0" />}
+            </div>
+          )}
+
           {/* Row 1: Nome + Email */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
