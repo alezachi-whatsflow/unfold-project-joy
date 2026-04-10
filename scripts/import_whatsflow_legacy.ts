@@ -50,7 +50,13 @@ function normalizePhone(phone: string | null | undefined): string | null {
 }
 
 // ── CSV Parser ──
-function parseCsvLine(line: string, sep = ","): string[] {
+function parseCsvLine(line: string, sep?: string): string[] {
+  // Auto-detect separator
+  if (!sep) {
+    if (line.includes("\t")) sep = "\t";
+    else if (line.includes(";")) sep = ";";
+    else sep = ",";
+  }
   const result: string[] = [];
   let current = "";
   let inQ = false;
