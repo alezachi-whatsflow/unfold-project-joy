@@ -267,11 +267,11 @@ export default function VendasPipeline() {
         {columns.map(col => (
           <div
             key={col.status}
-            className="flex-shrink-0 w-[280px] border border-border/40 bg-muted/20"
+            className="flex-shrink-0 w-[280px] rounded-xl border border-border bg-card/50"
             onDragOver={e => e.preventDefault()}
             onDrop={() => handleDrop(col.status)}
           >
-            <div className="p-3 border-b border-border/30">
+            <div className="p-3 border-b border-border">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ background: col.config.color }} />
                 <span className="text-xs font-semibold text-foreground">{col.config.label}</span>
@@ -292,7 +292,7 @@ export default function VendasPipeline() {
                     onDragStart={() => { dragItem.current = neg; }}
                     onDragEnd={() => { dragItem.current = null; }}
                     onClick={() => openDrawer(neg)}
-                    className={`p-3 border bg-card cursor-pointer hover:border-primary/30 transition-all group ${isHighlighted ? "ring-2 ring-primary border-primary animate-pulse" : "border-border/30"}`}
+                    className={`p-3 rounded-lg border bg-card cursor-pointer hover:border-primary/30 transition-all group ${isHighlighted ? "ring-2 ring-primary border-primary animate-pulse" : "border-border"}`}
                   >
                     <div className="flex items-start justify-between gap-1">
                       <h4 className="text-xs font-semibold text-foreground leading-tight truncate">{neg.titulo}</h4>
