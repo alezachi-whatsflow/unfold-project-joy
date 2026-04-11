@@ -168,9 +168,9 @@ const MensageriaPage = () => {
                     style={{ width: 38, height: 38 }}
                   >
                     <img src={whatsflowLogo} alt="Whatsflow" className="h-6 w-6" />
-                    <span className="nav-icon-tooltip-right">Central de Controle</span>
                   </button>
                 </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">Central de Controle</TooltipContent>
               </Tooltip>
             </div>
           )}
