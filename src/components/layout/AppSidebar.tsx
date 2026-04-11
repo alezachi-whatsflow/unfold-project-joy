@@ -18,6 +18,7 @@ import type { NavCategory, NavItem } from "@/types/sidebar";
 import { getIcon } from "@/lib/iconMap";
 import { sidebarIconMap } from "@/components/ui/SidebarIcons";
 import { IazisLogo, IazisIcon } from "@/components/ui/IazisLogo";
+import { useTenantId } from "@/hooks/useTenantId";
 
 // ──────────────────────── shared styles ────────────────────────
 const menuItemBase = "flex items-center no-underline transition-all duration-[var(--transition-base)]";
@@ -181,16 +182,29 @@ function UserFooter({ collapsed, isMobile }: { collapsed: boolean; isMobile: boo
 }
 
 // ──────────────────────── sidebar header ────────────────────────
-function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { collapsed: boolean; isMobile: boolean; onCollapse: () => void; onCloseMobile: () => void }) {
+interface WLBrand { name: string | null; logo: string | null; color: string }
+function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile, wlBrand }: { collapsed: boolean; isMobile: boolean; onCollapse: () => void; onCloseMobile: () => void; wlBrand?: WLBrand | null }) {
   const isCollapsed = collapsed && !isMobile;
+  const hasWL = !!wlBrand?.name;
+  const brandName = wlBrand?.name || "IAZIS";
+  const brandColor = wlBrand?.color || "#478BFF";
+
   return (
     <div className="flex items-center px-4 py-5 relative border-b border-black/[0.06]">
       <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && "justify-center w-full")}>
-        <IazisLogo size={32} />
+        {wlBrand?.logo ? (
+          <img src={wlBrand.logo} alt={brandName} className="h-8 w-8 rounded-lg object-contain shrink-0" />
+        ) : hasWL ? (
+          <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-sm" style={{ background: brandColor }}>
+            {brandName[0]?.toUpperCase()}
+          </div>
+        ) : (
+          <IazisLogo size={32} />
+        )}
         {!isCollapsed && (
           <div className="min-w-0">
-            <h2 className="font-mono text-sm font-bold tracking-wider truncate text-foreground">IAZIS</h2>
-            <p className="text-[8px] uppercase tracking-[0.2em] text-[#478BFF] font-mono">Ambient Intelligence</p>
+            <h2 className="text-sm font-bold tracking-wider truncate text-foreground" style={{ fontFamily: hasWL ? "'Readex Pro', sans-serif" : "'Geist Mono', monospace" }}>{brandName}</h2>
+            {!hasWL && <p className="text-[8px] uppercase tracking-[0.2em] text-[#478BFF] font-mono">Ambient Intelligence</p>}
           </div>
         )}
       </div>
@@ -343,7 +357,15 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
     <div className="flex h-full">
       {/* Rail */}
       <div className="flex flex-col items-center py-3 shrink-0 border-r border-border" style={{ width: 58 }}>
-        <IazisIcon size={28} className="mb-4" />
+        {wlBrand?.logo ? (
+          <img src={wlBrand.logo} alt={wlBrand.name || ""} className="h-7 w-7 rounded-md object-contain mb-4" />
+        ) : wlBrand?.name ? (
+          <div className="h-7 w-7 rounded-md flex items-center justify-center text-white font-bold text-xs mb-4" style={{ background: wlBrand.color }}>
+            {wlBrand.name[0]?.toUpperCase()}
+          </div>
+        ) : (
+          <IazisIcon size={28} className="mb-4" />
+        )}
         <div className="flex-1 flex flex-col gap-1">
           {filteredGroups.filter(c => c.id !== 'sistema').map(cat => {
             const CatIcon = getIcon(cat.icon || 'LayoutDashboard');
@@ -525,6 +547,35 @@ export function AppSidebar() {
   const { prefs, setPrefs } = useSidebarPrefs();
   const isMobile = useIsMobile();
   const location = useLocation();
+  const tenantId = useTenantId();
+
+  // Resolve partner WL branding for this tenant
+  const { data: wlBrand } = useQuery({
+    queryKey: ["sidebar-wl-brand", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const { data: license } = await (supabase as any)
+        .from("licenses")
+        .select("id, parent_license_id")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (!license) return null;
+      const wlLicenseId = license.parent_license_id || license.id;
+      const { data: wlConfig } = await (supabase as any)
+        .from("whitelabel_config")
+        .select("display_name, logo_url, primary_color")
+        .eq("license_id", wlLicenseId)
+        .maybeSingle();
+      if (!wlConfig) return null;
+      return {
+        name: wlConfig.display_name || null,
+        logo: wlConfig.logo_url || null,
+        color: wlConfig.primary_color || "#11BC76",
+      };
+    },
+    enabled: !!tenantId,
+    staleTime: 10 * 60_000,
+  });
 
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -595,6 +646,7 @@ export function AppSidebar() {
           isMobile={isMobile}
           onCollapse={() => setCollapsed(p => !p)}
           onCloseMobile={() => setMobileOpen(false)}
+          wlBrand={wlBrand}
         />
       )}
       {renderLayout()}
