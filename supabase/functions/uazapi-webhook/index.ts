@@ -171,9 +171,15 @@ const normalizeMessage = (msg: AnyRecord, payload: AnyRecord, instance: string) 
   else if (normalizedType.includes("audio") || normalizedType === "ptt") type = "audio";
   else if (normalizedType.includes("document")) type = "document";
   else if (normalizedType.includes("sticker")) type = "sticker";
+  else if (normalizedType.includes("location") || normalizedType.includes("live_location")) type = "location";
+  else if (normalizedType.includes("vcard") || normalizedType.includes("contact")) type = "contact";
+  else if (normalizedType.includes("reaction")) type = "reaction";
+  else if (normalizedType.includes("poll")) type = "poll";
+  else if (normalizedType.includes("order") || normalizedType.includes("product") || normalizedType.includes("catalog")) type = normalizedType;
+  else if (normalizedType.includes("list") || normalizedType.includes("button") || normalizedType.includes("interactive")) type = normalizedType;
   else if (body) type = "text";
   else if (mediaUrl) type = "media";
-  else type = rawType || "unknown";
+  else type = rawType || "text";
 
   const mimetype =
     msg?.mimetype ??

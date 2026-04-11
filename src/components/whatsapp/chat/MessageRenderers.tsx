@@ -180,10 +180,70 @@ const TransferRenderer: React.FC<MessageRendererProps> = ({ message }) => (
   </div>
 );
 
-// Fallback for unknown types
-const UnknownRenderer: React.FC<MessageRendererProps> = ({ message }) => (
-  <p className="text-sm whitespace-pre-wrap break-words">{message.content || `[${message.type}]`}</p>
+// Location renderer
+const LocationRenderer: React.FC<MessageRendererProps> = ({ message }) => (
+  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--wa-bg-msg-in, hsl(var(--muted)))", border: "1px solid var(--border, rgba(255,255,255,0.1))" }}>
+    <span className="text-xl">📍</span>
+    <div className="min-w-0">
+      <p className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>{message.caption || "Localização"}</p>
+      <p className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>{message.content || "Localização compartilhada"}</p>
+    </div>
+  </div>
 );
+
+// Contact renderer
+const ContactRenderer: React.FC<MessageRendererProps> = ({ message }) => (
+  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--wa-bg-msg-in, hsl(var(--muted)))", border: "1px solid var(--border, rgba(255,255,255,0.1))" }}>
+    <span className="text-xl">👤</span>
+    <div className="min-w-0">
+      <p className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>{message.caption || "Contato"}</p>
+      <p className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>{message.content || "Contato compartilhado"}</p>
+    </div>
+  </div>
+);
+
+// Reaction renderer
+const ReactionRenderer: React.FC<MessageRendererProps> = ({ message }) => (
+  <span className="text-2xl">{message.content || "❤️"}</span>
+);
+
+// Poll renderer
+const PollRenderer: React.FC<MessageRendererProps> = ({ message }) => (
+  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--wa-bg-msg-in, hsl(var(--muted)))", border: "1px solid var(--border, rgba(255,255,255,0.1))" }}>
+    <span className="text-xl">📊</span>
+    <div className="min-w-0">
+      <p className="text-sm font-medium" style={{ color: "var(--wa-text-primary)" }}>{message.caption || "Enquete"}</p>
+      <p className="text-[10px]" style={{ color: "var(--wa-text-secondary)" }}>{message.content || "Enquete recebida"}</p>
+    </div>
+  </div>
+);
+
+// Fallback for unknown/unsupported types — friendly message instead of raw type
+const UnknownRenderer: React.FC<MessageRendererProps> = ({ message }) => {
+  if (message.content && !message.content.startsWith("[")) {
+    return <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>;
+  }
+  const typeLabels: Record<string, { emoji: string; label: string }> = {
+    unsupported: { emoji: "📎", label: "Mensagem não suportada" },
+    unknown: { emoji: "📎", label: "Tipo de mensagem não reconhecido" },
+    order: { emoji: "🛒", label: "Pedido recebido" },
+    product: { emoji: "🏷️", label: "Produto compartilhado" },
+    catalog: { emoji: "📋", label: "Catálogo compartilhado" },
+    list: { emoji: "📝", label: "Lista interativa" },
+    button: { emoji: "🔘", label: "Mensagem com botões" },
+    template: { emoji: "📄", label: "Template de mensagem" },
+    interactive: { emoji: "💬", label: "Mensagem interativa" },
+    ephemeral: { emoji: "⏱️", label: "Mensagem temporária" },
+    revoked: { emoji: "🚫", label: "Mensagem apagada" },
+  };
+  const info = typeLabels[message.type] || { emoji: "📎", label: message.content || `Tipo: ${message.type}` };
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <span className="text-base">{info.emoji}</span>
+      <p className="text-xs italic" style={{ color: "var(--wa-text-secondary, hsl(var(--muted-foreground)))" }}>{info.label}</p>
+    </div>
+  );
+};
 
 // Registry map
 const RENDERERS: Record<string, React.FC<MessageRendererProps>> = {
@@ -196,6 +256,13 @@ const RENDERERS: Record<string, React.FC<MessageRendererProps>> = {
   sticker: StickerRenderer,
   system: SystemRenderer,
   transfer: TransferRenderer,
+  location: LocationRenderer,
+  vcard: ContactRenderer,
+  contact: ContactRenderer,
+  contacts: ContactRenderer,
+  reaction: ReactionRenderer,
+  poll: PollRenderer,
+  poll_creation: PollRenderer,
 };
 
 /**
