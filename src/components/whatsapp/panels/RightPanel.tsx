@@ -24,7 +24,7 @@ export default function RightPanel({ conversation, isOpen, onClose, onNameUpdate
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ tags: true, info: true, pipeline: true });
   const tenantId = useTenantId();
   const { pipelines } = usePipelines(tenantId);
-  const { createNegocio } = useNegocios();
+  const { createNegocio } = useNegocios(tenantId);
   const [sendingTo, setSendingTo] = useState<string | null>(null);
 
   // Editable fields
