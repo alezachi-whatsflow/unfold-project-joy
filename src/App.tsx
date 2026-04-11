@@ -112,9 +112,9 @@ import CheckoutPage from "./pages/CheckoutPage";
 import AguardandoAtivacaoPage from "./pages/AguardandoAtivacaoPage";
 import ActivationPage from "./pages/ActivationPage";
 
-// Pzaafi — Payment Orchestration (tier-based dashboard)
-import { PzaafiModule } from '@/modules/pzaafi'
-import { PzaafiPublicCheckout } from '@/modules/pzaafi/components/checkout/PublicCheckout'
+// IAZIS — Payment Orchestration (tier-based dashboard)
+import { IazisModule } from '@/modules/iazis'
+import { IazisPublicCheckout } from '@/modules/iazis/components/checkout'
 
 import { Loader2 } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -156,8 +156,8 @@ const AppRoutes = () => (
     <Route path="/aguardando-ativacao" element={<AguardandoAtivacaoPage />} />
     <Route path="/ativar/:token" element={<ActivationPage />} />
 
-    {/* Pzaafi — Public checkout page (no auth required) */}
-    <Route path="/pay/:slug" element={<PzaafiPublicCheckout />} />
+    {/* IAZIS — Public checkout page (no auth required) */}
+    <Route path="/pay/:slug" element={<IazisPublicCheckout />} />
 
     {/* ═══ Admin Core (formerly Nexus) ═══ */}
     <Route path="/admin-core/login" element={<NexusLogin />} />
@@ -254,7 +254,7 @@ const AppRoutes = () => (
       <Route path="sistema/tutoriais" element={<TutoriaisPage />} />
       <Route path="sistema/manual" element={<ManualSistemaPage />} />
       <Route path="sistema/onboarding" element={<OnboardingPage />} />
-      <Route path="pzaafi" element={<PzaafiModule />} />
+      <Route path="iazis" element={<IazisModule />} />
     </Route>
 
     <Route path="/whatsapp" element={<AuthGuard><ProtectedRoute module="mensageria"><WhatsAppPage /></ProtectedRoute></AuthGuard>} />

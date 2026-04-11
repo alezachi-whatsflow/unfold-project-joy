@@ -199,7 +199,7 @@ export default function NexusLicenseDetail() {
                   color: '#10b981',
                   border: '1px solid rgba(16,185,129,0.3)',
                 }}>
-                  Pzaafi
+                  IAZIS
                 </span>
               )}
             </div>
@@ -356,7 +356,7 @@ export default function NexusLicenseDetail() {
               <Row label="Sub-Licenças" value={`${subLicenses.length} empresa(s)`} />
             )}
             <div className="flex items-center justify-between py-2" style={{ borderTop: '1px solid hsl(var(--border)/0.3)' }}>
-              <span className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Checkout Pzaafi</span>
+              <span className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Checkout IAZIS</span>
               <div className="flex items-center gap-2">
                 <select
                   value={pzaafiTier || 'off'}
@@ -373,7 +373,7 @@ export default function NexusLicenseDetail() {
                       .eq('id', license.id)
 
                     if (error) {
-                      toast({ title: 'Erro ao atualizar Pzaafi', variant: 'destructive' })
+                      toast({ title: 'Erro ao atualizar IAZIS', variant: 'destructive' })
                       return
                     }
 
@@ -408,7 +408,7 @@ export default function NexusLicenseDetail() {
                       }
                     }
 
-                    toast({ title: newTier ? `Pzaafi ativado como ${newTier}` : 'Pzaafi desativado' })
+                    toast({ title: newTier ? `IAZIS ativado como ${newTier}` : 'IAZIS desativado' })
                   }}
                   className="h-8 rounded-md border px-2 text-sm bg-transparent"
                   style={{ borderColor: 'hsl(var(--border))' }}

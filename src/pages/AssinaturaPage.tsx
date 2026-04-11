@@ -47,7 +47,7 @@ export default function AssinaturaPage() {
   const tenantId = userTenants?.[0]?.tenant_id;
   const { data: limits, isLoading } = useLicenseLimits(tenantId);
 
-  // Check if checkout/upgrade is enabled for this tenant via Pzaafi
+  // Check if checkout/upgrade is enabled for this tenant via IAZIS
   const { data: pzaafiLicense } = useQuery({
     queryKey: ['license-pzaafi-check', tenantId],
     queryFn: async () => {

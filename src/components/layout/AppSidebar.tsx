@@ -17,7 +17,7 @@ import { WIDTH_MAP } from "@/types/sidebar";
 import type { NavCategory, NavItem } from "@/types/sidebar";
 import { getIcon } from "@/lib/iconMap";
 import { sidebarIconMap } from "@/components/ui/SidebarIcons";
-import { PzaafiLogo, PzaafiIcon } from "@/components/ui/PzaafiLogo";
+import { IazisLogo, IazisIcon } from "@/components/ui/IazisLogo";
 
 // ──────────────────────── shared styles ────────────────────────
 const menuItemBase = "flex items-center no-underline transition-all duration-[var(--transition-base)]";
@@ -186,10 +186,10 @@ function SidebarHeader({ collapsed, isMobile, onCollapse, onCloseMobile }: { col
   return (
     <div className="flex items-center px-4 py-5 relative border-b border-black/[0.06]">
       <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && "justify-center w-full")}>
-        <PzaafiLogo size={32} />
+        <IazisLogo size={32} />
         {!isCollapsed && (
           <div className="min-w-0">
-            <h2 className="font-mono text-sm font-bold tracking-wider truncate text-foreground">PZAAFI</h2>
+            <h2 className="font-mono text-sm font-bold tracking-wider truncate text-foreground">IAZIS</h2>
             <p className="text-[8px] uppercase tracking-[0.2em] text-[#478BFF] font-mono">Ambient Intelligence</p>
           </div>
         )}
@@ -343,7 +343,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
     <div className="flex h-full">
       {/* Rail */}
       <div className="flex flex-col items-center py-3 shrink-0 border-r border-border" style={{ width: 58 }}>
-        <PzaafiIcon size={28} className="mb-4" />
+        <IazisIcon size={28} className="mb-4" />
         <div className="flex-1 flex flex-col gap-1">
           {filteredGroups.filter(c => c.id !== 'sistema').map(cat => {
             const CatIcon = getIcon(cat.icon || 'LayoutDashboard');

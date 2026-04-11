@@ -50,7 +50,7 @@ function addFooter(pdf: jsPDF, pageNum: number) {
   const pageH = pdf.internal.pageSize.getHeight();
   pdf.setFontSize(7);
   pdf.setTextColor(150);
-  pdf.text(`Whatsflow Finance · Gerado em ${new Date().toLocaleDateString("pt-BR")}`, 10, pageH - 8);
+  pdf.text(`IAZIS Finance · Gerado em ${new Date().toLocaleDateString("pt-BR")}`, 10, pageH - 8);
   pdf.text(`Página ${pageNum}`, pageW - 25, pageH - 8);
   pdf.setTextColor(0);
 }
@@ -131,7 +131,7 @@ export async function generateDREReport(entries: FinancialEntry[]) {
   });
 
   addFooter(pdf, pageNum.n);
-  pdf.save("DRE_Whatsflow.pdf");
+  pdf.save("DRE_IAZIS.pdf");
 }
 
 export async function generateKPIReport(entries: FinancialEntry[]) {
@@ -182,7 +182,7 @@ export async function generateKPIReport(entries: FinancialEntry[]) {
   });
 
   addFooter(pdf, pageNum.n);
-  pdf.save("KPIs_SaaS_Whatsflow.pdf");
+  pdf.save("KPIs_SaaS_IAZIS.pdf");
 }
 
 export async function generateCostBreakdownReport(entries: FinancialEntry[]) {
@@ -215,7 +215,7 @@ export async function generateCostBreakdownReport(entries: FinancialEntry[]) {
   ], widths, true);
 
   addFooter(pdf, pageNum.n);
-  pdf.save("Custos_Whatsflow.pdf");
+  pdf.save("Custos_IAZIS.pdf");
 }
 
 export async function generateCustomerReport(entries: FinancialEntry[]) {
@@ -245,7 +245,7 @@ export async function generateCustomerReport(entries: FinancialEntry[]) {
   });
 
   addFooter(pdf, pageNum.n);
-  pdf.save("Clientes_Whatsflow.pdf");
+  pdf.save("Clientes_IAZIS.pdf");
 }
 
 export async function generateCashFlowReport(entries: FinancialEntry[]) {
@@ -282,7 +282,7 @@ export async function generateCashFlowReport(entries: FinancialEntry[]) {
   });
 
   addFooter(pdf, pageNum.n);
-  pdf.save("FluxoCaixa_Whatsflow.pdf");
+  pdf.save("FluxoCaixa_IAZIS.pdf");
 }
 
 // ── CSV exports ──────────────────────────────────────────────
@@ -319,7 +319,7 @@ export function exportDRECSV(entries: FinancialEntry[]) {
       m.netProfit.toFixed(2),
     ];
   });
-  downloadCSV("DRE_Whatsflow.csv", headers, rows);
+  downloadCSV("DRE_IAZIS.csv", headers, rows);
 }
 
 export function exportKPICSV(entries: FinancialEntry[]) {
@@ -329,7 +329,7 @@ export function exportKPICSV(entries: FinancialEntry[]) {
     const m = calculateMetrics(e, prev);
     return [e.month, m.mrr.toFixed(2), m.arr.toFixed(2), m.cac.toFixed(2), m.ltv.toFixed(2), m.ltvCacRatio.toFixed(2), m.revenueChurnRate.toFixed(1), m.logoChurnRate.toFixed(1), m.grossMargin.toFixed(1), m.netMargin.toFixed(1), m.ebitda.toFixed(2), m.burnRate.toFixed(2), m.runway.toFixed(1)];
   });
-  downloadCSV("KPIs_SaaS_Whatsflow.csv", headers, rows);
+  downloadCSV("KPIs_SaaS_IAZIS.csv", headers, rows);
 }
 
 export function exportCostsCSV(entries: FinancialEntry[]) {
@@ -341,7 +341,7 @@ export function exportCostsCSV(entries: FinancialEntry[]) {
     e.costs.revDeductions.toFixed(2),
     Object.values(e.costs).reduce((a, b) => a + b, 0).toFixed(2),
   ]);
-  downloadCSV("Custos_Whatsflow.csv", headers, rows);
+  downloadCSV("Custos_IAZIS.csv", headers, rows);
 }
 
 export function exportCustomersCSV(entries: FinancialEntry[]) {
@@ -353,7 +353,7 @@ export function exportCustomersCSV(entries: FinancialEntry[]) {
     e.customers.churnedCustomers.toString(),
     (e.customers.newCustomers - e.customers.churnedCustomers).toString(),
   ]);
-  downloadCSV("Clientes_Whatsflow.csv", headers, rows);
+  downloadCSV("Clientes_IAZIS.csv", headers, rows);
 }
 
 export function exportCashFlowCSV(entries: FinancialEntry[]) {
@@ -363,5 +363,5 @@ export function exportCashFlowCSV(entries: FinancialEntry[]) {
     const m = calculateMetrics(e, prev);
     return [e.month, m.totalRevenue.toFixed(2), m.totalCosts.toFixed(2), m.netProfit.toFixed(2), m.burnRate.toFixed(2), e.cashBalance.toFixed(2), m.runway.toFixed(1)];
   });
-  downloadCSV("FluxoCaixa_Whatsflow.csv", headers, rows);
+  downloadCSV("FluxoCaixa_IAZIS.csv", headers, rows);
 }

@@ -707,7 +707,7 @@ export default function NexusLicenses() {
                         <TableHead className="min-w-[70px] text-center">Atend.</TableHead>
                         <TableHead className="min-w-[100px]">Adicional</TableHead>
                         <TableHead className="min-w-[80px]">Checkout</TableHead>
-                        <TableHead className="min-w-[80px]">Pzaafi</TableHead>
+                        <TableHead className="min-w-[80px]">IAZIS</TableHead>
                         <TableHead className="min-w-[100px]">Receita</TableHead>
                         <TableHead className="min-w-[90px]"><div className="flex items-center gap-1">Tipo Pgto<ColFilter col="payment_type" values={colUniqueValues('payment_type')} selected={colFilters['payment_type'] || new Set()} onChange={setColFilter} /></div></TableHead>
                         <TableHead className="min-w-[80px]"><div className="flex items-center gap-1">Condição<ColFilter col="payment_condition" values={colUniqueValues('payment_condition')} selected={colFilters['payment_condition'] || new Set()} onChange={setColFilter} /></div></TableHead>

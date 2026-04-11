@@ -143,17 +143,17 @@ main::-webkit-scrollbar-corner,
     --sidebar-border: 214 52% 23%;
     --sidebar-ring: 218 100% 64%;
 
-    /* Pzaafi brand tokens (non-shadcn) */
-    --pz-signal-blue: #478BFF;
-    --pz-cyan-accent: #39F7B2;
-    --pz-dark-eclipse: #0D0E14;
-    --pz-surface: #121419;
-    --pz-surface-2: #181C24;
-    --pz-signal-soft: #1E3757;
-    --pz-wordmark-light: #E5E8ED;
-    --pz-mid-gray: #8A8F9E;
-    --pz-dim: #555C6E;
-    --pz-snow: #F0F2F5;
+    /* IAZIS brand tokens (non-shadcn) */
+    --iz-signal-blue: #478BFF;
+    --iz-cyan-accent: #39F7B2;
+    --iz-dark-eclipse: #0D0E14;
+    --iz-surface: #121419;
+    --iz-surface-2: #181C24;
+    --iz-signal-soft: #1E3757;
+    --iz-wordmark-light: #E5E8ED;
+    --iz-mid-gray: #8A8F9E;
+    --iz-dim: #555C6E;
+    --iz-snow: #F0F2F5;
   }
 }
 
@@ -232,14 +232,14 @@ main::-webkit-scrollbar-corner,
     word-break: break-word;
   }
 
-  /* Pzaafi brand utilities */
-  .pz-glow-blue {
+  /* IAZIS brand utilities */
+  .iz-glow-blue, .pz-glow-blue {
     box-shadow: 0 0 20px rgba(71, 139, 255, 0.15);
   }
-  .pz-glow-cyan {
+  .iz-glow-cyan, .pz-glow-cyan {
     box-shadow: 0 0 20px rgba(57, 247, 178, 0.15);
   }
-  .pz-border-neon {
+  .iz-border-neon, .pz-border-neon {
     border: 1px solid rgba(71, 139, 255, 0.3);
   }
 }

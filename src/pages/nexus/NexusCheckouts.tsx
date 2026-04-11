@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
-import { PzaafiNexusDashboard } from "@/modules/pzaafi/dashboards/PzaafiNexusDashboard";
+import { PzaafiNexusDashboard } from "@/modules/iazis/dashboards/PzaafiNexusDashboard";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending:   { label: "Pendente",    color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
@@ -94,7 +94,7 @@ export default function NexusCheckouts() {
         <nav className="flex gap-6">
           {([
             { key: "sessions" as const, label: "Sessoes de Checkout", icon: <CreditCard className="h-4 w-4" /> },
-            { key: "pzaafi" as const, label: "Pzaafi — Organizacoes", icon: <Building2 className="h-4 w-4" /> },
+            { key: "pzaafi" as const, label: "IAZIS — Organizações", icon: <Building2 className="h-4 w-4" /> },
           ]).map((tab) => (
             <button
               key={tab.key}

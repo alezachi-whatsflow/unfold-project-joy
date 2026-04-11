@@ -11,7 +11,7 @@ import TelegramSection from "@/components/integracoes/TelegramSection";
 import MercadoLivreSection from "@/components/integracoes/MercadoLivreSection";
 import N8nSection from "@/components/integracoes/N8nSection";
 import AsaasConnectionSection from "@/components/integracoes/AsaasConnectionSection";
-import { PzaafiModule } from "@/modules/pzaafi";
+import { IazisModule } from "@/modules/iazis";
 import { useTenantId } from "@/hooks/useTenantId";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -299,11 +299,11 @@ const IntegracoesPage = () => {
                     </div>
                   </div>
                   <pre style={{ background: "#000000", color: "#FFFFFF", padding: "16px 20px", fontSize: 12, lineHeight: 1.7, fontFamily: "'JetBrains Mono', 'Fira Code', monospace", overflowX: "auto", border: "none", borderRadius: 0, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all", boxShadow: "none" }}>
-                    <code>{`<script\n  data-tenant="${tenantId || "SEU_TENANT_ID"}"\n  src="https://cdn.pzaafi.com/webchat.js"\n></script>`}</code>
+                    <code>{`<script\n  data-tenant="${tenantId || "SEU_TENANT_ID"}"\n  src="https://cdn.iazis.com/webchat.js"\n></script>`}</code>
                   </pre>
                   <button
                     onClick={() => {
-                      const code = `<script data-tenant="${tenantId || "SEU_TENANT_ID"}" src="https://cdn.pzaafi.com/webchat.js"></script>`;
+                      const code = `<script data-tenant="${tenantId || "SEU_TENANT_ID"}" src="https://cdn.iazis.com/webchat.js"></script>`;
                       navigator.clipboard.writeText(code).then(() => {
                         setCodeCopied(true);
                         toast.success("Código copiado!");
@@ -334,18 +334,18 @@ const IntegracoesPage = () => {
         {/* Checkout Whatsflow (Pzaafi) */}
         <Card
           style={{
-            border: expandedSection === "pzaafi" ? "1px solid hsl(var(--primary)/0.4)" : "1px solid var(--border)",
+            border: expandedSection === "iazis" ? "1px solid hsl(var(--primary)/0.4)" : "1px solid var(--border)",
             background: "var(--bg-card)",
             borderRadius: 12,
             overflow: "hidden",
           }}
         >
           <button
-            onClick={() => toggleSection("pzaafi")}
+            onClick={() => toggleSection("iazis")}
             style={{
               display: "flex", alignItems: "center", gap: 12, width: "100%",
               padding: "16px 20px", border: "none", cursor: "pointer",
-              background: expandedSection === "pzaafi" ? "hsl(var(--primary)/0.06)" : "transparent",
+              background: expandedSection === "iazis" ? "hsl(var(--primary)/0.06)" : "transparent",
               textAlign: "left",
             }}
           >
@@ -364,10 +364,10 @@ const IntegracoesPage = () => {
               {pzaafiTier ? "Ativo" : "Não configurado"}
             </span>
           </button>
-          {expandedSection === "pzaafi" && (
+          {expandedSection === "iazis" && (
             <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--border)" }}>
               {pzaafiTier ? (
-                <PzaafiModule />
+                <IazisModule />
               ) : (
                 <div style={{ padding: "32px 0", textAlign: "center" }}>
                   <p style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
