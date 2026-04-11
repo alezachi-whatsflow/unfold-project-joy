@@ -1,9 +1,9 @@
-import { fmtDate } from "@/lib/dateUtils";
 import { useState, useRef, useCallback, type DragEvent } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, FileText, Bot, Loader2 } from "lucide-react";
+import { Upload, FileText, Bot, Loader2, AlertTriangle } from "lucide-react";
 import { StatusPill } from "./StatusPill";
 import { OrigemPill } from "./OrigemPill";
+import { supabase } from "@/integrations/supabase/client";
 
 const ACCEPTED = ".jpg,.jpeg,.png,.webp,.pdf";
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -14,15 +14,24 @@ interface ExtractedData {
   category: string;
   date: string;
   description: string;
+  confidence: number;
 }
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: ExtractedData & { file: File }) => void;
+  onSave: (data: { supplier: string; value: number; category: string; date: string; description: string; file: File }) => void;
 }
 
 const labelCls = "text-xs font-medium mb-1 block";
+
+const fmt = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+const fmtDate = (d: string) => {
+  const dt = new Date(d + "T00:00:00");
+  return dt.toLocaleDateString("pt-BR");
+};
 
 export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,21 +40,31 @@ export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
   const [dragging, setDragging] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Allow editing extracted fields before saving
+  const [editSupplier, setEditSupplier] = useState("");
+  const [editValue, setEditValue] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const reset = () => {
     setFile(null);
     setPreview(null);
     setProcessing(false);
     setExtracted(null);
+    setError(null);
   };
 
   const handleFileSelected = useCallback((f: File) => {
     if (f.size > MAX_SIZE) {
-      alert("Arquivo muito grande. Máximo 10MB.");
+      setError("Arquivo muito grande. Máximo 10MB.");
       return;
     }
     setFile(f);
     setExtracted(null);
+    setError(null);
     if (f.type.startsWith("image/")) {
       setPreview(URL.createObjectURL(f));
     } else {
@@ -63,21 +82,66 @@ export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
   const handleProcess = async () => {
     if (!file) return;
     setProcessing(true);
-    // Simulate AI extraction (Phase 1 mock)
-    await new Promise((r) => setTimeout(r, 1500));
-    setExtracted({
-      supplier: "Fornecedor Extraído (IA)",
-      value: 249.90,
-      category: "Tecnologia",
-      date: new Date().toISOString().split("T")[0],
-      description: "Serviço extraído automaticamente por IA",
-    });
-    setProcessing(false);
+    setError(null);
+
+    try {
+      // 1. Upload file to storage to get a public URL
+      const ext = file.name.split(".").pop() || "bin";
+      const fileName = `ocr/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { data: uploaded, error: uploadErr } = await supabase.storage
+        .from("expense-attachments")
+        .upload(fileName, file, { contentType: file.type, upsert: false });
+
+      if (uploadErr) throw new Error("Upload falhou: " + uploadErr.message);
+
+      const { data: urlData } = supabase.storage
+        .from("expense-attachments")
+        .getPublicUrl(uploaded.path);
+
+      const imageUrl = urlData.publicUrl;
+
+      // 2. Call the extraction edge function
+      const { data: result, error: fnErr } = await supabase.functions.invoke("extract-expense-ocr", {
+        body: { image_url: imageUrl },
+      });
+
+      if (fnErr) throw new Error(fnErr.message || "Erro na extração");
+      if (!result?.success) throw new Error(result?.error || "Resposta inválida da IA");
+
+      const d = result.data;
+      setExtracted({
+        supplier: d.supplier,
+        value: d.value,
+        category: d.category,
+        date: d.date,
+        description: d.description,
+        confidence: d.confidence,
+      });
+
+      // Prefill editable fields
+      setEditSupplier(d.supplier);
+      setEditValue(String(d.value));
+      setEditCategory(d.category);
+      setEditDate(d.date);
+      setEditDescription(d.description);
+    } catch (err: any) {
+      console.error("[ModalExtrator] Error:", err);
+      setError(err.message || "Erro ao processar imagem");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleSave = () => {
-    if (!extracted || !file) return;
-    onSave({ ...extracted, file });
+    if (!file) return;
+    onSave({
+      supplier: editSupplier || extracted?.supplier || "",
+      value: parseFloat(editValue) || extracted?.value || 0,
+      category: editCategory || extracted?.category || "Outros",
+      date: editDate || extracted?.date || new Date().toISOString().split("T")[0],
+      description: editDescription || extracted?.description || "",
+      file,
+    });
     reset();
     onOpenChange(false);
   };
@@ -87,8 +151,11 @@ export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
     onOpenChange(v);
   };
 
-  const fmt = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const confidence = extracted?.confidence ?? 0;
+  const confPct = Math.round(confidence * 100);
+  const confColor = confPct >= 80 ? "#10B981" : confPct >= 50 ? "#F59E0B" : "#EF4444";
+
+  const inputCls = "w-full h-8 rounded-md border px-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-[hsl(var(--ring))]";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -155,34 +222,78 @@ export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
             </div>
           )}
 
-          {/* Extracted data */}
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-md" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <AlertTriangle size={16} color="#EF4444" />
+              <span className="text-xs" style={{ color: "#EF4444" }}>{error}</span>
+            </div>
+          )}
+
+          {/* Extracted data — editable fields */}
           {extracted && (
             <div className="rounded-lg border p-4 space-y-3" style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--card))" }}>
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>
-                Dados extraídos
-              </p>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Dados extraídos
+                </p>
+                <span
+                  className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                  style={{ background: `${confColor}15`, color: confColor }}
+                >
+                  {confPct}% confiança
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Fornecedor</label>
-                  <p className="font-medium">{extracted.supplier}</p>
+                  <input
+                    value={editSupplier}
+                    onChange={(e) => setEditSupplier(e.target.value)}
+                    className={inputCls}
+                    style={{ borderColor: "hsl(var(--border))" }}
+                  />
                 </div>
                 <div>
-                  <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Valor</label>
-                  <p className="font-medium">{fmt(extracted.value)}</p>
+                  <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Valor (R$)</label>
+                  <input
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className={inputCls}
+                    style={{ borderColor: "hsl(var(--border))" }}
+                  />
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Categoria</label>
-                  <p className="font-medium">{extracted.category}</p>
+                  <input
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className={inputCls}
+                    style={{ borderColor: "hsl(var(--border))" }}
+                  />
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Data</label>
-                  <p className="font-medium">{fmtDate(extracted.date + "T00:00:00")}</p>
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className={inputCls}
+                    style={{ borderColor: "hsl(var(--border))" }}
+                  />
                 </div>
                 <div className="col-span-2">
                   <label className={labelCls} style={{ color: "hsl(var(--muted-foreground))" }}>Descrição</label>
-                  <p className="font-medium">{extracted.description}</p>
+                  <input
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className={inputCls}
+                    style={{ borderColor: "hsl(var(--border))" }}
+                  />
                 </div>
               </div>
+
               <div className="flex items-center gap-3 pt-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>Status:</span>
@@ -193,6 +304,10 @@ export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
                   <OrigemPill origem="IA" />
                 </div>
               </div>
+
+              <p className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                Revise e ajuste os dados antes de salvar. Campos editáveis.
+              </p>
             </div>
           )}
 
@@ -213,7 +328,7 @@ export function ModalExtrator({ open, onOpenChange, onSave }: Props) {
                 style={{ background: "#818CF8" }}
               >
                 {processing && <Loader2 size={14} className="animate-spin" />}
-                {processing ? "Processando..." : "Processar com IA"}
+                {processing ? "Extraindo..." : "Processar com IA"}
               </button>
             ) : (
               <button
