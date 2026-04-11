@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "./useTenantId";
@@ -51,6 +52,27 @@ export function useExpenses() {
     enabled: !!tenantId,
     staleTime: 30_000,
   });
+
+  /* ── Realtime: auto-refresh on INSERT/UPDATE/DELETE ── */
+  useEffect(() => {
+    if (!tenantId) return;
+    const channel = supabase
+      .channel("expenses-rt")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "asaas_expenses",
+        filter: `tenant_id=eq.${tenantId}`,
+      }, (payload) => {
+        // Show toast only for inserts from IA (WhatsApp pipeline)
+        if (payload.eventType === "INSERT" && (payload.new as any)?.origem === "IA") {
+          toast.success("Nova despesa extraída por IA!", { icon: "🤖" });
+        }
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEY, tenantId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [tenantId, queryClient]);
 
   /* ── Compute summary from fetched data ── */
   const despesas = query.data || [];

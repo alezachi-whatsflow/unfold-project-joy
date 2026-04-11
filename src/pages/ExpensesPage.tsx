@@ -238,9 +238,77 @@ export default function ExpensesPage() {
     toast.success("CSV exportado");
   }, [filtered]);
 
-  const handleExportPDF = useCallback(() => {
-    toast.info("Exportação PDF em breve — utilize CSV por enquanto");
-  }, []);
+  const handleExportPDF = useCallback(async () => {
+    const { default: jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 14;
+    let y = 16;
+
+    // Title
+    doc.setFontSize(16);
+    doc.setTextColor(30, 30, 30);
+    doc.text("Relatório de Despesas", margin, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Gerado em ${new Date().toLocaleDateString("pt-BR")} · ${filtered.length} registros · Total: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalValue)}`, margin, y);
+    y += 8;
+
+    // Table header
+    const cols = [
+      { label: "Data", w: 24 },
+      { label: "Fornecedor", w: 50 },
+      { label: "Descrição", w: 65 },
+      { label: "Categoria", w: 30 },
+      { label: "Valor", w: 28 },
+      { label: "Status", w: 22 },
+      { label: "Origem", w: 20 },
+    ];
+
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, y - 4, pageW - margin * 2, 7, "F");
+    doc.setFontSize(7);
+    doc.setTextColor(80, 80, 80);
+    let x = margin + 2;
+    for (const col of cols) {
+      doc.text(col.label.toUpperCase(), x, y);
+      x += col.w;
+    }
+    y += 6;
+
+    // Rows
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(8);
+    const fmtD = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
+    const fmtV = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+    for (const d of filtered) {
+      if (y > doc.internal.pageSize.getHeight() - 12) {
+        doc.addPage();
+        y = 16;
+      }
+      x = margin + 2;
+      const row = [
+        fmtD(d.date),
+        d.supplier.slice(0, 28),
+        d.description.slice(0, 38),
+        d.category.slice(0, 18),
+        fmtV(d.value),
+        d.status === "pago" ? "Pago" : d.status === "pendente" ? "Pendente" : "Rejeitado",
+        d.origin,
+      ];
+      for (let i = 0; i < row.length; i++) {
+        doc.text(row[i], x, y);
+        x += cols[i].w;
+      }
+      y += 5;
+    }
+
+    doc.save("despesas.pdf");
+    toast.success("PDF exportado");
+  }, [filtered, totalValue]);
 
   const openNewModal = () => {
     setEditingExpense(null);
@@ -288,7 +356,7 @@ export default function ExpensesPage() {
       <DespesaSummaryCards data={filteredSummary} />
 
       {/* Filters */}
-      <DespesaFilterBar filters={filters} onFilterChange={handleFilterChange} onClear={handleClearFilters} />
+      <DespesaFilterBar filters={filters} onFilterChange={handleFilterChange} onClear={handleClearFilters} categories={categories} />
 
       {/* Table */}
       <div

@@ -8,13 +8,17 @@ interface Filters {
   origem: string;
 }
 
+interface CategoryOption {
+  name: string;
+}
+
 interface Props {
   filters: Filters;
   onFilterChange: (f: Partial<Filters>) => void;
   onClear: () => void;
+  categories?: CategoryOption[];
 }
 
-const CATEGORIAS = ["", "Transporte", "Escritório", "Tecnologia", "Telecom", "Alimentação", "Outros"];
 const STATUS = ["", "pendente", "pago", "rejeitado"];
 const ORIGENS = ["", "IA", "Manual"];
 const PERIODOS = [
@@ -26,7 +30,7 @@ const PERIODOS = [
 
 const selectCls = "h-9 rounded-md border px-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-[hsl(var(--ring))]";
 
-export function DespesaFilterBar({ filters, onFilterChange, onClear }: Props) {
+export function DespesaFilterBar({ filters, onFilterChange, onClear, categories = [] }: Props) {
   const hasFilters = filters.search || filters.periodo || filters.categoria || filters.status || filters.origem;
 
   return (
@@ -47,7 +51,7 @@ export function DespesaFilterBar({ filters, onFilterChange, onClear }: Props) {
       </select>
       <select value={filters.categoria} onChange={(e) => onFilterChange({ categoria: e.target.value })} className={selectCls} style={{ borderColor: "hsl(var(--border))" }}>
         <option value="">Categorias</option>
-        {CATEGORIAS.filter(Boolean).map((c) => <option key={c} value={c}>{c}</option>)}
+        {categories.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
       </select>
       <select value={filters.status} onChange={(e) => onFilterChange({ status: e.target.value })} className={selectCls} style={{ borderColor: "hsl(var(--border))" }}>
         <option value="">Status</option>
