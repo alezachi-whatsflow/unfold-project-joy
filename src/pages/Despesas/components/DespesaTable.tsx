@@ -1,23 +1,16 @@
-import { Check, Pencil, Trash2, FileText, FileDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Check, Pencil, Trash2, FileText, FileDown, Clock, ChevronDown } from "lucide-react";
 import { StatusPill } from "./StatusPill";
 import { OrigemPill } from "./OrigemPill";
 import { CategoriaPill } from "./CategoriaPill";
-
-export interface Despesa {
-  id: string;
-  date: string;
-  supplier: string;
-  description: string;
-  category: string;
-  value: number;
-  status: string;
-  origin: string;
-  attachment_url: string | null;
-}
+import type { Despesa } from "@/types/expenses";
+import type { ExpenseCategory } from "@/hooks/useExpenseCategories";
 
 interface Props {
   despesas: Despesa[];
-  onMarkAsPaid: (id: string) => void;
+  categories?: ExpenseCategory[];
+  onTogglePaid: (id: string, isPaid: boolean) => void;
+  onUpdateCategory: (id: string, category: string, categoryId: string | null) => void;
   onEdit: (d: Despesa) => void;
   onDelete: (id: string) => void;
   totalValue: number;
@@ -33,7 +26,25 @@ const fmtDate = (d: string) => {
   return dt.toLocaleDateString("pt-BR");
 };
 
-export function DespesaTable({ despesas, onMarkAsPaid, onEdit, onDelete, totalValue, onExportCSV, onExportPDF }: Props) {
+export function DespesaTable({
+  despesas, categories = [], onTogglePaid, onUpdateCategory,
+  onEdit, onDelete, totalValue, onExportCSV, onExportPDF,
+}: Props) {
+  const [categoryDropdownId, setCategoryDropdownId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!categoryDropdownId) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setCategoryDropdownId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [categoryDropdownId]);
+
   if (despesas.length === 0) {
     return (
       <div className="text-center py-16" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -70,9 +81,59 @@ export function DespesaTable({ despesas, onMarkAsPaid, onEdit, onDelete, totalVa
                 <td className="py-3 px-3 whitespace-nowrap" style={{ color: "hsl(var(--muted-foreground))" }}>{fmtDate(d.date)}</td>
                 <td className="py-3 px-3 font-medium truncate max-w-[200px]">{d.supplier}</td>
                 <td className="py-3 px-3 truncate max-w-[180px]" style={{ color: "hsl(var(--muted-foreground))" }}>{d.description}</td>
-                <td className="py-3 px-3"><CategoriaPill categoria={d.category} /></td>
+
+                {/* ── Inline category edit ── */}
+                <td className="py-3 px-3 relative">
+                  <button
+                    onClick={() => setCategoryDropdownId(categoryDropdownId === d.id ? null : d.id)}
+                    className="flex items-center gap-1 group/cat"
+                  >
+                    <CategoriaPill categoria={d.category} />
+                    <ChevronDown
+                      size={10}
+                      className="opacity-0 group-hover/cat:opacity-100 transition-opacity"
+                      style={{ color: "hsl(var(--muted-foreground))" }}
+                    />
+                  </button>
+                  {categoryDropdownId === d.id && (
+                    <div
+                      ref={dropdownRef}
+                      className="absolute z-20 mt-1 py-1 rounded-lg shadow-lg border min-w-[160px]"
+                      style={{ background: "hsl(var(--popover))", borderColor: "hsl(var(--border))" }}
+                    >
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            onUpdateCategory(d.id, cat.name, cat.id);
+                            setCategoryDropdownId(null);
+                          }}
+                          className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 transition-colors hover:bg-[hsl(var(--muted)/0.5)]"
+                        >
+                          <span className="w-2 h-2 rounded-full" style={{ background: cat.color }} />
+                          {cat.name}
+                          {cat.name === d.category && (
+                            <Check size={10} className="ml-auto" style={{ color: "#10B981" }} />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </td>
+
                 <td className="py-3 px-3 text-right font-medium tabular-nums">{fmt(d.value)}</td>
-                <td className="py-3 px-3"><StatusPill status={d.status} /></td>
+
+                {/* ── Inline status toggle ── */}
+                <td className="py-3 px-3">
+                  <button
+                    onClick={() => onTogglePaid(d.id, d.status !== "pago")}
+                    className="group/status cursor-pointer"
+                    title={d.status === "pago" ? "Marcar como pendente" : "Marcar como pago"}
+                  >
+                    <StatusPill status={d.status} />
+                  </button>
+                </td>
+
                 <td className="py-3 px-3"><OrigemPill origem={d.origin} /></td>
                 <td className="py-3 px-3 text-center">
                   {d.attachment_url ? (
@@ -85,11 +146,6 @@ export function DespesaTable({ despesas, onMarkAsPaid, onEdit, onDelete, totalVa
                 </td>
                 <td className="py-3 px-3">
                   <div className="flex items-center gap-1">
-                    {d.status === "pendente" && (
-                      <button onClick={() => onMarkAsPaid(d.id)} title="Marcar como pago" className="p-1.5 rounded-md transition-colors hover:bg-[rgba(16,185,129,0.15)]">
-                        <Check size={14} color="#10B981" />
-                      </button>
-                    )}
                     <button onClick={() => onEdit(d)} title="Editar" className="p-1.5 rounded-md transition-colors hover:bg-[hsl(var(--muted))]">
                       <Pencil size={14} style={{ color: "hsl(var(--muted-foreground))" }} />
                     </button>

@@ -8,9 +8,10 @@ import type { Message } from "@/data/mockMessages";
 import WaAvatar from "../shared/Avatar";
 import TagBadge from "../shared/TagBadge";
 import MessageList from "../chat/MessageList";
-import ChatInput, { type AttachmentPayload } from "../chat/ChatInput";
+import ChatInput, { type AttachmentPayload, type QuickReplyItem } from "../chat/ChatInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "@/hooks/useTenantId";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface ChatPanelProps {
@@ -74,6 +75,22 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
   const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
 
   const tenantId = useTenantId();
+
+  // Load quick replies for / shortcut in chat input
+  const { data: quickReplies = [] } = useQuery<QuickReplyItem[]>({
+    queryKey: ["quick-replies-chat", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return [];
+      const { data } = await supabase
+        .from("quick_replies")
+        .select("id, title, shortcut, body, category, usage_count")
+        .eq("tenant_id", tenantId)
+        .order("usage_count", { ascending: false });
+      return (data || []) as QuickReplyItem[];
+    },
+    enabled: !!tenantId,
+    staleTime: 60_000,
+  });
 
   // ── Transfer state ──
   const [transferOpen, setTransferOpen] = useState(false);
@@ -561,6 +578,7 @@ export default function ChatPanel({ conversation, messages, isRightOpen, onToggl
         onSendAttachment={onSendAttachment}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
+        quickReplies={quickReplies}
       />
 
       {/* Quick Lead Drawer */}

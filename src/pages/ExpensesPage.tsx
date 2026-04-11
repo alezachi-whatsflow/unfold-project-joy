@@ -1,31 +1,30 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Plus, Bot } from "lucide-react";
+import { Plus, Bot, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
 import { PermissionGate } from "@/components/auth/PermissionGate";
+import { useExpenses } from "@/hooks/useExpenses";
+import { useExpensePredictability } from "@/hooks/useExpensePredictability";
+import { useExpenseCategories } from "@/hooks/useExpenseCategories";
 import { DespesaSummaryCards } from "./Despesas/components/DespesaSummaryCards";
 import { DespesaFilterBar, type Filters } from "./Despesas/components/DespesaFilterBar";
-import { DespesaTable, type Despesa } from "./Despesas/components/DespesaTable";
+import { DespesaTable } from "./Despesas/components/DespesaTable";
+import { PredictabilityDashboard } from "./Despesas/components/PredictabilityDashboard";
 import { ModalNovaDespesa } from "./Despesas/components/ModalNovaDespesa";
 import { ModalExtrator } from "./Despesas/components/ModalExtrator";
-
-/* ─── Mock data (Phase 1) ─── */
-const MOCK_DESPESAS: Despesa[] = [
-  { id: "1", date: "2026-03-25", supplier: "Uber Corporativo", description: "Corrida escritório → cliente", category: "Transporte", value: 47.90, status: "pago", origin: "IA", attachment_url: "#" },
-  { id: "2", date: "2026-03-24", supplier: "AWS", description: "Servidores EC2 - março/2026", category: "Tecnologia", value: 1280.00, status: "pago", origin: "Manual", attachment_url: null },
-  { id: "3", date: "2026-03-23", supplier: "Kalunga", description: "Material de escritório", category: "Escritório", value: 189.50, status: "pendente", origin: "Manual", attachment_url: null },
-  { id: "4", date: "2026-03-22", supplier: "Vivo Empresas", description: "Plano corporativo - 10 linhas", category: "Telecom", value: 599.90, status: "pago", origin: "IA", attachment_url: "#" },
-  { id: "5", date: "2026-03-20", supplier: "iFood Corporativo", description: "Almoço reunião de equipe", category: "Alimentação", value: 312.00, status: "pendente", origin: "Manual", attachment_url: null },
-  { id: "6", date: "2026-03-18", supplier: "Google Cloud", description: "Cloud Run + Storage - março", category: "Tecnologia", value: 890.00, status: "pago", origin: "IA", attachment_url: "#" },
-  { id: "7", date: "2026-03-15", supplier: "99 Táxi", description: "Corrida aeroporto", category: "Transporte", value: 78.50, status: "rejeitado", origin: "Manual", attachment_url: null },
-  { id: "8", date: "2026-03-12", supplier: "Vercel", description: "Pro plan - hosting frontend", category: "Tecnologia", value: 120.00, status: "pago", origin: "Manual", attachment_url: "#" },
-  { id: "9", date: "2026-03-10", supplier: "Supabase", description: "Database Pro - março/2026", category: "Tecnologia", value: 250.00, status: "pendente", origin: "IA", attachment_url: "#" },
-  { id: "10", date: "2026-03-05", supplier: "Papelaria Central", description: "Impressão de contratos", category: "Escritório", value: 45.00, status: "pago", origin: "Manual", attachment_url: null },
-];
+import type { Despesa } from "@/types/expenses";
 
 const DEFAULT_FILTERS: Filters = { search: "", periodo: "", categoria: "", status: "", origem: "" };
 
 export default function ExpensesPage() {
-  const [despesas, setDespesas] = useState<Despesa[]>(MOCK_DESPESAS);
+  const tenantId = useTenantId();
+  const {
+    despesas, summary, isLoading,
+    createExpense, updateExpense, togglePaid, deleteExpense, updateCategory,
+  } = useExpenses();
+  const { categories } = useExpenseCategories();
+
   const [filters, setFilters] = useState<Filters>({ ...DEFAULT_FILTERS });
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -35,9 +34,7 @@ export default function ExpensesPage() {
 
   // Debounce search
   useEffect(() => {
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(filters.search);
-    }, 300);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(filters.search), 300);
     return () => clearTimeout(debounceRef.current);
   }, [filters.search]);
 
@@ -53,7 +50,6 @@ export default function ExpensesPage() {
   const filtered = useMemo(() => {
     let result = despesas;
 
-    // Search
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       result = result.filter(
@@ -61,75 +57,60 @@ export default function ExpensesPage() {
       );
     }
 
-    // Periodo
     if (filters.periodo) {
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth();
-      let start: Date;
       if (filters.periodo === "mes_atual") {
-        start = new Date(year, month, 1);
+        const start = new Date(year, month, 1);
+        result = result.filter((d) => new Date(d.date + "T00:00:00") >= start);
       } else if (filters.periodo === "mes_anterior") {
-        start = new Date(year, month - 1, 1);
+        const start = new Date(year, month - 1, 1);
         const end = new Date(year, month, 0);
         result = result.filter((d) => {
           const dt = new Date(d.date + "T00:00:00");
           return dt >= start && dt <= end;
         });
-        // early return for mes_anterior since it has an end date
-      } else {
-        // 3_meses
-        start = new Date(year, month - 2, 1);
-      }
-      if (filters.periodo !== "mes_anterior") {
+      } else if (filters.periodo === "3_meses") {
+        const start = new Date(year, month - 2, 1);
         result = result.filter((d) => new Date(d.date + "T00:00:00") >= start);
       }
     }
 
-    // Categoria
-    if (filters.categoria) {
-      result = result.filter((d) => d.category === filters.categoria);
-    }
-
-    // Status
-    if (filters.status) {
-      result = result.filter((d) => d.status === filters.status);
-    }
-
-    // Origem
-    if (filters.origem) {
-      result = result.filter((d) => d.origin === filters.origem);
-    }
+    if (filters.categoria) result = result.filter((d) => d.category === filters.categoria);
+    if (filters.status) result = result.filter((d) => d.status === filters.status);
+    if (filters.origem) result = result.filter((d) => d.origin === filters.origem);
 
     return result;
   }, [despesas, debouncedSearch, filters.periodo, filters.categoria, filters.status, filters.origem]);
 
-  // Summary
-  const summary = useMemo(() => {
-    const total = filtered.reduce((s, d) => s + d.value, 0);
-    const pendentes = filtered.filter((d) => d.status === "pendente");
-    const pagos = filtered.filter((d) => d.status === "pago");
-    const iaCount = filtered.filter((d) => d.origin === "IA").length;
-    return {
-      total,
-      totalCount: filtered.length,
-      pendente: pendentes.reduce((s, d) => s + d.value, 0),
-      pendenteCount: pendentes.length,
-      pago: pagos.reduce((s, d) => s + d.value, 0),
-      pagoCount: pagos.length,
-      iaCount,
-    };
-  }, [filtered]);
+  // Predictability engine runs on ALL despesas (unfiltered)
+  const predictability = useExpensePredictability(despesas);
+
+  // Summary for filtered results
+  const filteredSummary = useMemo(() => ({
+    total: filtered.reduce((s, d) => s + d.value, 0),
+    totalCount: filtered.length,
+    pendente: filtered.filter((d) => d.status === "pendente").reduce((s, d) => s + d.value, 0),
+    pendenteCount: filtered.filter((d) => d.status === "pendente").length,
+    pago: filtered.filter((d) => d.status === "pago").reduce((s, d) => s + d.value, 0),
+    pagoCount: filtered.filter((d) => d.status === "pago").length,
+    iaCount: filtered.filter((d) => d.origin === "IA").length,
+  }), [filtered]);
 
   const totalValue = useMemo(() => filtered.reduce((s, d) => s + d.value, 0), [filtered]);
 
-  // Actions
-  const handleMarkAsPaid = useCallback((id: string) => {
-    setDespesas((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, status: "pago" } : d))
-    );
-    toast.success("Despesa marcada como paga");
-  }, []);
+  // ── Actions ──
+
+  const handleTogglePaid = useCallback((id: string, isPaid: boolean) => {
+    togglePaid.mutate({ id, is_paid: isPaid });
+    toast.success(isPaid ? "Marcada como paga" : "Marcada como pendente");
+  }, [togglePaid]);
+
+  const handleUpdateCategory = useCallback((id: string, category: string, categoryId: string | null) => {
+    updateCategory.mutate({ id, category, category_id: categoryId });
+    toast.success("Categoria atualizada");
+  }, [updateCategory]);
 
   const handleEdit = useCallback((d: Despesa) => {
     setEditingExpense(d);
@@ -137,68 +118,115 @@ export default function ExpensesPage() {
   }, []);
 
   const handleDelete = useCallback((id: string) => {
-    setDespesas((prev) => prev.filter((d) => d.id !== id));
-    toast.success("Despesa excluída");
-  }, []);
+    deleteExpense.mutate(id);
+  }, [deleteExpense]);
 
   const handleSave = useCallback(
-    (data: { supplier: string; value: number; category: string; date: string; description: string; status: string; file: File | null }) => {
+    async (data: { supplier: string; value: number; category: string; date: string; description: string; status: string; file: File | null }) => {
+      // Upload attachment if provided
+      let attachmentUrl: string | null = null;
+      let attachmentType: string | null = null;
+      let attachmentFilename: string | null = null;
+      let attachmentSizeBytes: number | null = null;
+
+      if (data.file) {
+        const ext = data.file.name.split(".").pop() || "bin";
+        const fileName = `${tenantId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { data: uploaded, error: uploadError } = await supabase.storage
+          .from("expense-attachments")
+          .upload(fileName, data.file, { contentType: data.file.type, upsert: false });
+
+        if (uploadError) {
+          toast.error("Erro no upload: " + uploadError.message);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("expense-attachments")
+          .getPublicUrl(uploaded.path);
+        attachmentUrl = urlData.publicUrl;
+        attachmentType = data.file.type.startsWith("image/") ? "image" : "pdf";
+        attachmentFilename = data.file.name;
+        attachmentSizeBytes = data.file.size;
+      }
+
+      // Find category_id
+      const cat = categories.find((c) => c.name === data.category);
+
       if (editingExpense) {
-        setDespesas((prev) =>
-          prev.map((d) =>
-            d.id === editingExpense.id
-              ? { ...d, supplier: data.supplier, value: data.value, category: data.category, date: data.date, description: data.description, status: data.status }
-              : d
-          )
-        );
-        toast.success("Despesa atualizada");
-      } else {
-        const newDespesa: Despesa = {
-          id: String(Date.now()),
-          date: data.date,
-          supplier: data.supplier,
+        updateExpense.mutate({
+          id: editingExpense.id,
           description: data.description,
           category: data.category,
+          category_id: cat?.id || null,
           value: data.value,
-          status: data.status,
-          origin: "Manual",
-          attachment_url: data.file ? "#" : null,
-        };
-        setDespesas((prev) => [newDespesa, ...prev]);
-        toast.success("Despesa criada");
+          date: data.date,
+          is_paid: data.status === "pago",
+          ...(attachmentUrl && { attachment_url: attachmentUrl }),
+        });
+        toast.success("Despesa atualizada");
+      } else {
+        createExpense.mutate({
+          description: data.description,
+          category: data.category,
+          category_id: cat?.id || null,
+          value: data.value,
+          date: data.date,
+          is_paid: data.status === "pago",
+          origem: "Manual",
+          attachment_url: attachmentUrl,
+          attachment_type: attachmentType,
+          attachment_filename: attachmentFilename,
+          attachment_size_bytes: attachmentSizeBytes,
+        });
       }
       setEditingExpense(null);
     },
-    [editingExpense]
+    [editingExpense, tenantId, categories, createExpense, updateExpense]
   );
 
   const handleExtratorSave = useCallback(
-    (data: { supplier: string; value: number; category: string; date: string; description: string; file: File }) => {
-      const newDespesa: Despesa = {
-        id: String(Date.now()),
-        date: data.date,
-        supplier: data.supplier,
+    async (data: { supplier: string; value: number; category: string; date: string; description: string; file: File }) => {
+      // Upload file
+      const ext = data.file.name.split(".").pop() || "bin";
+      const fileName = `${tenantId}/${Date.now()}_ia_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { data: uploaded, error: uploadError } = await supabase.storage
+        .from("expense-attachments")
+        .upload(fileName, data.file, { contentType: data.file.type, upsert: false });
+
+      let attachmentUrl: string | null = null;
+      if (!uploadError && uploaded) {
+        const { data: urlData } = supabase.storage
+          .from("expense-attachments")
+          .getPublicUrl(uploaded.path);
+        attachmentUrl = urlData.publicUrl;
+      }
+
+      const cat = categories.find((c) => c.name === data.category);
+
+      createExpense.mutate({
         description: data.description,
         category: data.category,
+        category_id: cat?.id || null,
         value: data.value,
-        status: "pago",
-        origin: "IA",
-        attachment_url: "#",
-      };
-      setDespesas((prev) => [newDespesa, ...prev]);
-      toast.success("Despesa extraída e salva com sucesso");
+        date: data.date,
+        is_paid: true,
+        origem: "IA",
+        attachment_url: attachmentUrl,
+        attachment_type: data.file.type.startsWith("image/") ? "image" : "pdf",
+        attachment_filename: data.file.name,
+        attachment_size_bytes: data.file.size,
+      });
+      toast.success("Despesa extraída e salva");
     },
-    []
+    [tenantId, categories, createExpense]
   );
 
   // Export CSV
   const handleExportCSV = useCallback(() => {
     const header = "Data,Fornecedor,Descrição,Categoria,Valor,Status,Origem\n";
     const rows = filtered
-      .map(
-        (d) =>
-          `${d.date},"${d.supplier}","${d.description}","${d.category}",${d.value},${d.status},${d.origin}`
-      )
+      .map((d) => `${d.date},"${d.supplier}","${d.description}","${d.category}",${d.value},${d.status},${d.origin}`)
       .join("\n");
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -210,9 +238,8 @@ export default function ExpensesPage() {
     toast.success("CSV exportado");
   }, [filtered]);
 
-  // Export PDF (basic)
   const handleExportPDF = useCallback(() => {
-    toast.info("Exportação PDF em breve - utilize CSV por enquanto");
+    toast.info("Exportação PDF em breve — utilize CSV por enquanto");
   }, []);
 
   const openNewModal = () => {
@@ -221,7 +248,7 @@ export default function ExpensesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 p-1">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -229,7 +256,7 @@ export default function ExpensesPage() {
             Despesas
           </h1>
           <p className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Gerencie as despesas da empresa
+            Gestão financeira inteligente com previsibilidade IAZIS
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -252,8 +279,13 @@ export default function ExpensesPage() {
         </div>
       </div>
 
+      {/* Predictability Dashboard (IAZIS core) */}
+      {!isLoading && despesas.length > 0 && (
+        <PredictabilityDashboard data={predictability} />
+      )}
+
       {/* Summary Cards */}
-      <DespesaSummaryCards data={summary} />
+      <DespesaSummaryCards data={filteredSummary} />
 
       {/* Filters */}
       <DespesaFilterBar filters={filters} onFilterChange={handleFilterChange} onClear={handleClearFilters} />
@@ -264,15 +296,24 @@ export default function ExpensesPage() {
         style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
       >
         <div className="p-4">
-          <DespesaTable
-            despesas={filtered}
-            onMarkAsPaid={handleMarkAsPaid}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            totalValue={totalValue}
-            onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16 gap-2" style={{ color: "hsl(var(--muted-foreground))" }}>
+              <Loader2 size={18} className="animate-spin" />
+              <span className="text-sm">Carregando despesas...</span>
+            </div>
+          ) : (
+            <DespesaTable
+              despesas={filtered}
+              categories={categories}
+              onTogglePaid={handleTogglePaid}
+              onUpdateCategory={handleUpdateCategory}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              totalValue={totalValue}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+            />
+          )}
         </div>
       </div>
 

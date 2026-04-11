@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Inbox, Send, Kanban, Users, UsersRound, Receipt, ScrollText,
-  UserCog, Building2, MessageSquareText, Tag, Bot, FileText, Zap,
+  UserCog, Building2, MessageSquareText, Tag, Bot, Zap,
   BarChart3, Menu, Clock,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,11 +18,10 @@ import LeadKanban from "@/components/mensageria/LeadKanban";
 import MassSendHub from "@/components/mensageria/MassSendHub";
 import GroupsInboxView from "@/components/mensageria/GroupsInboxView";
 import GroupDashboard from "@/components/whatsapp/groups/GroupDashboard";
-import QuickReplyManager from "@/components/mensageria/quick-replies/QuickReplyManager";
+import ModelosMsgTabs from "@/components/mensageria/ModelosMsgTabs";
 import AgentDashboard from "@/components/mensageria/agents/AgentDashboard";
 import DepartmentManager from "@/components/mensageria/agents/DepartmentManager";
 import ContactTagManager from "@/components/mensageria/agents/ContactTagManager";
-import HSMTemplateManager from "@/components/mensageria/templates/HSMTemplateManager";
 import AutomationManager from "@/components/mensageria/automation/AutomationManager";
 import AttendanceMetrics from "@/components/mensageria/metrics/AttendanceMetrics";
 import SlaConfigPanel from "@/components/mensageria/sla/SlaConfigPanel";
@@ -43,7 +42,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: "leads",     label: "Leads",               icon: Kanban,           group: "tools" },
   { id: "grupos",    label: "ADM Grupos",           icon: UsersRound,       group: "tools" },
   { id: "contatos",  label: "Contatos",            icon: Users,            group: "tools" },
-  { id: "templates",  label: "Templates HSM",        icon: FileText,         group: "tools" },
   { id: "cobranca",  label: "Cobrança",              icon: Receipt,          group: "tools" },
   { id: "metricas",  label: "Métricas",                icon: BarChart3,        group: "tools" },
   { id: "logs",      label: "Logs",                   icon: ScrollText,       group: "tools" },
@@ -73,7 +71,6 @@ const MensageriaPage = () => {
       case "leads":           return <LeadKanban />;
       case "grupos":          return <GroupDashboard />;
       case "contatos":        return <ContactChecker />;
-      case "templates":       return <HSMTemplateManager />;
       case "cobranca":        return <BillingRulesTab />;
       case "metricas":        return <AttendanceMetrics />;
       case "logs":            return <LogsTab />;
@@ -81,7 +78,7 @@ const MensageriaPage = () => {
       case "atendentes":      return <AgentDashboard />;
       case "setores":         return <DepartmentManager />;
       case "sla":             return <SlaConfigPanel />;
-      case "msg-predefinidas": return <QuickReplyManager />;
+      case "msg-predefinidas": return <ModelosMsgTabs />;
       case "tags-contato":    return <ContactTagManager />;
       case "automacoes":      return <AutomationManager />;
       default:                return <InboxTab />;

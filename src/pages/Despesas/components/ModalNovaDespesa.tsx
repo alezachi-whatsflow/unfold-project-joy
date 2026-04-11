@@ -5,7 +5,7 @@ import { StatusPill } from "./StatusPill";
 import { SmartCombobox } from "@/components/expenses/SmartCombobox";
 import { useExpenseCategories } from "@/hooks/useExpenseCategories";
 import { useSuppliers } from "@/hooks/useSuppliers";
-import type { Despesa } from "./DespesaTable";
+import type { Despesa } from "@/types/expenses";
 
 const CATEGORIAS_FALLBACK = ["Transporte", "Escritório", "Tecnologia", "Telecom", "Alimentação", "Outros"];
 const STATUS_OPTIONS = ["pendente", "pago", "rejeitado"];

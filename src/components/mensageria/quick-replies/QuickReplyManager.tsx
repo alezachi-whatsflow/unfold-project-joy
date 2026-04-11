@@ -9,8 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, Edit2, Trash2, Lock, Globe, Zap } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, Edit2, Trash2, Lock, Globe, Building2, Zap, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+
+type Visibility = "all" | "sector" | "exclusive";
 
 interface QuickReply {
   id: string;
@@ -20,9 +23,30 @@ interface QuickReply {
   media_url: string | null;
   media_type: string | null;
   is_private: boolean;
+  visibility: Visibility;
+  category: string | null;
+  sector_ids: string[];
   usage_count: number;
   created_at: string;
 }
+
+const VISIBILITY_OPTIONS: { value: Visibility; label: string; icon: typeof Globe }[] = [
+  { value: "all", label: "Todos", icon: Globe },
+  { value: "sector", label: "Setor específico", icon: Building2 },
+  { value: "exclusive", label: "Exclusivo (só eu)", icon: Lock },
+];
+
+const CATEGORY_OPTIONS = [
+  { value: "", label: "Sem categoria" },
+  { value: "saudacao", label: "Saudação" },
+  { value: "atendimento", label: "Atendimento" },
+  { value: "vendas", label: "Vendas" },
+  { value: "suporte", label: "Suporte" },
+  { value: "cobranca", label: "Cobrança" },
+  { value: "follow-up", label: "Follow-up" },
+  { value: "encerramento", label: "Encerramento" },
+  { value: "outro", label: "Outro" },
+];
 
 export default function QuickReplyManager() {
   const tenantId = useTenantId();
@@ -30,7 +54,8 @@ export default function QuickReplyManager() {
   const [search, setSearch] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<QuickReply | null>(null);
-  const [form, setForm] = useState({ title: "", shortcut: "", body: "", is_private: false });
+  const [form, setForm] = useState({ title: "", shortcut: "", body: "", is_private: false, visibility: "all" as Visibility, category: "" as string, sector_ids: [] as string[] });
+  const [filterCategory, setFilterCategory] = useState("all");
 
   const { data: replies = [], isLoading } = useQuery({
     queryKey: ["quick-replies", tenantId],
@@ -56,6 +81,9 @@ export default function QuickReplyManager() {
         shortcut,
         body: values.body,
         is_private: values.is_private,
+        visibility: values.visibility || "all",
+        category: values.category || null,
+        sector_ids: values.sector_ids || [],
         tenant_id: tenantId,
       };
       if (values.id) {
@@ -86,19 +114,24 @@ export default function QuickReplyManager() {
     },
   });
 
-  const filtered = replies.filter((r) =>
-    !search || r.title.toLowerCase().includes(search.toLowerCase()) || r.shortcut.includes(search) || r.body.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = replies.filter((r) => {
+    if (filterCategory !== "all" && (r.category || "") !== filterCategory) return false;
+    if (search && !r.title.toLowerCase().includes(search.toLowerCase()) && !r.shortcut.includes(search) && !r.body.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", shortcut: "", body: "", is_private: false });
+    setForm({ title: "", shortcut: "", body: "", is_private: false, visibility: "all", category: "", sector_ids: [] });
     setEditOpen(true);
   };
 
   const openEdit = (r: QuickReply) => {
     setEditing(r);
-    setForm({ title: r.title, shortcut: r.shortcut, body: r.body, is_private: r.is_private });
+    setForm({
+      title: r.title, shortcut: r.shortcut, body: r.body, is_private: r.is_private,
+      visibility: r.visibility || "all", category: r.category || "", sector_ids: r.sector_ids || [],
+    });
     setEditOpen(true);
   };
 
@@ -117,15 +150,26 @@ export default function QuickReplyManager() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
-        <Input
-          placeholder="Buscar por título, atalho ou conteúdo..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 text-sm"
-        />
+      {/* Search + category filter */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+          <Input
+            placeholder="Buscar por título, atalho ou conteúdo..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 text-sm"
+          />
+        </div>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-36 text-xs"><FolderOpen size={12} className="mr-1" /><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas categorias</SelectItem>
+            {CATEGORY_OPTIONS.filter((c) => c.value).map((c) => (
+              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* List */}
@@ -140,10 +184,19 @@ export default function QuickReplyManager() {
           filtered.map((r) => (
             <Card key={r.id} className="p-3 flex items-start gap-3 group" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{r.title}</span>
                   <Badge variant="outline" className="text-[10px] font-mono">{r.shortcut}</Badge>
-                  {r.is_private && <Lock size={10} style={{ color: "var(--text-muted)" }} />}
+                  {(() => {
+                    const vis = VISIBILITY_OPTIONS.find((v) => v.value === (r.visibility || "all")) || VISIBILITY_OPTIONS[0];
+                    const VisIcon = vis.icon;
+                    return <Badge variant="outline" className="text-[9px] gap-0.5"><VisIcon size={8} /> {vis.label}</Badge>;
+                  })()}
+                  {r.category && (
+                    <Badge variant="secondary" className="text-[9px]">
+                      {CATEGORY_OPTIONS.find((c) => c.value === r.category)?.label || r.category}
+                    </Badge>
+                  )}
                   {r.media_url && <Badge variant="secondary" className="text-[9px]">📎 Mídia</Badge>}
                 </div>
                 <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>{r.body}</p>
@@ -171,11 +224,37 @@ export default function QuickReplyManager() {
               <Input placeholder="Atalho (ex: /ola)" value={form.shortcut} onChange={(e) => setForm({ ...form, shortcut: e.target.value })} className="pl-9 font-mono" />
             </div>
             <Textarea placeholder="Texto da resposta... Use {{nome}} para variáveis" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={4} />
+            {/* Category */}
+            <Select value={form.category || ""} onValueChange={(v) => setForm({ ...form, category: v })}>
+              <SelectTrigger className="text-sm"><FolderOpen size={12} className="mr-1" /><SelectValue placeholder="Categoria (opcional)" /></SelectTrigger>
+              <SelectContent>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Visibility */}
             <div className="flex items-center gap-2">
-              <Switch checked={form.is_private} onCheckedChange={(v) => setForm({ ...form, is_private: v })} />
-              <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                {form.is_private ? <><Lock size={12} className="inline mr-1" />Privada (só você vê)</> : <><Globe size={12} className="inline mr-1" />Visível para toda equipe</>}
-              </span>
+              <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>Visibilidade:</span>
+              {VISIBILITY_OPTIONS.map((opt) => {
+                const Icon = opt.icon;
+                const isSelected = form.visibility === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setForm({ ...form, visibility: opt.value })}
+                    className="flex items-center gap-1 px-2 py-1 text-[11px] rounded transition-colors"
+                    style={{
+                      background: isSelected ? "var(--acc, hsl(var(--primary)))" : "transparent",
+                      color: isSelected ? "#fff" : "var(--text-muted)",
+                      border: `1px solid ${isSelected ? "transparent" : "var(--border)"}`,
+                    }}
+                  >
+                    <Icon size={10} /> {opt.label}
+                  </button>
+                );
+              })}
             </div>
             <Button onClick={() => saveMutation.mutate({ ...form, id: editing?.id })} disabled={!form.title.trim() || !form.shortcut.trim() || !form.body.trim() || saveMutation.isPending} className="w-full">
               {saveMutation.isPending ? "Salvando..." : editing ? "Salvar Alterações" : "Criar Modelo"}

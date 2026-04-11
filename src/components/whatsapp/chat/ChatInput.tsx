@@ -22,6 +22,14 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export interface QuickReplyItem {
+  id: string;
+  title: string;
+  shortcut: string;
+  body: string;
+  category: string | null;
+}
+
 export type AttachmentPayload =
   | { type: "media"; mediaType: "image" | "video" | "document" | "audio"; file: string; text?: string }
   | { type: "location"; latitude: number; longitude: number; name?: string }
@@ -33,6 +41,7 @@ interface ChatInputProps {
   onSendAttachment?: (payload: AttachmentPayload) => Promise<void>;
   replyTo?: { senderName: string; content: string; messageId?: string } | null;
   onCancelReply?: () => void;
+  quickReplies?: QuickReplyItem[];
 }
 
 type AttachMode = null | "media" | "document" | "location" | "contact" | "poll" | "audio";
@@ -82,9 +91,13 @@ function formatRecordingTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelReply }: ChatInputProps) {
+export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelReply, quickReplies = [] }: ChatInputProps) {
   const [text, setText] = useState("");
   const [fixingGrammar, setFixingGrammar] = useState(false);
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashFilter, setSlashFilter] = useState("");
+  const [slashIndex, setSlashIndex] = useState(0);
+  const slashMenuRef = useRef<HTMLDivElement>(null);
   const [showAttach, setShowAttach] = useState(false);
   const [attachMode, setAttachMode] = useState<AttachMode>(null);
   const [sending, setSending] = useState(false);
@@ -130,6 +143,41 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     }, 300);
     return () => clearTimeout(timer);
   }, []);
+
+  // Slash command detection
+  useEffect(() => {
+    if (text.startsWith("/") && quickReplies.length > 0) {
+      const query = text.slice(1).toLowerCase();
+      setSlashFilter(query);
+      setShowSlashMenu(true);
+      setSlashIndex(0);
+    } else {
+      setShowSlashMenu(false);
+    }
+  }, [text, quickReplies.length]);
+
+  const filteredSlashReplies = showSlashMenu
+    ? quickReplies
+        .filter((r) => {
+          const q = slashFilter.toLowerCase();
+          if (!q) return true;
+          return (
+            r.title.toLowerCase().includes(q) ||
+            r.shortcut.toLowerCase().includes(q) ||
+            r.body.toLowerCase().includes(q)
+          );
+        })
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .slice(0, 10)
+    : [];
+
+  const selectSlashReply = (reply: QuickReplyItem) => {
+    setText(reply.body);
+    setShowSlashMenu(false);
+    textareaRef.current?.focus();
+    // Increment usage_count via supabase (fire & forget)
+    supabase.from("quick_replies").update({ usage_count: (reply as any).usage_count + 1 || 1 }).eq("id", reply.id).then(() => {});
+  };
 
   // Close emoji picker on click outside
   useEffect(() => {
@@ -734,6 +782,52 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
         </div>
       )}
 
+      {/* ── Slash command menu ── */}
+      {showSlashMenu && filteredSlashReplies.length > 0 && (
+        <div
+          ref={slashMenuRef}
+          className="mx-4 mb-1 overflow-y-auto"
+          style={{
+            backgroundColor: "#233138",
+            border: "1px solid var(--wa-border)",
+            borderRadius: 10,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            animation: "messageIn 150ms ease-out",
+            maxHeight: 260,
+          }}
+        >
+          <div className="px-3 py-1.5" style={{ borderBottom: "1px solid var(--wa-border)" }}>
+            <span className="text-[11px] font-medium" style={{ color: "var(--wa-text-secondary)" }}>
+              Respostas Rápidas — digite para filtrar
+            </span>
+          </div>
+          {filteredSlashReplies.map((reply, i) => (
+            <button
+              key={reply.id}
+              onClick={() => selectSlashReply(reply)}
+              className="w-full text-left px-3 py-2 flex flex-col gap-0.5 transition-colors"
+              style={{
+                backgroundColor: i === slashIndex ? "var(--wa-bg-hover, rgba(255,255,255,0.08))" : "transparent",
+              }}
+              onMouseEnter={() => setSlashIndex(i)}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium" style={{ color: "var(--wa-text-primary)" }}>{reply.title}</span>
+                <span className="text-[10px] font-mono px-1 rounded" style={{ color: "var(--wa-green)", background: "rgba(0,168,132,0.1)" }}>
+                  {reply.shortcut}
+                </span>
+                {reply.category && (
+                  <span className="text-[9px] px-1 rounded" style={{ color: "var(--wa-text-secondary)", background: "rgba(255,255,255,0.05)" }}>
+                    {reply.category}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] truncate" style={{ color: "var(--wa-text-secondary)" }}>{reply.body}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* ── Emoji Picker ── */}
       {showEmojiPicker && (
         <div
@@ -834,6 +928,30 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
+              // Slash menu navigation
+              if (showSlashMenu && filteredSlashReplies.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSlashIndex((prev) => (prev + 1) % filteredSlashReplies.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSlashIndex((prev) => (prev - 1 + filteredSlashReplies.length) % filteredSlashReplies.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  selectSlashReply(filteredSlashReplies[slashIndex]);
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setShowSlashMenu(false);
+                  setText("");
+                  return;
+                }
+              }
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSend();
