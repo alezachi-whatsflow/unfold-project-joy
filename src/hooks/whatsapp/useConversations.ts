@@ -201,6 +201,7 @@ export function useConversations() {
         tags: lead?.lead_tags?.length ? lead.lead_tags.map((t: string) => ({ label: t, color: "lead" as const })) : [],
         isTicketOpen: lead?.is_ticket_open ?? false,
         assignedTo: lead?.assigned_attendant_id ?? undefined,
+        assignedAt: lead?.assigned_at ?? undefined,
         status: lead?.lead_status === "resolved" ? "resolved" : "open",
         isGroup,
       });
@@ -269,6 +270,7 @@ export function useConversations() {
     // Extract jid from composite key (instance_name::remote_jid)
     const chatId = compositeId.includes("::") ? compositeId.split("::").slice(1).join("::") : compositeId;
     const instanceName = conv?.instanceName || (compositeId.includes("::") ? compositeId.split("::")[0] : "");
+    const now = new Date().toISOString();
     const { error: upsertErr } = await supabase
       .from("whatsapp_leads")
       .upsert({
@@ -276,6 +278,7 @@ export function useConversations() {
         instance_name: instanceName,
         lead_name: conv?.name || chatId,
         assigned_attendant_id: currentUserId,
+        assigned_at: now,
         lead_status: "open",
         is_ticket_open: true,
         tenant_id: tId,
@@ -287,8 +290,9 @@ export function useConversations() {
     }
 
     toast.success(`Atendimento iniciado: ${conv?.name || chatId}`);
+    // Optimistic: put at top immediately via assignedAt = now
     setConversations((prev) =>
-      prev.map((c) => c.id === compositeId ? { ...c, assignedTo: currentUserId, status: "open" as const } : c)
+      prev.map((c) => c.id === compositeId ? { ...c, assignedTo: currentUserId, assignedAt: now, status: "open" as const } : c)
     );
     fetchConversations();
   }, [currentUserId, conversations, fetchConversations]);

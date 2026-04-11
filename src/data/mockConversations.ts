@@ -25,6 +25,8 @@ export interface Conversation {
   participantCount?: number;
   /** SLA breach: true if first response or resolution time exceeded */
   slaBreach?: boolean;
+  /** When the attendant clicked "Atender" — for priority sorting */
+  assignedAt?: string;
   /** When found via message content search, the matched snippet */
   searchSnippet?: string;
 }

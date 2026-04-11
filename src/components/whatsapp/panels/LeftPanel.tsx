@@ -134,6 +134,25 @@ export default function LeftPanel({
     if (filter === "resolved") list = list.filter((c) => !c.isGroup && c.status === "resolved");
     // Channel filter (WA Web, Cloud API, IG, etc.)
     if (channelFilter) list = list.filter((c) => c.channel === channelFilter);
+
+    // Priority sort for "Em atendimento": recently-assigned conversations go to top
+    if (filter === "inbox") {
+      const PRIORITY_WINDOW = 10 * 60 * 1000; // 10 minutes
+      const now = Date.now();
+      list = [...list].sort((a, b) => {
+        const aAssigned = a.assignedAt ? new Date(a.assignedAt).getTime() : 0;
+        const bAssigned = b.assignedAt ? new Date(b.assignedAt).getTime() : 0;
+        const aRecent = (now - aAssigned) < PRIORITY_WINDOW;
+        const bRecent = (now - bAssigned) < PRIORITY_WINDOW;
+        // Recently assigned first, then by assignedAt desc
+        if (aRecent && !bRecent) return -1;
+        if (!aRecent && bRecent) return 1;
+        if (aRecent && bRecent) return bAssigned - aAssigned;
+        // Fallback: keep original order (by lastMessageTime)
+        return 0;
+      });
+    }
+
     return list;
   }, [conversations, search, filter, deepSearchSnippets, channelFilter]);
 
