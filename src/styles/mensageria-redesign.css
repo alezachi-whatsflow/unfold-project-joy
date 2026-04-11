@@ -13,9 +13,9 @@
   --inbox-text: var(--text-primary, #2A2520);
   --inbox-text-secondary: var(--text-secondary, #7A6E62);
   --inbox-text-muted: var(--text-muted, #A09888);
-  --inbox-active-bg: rgba(14, 138, 92, 0.08);
-  --inbox-active-border: rgba(14, 138, 92, 0.25);
-  --inbox-active-color: #0E8A5C;
+  --inbox-active-bg: var(--acc-bg, rgba(17, 188, 118, 0.08));
+  --inbox-active-border: var(--acc-border, rgba(17, 188, 118, 0.25));
+  --inbox-active-color: var(--acc, #11BC76);
   --inbox-dot-inactive: #D8D2C8;
   --inbox-radius: 10px;
   --inbox-radius-lg: 12px;
