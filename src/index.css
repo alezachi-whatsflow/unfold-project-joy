@@ -473,6 +473,17 @@ main::-webkit-scrollbar-corner,
   background: rgba(71,139,255,0.12);
   color: #478BFF;
 }
+[data-theme="pacifico"] .nav-icon-hover {
+  color: #6B7565;
+}
+[data-theme="pacifico"] .nav-icon-hover:hover {
+  background: rgba(17,188,118,0.12);
+  color: #11BC76;
+}
+[data-theme="pacifico"] .nav-icon-hover.active {
+  background: rgba(17,188,118,0.12);
+  color: #11BC76;
+}
 
 .nav-icon-tooltip {
   position: absolute;
