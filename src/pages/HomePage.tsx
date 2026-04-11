@@ -42,7 +42,7 @@ export default function HomePage() {
   /* First access detection — redirect to Wizard */
   useEffect(() => {
     if (!user?.id) return;
-    const key = `pzaafi_wizard_done_${user.id}`;
+    const key = `iazis_wizard_done_${user.id}`;
     if (localStorage.getItem(key)) return;
 
     (async () => {
@@ -165,7 +165,7 @@ export default function HomePage() {
       {/* ── HEADER ───────────────────────────── */}
       <header className="home-header glass-header">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold font-mono text-[#E5E8ED] tracking-wider hidden sm:inline">PZAAFI</span>
+          <span className="text-sm font-bold font-mono text-[#E5E8ED] tracking-wider hidden sm:inline">IAZIS</span>
           <div className="hidden sm:block h-6 w-px bg-[rgba(71,139,255,0.2)]" />
           <span className="text-sm text-[rgba(229,232,237,0.5)] hidden sm:inline">
             {greeting()}, {firstName} 👋
