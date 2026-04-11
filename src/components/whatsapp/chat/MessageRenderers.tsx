@@ -97,7 +97,12 @@ const AudioRenderer: React.FC<MessageRendererProps> = ({ message }) => (
 
 // Document renderer — rich card similar to WhatsApp Web
 const DocumentRenderer: React.FC<MessageRendererProps> = ({ message }) => {
-  const fileName = message.caption || message.content || "Documento";
+  // Extract filename: prefer mediaUrl filename, then content (if it looks like a filename), then generic
+  const urlFileName = message.mediaUrl?.split("/").pop()?.split("?")[0] || null;
+  const contentIsFilename = message.content && /\.\w{2,5}$/.test(message.content);
+  const fileName = contentIsFilename ? message.content! : urlFileName || "Documento";
+  const displayName = fileName.length > 35 ? fileName.slice(0, 32) + "..." : fileName;
+
   const ext = fileName.split(".").pop()?.toUpperCase() || "DOC";
   const isPdf = ext === "PDF";
   const isSpreadsheet = ["XLS", "XLSX", "CSV"].includes(ext);
@@ -106,53 +111,61 @@ const DocumentRenderer: React.FC<MessageRendererProps> = ({ message }) => {
   const iconColor = isPdf ? "#E53935" : isSpreadsheet ? "#43A047" : isPresentation ? "#FB8C00" : "#1E88E5";
   const iconLabel = isPdf ? "PDF" : isSpreadsheet ? "XLS" : isPresentation ? "PPT" : ext;
 
+  // Caption is separate from filename
+  const caption = message.caption && message.caption !== fileName ? message.caption : null;
+
   return (
-    <a
-      href={message.mediaUrl || "#"}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block no-underline"
-      style={{ textDecoration: "none" }}
-    >
-      <div
-        className="flex items-center gap-3 p-3 rounded-lg transition-colors hover:opacity-90"
-        style={{
-          background: "var(--wa-bg-msg-in, hsl(var(--muted)))",
-          border: "1px solid var(--border, rgba(255,255,255,0.1))",
-          minWidth: 220,
-          maxWidth: 320,
-        }}
+    <div>
+      <a
+        href={message.mediaUrl || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block no-underline"
+        style={{ textDecoration: "none" }}
       >
-        {/* File type icon */}
         <div
-          className="flex items-center justify-center shrink-0 rounded"
-          style={{ width: 40, height: 40, background: iconColor + "20" }}
+          className="flex items-center gap-3 p-3 rounded-lg transition-colors hover:opacity-90"
+          style={{
+            background: "var(--wa-bg-msg-in, hsl(var(--muted)))",
+            border: "1px solid var(--border, rgba(255,255,255,0.1))",
+            minWidth: 220,
+            maxWidth: 320,
+          }}
         >
-          <span style={{ color: iconColor, fontSize: 11, fontWeight: 700 }}>{iconLabel}</span>
-        </div>
-
-        {/* File info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate" style={{ color: "var(--wa-text-primary, hsl(var(--foreground)))" }}>
-            {fileName}
-          </p>
-          <p className="text-[10px]" style={{ color: "var(--wa-text-secondary, hsl(var(--muted-foreground)))" }}>
-            {ext} {message.mediaUrl ? "· Clique para baixar" : ""}
-          </p>
-        </div>
-
-        {/* Download indicator */}
-        {message.mediaUrl && (
-          <div className="shrink-0" style={{ color: "var(--wa-text-secondary)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+          {/* File type icon */}
+          <div
+            className="flex items-center justify-center shrink-0 rounded"
+            style={{ width: 40, height: 40, background: iconColor + "20" }}
+          >
+            <span style={{ color: iconColor, fontSize: 11, fontWeight: 700 }}>{iconLabel}</span>
           </div>
-        )}
-      </div>
-    </a>
+
+          {/* File info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate" style={{ color: "var(--wa-text-primary, hsl(var(--foreground)))" }}>
+              {displayName}
+            </p>
+            <p className="text-[10px]" style={{ color: "var(--wa-text-secondary, hsl(var(--muted-foreground)))" }}>
+              {ext} {message.mediaUrl ? "· Clique para baixar" : ""}
+            </p>
+          </div>
+
+          {/* Download indicator */}
+          {message.mediaUrl && (
+            <div className="shrink-0" style={{ color: "var(--wa-text-secondary)" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </div>
+          )}
+        </div>
+      </a>
+      {caption && (
+        <p className="text-sm mt-1 whitespace-pre-wrap break-words">{caption}</p>
+      )}
+    </div>
   );
 };
 
