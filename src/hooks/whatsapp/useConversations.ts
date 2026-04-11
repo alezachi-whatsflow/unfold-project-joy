@@ -201,7 +201,7 @@ export function useConversations() {
         tags: lead?.lead_tags?.length ? lead.lead_tags.map((t: string) => ({ label: t, color: "lead" as const })) : [],
         isTicketOpen: lead?.is_ticket_open ?? false,
         assignedTo: lead?.assigned_attendant_id ?? undefined,
-        assignedAt: lead?.assigned_at ?? undefined,
+        assignedAt: lead?.assigned_at || undefined,
         status: lead?.lead_status === "resolved" ? "resolved" : "open",
         isGroup,
       });
@@ -271,18 +271,31 @@ export function useConversations() {
     const chatId = compositeId.includes("::") ? compositeId.split("::").slice(1).join("::") : compositeId;
     const instanceName = conv?.instanceName || (compositeId.includes("::") ? compositeId.split("::")[0] : "");
     const now = new Date().toISOString();
-    const { error: upsertErr } = await supabase
+    const payload: Record<string, any> = {
+      chat_id: chatId,
+      instance_name: instanceName,
+      lead_name: conv?.name || chatId,
+      assigned_attendant_id: currentUserId,
+      lead_status: "open",
+      is_ticket_open: true,
+      tenant_id: tId,
+    };
+
+    // Try with assigned_at first, fallback without if column doesn't exist yet
+    let upsertErr: any = null;
+    const { error: err1 } = await supabase
       .from("whatsapp_leads")
-      .upsert({
-        chat_id: chatId,
-        instance_name: instanceName,
-        lead_name: conv?.name || chatId,
-        assigned_attendant_id: currentUserId,
-        assigned_at: now,
-        lead_status: "open",
-        is_ticket_open: true,
-        tenant_id: tId,
-      }, { onConflict: "instance_name,chat_id" });
+      .upsert({ ...payload, assigned_at: now }, { onConflict: "instance_name,chat_id" });
+
+    if (err1?.message?.includes("assigned_at")) {
+      // Column not yet in schema — fallback without it
+      const { error: err2 } = await supabase
+        .from("whatsapp_leads")
+        .upsert(payload, { onConflict: "instance_name,chat_id" });
+      upsertErr = err2;
+    } else {
+      upsertErr = err1;
+    }
 
     if (upsertErr) {
       toast.error(`Erro ao atender: ${upsertErr.message}`);
