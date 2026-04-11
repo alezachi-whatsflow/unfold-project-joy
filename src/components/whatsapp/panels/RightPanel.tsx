@@ -32,6 +32,7 @@ export default function RightPanel({ conversation, isOpen, onClose, onNameUpdate
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editCpfCnpj, setEditCpfCnpj] = useState("");
+  const [editEmpresa, setEditEmpresa] = useState("");
   const [savingName, setSavingName] = useState(false);
 
   const toggleSection = (id: string) => setOpenSections((p) => ({ ...p, [id]: !p[id] }));
@@ -43,18 +44,20 @@ export default function RightPanel({ conversation, isOpen, onClose, onNameUpdate
       setEditName(conversation.name || "");
       setEditEmail("");
       setEditCpfCnpj("");
+      setEditEmpresa("");
 
-      // Load email/cpf from lead or customer
+      // Load email/cpf/empresa from lead or customer
       const chatId = conversation.id.includes("::") ? conversation.id.split("::").slice(1).join("::") : conversation.id;
       const instName = conversation.instanceName || (conversation.id.includes("::") ? conversation.id.split("::")[0] : "");
       let q = supabase.from("whatsapp_leads").select("customer_id").eq("chat_id", chatId);
       if (instName) q = q.eq("instance_name", instName);
       q.maybeSingle().then(({ data }) => {
         if (data?.customer_id) {
-          supabase.from("customers").select("email, cpf_cnpj").eq("id", data.customer_id).maybeSingle().then(({ data: cust }) => {
+          supabase.from("customers").select("email, cpf_cnpj, empresa").eq("id", data.customer_id).maybeSingle().then(({ data: cust }) => {
             if (cust) {
               setEditEmail(cust.email || "");
               setEditCpfCnpj(cust.cpf_cnpj || "");
+              setEditEmpresa((cust as any).empresa || "");
             }
           });
         }
@@ -77,6 +80,7 @@ export default function RightPanel({ conversation, isOpen, onClose, onNameUpdate
           new_name: editName.trim(),
           email: editEmail.trim() || undefined,
           cpf_cnpj: editCpfCnpj.trim() || undefined,
+          empresa: editEmpresa.trim() || undefined,
         },
       });
 
@@ -91,7 +95,7 @@ export default function RightPanel({ conversation, isOpen, onClose, onNameUpdate
     } finally {
       setSavingName(false);
     }
-  }, [conversation, editName, editEmail, editCpfCnpj, onNameUpdated]);
+  }, [conversation, editName, editEmail, editCpfCnpj, editEmpresa, onNameUpdated]);
 
   if (!conversation || !isOpen) return null;
   const c = conversation;
@@ -258,6 +262,15 @@ export default function RightPanel({ conversation, isOpen, onClose, onNameUpdate
                     onChange={(e) => setEditName(e.target.value)}
                     className="h-8 text-sm mt-0.5"
                     placeholder="Nome do contato"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase text-muted-foreground">Empresa</Label>
+                  <Input
+                    value={editEmpresa}
+                    onChange={(e) => setEditEmpresa(e.target.value)}
+                    className="h-8 text-sm mt-0.5"
+                    placeholder="Nome da empresa"
                   />
                 </div>
                 <InfoField label="Telefone" value={c.phone} />

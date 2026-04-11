@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     const { data: { user } } = await callerClient.auth.getUser();
     if (!user) return json({ error: "Não autorizado" }, 401);
 
-    const { chat_id, instance_name, new_name, email, cpf_cnpj } = await req.json();
+    const { chat_id, instance_name, new_name, email, cpf_cnpj, empresa } = await req.json();
     if (!chat_id || !instance_name || !new_name) {
       return json({ error: "chat_id, instance_name e new_name obrigatórios" }, 400);
     }
@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
       const updateData: Record<string, any> = { nome: new_name };
       if (email) updateData.email = email;
       if (cpf_cnpj) updateData.cpf_cnpj = cpf_cnpj;
+      if (empresa !== undefined) updateData.empresa = empresa || null;
 
       await supabase.from("customers").update(updateData).eq("id", customerId);
       updates.push("customer_updated");
@@ -117,6 +118,7 @@ Deno.serve(async (req) => {
             telefone: phone,
             email: email || null,
             cpf_cnpj: cpf_cnpj || null,
+            empresa: empresa || null,
             origem: "inbox",
           })
           .select("id")
