@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTenantId } from "@/hooks/useTenantId";
+import { useQuery } from "@tanstack/react-query";
 import {
   PenLine, TrendingUp, DollarSign, Receipt, FileText, UserCheck,
   Users, Package, ShoppingCart, MessageSquare, LayoutDashboard, Radar,
@@ -37,7 +39,40 @@ export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const tenantId = useTenantId();
   const [mobileMenu, setMobileMenu] = useState(false);
+
+  /* ── Resolve partner branding (WL cascade) ── */
+  const { data: wlBrand } = useQuery({
+    queryKey: ["home-wl-brand", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const { data: license } = await (supabase as any)
+        .from("licenses")
+        .select("id, parent_license_id")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (!license) return null;
+      const wlLicenseId = license.parent_license_id || license.id;
+      const { data: wlConfig } = await (supabase as any)
+        .from("whitelabel_config")
+        .select("display_name, logo_url, primary_color")
+        .eq("license_id", wlLicenseId)
+        .maybeSingle();
+      if (!wlConfig) return null;
+      return {
+        name: wlConfig.display_name || "Whatsflow",
+        logo: wlConfig.logo_url || null,
+        color: wlConfig.primary_color || "#11BC76",
+      };
+    },
+    enabled: !!tenantId,
+    staleTime: 10 * 60_000,
+  });
+
+  const brandName = wlBrand?.name || "IAZIS";
+  const brandColor = wlBrand?.color || "#478BFF";
+  const brandLogo = wlBrand?.logo || null;
 
   /* First access detection — redirect to Wizard */
   useEffect(() => {
@@ -165,8 +200,13 @@ export default function HomePage() {
       {/* ── HEADER ───────────────────────────── */}
       <header className="home-header glass-header">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold font-mono text-[#E5E8ED] tracking-wider hidden sm:inline">IAZIS</span>
-          <div className="hidden sm:block h-6 w-px bg-[rgba(71,139,255,0.2)]" />
+          {brandLogo && (
+            <img src={brandLogo} alt={brandName} className="h-7 w-7 object-contain rounded hidden sm:block" />
+          )}
+          <span className="text-sm font-bold text-[#E5E8ED] tracking-wider hidden sm:inline" style={{ fontFamily: wlBrand ? "'Readex Pro', sans-serif" : "'Geist Mono', monospace", color: brandColor }}>
+            {brandName}
+          </span>
+          <div className="hidden sm:block h-6 w-px" style={{ background: `${brandColor}33` }} />
           <span className="text-sm text-[rgba(229,232,237,0.5)] hidden sm:inline">
             {greeting()}, {firstName} 👋
           </span>
@@ -175,9 +215,10 @@ export default function HomePage() {
           <span className="text-xs text-[rgba(229,232,237,0.4)] hidden md:inline capitalize">
             {todayLabel()}
           </span>
-          <div className="hidden md:block h-6 w-px bg-[rgba(71,139,255,0.2)]" />
+          <div className="hidden md:block h-6 w-px" style={{ background: `${brandColor}33` }} />
           <NotificationBell />
-          <button className="h-8 w-8 rounded-full bg-[rgba(71,139,255,0.2)] flex items-center justify-center text-xs font-bold text-[#478BFF]"
+          <button className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
+            style={{ background: `${brandColor}33`, color: brandColor }}
             onClick={() => go("/perfil")}>
             {firstName[0]?.toUpperCase()}
           </button>
