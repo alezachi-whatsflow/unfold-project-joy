@@ -11,6 +11,7 @@ import TelegramSection from "@/components/integracoes/TelegramSection";
 import MercadoLivreSection from "@/components/integracoes/MercadoLivreSection";
 import N8nSection from "@/components/integracoes/N8nSection";
 import AsaasConnectionSection from "@/components/integracoes/AsaasConnectionSection";
+import { CalendarManagement } from "@/components/settings/CalendarManagement";
 import { IazisModule } from "@/modules/iazis";
 import { useTenantId } from "@/hooks/useTenantId";
 import { supabase } from "@/integrations/supabase/client";
@@ -395,6 +396,9 @@ const IntegracoesPage = () => {
           expanded={expandedSection === "n8n"}
           onToggle={() => toggleSection("n8n")}
         />
+
+        {/* Google Calendar */}
+        <CalendarManagement />
 
         {/* Future */}
         <Card style={{ border: "1px solid var(--border)", background: "var(--bg-card)", borderRadius: 12, opacity: 0.6 }}>
