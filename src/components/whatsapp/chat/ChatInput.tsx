@@ -613,19 +613,21 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
     <div style={{ backgroundColor: "var(--wa-bg-header)", borderTop: "1px solid var(--wa-border)" }}>
       {showAttach && !attachMode && (
         <div
-          className="mx-4 mt-2 p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
-          style={{ backgroundColor: "#233138", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "messageIn 200ms ease-out" }}
+          className="mx-4 mt-2 p-2 grid grid-cols-3 gap-1 rounded-xl"
+          style={{ backgroundColor: "var(--wa-bg-panel, #233138)", border: "1px solid var(--wa-border)", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", animation: "messageIn 200ms ease-out" }}
         >
           {attachmentItems.map((item) => (
             <button
               key={item.label}
               onClick={() => handleSelectAttachment(item.mode)}
-              className="flex items-center gap-2 px-3 py-2 text-sm transition-colors"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all"
               style={{ color: "var(--wa-text-primary)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--wa-bg-hover)")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${item.color}15`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             >
-              <item.icon size={20} style={{ color: item.color }} />
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${item.color}18` }}>
+                <item.icon size={15} style={{ color: item.color }} />
+              </div>
               {item.label}
             </button>
           ))}
@@ -634,8 +636,8 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
 
       {attachMode && (
         <div
-          className="mx-4 mt-2 p-3 space-y-2"
-          style={{ backgroundColor: "#233138", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "messageIn 200ms ease-out" }}
+          className="mx-4 mt-2 p-3 space-y-2 rounded-xl"
+          style={{ backgroundColor: "var(--wa-bg-panel, #233138)", border: "1px solid var(--wa-border)", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", animation: "messageIn 200ms ease-out" }}
         >
           <div className="flex items-center justify-between mb-1">
             <button onClick={resetAttach} className="flex items-center gap-1 text-xs" style={{ color: "var(--wa-text-secondary)" }}>
