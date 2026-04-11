@@ -49,7 +49,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "atendentes",       label: "Atendentes",           icon: UserCog,            group: "config" },
   { id: "setores",          label: "Setores",              icon: Building2,          group: "config" },
   { id: "sla",              label: "SLA",                  icon: Clock,              group: "config" },
-  { id: "msg-predefinidas", label: "Modelos de Msg",       icon: MessageSquareText,  group: "config" },
+  { id: "msg-predefinidas", label: "Modelos de Msgs",      icon: MessageSquareText,  group: "config" },
   { id: "tags-contato",     label: "Tags de Contato",      icon: Tag,                group: "config" },
   { id: "automacoes",       label: "Automações",           icon: Zap,                group: "config" },
 ];
