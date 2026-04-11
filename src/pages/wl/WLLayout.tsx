@@ -71,11 +71,12 @@ export default function WLLayout() {
   useEffect(() => {
     const color = wlConfig?.primary_color || '#11BC76';
     document.documentElement.style.setProperty('--wl-primary', color);
-    document.documentElement.style.setProperty('--wl-secondary', '#1E293B');
-    document.documentElement.style.setProperty('--wl-accent', '#6366F1');
-    document.documentElement.style.setProperty('--wl-bg', '#0F172A');
+    document.documentElement.style.setProperty('--wl-secondary', '#191D20');
+    document.documentElement.style.setProperty('--wl-accent', '#4F5AE3');
+    document.documentElement.style.setProperty('--wl-bg', '#191D20');
+    document.documentElement.style.setProperty('--wl-hover', '#39F7B2');
     return () => {
-      ['--wl-primary', '--wl-secondary', '--wl-accent', '--wl-bg'].forEach(v =>
+      ['--wl-primary', '--wl-secondary', '--wl-accent', '--wl-bg', '--wl-hover'].forEach(v =>
         document.documentElement.style.removeProperty(v)
       );
     };
@@ -125,14 +126,18 @@ export default function WLLayout() {
         }}
       >
         <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
-          <div
-            className="flex items-center justify-center shrink-0 text-white font-bold text-sm rounded-md"
-            style={{ backgroundColor: 'var(--wl-primary)', width: 32, height: 32 }}
-          >
-            {branding.app_name.charAt(0).toUpperCase()}
-          </div>
+          {branding.logo_url ? (
+            <img src={branding.logo_url} alt={branding.app_name} className="h-8 w-8 shrink-0 object-contain rounded-md" />
+          ) : (
+            <div
+              className="flex items-center justify-center shrink-0 text-white font-bold text-sm rounded-md"
+              style={{ backgroundColor: 'var(--wl-primary)', width: 32, height: 32 }}
+            >
+              {branding.app_name.charAt(0).toUpperCase()}
+            </div>
+          )}
           {(!collapsed || isMobile) && (
-            <span className="text-sm font-bold text-foreground truncate">{branding.app_name}</span>
+            <span className="text-sm font-bold text-foreground truncate" style={{ fontFamily: "'Readex Pro', sans-serif" }}>{branding.app_name}</span>
           )}
           {isMobile && (
             <button onClick={() => setMobileOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted">

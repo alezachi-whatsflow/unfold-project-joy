@@ -110,7 +110,7 @@ export default function LoginPage() {
               className="h-12 mx-auto object-contain"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">{displayName}</CardTitle>
+          <CardTitle className="text-2xl font-bold text-foreground" style={wlConfig ? { fontFamily: "'Readex Pro', sans-serif" } : undefined}>{displayName}</CardTitle>
           <CardDescription>Entre com suas credenciais</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>

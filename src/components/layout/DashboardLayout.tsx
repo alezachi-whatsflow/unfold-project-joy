@@ -9,28 +9,60 @@ import { TopNavBar } from "./TopNavBar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantId } from "@/hooks/useTenantId";
 import { GlobalInternalChatDrawer } from "@/components/chat/GlobalInternalChatDrawer";
 
 export function DashboardLayout() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { slug } = useParams<{ slug: string }>();
+  const tenantId = useTenantId();
   const isDetached = new URLSearchParams(location.search).get("detached") === "true";
 
-  // Simulate fetching branding by slug
-  const { data: branding, isLoading } = useQuery({
-    queryKey: ['client-branding', slug],
+  // Resolve white-label branding from the tenant's parent license
+  const { data: branding } = useQuery({
+    queryKey: ['tenant-wl-branding', tenantId],
     queryFn: async () => {
-      if (!slug || slug === 'whatsflow') return null; // fallback to whatsflow default
+      if (!tenantId) return null;
+      // Find this tenant's license and its parent (WL) license
+      const { data: license } = await (supabase as any)
+        .from("licenses")
+        .select("id, parent_license_id")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (!license) return null;
+
+      // Use parent_license_id if this is a sub-license, otherwise own license
+      const wlLicenseId = license.parent_license_id || license.id;
+
+      // Fetch the WL config for that license
+      const { data: wlConfig } = await (supabase as any)
+        .from("whitelabel_config")
+        .select("display_name, logo_url, primary_color")
+        .eq("license_id", wlLicenseId)
+        .maybeSingle();
+
+      if (!wlConfig) return null;
+
+      // Also fetch extended branding if available
+      const { data: extBrand } = await (supabase as any)
+        .from("whitelabel_branding")
+        .select("primary_color, secondary_color, accent_color, background_color, logo_url, logo_dark_url, app_name")
+        .eq("account_id", wlLicenseId)
+        .maybeSingle();
+
       return {
-        app_name: "SendHit Pro",
-        primary_color: "#0EA5E9",
-        secondary_color: "#1E293B",
-        accent_color: "#6366F1",
-        background_color: "#0F172A",
-        logo_url: null,
+        app_name: extBrand?.app_name || wlConfig.display_name || "Whatsflow",
+        primary_color: extBrand?.primary_color ? `#${extBrand.primary_color}` : wlConfig.primary_color || "#11BC76",
+        secondary_color: extBrand?.secondary_color ? `#${extBrand.secondary_color}` : "#191D20",
+        accent_color: extBrand?.accent_color ? `#${extBrand.accent_color}` : "#4F5AE3",
+        background_color: extBrand?.background_color ? `#${extBrand.background_color}` : "#191D20",
+        logo_url: extBrand?.logo_dark_url || extBrand?.logo_url || wlConfig.logo_url || null,
       };
-    }
+    },
+    enabled: !!tenantId,
+    staleTime: 10 * 60_000,
   });
 
   useEffect(() => {
@@ -41,11 +73,10 @@ export function DashboardLayout() {
       document.documentElement.style.setProperty('--wl-bg', branding.background_color);
     }
     return () => {
-      document.documentElement.style.removeProperty('--wl-primary');
-      document.documentElement.style.removeProperty('--wl-secondary');
-      document.documentElement.style.removeProperty('--wl-accent');
-      document.documentElement.style.removeProperty('--wl-bg');
-    }
+      ['--wl-primary', '--wl-secondary', '--wl-accent', '--wl-bg'].forEach(v =>
+        document.documentElement.style.removeProperty(v)
+      );
+    };
   }, [branding]);
 
   const handlePopOut = () => {
@@ -63,7 +94,7 @@ export function DashboardLayout() {
       <div className="flex min-h-screen w-full flex-col bg-background">
         <header className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-4">
           <Minimize2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">Janela estendida — WhatsFlow</span>
+          <span className="text-xs font-medium text-muted-foreground">Janela estendida — {branding?.app_name || "Whatsflow"}</span>
           <div className="ml-auto flex items-center gap-2">
             <ThemeSwitcher />
             <Button variant="ghost" size="sm" onClick={handleCloseDetached} className="text-xs h-7">
