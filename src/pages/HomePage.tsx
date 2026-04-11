@@ -191,7 +191,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="home-page-root">
+    <div className="home-page-root" data-theme="cafe-noturno">
       {/* ambient spheres */}
       <div className="home-sphere home-sphere-1" />
       <div className="home-sphere home-sphere-2" />
