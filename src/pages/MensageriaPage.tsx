@@ -24,6 +24,7 @@ import DepartmentManager from "@/components/mensageria/agents/DepartmentManager"
 import ContactTagManager from "@/components/mensageria/agents/ContactTagManager";
 import AutomationManager from "@/components/mensageria/automation/AutomationManager";
 import AttendanceMetrics from "@/components/mensageria/metrics/AttendanceMetrics";
+import AuditorDashboard from "@/components/mensageria/metrics/AuditorDashboard";
 import SlaConfigPanel from "@/components/mensageria/sla/SlaConfigPanel";
 
 /* ── Sidebar nav items ── */
@@ -72,7 +73,14 @@ const MensageriaPage = () => {
       case "grupos":          return <GroupDashboard />;
       case "contatos":        return <ContactChecker />;
       case "cobranca":        return <BillingRulesTab />;
-      case "metricas":        return <AttendanceMetrics />;
+      case "metricas":        return (
+          <div className="flex flex-col h-full overflow-y-auto">
+            <AttendanceMetrics />
+            <div className="px-4 pb-6">
+              <AuditorDashboard />
+            </div>
+          </div>
+        );
       case "logs":            return <LogsTab />;
       // Config
       case "atendentes":      return <AgentDashboard />;

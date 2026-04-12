@@ -548,6 +548,66 @@ Deno.serve(async (req) => {
             }
           }
 
+          // ── Follow-up auto-detection: outgoing message to inactive conversation ──
+          if (normalized.direction === "outgoing" && !isGroupJid) {
+            try {
+              const phone = normalized.remote_jid?.replace(/@.*$/, "");
+              const compositeKey = `${normalized.instance_name}::${normalized.remote_jid}`;
+
+              // Check last outgoing message for this conversation (excluding this one)
+              const { data: lastOut } = await supabase
+                .from("whatsapp_messages")
+                .select("created_at")
+                .eq("instance_name", normalized.instance_name)
+                .eq("remote_jid", normalized.remote_jid)
+                .eq("direction", "outgoing")
+                .neq("message_id", normalized.message_id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              const FOLLOW_UP_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4 hours
+              const now = Date.now();
+              const lastOutTime = lastOut?.created_at ? new Date(lastOut.created_at).getTime() : 0;
+              const gap = now - lastOutTime;
+
+              // If >4h since last outgoing OR no previous outgoing at all (re-engagement)
+              if (gap > FOLLOW_UP_THRESHOLD_MS && lastOutTime > 0) {
+                const { data: inst } = await supabase
+                  .from("whatsapp_instances")
+                  .select("tenant_id")
+                  .eq("instance_name", normalized.instance_name)
+                  .limit(1)
+                  .maybeSingle();
+
+                if (inst?.tenant_id) {
+                  const { data: lead } = await supabase
+                    .from("whatsapp_leads")
+                    .select("assigned_attendant_id, lead_name")
+                    .eq("instance_name", normalized.instance_name)
+                    .eq("chat_id", normalized.remote_jid)
+                    .maybeSingle();
+
+                  await supabase.from("follow_up_logs").insert({
+                    tenant_id: inst.tenant_id,
+                    conversation_id: compositeKey,
+                    agent_id: lead?.assigned_attendant_id || null,
+                    agent_name: normalized.sender_name || null,
+                    customer_phone: phone,
+                    customer_name: lead?.lead_name || phone,
+                    follow_up_type: "auto_reengagement",
+                    message_body: (normalized.body || normalized.caption || "").substring(0, 200),
+                    executed_at: new Date().toISOString(),
+                  }).then(() => {
+                    console.log(`[follow-up] Auto-detected for ${phone} (gap: ${Math.round(gap / 3600000)}h)`);
+                  });
+                }
+              }
+            } catch (e: any) {
+              console.error("[follow-up-detection] Error:", e.message);
+            }
+          }
+
           // ── CSAT detection: if incoming message is 1-5, save as rating ──
           if (normalized.direction === "incoming" && normalized.body) {
             const trimmed = String(normalized.body).trim();
