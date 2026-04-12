@@ -253,12 +253,14 @@ main::-webkit-scrollbar-corner,
    HOME PAGE — IAZIS Cyber-Minimalist Layout
    ═══════════════════════════════════════════════════════ */
 
+/* ── Central de Controle — always dark green, ignores user theme ── */
 .home-page-root {
   min-height: 100vh;
-  background: radial-gradient(ellipse at top left, #0F1420, #0D0E14 70%);
+  background: radial-gradient(ellipse at top left, #0F1E16, #0A1410 70%);
   position: relative;
   overflow-x: hidden;
   padding-bottom: 100px;
+  color: #E5EDE8;
 }
 
 .home-sphere {
@@ -268,11 +270,9 @@ main::-webkit-scrollbar-corner,
   pointer-events: none;
   z-index: 0;
 }
-.home-sphere-1 { width: 600px; height: 600px; top: -100px; left: -100px; background: rgba(71,139,255,0.05); }
-.home-sphere-2 { width: 400px; height: 400px; top: 40%; right: -80px; background: rgba(57,247,178,0.03); }
-.home-sphere-3 { width: 300px; height: 300px; bottom: -50px; left: 40%; background: rgba(71,139,255,0.03); }
-
-/* Central de Controle always uses dark theme (forced via data-theme="cafe-noturno") */
+.home-sphere-1 { width: 600px; height: 600px; top: -100px; left: -100px; background: rgba(17,188,118,0.05); }
+.home-sphere-2 { width: 400px; height: 400px; top: 40%; right: -80px; background: rgba(57,247,178,0.04); }
+.home-sphere-3 { width: 300px; height: 300px; bottom: -50px; left: 40%; background: rgba(17,188,118,0.03); }
 
 .home-header {
   position: fixed;
@@ -285,10 +285,10 @@ main::-webkit-scrollbar-corner,
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: rgba(13,14,20,0.75);
+  background: rgba(10,20,16,0.80);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(71,139,255,0.12);
+  border: 1px solid rgba(17,188,118,0.12);
   border-radius: 12px;
   animation: home-slide-down 0.3s ease-out;
 }
@@ -316,10 +316,10 @@ main::-webkit-scrollbar-corner,
 .glass-card {
   position: relative;
   overflow: hidden;
-  background: rgba(18,20,25,0.6);
+  background: rgba(15,30,22,0.55);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(30,55,87,0.5);
+  border: 1px solid rgba(17,188,118,0.12);
   border-radius: 12px;
   padding: 24px;
   cursor: pointer;
@@ -327,15 +327,15 @@ main::-webkit-scrollbar-corner,
   animation: home-card-in 0.4s ease-out both;
 }
 .glass-card:hover {
-  border-color: rgba(71,139,255,0.3);
-  background: rgba(71,139,255,0.04);
+  border-color: rgba(17,188,118,0.3);
+  background: rgba(17,188,118,0.04);
   transform: translateY(-1px);
 }
 
 
 .home-cta-card {
-  background: linear-gradient(90deg, rgba(71,139,255,0.10), rgba(71,139,255,0.02)) !important;
-  border-left: 3px solid #478BFF !important;
+  background: linear-gradient(90deg, rgba(17,188,118,0.10), rgba(17,188,118,0.02)) !important;
+  border-left: 3px solid #11BC76 !important;
 }
 
 .kpi-pill {
@@ -345,7 +345,7 @@ main::-webkit-scrollbar-corner,
   padding: 6px 12px;
   border-radius: 8px;
   background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(30,55,87,0.5);
+  border: 1px solid rgba(17,188,118,0.15);
 }
 
 /* Dock */
@@ -359,12 +359,12 @@ main::-webkit-scrollbar-corner,
   align-items: center;
   padding: 10px 16px;
   gap: 4px;
-  background: rgba(13,14,20,0.9);
+  background: rgba(10,20,16,0.92);
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(71,139,255,0.15);
+  border: 1px solid rgba(17,188,118,0.15);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   animation: home-dock-in 0.5s ease-out 0.4s both;
 }
 
@@ -380,8 +380,8 @@ main::-webkit-scrollbar-corner,
   transform-origin: bottom center;
 }
 .dock-icon:hover {
-  background: rgba(71,139,255,0.12);
-  color: #478BFF;
+  background: rgba(17,188,118,0.12);
+  color: #11BC76;
   transform: scale(1.2);
 }
 
@@ -396,8 +396,8 @@ main::-webkit-scrollbar-corner,
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 11px;
-  background: rgba(13,14,20,0.95);
-  border: 1px solid rgba(30,55,87,0.5);
+  background: rgba(10,20,16,0.95);
+  border: 1px solid rgba(17,188,118,0.2);
   color: #E5E8ED;
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
@@ -419,13 +419,13 @@ main::-webkit-scrollbar-corner,
   position: relative;
 }
 .nav-icon-hover:hover {
-  background: rgba(71,139,255,0.12);
-  color: #478BFF;
+  background: rgba(17,188,118,0.12);
+  color: #11BC76;
   transform: scale(1.15);
 }
 .nav-icon-hover.active {
-  background: rgba(71,139,255,0.12);
-  color: #478BFF;
+  background: rgba(17,188,118,0.12);
+  color: #11BC76;
 }
 [data-theme="pacifico"] .nav-icon-hover {
   color: #6B7565;
@@ -451,8 +451,8 @@ main::-webkit-scrollbar-corner,
   border-radius: 6px;
   font-size: 10px;
   font-weight: 600;
-  background: rgba(13,14,20,0.95);
-  border: 1px solid rgba(30,55,87,0.5);
+  background: rgba(10,20,16,0.95);
+  border: 1px solid rgba(17,188,118,0.2);
   color: #E5E8ED;
   transition: opacity 0.15s ease, transform 0.15s ease;
   z-index: 99999;
