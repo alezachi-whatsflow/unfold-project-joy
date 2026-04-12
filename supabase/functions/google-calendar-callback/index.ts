@@ -2,6 +2,7 @@
  * google-calendar-callback
  * Handles Google OAuth2 callback — exchanges code for tokens,
  * fetches user info, saves config to google_calendar_configs table.
+ * Resolves partner credentials dynamically from whitelabel_config.
  *
  * GET /functions/v1/google-calendar-callback?code=AUTH_CODE&state=STATE
  */
@@ -14,17 +15,10 @@ Deno.serve(async (req) => {
     const stateRaw = url.searchParams.get("state");
     const error = url.searchParams.get("error");
 
-    // If user denied access
-    if (error) {
-      return redirectToApp("Acesso negado pelo usuário", "error");
-    }
+    if (error) return redirectToApp("Acesso negado pelo usuário", "error");
+    if (!code || !stateRaw) return redirectToApp("Parâmetros inválidos", "error");
 
-    if (!code || !stateRaw) {
-      return redirectToApp("Parâmetros inválidos", "error");
-    }
-
-    // Decode state
-    let state: { user_id: string; tenant_id: string | null; email: string };
+    let state: { user_id: string; tenant_id: string | null; email: string; partner?: string; gcid?: string };
     try {
       state = JSON.parse(atob(stateRaw));
     } catch {
@@ -34,10 +28,41 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
-
-    const clientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
-    const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
     const redirectUri = `${supabaseUrl}/functions/v1/google-calendar-callback`;
+
+    // Resolve partner's Google credentials
+    let clientId: string | null = null;
+    let clientSecret: string | null = null;
+
+    if (state.tenant_id) {
+      const { data: license } = await supabase
+        .from("licenses")
+        .select("id, parent_license_id")
+        .eq("tenant_id", state.tenant_id)
+        .maybeSingle();
+
+      if (license) {
+        const wlLicenseId = license.parent_license_id || license.id;
+        const { data: wlConfig } = await supabase
+          .from("whitelabel_config")
+          .select("google_client_id, google_client_secret")
+          .eq("license_id", wlLicenseId)
+          .maybeSingle();
+
+        if (wlConfig?.google_client_id && wlConfig?.google_client_secret) {
+          clientId = wlConfig.google_client_id;
+          clientSecret = wlConfig.google_client_secret;
+        }
+      }
+    }
+
+    // Fallback to global env
+    if (!clientId) clientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
+    if (!clientSecret) clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
+
+    if (!clientId || !clientSecret) {
+      return redirectToApp("Credenciais Google não configuradas", "error");
+    }
 
     // 1. Exchange code for tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -89,7 +114,7 @@ Deno.serve(async (req) => {
       sync_to_google: true,
       sync_from_google: true,
       auto_add_meet: false,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo",
+      timezone: "America/Sao_Paulo",
       updated_at: new Date().toISOString(),
     };
 
@@ -102,7 +127,7 @@ Deno.serve(async (req) => {
       return redirectToApp("Erro ao salvar configuração", "error");
     }
 
-    console.log(`[google-calendar-callback] Connected: ${userInfo.email} for user ${state.user_id}`);
+    console.log(`[google-calendar-callback] Connected: ${userInfo.email} for user ${state.user_id} partner=${state.partner || "global"}`);
 
     return redirectToApp("Google Calendar conectado com sucesso!", "success");
   } catch (err: any) {
@@ -112,8 +137,7 @@ Deno.serve(async (req) => {
 });
 
 function redirectToApp(message: string, type: "success" | "error") {
-  // Redirect back to the app's integrations page with status
-  const appUrl = Deno.env.get("APP_URL") || Deno.env.get("SITE_URL") || "https://app.whatsflow.com.br";
+  const appUrl = Deno.env.get("APP_URL") || Deno.env.get("SITE_URL") || Deno.env.get("VITE_APP_URL") || "https://app.whatsflow.com.br";
   const redirectUrl = `${appUrl}/app/whatsflow/integracoes?gcal=${type}&msg=${encodeURIComponent(message)}`;
   return new Response(null, {
     status: 302,
