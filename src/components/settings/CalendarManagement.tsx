@@ -209,17 +209,55 @@ export function CalendarManagement() {
               />
             </div>
 
-            {/* Last Sync Info */}
-            {config.last_sync_at && (
-              <p className="text-[10px] text-muted-foreground flex items-center gap-1 pt-1">
-                <RefreshCw className="h-3 w-3" />
-                Última sincronização: {new Date(config.last_sync_at).toLocaleString("pt-BR")}
-              </p>
-            )}
+            {/* Manual Sync + Last Sync Info */}
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div>
+                {config.last_sync_at && (
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <RefreshCw className="h-3 w-3" />
+                    Última sync: {new Date(config.last_sync_at).toLocaleString("pt-BR")}
+                  </p>
+                )}
+              </div>
+              <SyncButton />
+            </div>
           </div>
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function SyncButton() {
+  const [syncing, setSyncing] = useState(false)
+  const queryClient = useQueryClient()
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-sync", {
+        body: { action: "sync_all" },
+      })
+      if (error) throw error
+      const count = data?.synced?.length || 0
+      if (count > 0) {
+        toast.success(`Sincronizado: ${count} item(ns)`)
+      } else {
+        toast.info("Tudo sincronizado — nenhuma alteração pendente")
+      }
+      queryClient.invalidateQueries({ queryKey: ["gcal-config"] })
+    } catch (err: any) {
+      toast.error("Erro na sincronização: " + (err.message || ""))
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  return (
+    <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-lg" onClick={handleSync} disabled={syncing}>
+      {syncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+      {syncing ? "Sincronizando..." : "Sincronizar agora"}
+    </Button>
   )
 }
 
