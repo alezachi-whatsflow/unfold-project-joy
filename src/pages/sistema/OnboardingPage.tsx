@@ -31,6 +31,8 @@ const STEPS: OnboardingStep[] = [
   { key: "explorar_dashboard", title: "Explorar o Dashboard", description: "Conheca os indicadores e metricas do seu negocio", action: "Iniciar tour guiado", route: "/home", estimatedMinutes: 2, icon: "📊", hasTour: true },
   { key: "convidar_membro", title: "Convidar um membro da equipe", description: "Adicione outros membros da sua equipe para colaborar", action: "Iniciar tour guiado", route: "/usuarios", estimatedMinutes: 2, icon: "👋", hasTour: true },
   { key: "configurar_playbooks", title: "Configurar Playbooks de I.A.", description: "Ative funcionarios autonomos que qualificam leads e coletam dados pelo WhatsApp", action: "Configurar agora", route: "/intelligence", estimatedMinutes: 5, icon: "🤖", hasTour: false },
+  { key: "modelos_mensagem", title: "Criar modelos de mensagem", description: "Configure respostas rapidas (/) e cadencias de follow-up com texto, imagem e audio", action: "Iniciar tour guiado", route: "/mensageria", estimatedMinutes: 3, icon: "💬", hasTour: true },
+  { key: "google_calendar", title: "Conectar Google Calendar", description: "Sincronize atividades com sua agenda Google — reunioes, follow-ups e tarefas", action: "Iniciar tour guiado", route: "/integracoes", estimatedMinutes: 2, icon: "📅", hasTour: true },
 ];
 
 const motivationalMessages = [

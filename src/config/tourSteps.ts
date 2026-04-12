@@ -233,6 +233,105 @@ export const TOUR_CONFIGS: Record<string, TourConfig> = {
     ],
   },
 
+  modelos_mensagem: {
+    stepKey: "modelos_mensagem",
+    route: "/mensageria",
+    title: "Modelos de Mensagem",
+    icon: "💬",
+    steps: [
+      {
+        title: "Modelos de Mensagem — 3 em 1",
+        description: "Aqui você gerencia 3 tipos de modelo: Msgs Rápidas (atalho /), Cadência (follow-up automático) e Templates HSM (Meta oficial). Tudo em um só lugar.",
+      },
+      {
+        title: "Msgs Rápidas — Digite / no chat",
+        description: "Crie respostas pré-prontas. No chat, digite / e selecione o modelo. O texto é editável antes do envio — perfeito para personalizar rapidamente.",
+        selector: "[data-tour='modelos-msgs']",
+      },
+      {
+        title: "Cadência de Mensagens",
+        description: "Monte sequências automáticas de follow-up com texto, imagem, áudio ou vídeo. O sistema para automaticamente quando o cliente responde.",
+      },
+      {
+        title: "Modelos configurados!",
+        description: "Agora sua equipe economiza tempo com respostas padronizadas e follow-ups automáticos. Menos digitação, mais conversão.",
+      },
+    ],
+  },
+
+  extrator_despesas: {
+    stepKey: "extrator_despesas",
+    route: "/expenses",
+    title: "Extrator de Despesas por IA",
+    icon: "🤖",
+    steps: [
+      {
+        title: "Despesas com Inteligência Artificial",
+        description: "O Assistente IA extrai dados de notas fiscais e comprovantes automaticamente. Basta enviar a foto — fornecedor, valor, data e categoria são preenchidos sozinhos.",
+      },
+      {
+        title: "Motor de Previsibilidade",
+        description: "O sistema projeta seus gastos para os próximos 12 meses, incluindo provisionamento de 13º e férias calculados automaticamente da folha de pagamento.",
+        selector: "[data-tour='predictability']",
+      },
+      {
+        title: "Edição inline",
+        description: "Mude status (Pendente ↔ Pago) e categoria direto na tabela com 1 clique. Zero formulários, zero modais desnecessários.",
+      },
+      {
+        title: "Despesas inteligentes!",
+        description: "Agora seu financeiro funciona no piloto automático. IA extrai, o sistema prevê, você decide.",
+      },
+    ],
+  },
+
+  google_calendar: {
+    stepKey: "google_calendar",
+    route: "/integracoes",
+    title: "Google Calendar",
+    icon: "📅",
+    steps: [
+      {
+        title: "Conecte seu Google Calendar",
+        description: "Sincronize atividades do CRM com sua agenda Google automaticamente. Cada membro da equipe conecta sua própria agenda.",
+      },
+      {
+        title: "Sincronização bidirecional",
+        description: "Atividades criadas no Whatsflow aparecem no Google Calendar. Eventos do Google viram atividades no CRM. Google Meet é criado automaticamente em reuniões.",
+      },
+      {
+        title: "Configuração do Partner",
+        description: "O administrador do Partner configura as credenciais Google uma vez. Depois, cada usuário clica 'Conectar com Google' e pronto.",
+      },
+    ],
+  },
+
+  dashboard_qualidade: {
+    stepKey: "dashboard_qualidade",
+    route: "/mensageria",
+    title: "Dashboard de Qualidade",
+    icon: "🛡️",
+    steps: [
+      {
+        title: "Auditoria por Inteligência Artificial",
+        description: "A IA avalia cada conversa em 6 critérios: tempo de resposta, qualidade, empatia, técnica de vendas, follow-up e conhecimento. Score de 0 a 10.",
+      },
+      {
+        title: "Ranking de Concierges",
+        description: "Veja quem são seus melhores atendentes. Elite (≥9.0), Concierge (≥8.0), Vendedor (≥7.0) ou Em Treinamento (<7.0).",
+        selector: "[data-tour='auditor-dashboard']",
+      },
+      {
+        title: "Erros mais frequentes",
+        description: "Descubra os erros que sua equipe mais comete e foque o treinamento onde importa. Dados reais, não achismo.",
+      },
+      {
+        title: "Qualidade medida!",
+        description: "Agora você tem dados concretos sobre a qualidade do atendimento. Use para coaching, promoções e bonificações.",
+      },
+    ],
+  },
+
   configurar_assistente: {
     stepKey: "configurar_assistente",
     route: "/intelligence",

@@ -76,7 +76,7 @@ const MensageriaPage = () => {
       case "metricas":        return (
           <div className="flex flex-col h-full overflow-y-auto">
             <AttendanceMetrics />
-            <div className="px-4 pb-6">
+            <div className="px-4 pb-6" data-tour="auditor-dashboard">
               <AuditorDashboard />
             </div>
           </div>
@@ -86,7 +86,7 @@ const MensageriaPage = () => {
       case "atendentes":      return <AgentDashboard />;
       case "setores":         return <DepartmentManager />;
       case "sla":             return <SlaConfigPanel />;
-      case "msg-predefinidas": return <ModelosMsgTabs />;
+      case "msg-predefinidas": return <div data-tour="modelos-msgs"><ModelosMsgTabs /></div>;
       case "tags-contato":    return <ContactTagManager />;
       case "automacoes":      return <AutomationManager />;
       default:                return <InboxTab />;
