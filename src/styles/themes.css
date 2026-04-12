@@ -133,16 +133,16 @@
      Paleta: verde acinzentado, #11BC76 accent, legibilidade máxima
      Spec: ANTIGRAVITY_TEMA_PACIFICO_FIX v1.0 */
 
-  /* ── SHELL E ESTRUTURA ── */
-  --bg-base: #EEF0EC;
-  --bg-surface: #F0F2EE;
+  /* ── SHELL E ESTRUTURA (Antigravity Modular v1.0) ── */
+  --bg-base: #3C4E42;
+  --bg-surface: #344039;
   --bg-card: #FAFBF9;
   --bg-active: rgba(17, 188, 118, 0.12);
   --bg-hover: rgba(17, 188, 118, 0.06);
   --bg-input: #F2F5F0;
-  --border-soft: #D4D8D1;
+  --border-soft: rgba(255, 255, 255, 0.10);
   --border: #CDD1C9;
-  --border-strong: #A8AFA4;
+  --border-strong: #B8BEB4;
   --acc: #11BC76;
   --acc-bg: rgba(17, 188, 118, 0.10);
   --acc-border: rgba(17, 188, 118, 0.25);
@@ -150,6 +150,9 @@
   --text-primary: #1C2018;
   --text-secondary: #4B5549;
   --text-muted: #6B7565;
+  --text-disabled: #9AA394;
+  --text-on-shell: #E5E8ED;
+  --text-muted-on-shell: rgba(229, 232, 237, 0.55);
   --unread-bg: #11BC76;
   --unread-text: #ffffff;
   --sent-bg: #E8F5E9;
@@ -160,26 +163,26 @@
   --danger: #DC2626;
   --success: #11BC76;
   --warning: #D97706;
-  --scrollbar: #B8BEB4;
-  --shadow: 0 2px 12px rgba(40, 50, 38, 0.08);
+  --scrollbar: #4E6654;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   accent-color: #11BC76;
 
-  /* ── Shadcn/UI mapping ── */
-  --sidebar-glass-rgb: 226, 230, 223;
-  --sidebar-glass-alpha: 0.90;
-  --background: 100 8% 93%;       /* #EEF0EC */
-  --foreground: 100 12% 11%;      /* #1C2018 */
+  /* ── Shadcn/UI mapping (dark shell + light cards) ── */
+  --sidebar-glass-rgb: 52, 64, 57;
+  --sidebar-glass-alpha: 0.92;
+  --background: 150 14% 28%;      /* #3C4E42 shell */
+  --foreground: 0 0% 90%;         /* #E5E8ED on shell */
   --card: 100 8% 98%;             /* #FAFBF9 */
-  --card-foreground: 100 12% 11%;
+  --card-foreground: 100 12% 11%; /* #1C2018 */
   --popover: 100 8% 98%;          /* #FAFBF9 */
   --popover-foreground: 100 12% 11%;
   --primary: 153 82% 40%;         /* #11BC76 */
   --primary-foreground: 0 0% 100%;
-  --secondary: 100 8% 93%;        /* #E8EBE6 */
+  --secondary: 100 6% 94%;        /* #F2F5F0 */
   --secondary-foreground: 100 8% 30%;
   --muted: 100 6% 91%;            /* #E8EBE6 */
   --muted-foreground: 100 6% 42%; /* #6B7565 */
-  --accent: 100 10% 93%;          /* #EBF0E8 */
+  --accent: 100 10% 93%;
   --accent-foreground: 153 82% 28%;
   --destructive: 0 72% 52%;
   --destructive-foreground: 0 0% 100%;
@@ -196,13 +199,13 @@
   --chart-3: 188 70% 45%;
   --chart-4: 14 70% 55%;
   --chart-5: 349 72% 50%;
-  --sidebar-background: 100 8% 88%;  /* #E2E6DF */
-  --sidebar-foreground: 100 12% 11%;
+  --sidebar-background: 150 10% 23%; /* #344039 */
+  --sidebar-foreground: 0 0% 90%;    /* #E5E8ED */
   --sidebar-primary: 153 82% 40%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 100 10% 90%;
-  --sidebar-accent-foreground: 153 82% 28%;
-  --sidebar-border: 100 6% 78%;     /* #C4C9C0 */
+  --sidebar-accent: 153 82% 40%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 100% / 0.10; /* rgba(255,255,255,0.10) */
   --sidebar-ring: 153 82% 40%;
 
   /* ── SHELL extras (Antigravity spec) ── */
@@ -263,35 +266,35 @@
   --pacifico-page-header-sub: #8A9485;
 
   /* ── Glass / cards ── */
-  --bg-card-glass: rgba(250, 251, 249, 0.88);
-  --bg-card-hover: rgba(250, 251, 249, 0.95);
-  --bg-chat: #EEF0EC;
-  --bg-bubble-in: #FAFBF9;
-  --bg-bubble-out: rgba(17, 188, 118, 0.08);
+  --bg-card-glass: rgba(250, 251, 249, 0.92);
+  --bg-card-hover: rgba(242, 245, 240, 0.95);
+  --bg-chat: #F2F5F0;
+  --bg-bubble-in: #FFFFFF;
+  --bg-bubble-out: #DCF8C6;
   --accent-primary: #11BC76;
   --accent-primary-bg: rgba(17, 188, 118, 0.08);
   --accent-secondary: #0DA068;
   --accent-secondary-bg: rgba(13, 160, 104, 0.08);
-  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-subtle: rgba(255, 255, 255, 0.10);
   --border-card: #CDD1C9;
-  --border-sidebar: #C4C9C0;
+  --border-sidebar: rgba(255, 255, 255, 0.10);
   --section-accent: #11BC76;
   --glass-blur: 12px;
-  --glass-border: rgba(0, 0, 0, 0.05);
-  --glass-overlay-rgb: 40, 50, 38;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-overlay-rgb: 30, 40, 32;
   --text-bubble-in: #1C2018;
   --text-bubble-out: #0DA068;
 
   /* ── WhatsApp inbox overrides ── */
-  --wa-bg-deep: #E8EBE6;
-  --wa-bg-panel: #F0F2EE;
-  --wa-bg-chat: #EEF0EC;
-  --wa-bg-header: #E6EAE4;
-  --wa-bg-input: #F2F5F0;
-  --wa-bg-hover: rgba(17, 188, 118, 0.06);
-  --wa-bg-selected: rgba(17, 188, 118, 0.12);
-  --wa-bg-msg-out: #E8F5E9;
-  --wa-bg-msg-in: #FAFBF9;
+  --wa-bg-deep: #3C4E42;
+  --wa-bg-panel: #FAFBF9;
+  --wa-bg-chat: #F2F5F0;
+  --wa-bg-header: #FAFBF9;
+  --wa-bg-input: #FAFBF9;
+  --wa-bg-hover: #F2F5F0;
+  --wa-bg-selected: #E8F5E9;
+  --wa-bg-msg-out: #DCF8C6;
+  --wa-bg-msg-in: #FFFFFF;
   --wa-bg-system: rgba(17, 188, 118, 0.05);
   --wa-text-primary: #1C2018;
   --wa-text-secondary: #4B5549;
@@ -302,7 +305,7 @@
   --wa-teal: #11BC76;
   --wa-blue-read: #11BC76;
   --wa-border: #CDD1C9;
-  --wa-border-input: #C4C9C0;
+  --wa-border-input: #CDD1C9;
   --wa-wallpaper-pattern: none;
 }
 

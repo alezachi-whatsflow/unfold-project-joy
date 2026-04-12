@@ -152,19 +152,19 @@
   outline: none;
 }
 
-/* ── Pacífico theme overrides — light glass ── */
+/* ── Pacífico theme overrides — dark shell + light cards ── */
 [data-theme="pacifico"] {
-  --glass-bg-1: rgba(226, 230, 223, 0.70);
-  --glass-bg-2: rgba(238, 240, 236, 0.65);
-  --glass-bg-3: rgba(244, 246, 242, 0.50);
-  --glass-border: 1px solid rgba(0, 0, 0, 0.06);
+  --glass-bg-1: rgba(52, 64, 57, 0.80);
+  --glass-bg-2: rgba(60, 78, 66, 0.70);
+  --glass-bg-3: rgba(60, 78, 66, 0.50);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.10);
   --glass-border-accent: 1px solid rgba(17, 188, 118, 0.25);
-  --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
-  --glass-shadow-sm: 0 4px 16px rgba(40, 50, 38, 0.06);
-  --glass-shadow-md: 0 8px 32px rgba(40, 50, 38, 0.08);
-  --glass-shadow-lg: 0 16px 48px rgba(40, 50, 38, 0.10);
-  --sidebar-glass-rgb: 226, 230, 223;
-  --sidebar-glass-alpha: 0.90;
+  --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
+  --glass-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --glass-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.20);
+  --glass-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.25);
+  --sidebar-glass-rgb: 52, 64, 57;
+  --sidebar-glass-alpha: 0.92;
 }
 
 /* ── Ambient background for glass refraction ── */
@@ -175,10 +175,7 @@
     hsl(var(--background));
 }
 [data-theme="pacifico"] .glass-ambient-bg {
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(17, 188, 118, 0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(17, 188, 118, 0.02) 0%, transparent 50%),
-    hsl(var(--background));
+  background: #3C4E42;
 }
 
 /* ── Tab bar scroll behavior ── */
