@@ -36,6 +36,7 @@ export function CalendarManagement() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [checkingSetup, setCheckingSetup] = useState(false)
 
   // Handle callback redirect params
   useEffect(() => {
@@ -105,14 +106,44 @@ export function CalendarManagement() {
   })
 
   const handleConnect = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) {
-      toast.error("Sessão expirada. Faça login novamente.")
-      return
+    setCheckingSetup(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        toast.error("Sessão expirada. Faça login novamente.")
+        return
+      }
+
+      // Pre-check: verify partner has Google credentials configured
+      const base = (supabase as any).supabaseUrl || "https://supabase.whatsflow.com.br"
+      const checkRes = await fetch(`${base}/functions/v1/google-calendar-auth?jwt=${session.access_token}`, {
+        method: "GET",
+        redirect: "manual", // Don't follow redirect — just check status
+      })
+
+      // If we get a redirect (302), credentials are configured — proceed
+      if (checkRes.status === 302 || checkRes.type === "opaqueredirect") {
+        window.location.href = `${base}/functions/v1/google-calendar-auth?jwt=${session.access_token}`
+        return
+      }
+
+      // If we get an error response, show friendly message
+      const text = await checkRes.text().catch(() => "")
+      if (text.includes("não configurado") || text.includes("not configured") || checkRes.status === 400) {
+        toast.error("Google Calendar ainda não foi configurado pelo administrador do seu plano. Entre em contato com o suporte.")
+      } else {
+        toast.error("Erro ao conectar: " + (text || "Tente novamente"))
+      }
+    } catch {
+      // fetch with redirect: "manual" may throw in some browsers — just redirect directly
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        const base = (supabase as any).supabaseUrl || "https://supabase.whatsflow.com.br"
+        window.location.href = `${base}/functions/v1/google-calendar-auth?jwt=${session.access_token}`
+      }
+    } finally {
+      setCheckingSetup(false)
     }
-    // Redirect to edge function which handles Google OAuth
-    const base = (supabase as any).supabaseUrl || "https://supabase.whatsflow.com.br"
-    window.location.href = `${base}/functions/v1/google-calendar-auth?jwt=${session.access_token}`
   }
 
   if (isLoading) {
@@ -149,9 +180,13 @@ export function CalendarManagement() {
               Conecte seu Google Calendar para sincronizar atividades automaticamente.
               Cada membro da equipe pode conectar sua própria agenda.
             </p>
-            <Button onClick={handleConnect} className="gap-2 text-xs rounded-lg">
-              <svg className="h-4 w-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-              Conectar com Google
+            <Button onClick={handleConnect} disabled={checkingSetup} className="gap-2 text-xs rounded-lg">
+              {checkingSetup ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <svg className="h-4 w-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              )}
+              {checkingSetup ? "Verificando..." : "Conectar com Google"}
             </Button>
           </div>
         ) : (
