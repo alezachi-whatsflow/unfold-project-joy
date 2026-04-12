@@ -89,10 +89,18 @@ export function CalendarManagement() {
     onError: () => toast.error("Erro ao salvar"),
   })
 
-  // Disconnect
+  // Disconnect — revoke token at Google + clear from DB
   const disconnect = useMutation({
     mutationFn: async () => {
       if (!config?.id) return
+      // Revoke token at Google (best-effort)
+      if (config.access_token) {
+        fetch(`https://oauth2.googleapis.com/revoke?token=${config.access_token}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }).catch(() => {})
+      }
+      // Clear tokens from DB
       const { error } = await (supabase as any)
         .from("google_calendar_configs")
         .update({ is_active: false, access_token: null, refresh_token: null })

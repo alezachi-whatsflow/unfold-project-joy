@@ -141,6 +141,11 @@ export default function LoginPage() {
             </div>
           </CardFooter>
         </form>
+        <div className="flex justify-center gap-3 mt-3 text-[10px] text-muted-foreground">
+          <Link to="/privacidade" className="hover:underline">Privacidade</Link>
+          <span>·</span>
+          <Link to="/termos" className="hover:underline">Termos de Serviço</Link>
+        </div>
       </Card>
     </div>
   );

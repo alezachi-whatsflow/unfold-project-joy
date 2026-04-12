@@ -112,6 +112,10 @@ import CheckoutPage from "./pages/CheckoutPage";
 import AguardandoAtivacaoPage from "./pages/AguardandoAtivacaoPage";
 import ActivationPage from "./pages/ActivationPage";
 
+// Legal (public)
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
+
 // IAZIS — Payment Orchestration (tier-based dashboard)
 import { IazisModule } from '@/modules/iazis'
 import { IazisPublicCheckout } from '@/modules/iazis/components/checkout'
@@ -158,6 +162,10 @@ const AppRoutes = () => (
 
     {/* IAZIS — Public checkout page (no auth required) */}
     <Route path="/pay/:slug" element={<IazisPublicCheckout />} />
+
+    {/* Legal — Public pages (required by Google OAuth) */}
+    <Route path="/privacidade" element={<PrivacyPolicyPage />} />
+    <Route path="/termos" element={<TermsOfServicePage />} />
 
     {/* ═══ Admin Core (formerly Nexus) ═══ */}
     <Route path="/admin-core/login" element={<NexusLogin />} />
