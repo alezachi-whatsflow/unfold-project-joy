@@ -86,8 +86,8 @@ const IntegracoesPage = () => {
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <div style={{ marginBottom: 24 }} className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Integracoes</h1>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>Gerencie todas as suas conexoes em um so lugar.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Integrações</h1>
+          <p className="text-sm text-muted-foreground">Gerencie todas as suas conexões em um só lugar.</p>
         </div>
         <Button
           variant="outline"
