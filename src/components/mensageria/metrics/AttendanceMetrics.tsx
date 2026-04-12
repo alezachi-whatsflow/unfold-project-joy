@@ -404,7 +404,7 @@ export default function AttendanceMetrics() {
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>Atendimentos por Dia</p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <Card className="p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <Card className="p-4 rounded-xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
             <div className="flex items-center gap-2 mb-3">
               <Users size={14} style={{ color: "#6366f1" }} />
               <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Msgs enviadas/dia (média)</span>
@@ -428,7 +428,7 @@ export default function AttendanceMetrics() {
             )}
           </Card>
 
-          <Card className="p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <Card className="p-4 rounded-xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp size={14} style={{ color: "#10b981" }} />
               <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Conversão por Consultor</span>
@@ -464,7 +464,7 @@ export default function AttendanceMetrics() {
             color={csat?.avg && csat.avg >= 4 ? "#10b981" : csat?.avg && csat.avg >= 3 ? "#f59e0b" : "#ef4444"}
             sub={`${csat?.count || 0} avaliações`}
           />
-          <Card className="p-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <Card className="p-3 rounded-xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
             <p className="text-[10px] font-medium mb-2" style={{ color: "var(--text-muted)" }}>Distribuição</p>
             <div className="space-y-1">
               {["⭐⭐⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐", "⭐⭐", "⭐"].map((stars, i) => {
@@ -534,7 +534,7 @@ export default function AttendanceMetrics() {
 // ── Metric Card Component ──
 function MetricCard({ icon: Icon, label, value, color, sub }: { icon: typeof Clock; label: string; value: string; color: string; sub?: string }) {
   return (
-    <Card className="p-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+    <Card className="p-3 rounded-xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
       <div className="flex items-center gap-2 mb-1">
         <Icon size={14} style={{ color }} />
         <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>{label}</span>
