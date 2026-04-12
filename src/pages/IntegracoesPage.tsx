@@ -224,7 +224,7 @@ const IntegracoesPage = () => {
         <Card
           style={{
             border: expandedSection === "webchat" ? "1px solid rgba(17,188,118,0.4)" : "1px solid var(--border)",
-            background: "#FFFFFF", borderRadius: 0, overflow: "hidden", boxShadow: "none",
+            background: "var(--bg-card, hsl(var(--card)))", borderRadius: 12, overflow: "hidden", boxShadow: "none",
           }}
         >
           <button

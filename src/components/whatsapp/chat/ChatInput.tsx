@@ -790,10 +790,10 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
           ref={slashMenuRef}
           className="mx-4 mb-1 overflow-y-auto"
           style={{
-            backgroundColor: "#233138",
+            backgroundColor: "var(--wa-bg-panel, #233138)",
             border: "1px solid var(--wa-border)",
             borderRadius: 10,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
             animation: "messageIn 150ms ease-out",
             maxHeight: 260,
           }}
@@ -836,10 +836,10 @@ export default function ChatInput({ onSend, onSendAttachment, replyTo, onCancelR
           ref={emojiPickerRef}
           className="mx-4 mb-1"
           style={{
-            backgroundColor: "#233138",
+            backgroundColor: "var(--wa-bg-panel, #233138)",
             border: "1px solid var(--wa-border)",
             borderRadius: 10,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
             animation: "messageIn 150ms ease-out",
             maxHeight: 280,
             display: "flex",

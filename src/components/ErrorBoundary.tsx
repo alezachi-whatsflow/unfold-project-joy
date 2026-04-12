@@ -35,11 +35,12 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-950 px-4">
-          <div className="w-full max-w-md border border-gray-800 bg-gray-900 p-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-900/30">
+        <div className="flex min-h-screen items-center justify-center px-4" style={{ background: "var(--app-bg, hsl(var(--background)))" }}>
+          <div className="w-full max-w-md border rounded-xl p-8 text-center" style={{ background: "var(--bg-card, hsl(var(--card)))", borderColor: "var(--border, hsl(var(--border)))" }}>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(220, 38, 38, 0.1)" }}>
               <svg
-                className="h-8 w-8 text-red-400"
+                className="h-8 w-8"
+                style={{ color: "#EF4444" }}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -53,16 +54,16 @@ class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
 
-            <h1 className="mb-2 text-2xl font-bold text-gray-100">
-              Algo deu errado
+            <h1 className="mb-2 text-2xl font-bold" style={{ color: "var(--text-primary, hsl(var(--foreground)))" }}>
+              Erro em App
             </h1>
-            <p className="mb-6 text-sm text-gray-400">
+            <p className="mb-6 text-sm" style={{ color: "var(--text-muted, hsl(var(--muted-foreground)))" }}>
               Ocorreu um erro inesperado. Tente recarregar a página ou volte ao
               início.
             </p>
 
             {this.state.error && (
-              <pre className="mb-6 max-h-32 overflow-auto bg-gray-800 p-3 text-left text-xs text-gray-400">
+              <pre className="mb-6 max-h-32 overflow-auto rounded-lg p-3 text-left text-xs" style={{ background: "var(--bg-card-secondary, hsl(var(--muted)))", color: "var(--text-secondary, hsl(var(--muted-foreground)))" }}>
                 {this.state.error.message}
               </pre>
             )}
@@ -70,15 +71,17 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 onClick={this.handleReload}
-                className="bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="rounded-lg px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2"
+                style={{ background: "var(--btn-primary-bg, hsl(var(--primary)))", color: "var(--btn-primary-text, #fff)" }}
               >
                 Tentar novamente
               </button>
               <button
                 onClick={this.handleGoHome}
-                className="border border-gray-700 bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                className="rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2"
+                style={{ background: "var(--btn-secondary-bg, transparent)", borderColor: "var(--border, hsl(var(--border)))", color: "var(--text-secondary, hsl(var(--muted-foreground)))" }}
               >
-                Voltar ao início
+                Inicio
               </button>
             </div>
           </div>

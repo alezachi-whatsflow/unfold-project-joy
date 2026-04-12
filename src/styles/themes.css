@@ -208,62 +208,105 @@
   --sidebar-border: 0 0% 100% / 0.10; /* rgba(255,255,255,0.10) */
   --sidebar-ring: 153 82% 40%;
 
-  /* ── SHELL extras (Antigravity spec) ── */
-  --pacifico-app-bg: #EEF0EC;
-  --pacifico-sidebar-bg: #E2E6DF;
-  --pacifico-sidebar-bg2: #D8DDD5;
-  --pacifico-header-zone-bg: #DDE0DA;
-  --pacifico-topbar-bg: #E6EAE4;
-  --pacifico-content-bg: #F0F2EE;
-  --pacifico-card-bg: #FAFBF9;
-  --pacifico-card-bg2: #F4F6F2;
-  --pacifico-card-border: #CDD1C9;
+  /* ── EXTENDED TOKENS (Master v2.0) ── */
 
-  /* ── TABELAS ── */
-  --pacifico-table-header-bg: #E8EBE6;
-  --pacifico-table-row-bg: #FAFBF9;
-  --pacifico-table-row-alt: #F4F6F2;
-  --pacifico-table-row-hover: #EBF0E8;
-  --pacifico-table-border: #D4D8D1;
+  /* Shell zones */
+  --app-bg: #3C4E42;
+  --shell-bg: #3C4E42;
+  --sidebar-bg: #344039;
+  --sidebar-bg2: #2D3B2A;
+  --topbar-bg: #2D3B2A;
+  --page-header-bg: #2D3B2A;
+  --page-header-text: #E5E8ED;
+  --page-header-subtext: rgba(229, 232, 237, 0.50);
+  --border-on-shell: rgba(255, 255, 255, 0.10);
 
-  /* ── MODAIS ── */
-  --pacifico-modal-bg: #FAFBF9;
-  --pacifico-modal-border: #CDD1C9;
-  --pacifico-modal-overlay: rgba(40, 50, 38, 0.45);
+  /* Cards extended */
+  --bg-card-secondary: #F2F5F0;
+  --bg-card-tertiary: #E8EBE6;
+  --bg-content: #F0F2EE;
 
-  /* ── INPUTS ── */
-  --pacifico-input-bg: #F2F5F0;
-  --pacifico-input-border: #C4C9C0;
-  --pacifico-input-focus: #11BC76;
-  --pacifico-input-placeholder: #9AA394;
+  /* Inputs extended */
+  --input-bg: #F2F5F0;
+  --input-border: #CDD1C9;
+  --input-focus-border: #11BC76;
+  --input-placeholder: #9AA394;
+  --input-text: #1C2018;
+  --textarea-bg: #F2F5F0;
+  --select-bg: #F2F5F0;
 
-  /* ── SIDEBAR ESTADOS ── */
-  --pacifico-sidebar-item-active-bg: rgba(17, 188, 118, 0.12);
-  --pacifico-sidebar-item-active-text: #11BC76;
-  --pacifico-sidebar-item-hover-bg: rgba(17, 188, 118, 0.06);
-  --pacifico-sidebar-item-hover-text: #1C2018;
-  --pacifico-sidebar-item-text: #6B7565;
+  /* Tables */
+  --table-header-bg: #E8EBE6;
+  --table-header-text: #4B5549;
+  --table-row-bg: #FAFBF9;
+  --table-row-alt: #F4F6F2;
+  --table-row-hover: #EBF0E8;
+  --table-border: #D4D8D1;
 
-  /* ── CALENDÁRIO ── */
-  --pacifico-calendar-bg: #FAFBF9;
-  --pacifico-calendar-day-bg: #F4F6F2;
-  --pacifico-calendar-day-hover: #EBF0E8;
-  --pacifico-calendar-today-bg: rgba(17, 188, 118, 0.10);
-  --pacifico-calendar-today-border: #11BC76;
-  --pacifico-calendar-header-bg: #E8EBE6;
+  /* Modals */
+  --modal-bg: #FAFBF9;
+  --modal-border: #CDD1C9;
+  --modal-overlay: rgba(44, 62, 48, 0.50);
 
-  /* ── MÉTRICAS ── */
-  --pacifico-metric-card-bg: #FAFBF9;
-  --pacifico-metric-value: #1C2018;
-  --pacifico-metric-label: #6B7565;
-  --pacifico-metric-positive: #11BC76;
-  --pacifico-metric-negative: #DC2626;
-  --pacifico-metric-pending: #D97706;
+  /* Sidebar states */
+  --sidebar-item-active-bg: rgba(17, 188, 118, 0.12);
+  --sidebar-item-active-border: #11BC76;
+  --sidebar-item-active-text: #11BC76;
+  --sidebar-item-hover-bg: rgba(17, 188, 118, 0.06);
+  --sidebar-item-hover-text: #E5E8ED;
+  --sidebar-item-text: rgba(229, 232, 237, 0.60);
+  --sidebar-item-icon: rgba(229, 232, 237, 0.45);
+  --sidebar-group-label: rgba(229, 232, 237, 0.35);
 
-  /* ── PAGE HEADER (zona dark verde-floresta) ── */
-  --pacifico-page-header-bg: #2D3B2A;
-  --pacifico-page-header-text: #E8EBE6;
-  --pacifico-page-header-sub: #8A9485;
+  /* Buttons */
+  --btn-primary-bg: #11BC76;
+  --btn-primary-text: #0D0E14;
+  --btn-primary-hover: #0DA068;
+  --btn-secondary-bg: #F2F5F0;
+  --btn-secondary-border: #CDD1C9;
+  --btn-secondary-text: #4B5549;
+  --btn-secondary-hover: #E8EBE6;
+  --btn-ghost-text: #6B7565;
+  --btn-ghost-hover: #F2F5F0;
+  --btn-danger-bg: #DC2626;
+  --btn-danger-text: #ffffff;
+  --btn-danger-light-bg: #FEF2F2;
+  --btn-danger-light-text: #DC2626;
+  --btn-danger-light-border: #FCA5A5;
+
+  /* Metrics & KPIs */
+  --metric-card-bg: #FAFBF9;
+  --metric-value: #1C2018;
+  --metric-label: #6B7565;
+  --metric-positive: #11BC76;
+  --metric-negative: #DC2626;
+  --metric-pending: #D97706;
+  --metric-info: #3B82F6;
+
+  /* Calendar */
+  --calendar-bg: #FAFBF9;
+  --calendar-day-bg: #F4F6F2;
+  --calendar-day-hover: #EBF0E8;
+  --calendar-today-bg: rgba(17, 188, 118, 0.10);
+  --calendar-today-border: #11BC76;
+  --calendar-header-bg: #E8EBE6;
+  --calendar-grid-border: #D4D8D1;
+
+  /* Kanban */
+  --kanban-col-bg: #F2F5F0;
+  --kanban-col-border: #CDD1C9;
+  --kanban-card-bg: #FAFBF9;
+  --kanban-card-border: #CDD1C9;
+  --kanban-card-hover: #F2F5F0;
+
+  /* Badges */
+  --badge-connected-bg: #E8F5E9;
+  --badge-connected-text: #2E7D32;
+  --badge-connected-border: #C8E6C9;
+  --badge-pending-bg: #FEF3C7;
+  --badge-pending-text: #92400E;
+  --badge-error-bg: #FEE2E2;
+  --badge-error-text: #991B1B;
 
   /* ── Glass / cards ── */
   --bg-card-glass: rgba(250, 251, 249, 0.92);
@@ -281,7 +324,7 @@
   --section-accent: #11BC76;
   --glass-blur: 12px;
   --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-overlay-rgb: 30, 40, 32;
+  --glass-overlay-rgb: 44, 62, 48;
   --text-bubble-in: #1C2018;
   --text-bubble-out: #0DA068;
 
