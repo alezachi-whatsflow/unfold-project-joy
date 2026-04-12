@@ -105,9 +105,16 @@ export default function RightPanel({ conversation, isOpen, onClose, onNameUpdate
     if (!tenantId) return;
     setSendingTo(pipelineId);
     try {
+      // Use the first stage of the target pipeline as initial status
+      const targetPipeline = pipelines.find(p => p.id === pipelineId);
+      const firstStage = targetPipeline?.stages
+        ?.filter((s: any) => s.enabled)
+        ?.sort((a: any, b: any) => a.ordem - b.ordem)?.[0];
+      const initialStatus = firstStage?.key || "prospeccao";
+
       await createNegocio({
         titulo: `Lead: ${editName || c.name}`,
-        status: "prospeccao",
+        status: initialStatus,
         origem: "whatsapp",
         cliente_nome: editName || c.name,
         pipeline_id: pipelineId,
