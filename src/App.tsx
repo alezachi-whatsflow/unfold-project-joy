@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { FinancialProvider } from "@/contexts/FinancialContext";
 import { CustomerProvider } from "@/contexts/CustomerContext";
 import { ProductProvider } from "@/contexts/ProductContext";
@@ -115,6 +115,9 @@ import ActivationPage from "./pages/ActivationPage";
 // Legal (public)
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
+
+// Domain-based routing (partner custom domains → /app/:slug)
+import { DomainResolver } from "@/components/routing/DomainResolver";
 
 // IAZIS — Payment Orchestration (tier-based dashboard)
 import { IazisModule } from '@/modules/iazis'
@@ -283,6 +286,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <DomainResolver>
         <AuthProvider>
           <SidebarPrefsProvider>
           <TourProvider>
@@ -305,6 +309,7 @@ const App = () => (
           </TourProvider>
           </SidebarPrefsProvider>
         </AuthProvider>
+        </DomainResolver>
       </BrowserRouter>
     </TooltipProvider>
     </ThemeProvider>

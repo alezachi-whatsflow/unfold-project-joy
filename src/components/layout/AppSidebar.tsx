@@ -19,6 +19,7 @@ import { getIcon } from "@/lib/iconMap";
 import { sidebarIconMap } from "@/components/ui/SidebarIcons";
 import { IazisLogo, IazisIcon } from "@/components/ui/IazisLogo";
 import { useTenantId } from "@/hooks/useTenantId";
+import { useWhiteLabelBranding } from "@/hooks/useWhiteLabelBranding";
 
 // ──────────────────────── shared styles ────────────────────────
 const menuItemBase = "flex items-center no-underline transition-all duration-[var(--transition-base)]";
@@ -549,33 +550,11 @@ export function AppSidebar() {
   const location = useLocation();
   const tenantId = useTenantId();
 
-  // Resolve partner WL branding for this tenant
-  const { data: wlBrand } = useQuery({
-    queryKey: ["sidebar-wl-brand", tenantId],
-    queryFn: async () => {
-      if (!tenantId) return null;
-      const { data: license } = await (supabase as any)
-        .from("licenses")
-        .select("id, parent_license_id")
-        .eq("tenant_id", tenantId)
-        .maybeSingle();
-      if (!license) return null;
-      const wlLicenseId = license.parent_license_id || license.id;
-      const { data: wlConfig } = await (supabase as any)
-        .from("whitelabel_config")
-        .select("display_name, logo_url, primary_color")
-        .eq("license_id", wlLicenseId)
-        .maybeSingle();
-      if (!wlConfig) return null;
-      return {
-        name: wlConfig.display_name || null,
-        logo: wlConfig.logo_url || null,
-        color: wlConfig.primary_color || "#11BC76",
-      };
-    },
-    enabled: !!tenantId,
-    staleTime: 10 * 60_000,
-  });
+  // Centralized WL branding — resolves by domain OR tenant (metadata-driven)
+  const { data: _wlBranding } = useWhiteLabelBranding(tenantId);
+  const wlBrand: WLBrand | null = _wlBranding
+    ? { name: _wlBranding.app_name, logo: _wlBranding.logo_url, color: _wlBranding.primary_color }
+    : null;
 
   const [collapsed, setCollapsed] = useState(() => {
     try {

@@ -8,9 +8,8 @@ import { ExternalLink, Minimize2, Loader2 } from "lucide-react";
 import { TopNavBar } from "./TopNavBar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useTenantId } from "@/hooks/useTenantId";
+import { useWhiteLabelBranding } from "@/hooks/useWhiteLabelBranding";
 import { GlobalInternalChatDrawer } from "@/components/chat/GlobalInternalChatDrawer";
 
 export function DashboardLayout() {
@@ -20,50 +19,8 @@ export function DashboardLayout() {
   const tenantId = useTenantId();
   const isDetached = new URLSearchParams(location.search).get("detached") === "true";
 
-  // Resolve white-label branding from the tenant's parent license
-  const { data: branding } = useQuery({
-    queryKey: ['tenant-wl-branding', tenantId],
-    queryFn: async () => {
-      if (!tenantId) return null;
-      // Find this tenant's license and its parent (WL) license
-      const { data: license } = await (supabase as any)
-        .from("licenses")
-        .select("id, parent_license_id")
-        .eq("tenant_id", tenantId)
-        .maybeSingle();
-      if (!license) return null;
-
-      // Use parent_license_id if this is a sub-license, otherwise own license
-      const wlLicenseId = license.parent_license_id || license.id;
-
-      // Fetch the WL config for that license
-      const { data: wlConfig } = await (supabase as any)
-        .from("whitelabel_config")
-        .select("display_name, logo_url, primary_color")
-        .eq("license_id", wlLicenseId)
-        .maybeSingle();
-
-      if (!wlConfig) return null;
-
-      // Also fetch extended branding if available
-      const { data: extBrand } = await (supabase as any)
-        .from("whitelabel_branding")
-        .select("primary_color, secondary_color, accent_color, background_color, logo_url, logo_dark_url, app_name")
-        .eq("account_id", wlLicenseId)
-        .maybeSingle();
-
-      return {
-        app_name: extBrand?.app_name || wlConfig.display_name || "Whatsflow",
-        primary_color: extBrand?.primary_color ? `#${extBrand.primary_color}` : wlConfig.primary_color || "#11BC76",
-        secondary_color: extBrand?.secondary_color ? `#${extBrand.secondary_color}` : "#191D20",
-        accent_color: extBrand?.accent_color ? `#${extBrand.accent_color}` : "#4F5AE3",
-        background_color: extBrand?.background_color ? `#${extBrand.background_color}` : "#191D20",
-        logo_url: extBrand?.logo_dark_url || extBrand?.logo_url || wlConfig.logo_url || null,
-      };
-    },
-    enabled: !!tenantId,
-    staleTime: 10 * 60_000,
-  });
+  // Centralized WL branding — resolves by domain OR tenant (metadata-driven, zero hardcode)
+  const { data: branding } = useWhiteLabelBranding(tenantId);
 
   useEffect(() => {
     if (branding) {
@@ -71,6 +28,13 @@ export function DashboardLayout() {
       document.documentElement.style.setProperty('--wl-secondary', branding.secondary_color);
       document.documentElement.style.setProperty('--wl-accent', branding.accent_color);
       document.documentElement.style.setProperty('--wl-bg', branding.background_color);
+      // Dynamic favicon + title
+      document.title = branding.app_name;
+      if (branding.favicon_url) {
+        let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+        if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+        link.href = branding.favicon_url;
+      }
     }
     return () => {
       ['--wl-primary', '--wl-secondary', '--wl-accent', '--wl-bg'].forEach(v =>
