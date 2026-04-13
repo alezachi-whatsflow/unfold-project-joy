@@ -88,7 +88,7 @@ RETURNS TABLE(
 LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   encryption_key TEXT;
@@ -142,7 +142,7 @@ CREATE OR REPLACE FUNCTION public.upsert_partner_smtp(
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   encryption_key TEXT;
@@ -203,7 +203,7 @@ RETURNS TABLE(
 LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_wl_config_id UUID;
