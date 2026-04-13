@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendEmail } from "../_shared/smtp.ts";
+import { sendEmail, resolveEmailBranding } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -237,38 +237,37 @@ async function handleRenewal(supabase: ReturnType<typeof createClient>, session:
 }
 
 async function sendActivationEmail(supabase: ReturnType<typeof createClient>, session: Record<string, any>, token: string) {
-  const APP_URL = Deno.env.get("APP_URL") || "https://app.whatsflow.com.br";
+  const APP_URL = Deno.env.get("APP_URL") || "https://unfold-project-joy-production.up.railway.app";
 
-  let fromEmail = "no-reply@whatsflow.com.br";
-  let fromName = "Whatsflow";
-  let appName = "Whatsflow";
-  let logoHtml = "";
+  // Resolve WL branding dynamically (partner name, logo, colors, sender)
+  const branding = await resolveEmailBranding(undefined, session.whitelabel_id);
 
-  if (session.whitelabel_id) {
-    const { data: wb } = await supabase.from("whitelabel_branding")
-      .select("app_name, logo_url, support_email, primary_color").eq("account_id", session.whitelabel_id).single();
-    if (wb) {
-      appName = wb.app_name || "Sistema"; fromName = appName;
-      if (wb.support_email) fromEmail = wb.support_email;
-      if (wb.logo_url) logoHtml = `<img src="${wb.logo_url}" alt="${appName}" style="height:40px;margin-bottom:24px;" />`;
-    }
+  // Resolve tenant_id for partner SMTP routing
+  let tenantId: string | undefined;
+  if (session.account_id) {
+    const { data: lic } = await supabase.from("licenses")
+      .select("tenant_id")
+      .eq("account_id", session.account_id)
+      .maybeSingle();
+    tenantId = lic?.tenant_id;
   }
 
   const html = `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#0f172a;color:#e2e8f0;border-radius:12px;">
-    ${logoHtml || `<div style="font-size:22px;font-weight:900;margin-bottom:24px;color:#10b981;">${appName}</div>`}
-    <h1 style="font-size:22px;font-weight:800;margin:0 0 16px;">Sua conta foi criada! 🎉</h1>
-    <p style="color:#94a3b8;">Olá, <strong>${session.buyer_name || session.buyer_email}</strong>! A conta <strong style="color:#e2e8f0;">${session.company_name}</strong> no ${appName} está pronta.</p>
-    <a href="${APP_URL}/ativar/${token}" style="display:inline-block;background:#10b981;color:white;font-weight:700;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:15px;margin:24px 0;">Ativar minha conta →</a>
+    ${branding.logoHtml || `<div style="font-size:22px;font-weight:900;margin-bottom:24px;color:${branding.primaryColor};">${branding.appName}</div>`}
+    <h1 style="font-size:22px;font-weight:800;margin:0 0 16px;">Sua conta foi criada!</h1>
+    <p style="color:#94a3b8;">Olá, <strong>${session.buyer_name || session.buyer_email}</strong>! A conta <strong style="color:#e2e8f0;">${session.company_name}</strong> no ${branding.appName} está pronta.</p>
+    <a href="${APP_URL}/ativar/${token}" style="display:inline-block;background:${branding.primaryColor};color:white;font-weight:700;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:15px;margin:24px 0;">Ativar minha conta →</a>
     <p style="color:#64748b;font-size:12px;">Link válido por 24h · Uso único · Se não foi você, ignore.</p>
   </div>`;
 
   await sendEmail({
-    from: `${fromName} <${fromEmail}>`,
+    from: `${branding.fromName} <${branding.fromEmail}>`,
     to: session.buyer_email,
-    subject: `Ative sua conta no ${appName}`,
+    subject: `Ative sua conta no ${branding.appName}`,
     html,
+    tenant_id: tenantId,
   });
-  console.log(`[checkout] Email sent to ${session.buyer_email}`);
+  console.log(`[checkout] Email sent to ${session.buyer_email} via ${tenantId ? "partner" : "global"} SMTP`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

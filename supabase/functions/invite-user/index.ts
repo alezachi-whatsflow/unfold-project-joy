@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendEmail } from "../_shared/smtp.ts";
+import { sendEmail, resolveEmailBranding } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,26 +8,28 @@ const corsHeaders = {
 
 const PRODUCTION_URL = Deno.env.get("APP_URL") || "https://unfold-project-joy-production.up.railway.app";
 
-function buildInviteEmail(full_name: string, actionLink: string) {
-  // Replace the lovable.app domain in the link with Railway production URL
-  const safeLink = actionLink.replace(
-    /https?:\/\/[^/]*lovable[^/]*\//g,
-    `${PRODUCTION_URL}/`
-  );
+function sanitizeLink(link: string): string {
+  return link.replace(/https?:\/\/[^/]*lovable[^/]*\//g, `${PRODUCTION_URL}/`);
+}
 
+function buildInviteEmail(fullName: string, actionLink: string, branding: { appName: string; logoHtml: string; primaryColor: string }) {
+  const safeLink = sanitizeLink(actionLink);
   return {
-    subject: "Você foi convidado para o Whatsflow",
+    subject: `Você foi convidado para o ${branding.appName}`,
     html: `
       <div style="font-family:'Open Sans',Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#fff;border-radius:12px;">
-        <h2 style="color:#344767;margin:0 0 8px;">Bem-vindo ao Whatsflow!</h2>
+        <div style="text-align:center;margin-bottom:24px;">
+          ${branding.logoHtml || `<div style="font-size:24px;font-weight:900;color:${branding.primaryColor};">${branding.appName}</div>`}
+        </div>
+        <h2 style="color:#344767;margin:0 0 8px;">Bem-vindo ao ${branding.appName}!</h2>
         <p style="color:#67748e;font-size:14px;line-height:1.6;margin:0 0 16px;">
-          Olá <strong>${full_name}</strong>, você recebeu um convite para acessar o <strong>Whatsflow Finance</strong>.
+          Olá <strong>${fullName}</strong>, você recebeu um convite para acessar o <strong>${branding.appName}</strong>.
         </p>
         <p style="color:#67748e;font-size:14px;line-height:1.6;margin:0 0 24px;">
           Clique no botão abaixo para confirmar seu acesso e criar sua senha:
         </p>
         <p style="text-align:center;margin:0 0 24px;">
-          <a href="${safeLink}" style="display:inline-block;padding:14px 32px;background:#5e72e4;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
+          <a href="${safeLink}" style="display:inline-block;padding:14px 32px;background:${branding.primaryColor};color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
             Criar minha senha
           </a>
         </p>
@@ -40,22 +42,21 @@ function buildInviteEmail(full_name: string, actionLink: string) {
   };
 }
 
-function buildRecoveryEmail(full_name: string, actionLink: string) {
-  const safeLink = actionLink.replace(
-    /https?:\/\/[^/]*lovable[^/]*\//g,
-    `${PRODUCTION_URL}/`
-  );
-
+function buildRecoveryEmail(fullName: string, actionLink: string, branding: { appName: string; logoHtml: string; primaryColor: string }) {
+  const safeLink = sanitizeLink(actionLink);
   return {
-    subject: "Crie sua senha — Whatsflow",
+    subject: `Crie sua senha — ${branding.appName}`,
     html: `
       <div style="font-family:'Open Sans',Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#fff;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          ${branding.logoHtml || `<div style="font-size:24px;font-weight:900;color:${branding.primaryColor};">${branding.appName}</div>`}
+        </div>
         <h2 style="color:#344767;margin:0 0 8px;">Criar sua senha</h2>
         <p style="color:#67748e;font-size:14px;line-height:1.6;margin:0 0 16px;">
-          Olá <strong>${full_name}</strong>, clique no botão abaixo para criar sua senha de acesso ao Whatsflow Finance:
+          Olá <strong>${fullName}</strong>, clique no botão abaixo para criar sua senha de acesso ao ${branding.appName}:
         </p>
         <p style="text-align:center;margin:0 0 24px;">
-          <a href="${safeLink}" style="display:inline-block;padding:14px 32px;background:#5e72e4;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
+          <a href="${safeLink}" style="display:inline-block;padding:14px 32px;background:${branding.primaryColor};color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
             Criar minha senha
           </a>
         </p>
@@ -68,16 +69,21 @@ function buildRecoveryEmail(full_name: string, actionLink: string) {
   };
 }
 
-async function sendEmailSmtp(to: string, subject: string, html: string): Promise<boolean> {
+async function sendEmailWithFallback(
+  to: string, subject: string, html: string,
+  branding: { fromName: string; fromEmail: string },
+  tenantId?: string,
+): Promise<boolean> {
   try {
     await sendEmail({
-      from: "Whatsflow <no-reply@whatsflow.com.br>",
+      from: `${branding.fromName} <${branding.fromEmail}>`,
       to,
       subject,
       html,
+      tenant_id: tenantId,
     });
     return true;
-  } catch (e) {
+  } catch (e: any) {
     console.warn("[invite-user] SMTP send failed (non-fatal):", e.message);
     return false;
   }
@@ -150,10 +156,13 @@ Deno.serve(async (req) => {
     const redirectUrl = `${PRODUCTION_URL}/reset-password`;
     const assignedRole = role || "consultor";
 
+    // Resolve WL branding for email templates
+    const branding = await resolveEmailBranding(tenant_id);
+
     // Check if user already exists
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase()
+      (u: any) => u.email?.toLowerCase() === email.toLowerCase()
     );
 
     if (existingUser) {
@@ -190,8 +199,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      const emailContent = buildRecoveryEmail(full_name, linkData.properties.action_link);
-      const emailSent = await sendEmailSmtp(email, emailContent.subject, emailContent.html);
+      const emailContent = buildRecoveryEmail(full_name, linkData.properties.action_link, branding);
+      const emailSent = await sendEmailWithFallback(email, emailContent.subject, emailContent.html, branding, tenant_id);
 
       return new Response(
         JSON.stringify({
@@ -206,7 +215,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // DIRECT ACTIVATION (skip_email + password): Create user with password, no email needed
+    // DIRECT ACTIVATION (skip_email + password)
     if (skip_email && directPassword) {
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email,
@@ -286,7 +295,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate invite link (type=recovery so user creates password)
+    // Generate invite link
     const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
       type: "recovery",
       email,
@@ -304,9 +313,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Send custom email in Portuguese
-    const emailContent = buildInviteEmail(full_name, linkData.properties.action_link);
-    const emailSent = await sendEmailSmtp(email, emailContent.subject, emailContent.html);
+    // Send branded invite email via partner or global SMTP
+    const emailContent = buildInviteEmail(full_name, linkData.properties.action_link, branding);
+    const emailSent = await sendEmailWithFallback(email, emailContent.subject, emailContent.html, branding, tenant_id);
 
     return new Response(
       JSON.stringify({
@@ -318,7 +327,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,

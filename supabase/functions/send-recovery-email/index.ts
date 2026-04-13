@@ -1,7 +1,8 @@
 // send-recovery-email
-// Generates a Supabase recovery link and sends it via SMTP2GO.
+// Generates a Supabase recovery link and sends via partner or global SMTP.
+// Supports WL branding: dynamic sender, logo, app name.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendEmail } from "../_shared/smtp.ts";
+import { sendEmail, resolveEmailBranding } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,59 +24,60 @@ Deno.serve(async (req) => {
     if (!email) throw new Error("Email é obrigatório");
 
     const redirectUrl = `${PRODUCTION_URL}/reset-password`;
+    const normalizedEmail = email.trim().toLowerCase();
 
     // Generate recovery link via Supabase Admin API
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "recovery",
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       options: { redirectTo: redirectUrl },
     });
 
-    if (linkError) {
-      console.error("[send-recovery] Link error:", linkError);
-      // Don't reveal if user exists or not — always show success to frontend
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const actionLink = linkData?.properties?.action_link;
-    if (!actionLink) {
-      console.warn("[send-recovery] No action_link returned");
+    if (linkError || !linkData?.properties?.action_link) {
+      console.warn("[send-recovery] Link error:", linkError?.message || "No action_link");
+      // Don't reveal if user exists — always return success
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Replace any lovable.app domain with production URL
-    const safeLink = actionLink.replace(
+    const safeLink = linkData.properties.action_link.replace(
       /https?:\/\/[^/]*lovable[^/]*\//g,
       `${PRODUCTION_URL}/`
     );
 
-    // Get user name if available
+    // Resolve tenant_id from user → user_tenants to get WL branding
+    const userId = linkData.user?.id;
+    let tenantId: string | undefined;
     let userName = "";
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", linkData.user?.id)
-      .maybeSingle();
-    if (profile?.full_name) userName = profile.full_name;
+
+    if (userId) {
+      const [{ data: profile }, { data: ut }] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+        supabase.from("user_tenants").select("tenant_id").eq("user_id", userId).limit(1).maybeSingle(),
+      ]);
+      userName = profile?.full_name || "";
+      tenantId = ut?.tenant_id;
+    }
+
+    // Resolve branding (partner name, logo, colors)
+    const branding = await resolveEmailBranding(tenantId);
 
     const html = `
       <div style="font-family:'Open Sans',Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#fff;border-radius:12px;">
         <div style="text-align:center;margin-bottom:24px;">
-          <div style="font-size:24px;font-weight:900;color:#5e72e4;">Whatsflow</div>
+          ${branding.logoHtml || `<div style="font-size:24px;font-weight:900;color:${branding.primaryColor};">${branding.appName}</div>`}
         </div>
         <h2 style="color:#344767;margin:0 0 8px;font-size:20px;">Recuperação de senha</h2>
         <p style="color:#67748e;font-size:14px;line-height:1.6;margin:0 0 16px;">
-          ${userName ? `Olá <strong>${userName}</strong>,` : "Olá,"} recebemos uma solicitação para redefinir sua senha no Whatsflow.
+          ${userName ? `Olá <strong>${userName}</strong>,` : "Olá,"} recebemos uma solicitação para redefinir sua senha no ${branding.appName}.
         </p>
         <p style="color:#67748e;font-size:14px;line-height:1.6;margin:0 0 24px;">
           Clique no botão abaixo para criar uma nova senha:
         </p>
         <p style="text-align:center;margin:0 0 24px;">
-          <a href="${safeLink}" style="display:inline-block;padding:14px 32px;background:#5e72e4;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
+          <a href="${safeLink}" style="display:inline-block;padding:14px 32px;background:${branding.primaryColor};color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
             Redefinir minha senha
           </a>
         </p>
@@ -87,12 +89,14 @@ Deno.serve(async (req) => {
     `;
 
     await sendEmail({
-      to: email.trim().toLowerCase(),
-      subject: "Recuperação de senha — Whatsflow",
+      to: normalizedEmail,
+      subject: `Recuperação de senha — ${branding.appName}`,
       html,
+      from: `${branding.fromName} <${branding.fromEmail}>`,
+      tenant_id: tenantId,
     });
 
-    console.log(`[send-recovery] Recovery email sent to ${email}`);
+    console.log(`[send-recovery] Recovery email sent to ${normalizedEmail} via ${tenantId ? "partner" : "global"} SMTP`);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
