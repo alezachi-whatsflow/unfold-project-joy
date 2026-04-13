@@ -248,7 +248,7 @@ function NavItemRow({ item, collapsed, isMobile, badgeCount, density }: { item: 
         className={() => cn(menuItemBase, isCollapsed ? "justify-center pl-0 border-l-0" : "gap-2", isActive ? menuItemActive : menuItemDefault)}
       >
         <span className="relative shrink-0 flex items-center justify-center" style={{ minWidth: '1.8rem' }}>
-          {CustomIcon ? <CustomIcon size={15} /> : <LucideIcon className="h-[15px] w-[15px]" />}
+          {CustomIcon ? <CustomIcon size={16} strokeWidth={1.5} /> : <LucideIcon className="h-4 w-4" strokeWidth={1.5} />}
           {isCollapsed && badgeCount > 0 && (
             <span className="absolute -top-1 -right-1 rounded-full w-2 h-2 bg-destructive" />
           )}
@@ -380,7 +380,7 @@ function SidebarDualRail({ isMobile }: { collapsed: boolean; isMobile: boolean }
                 className={cn("flex items-center justify-center transition-colors relative", isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}
                 style={{ width: 40, height: 40 }}
               >
-                <CatIcon className="h-4.5 w-4.5" />
+                <CatIcon className="h-[18px] w-[18px]" strokeWidth={1.5} />
                 {badge > 0 && <span className="absolute top-1 right-1 rounded-full w-[7px] h-[7px] bg-destructive" />}
               </button>
             );

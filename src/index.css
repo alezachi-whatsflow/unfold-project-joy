@@ -5,6 +5,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accent color global — checkboxes, radios, range inputs */
+:root {
+  accent-color: #11BC76;
+}
+
 /* Hide scrollbars globally — content still scrollable */
 * {
   scrollbar-width: none;

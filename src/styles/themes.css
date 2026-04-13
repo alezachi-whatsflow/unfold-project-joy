@@ -122,6 +122,7 @@
   --wa-border: rgba(58, 47, 34, 0.50);
   --wa-border-input: rgba(58, 47, 34, 0.70);
   --wa-wallpaper-pattern: none;
+  accent-color: #11BC76;
 }
 
 /* ── TEMA 2: PACÍFICO ──────────────────────
@@ -467,6 +468,7 @@
   --wa-border: rgba(26, 37, 64, 0.60);
   --wa-border-input: rgba(26, 37, 64, 0.80);
   --wa-wallpaper-pattern: none;
+  accent-color: #11BC76;
 }
 
 /* ───────────────────────────────────────────
