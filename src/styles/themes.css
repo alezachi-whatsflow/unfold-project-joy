@@ -172,7 +172,7 @@
   --sidebar-glass-rgb: 52, 64, 57;
   --sidebar-glass-alpha: 0.92;
   --background: 150 14% 28%;      /* #3C4E42 shell */
-  --foreground: 0 0% 90%;         /* #E5E8ED on shell */
+  --foreground: 0 0% 90%;         /* #E5E8ED — light text for shell areas */
   --card: 100 8% 98%;             /* #FAFBF9 */
   --card-foreground: 100 12% 11%; /* #1C2018 */
   --popover: 100 8% 98%;          /* #FAFBF9 */
@@ -351,6 +351,21 @@
   --wa-border: #CDD1C9;
   --wa-border-input: #CDD1C9;
   --wa-wallpaper-pattern: none;
+}
+
+/* ── PACÍFICO: contextual overrides for light surfaces ──
+   Cards, popovers, dialogs, and <main> content use dark text.
+   Shell, sidebar, topbar keep light text via --foreground (inherited).
+   ─────────────────────────────────────────── */
+[data-theme="pacifico"] .bg-card,
+[data-theme="pacifico"] .bg-popover,
+[data-theme="pacifico"] .bg-background,
+[data-theme="pacifico"] [class*="bg-card"],
+[data-theme="pacifico"] [data-radix-popper-content-wrapper],
+[data-theme="pacifico"] [role="dialog"],
+[data-theme="pacifico"] main {
+  --foreground: 100 12% 11%;       /* #1C2018 — dark text on light surfaces */
+  --muted-foreground: 100 6% 42%;  /* #6B7565 */
 }
 
 /* ── TEMA 3: COSMOS ────────────────────────
